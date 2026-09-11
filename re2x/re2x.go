@@ -39,6 +39,7 @@ type Match struct {
 	src   string
 	names []string
 	spans map[string][2]int
+	whole [2]int
 }
 
 // Compile parses pattern as a regular expression and reports the named
@@ -109,7 +110,8 @@ func newMatch(src string, re *regexp.Regexp, loc []int) Match {
 		spans[name] = [2]int{loc[2*i], loc[2*i+1]}
 		order = append(order, name)
 	}
-	return Match{src: src, names: order, spans: spans}
+	return Match{
+		whole: [2]int{loc[0], loc[1]}, src: src, names: order, spans: spans}
 }
 
 // Get returns the substring captured by the named group and whether it
@@ -215,4 +217,17 @@ func CheckRE2(pattern string) error {
 		}
 	}
 	return nil
+}
+
+// Whole reports the span of the entire match in the source, which a caller
+// needs when one pattern narrows a region for the next one to search inside.
+//
+// That is the recursive matchStrings strategy: the outer pattern exists to
+// stop the inner one matching text that happens to look right somewhere else
+// in the file, so the inner search has to be confined to exactly these bytes.
+func (m Match) Whole() (start, end int, ok bool) {
+	if m.whole[1] < m.whole[0] {
+		return 0, 0, false
+	}
+	return m.whole[0], m.whole[1], true
 }

@@ -314,3 +314,35 @@ func TestCheckRE2RejectsBackreferencesAndLookaroundButAcceptsNamedGroups(t *test
 		})
 	}
 }
+
+// Whole is what the recursive matchStrings strategy needs: the outer pattern
+// narrows a region and the inner one searches only inside it, so the inner
+// search must be confined to exactly these bytes.
+func TestWholeSpansTheEntireMatch(t *testing.T) {
+	src := "prefix image: alpine:3.21 suffix"
+	re, err := Compile(`image: (?<name>[a-z]+):(?<tag>[0-9.]+)`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, ok := re.Find(src)
+	if !ok {
+		t.Fatal("no match")
+	}
+	s, e, ok := m.Whole()
+	if !ok {
+		t.Fatal("Whole reported no span")
+	}
+	if got := src[s:e]; got != "image: alpine:3.21" {
+		t.Errorf("Whole spans %q, want %q", got, "image: alpine:3.21")
+	}
+	// The whole match must contain every named group's span.
+	for _, name := range m.Names() {
+		gs, ge, ok := m.Span(name)
+		if !ok {
+			continue
+		}
+		if gs < s || ge > e {
+			t.Errorf("group %q spans [%d:%d], outside the whole match [%d:%d]", name, gs, ge, s, e)
+		}
+	}
+}
