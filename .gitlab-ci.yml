@@ -59,8 +59,6 @@ workflow:
 variables:
   # renovate: datasource=docker depName=devops/images/golang
   GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27"
-  # renovate: datasource=docker depName=devops/images/curl
-  CURL_IMAGE: "registry.ole-hartwig.eu/devops/images/curl:8.21"
   # Do not quietly pull a different Go version: what is in the image is what
   # counts. go.mod says 1.27 and the image is 1.27; with `auto` a future bump
   # to the directive would silently download a toolchain the image does not
