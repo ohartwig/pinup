@@ -1,0 +1,329 @@
+// SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
+// SPDX-License-Identifier: MIT
+
+package httpx
+
+import (
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"strings"
+	"sync"
+	"sync/atomic"
+	"testing"
+	"time"
+)
+
+func TestHostRuleAppliesCredentials(t *testing.T) {
+	const token = "line-up-token-abc123"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "Bearer "+token {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	for _, tc := range []struct {
+		name       string
+		withRule   bool
+		wantStatus int
+		wantErr    bool
+	}{
+		{name: "no rule configured", withRule: false, wantErr: true},
+		{name: "matching rule sends bearer token", withRule: true, wantStatus: http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var rules []HostRule
+			if tc.withRule {
+				rules = []HostRule{{MatchHost: hostOf(srv.URL), Token: token}}
+			}
+			client := New(Options{
+				HostRules: rules,
+				Now:       time.Now,
+				Sleep:     func(time.Duration) {},
+			})
+
+			resp, err := client.Get(t.Context(), srv.URL, ReqOptions{})
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("Get() error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if !tc.wantErr && resp.StatusCode != tc.wantStatus {
+				t.Errorf("StatusCode = %d, want %d", resp.StatusCode, tc.wantStatus)
+			}
+		})
+	}
+}
+
+// TestRetryBehaviour covers the three retry-policy requirements together:
+// 429 with Retry-After is honoured, 5xx is retried up to MaxRetries, and
+// non-429 4xx is never retried. The injected Sleep never actually waits, so
+// this test asserts wall-clock time stays well under what real backoffs
+// would cost.
+func TestRetryBehaviour(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		maxRetries   int
+		statuses     []int // status per call; the last entry repeats if exhausted
+		retryAfter   string
+		wantAttempts int32
+		wantErr      bool
+		checkSleeps  func(t *testing.T, sleeps []time.Duration)
+	}{
+		{
+			name:         "429 with Retry-After then success",
+			maxRetries:   1,
+			statuses:     []int{http.StatusTooManyRequests, http.StatusOK},
+			retryAfter:   "1",
+			wantAttempts: 2,
+			checkSleeps: func(t *testing.T, sleeps []time.Duration) {
+				t.Helper()
+				if len(sleeps) != 1 || sleeps[0] != time.Second {
+					t.Errorf("sleeps = %v, want [1s]", sleeps)
+				}
+			},
+		},
+		{
+			name:         "three 500s then success",
+			maxRetries:   3,
+			statuses:     []int{http.StatusInternalServerError, http.StatusInternalServerError, http.StatusInternalServerError, http.StatusOK},
+			wantAttempts: 4,
+		},
+		{
+			name:         "404 is not retried",
+			maxRetries:   3,
+			statuses:     []int{http.StatusNotFound},
+			wantAttempts: 1,
+			wantErr:      true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var attempts atomic.Int32
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				n := int(attempts.Add(1)) - 1
+				if n >= len(tc.statuses) {
+					n = len(tc.statuses) - 1
+				}
+				status := tc.statuses[n]
+				if status == http.StatusTooManyRequests && tc.retryAfter != "" {
+					w.Header().Set("Retry-After", tc.retryAfter)
+				}
+				w.WriteHeader(status)
+			}))
+			defer srv.Close()
+
+			var mu sync.Mutex
+			var sleeps []time.Duration
+			client := New(Options{
+				MaxRetries: tc.maxRetries,
+				Now:        time.Now,
+				Sleep: func(d time.Duration) {
+					mu.Lock()
+					sleeps = append(sleeps, d)
+					mu.Unlock()
+				},
+			})
+
+			start := time.Now()
+			resp, err := client.Get(t.Context(), srv.URL, ReqOptions{})
+			elapsed := time.Since(start)
+
+			// A real 1s Retry-After plus growing 5xx backoffs would take
+			// seconds; an injected Sleep that never actually sleeps keeps
+			// this well under that.
+			if elapsed > 500*time.Millisecond {
+				t.Errorf("elapsed = %v, want well under 500ms (Sleep must not really sleep)", elapsed)
+			}
+
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("Get() error = %v, wantErr %v", err, tc.wantErr)
+			}
+			if got := attempts.Load(); got != tc.wantAttempts {
+				t.Errorf("attempts = %d, want %d", got, tc.wantAttempts)
+			}
+			if wantSleeps := int(tc.wantAttempts) - 1; len(sleeps) != wantSleeps {
+				t.Errorf("len(sleeps) = %d, want %d", len(sleeps), wantSleeps)
+			}
+			if !tc.wantErr && resp.StatusCode != http.StatusOK {
+				t.Errorf("StatusCode = %d, want 200", resp.StatusCode)
+			}
+			if tc.checkSleeps != nil {
+				tc.checkSleeps(t, sleeps)
+			}
+		})
+	}
+}
+
+// TestConditionalRequestETag exercises the If-None-Match / 304 round trip:
+// the first fetch returns a body and an ETag, the second fetch echoes that
+// ETag and gets back an empty, NotModified response.
+func TestConditionalRequestETag(t *testing.T) {
+	const etag = `"v1"`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("If-None-Match") == etag {
+			w.Header().Set("ETag", etag)
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Set("ETag", etag)
+		w.WriteHeader(http.StatusOK)
+		_, _ = io.WriteString(w, "hello")
+	}))
+	defer srv.Close()
+
+	client := New(Options{Now: time.Now, Sleep: func(time.Duration) {}})
+
+	first, err := client.Get(t.Context(), srv.URL, ReqOptions{})
+	if err != nil {
+		t.Fatalf("first Get() error = %v", err)
+	}
+	if first.NotModified {
+		t.Fatal("first response reported NotModified")
+	}
+	if string(first.Body) != "hello" || first.ETag != etag {
+		t.Fatalf("first response = %q/%q, want hello/%s", first.Body, first.ETag, etag)
+	}
+
+	second, err := client.Get(t.Context(), srv.URL, ReqOptions{ETag: first.ETag})
+	if err != nil {
+		t.Fatalf("second Get() error = %v", err)
+	}
+	if !second.NotModified {
+		t.Error("second response did not report NotModified")
+	}
+	if len(second.Body) != 0 {
+		t.Errorf("second response body = %q, want empty", second.Body)
+	}
+}
+
+// TestRedirectDropsAuthorizationCrossHost proves the security-critical
+// behaviour: a token configured for host A must not follow a redirect to
+// host B.
+func TestRedirectDropsAuthorizationCrossHost(t *testing.T) {
+	const token = "hostA-only-token"
+
+	var sawAuthOnB atomic.Bool
+	hostB := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			sawAuthOnB.Store(true)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer hostB.Close()
+
+	var sawAuthOnA atomic.Bool
+	hostA := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == "Bearer "+token {
+			sawAuthOnA.Store(true)
+		}
+		http.Redirect(w, r, hostB.URL, http.StatusFound)
+	}))
+	defer hostA.Close()
+
+	client := New(Options{
+		HostRules: []HostRule{{MatchHost: hostOf(hostA.URL), Token: token}},
+		Now:       time.Now,
+		Sleep:     func(time.Duration) {},
+	})
+
+	resp, err := client.Get(t.Context(), hostA.URL, ReqOptions{})
+	if err != nil {
+		t.Fatalf("Get() error = %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("StatusCode = %d, want 200", resp.StatusCode)
+	}
+	if !sawAuthOnA.Load() {
+		t.Error("host A never received the Authorization header (test setup problem)")
+	}
+	if sawAuthOnB.Load() {
+		t.Error("host B received an Authorization header carried over from host A")
+	}
+}
+
+// TestErrorNeverLeaksToken is the hard requirement from CLAUDE.md: whatever
+// a failure's error text says, it must never contain the configured token.
+func TestErrorNeverLeaksToken(t *testing.T) {
+	const token = "do-not-leak-this-secret-9f8e7d"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+	}))
+	defer srv.Close()
+
+	client := New(Options{
+		HostRules: []HostRule{{MatchHost: hostOf(srv.URL), Token: token}},
+		Now:       time.Now,
+		Sleep:     func(time.Duration) {},
+	})
+
+	_, err := client.Get(t.Context(), srv.URL, ReqOptions{})
+	if err == nil {
+		t.Fatal("Get() error = nil, want an error for 403")
+	}
+	if strings.Contains(err.Error(), token) {
+		t.Errorf("error text leaks the configured token: %q", err.Error())
+	}
+}
+
+// TestPerHostConcurrencyLimit asserts the semaphore actually bounds
+// concurrency: with MaxConcurrent=2 and six simultaneous callers, the
+// handler must never observe more than two requests in flight at once.
+func TestPerHostConcurrencyLimit(t *testing.T) {
+	const limit = 2
+	const callers = 6
+
+	var mu sync.Mutex
+	current, peak := 0, 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		current++
+		if current > peak {
+			peak = current
+		}
+		mu.Unlock()
+
+		time.Sleep(30 * time.Millisecond) // hold the slot long enough for overlap to show up
+
+		mu.Lock()
+		current--
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	client := New(Options{
+		HostRules: []HostRule{{MatchHost: hostOf(srv.URL), MaxConcurrent: limit}},
+		Now:       time.Now,
+		Sleep:     func(time.Duration) {},
+	})
+
+	var wg sync.WaitGroup
+	for range callers {
+		wg.Go(func() {
+			if _, err := client.Get(t.Context(), srv.URL, ReqOptions{}); err != nil {
+				t.Errorf("Get() error = %v", err)
+			}
+		})
+	}
+	wg.Wait()
+
+	mu.Lock()
+	defer mu.Unlock()
+	if peak > limit {
+		t.Errorf("peak concurrent requests = %d, want <= %d", peak, limit)
+	}
+}
+
+// hostOf extracts the host[:port] portion of a URL, matching how
+// HostRule.MatchHost is expected to be configured.
+func hostOf(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return rawURL
+	}
+	return u.Host
+}
