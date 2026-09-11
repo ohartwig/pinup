@@ -496,3 +496,57 @@ func skipReasons(p *model.Plan) []string {
 	}
 	return out
 }
+
+// The fast lane plans one dependency: everything else is skipped by name,
+// and the released package's lookups bypass the cache.
+func TestWhatifReleasedNarrowsToTheReleasedPackage(t *testing.T) {
+	if _, err := os.Stat(ciToolsRepo); err != nil {
+		t.Skipf("the ci-tools checkout is not present: %v", err)
+	}
+	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(at)
+	opts.Released = "devops/ci-cd-components/lint-tools"
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	planned, skippedByName := 0, 0
+	for _, d := range plan.Deps {
+		switch {
+		case strings.Contains(d.DepName, "lint-tools"):
+			if strings.Contains(d.SkipReason, "not the released") {
+				t.Errorf("the released package was skipped: %s", d.SkipReason)
+			}
+			planned++
+		case strings.Contains(d.SkipReason, "not the released package devops/ci-cd-components/lint-tools"):
+			skippedByName++
+		case d.SkipReason == "":
+			t.Errorf("%s was planned although it is not the released package", d.DepName)
+		}
+	}
+	if planned == 0 || skippedByName == 0 {
+		t.Errorf("planned %d released deps, %d skipped by name", planned, skippedByName)
+	}
+	if plan.Stats.LookupsIssued != 2 {
+		t.Errorf("only the released package is looked up (gitlab-tags and gitlab-releases): %d lookups", plan.Stats.LookupsIssued)
+	}
+}
+
+func TestReleasedDebounce(t *testing.T) {
+	path := t.TempDir() + "/released.json"
+	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
+	if seenRecently(path, "a/b@1", at) {
+		t.Fatal("nothing seen yet")
+	}
+	markSeen(path, "a/b@1", at)
+	if !seenRecently(path, "a/b@1", at.Add(30*time.Minute)) {
+		t.Error("seen half an hour ago must count")
+	}
+	if seenRecently(path, "a/b@1", at.Add(2*time.Hour)) || seenRecently(path, "a/b@2", at) {
+		t.Error("a later version or a later hour is a new run")
+	}
+	markSeen(path, "c/d@1", at.Add(48*time.Hour))
+	if seenRecently(path, "a/b@1", at.Add(48*time.Hour+time.Minute)) {
+		t.Error("entries older than a day are pruned")
+	}
+}

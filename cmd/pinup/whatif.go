@@ -21,6 +21,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/planner"
+	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/rules"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
@@ -111,6 +112,15 @@ type whatifOptions struct {
 	// Presets answers local> presets other than the runner's own file;
 	// nil means only the builtin library is known.
 	Presets preset.Source
+	// Released, when set, is the project path of a package that was just
+	// released: only dependencies on it are planned, every other one is
+	// skipped by name, and its lookups bypass the cache.
+	Released string
+	// RunnerDefault is the runner's default.json, what the estate's
+	// repositories extend as local>devops/renovate-runner. Empty means
+	// ConfigPath is that file. It differs for the fast lane, whose
+	// --config is release-fast.json and itself extends the default.
+	RunnerDefault string
 }
 
 // runnerAliases are the names the estate's repositories extend the runner
@@ -130,14 +140,22 @@ var runnerAliases = []string{
 // Renovate composes them in production, where the repository's own keys
 // and rules come last and decide (testdata/parity/.../presets/README.md).
 // A repository without one runs under the runner's file alone.
-func resolveConfig(root, cfgPath string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
+func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
 	global, err := config.LoadFile(cfgPath)
 	if err != nil {
 		return config.Decoded{}, nil, nil, err
 	}
+	aliasDoc := global.Raw
+	if runnerDefault != "" && runnerDefault != cfgPath {
+		def, err := config.LoadFile(runnerDefault)
+		if err != nil {
+			return config.Decoded{}, nil, nil, err
+		}
+		aliasDoc = def.Raw
+	}
 	aliases := preset.Aliases{}
 	for _, name := range runnerAliases {
-		aliases[name] = global.Raw
+		aliases[name] = aliasDoc
 	}
 	sources := preset.Chain{aliases}
 	if remote != nil {
@@ -173,7 +191,7 @@ func resolveConfig(root, cfgPath string, remote preset.Source) (config.Decoded, 
 // update, where the update type is known and a rule can hold it.
 func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	root, cfgPath, repoName, now := o.Root, o.ConfigPath, o.RepoName, o.Now
-	decoded, resolved, presetWarnings, err := resolveConfig(root, cfgPath, o.Presets)
+	decoded, resolved, presetWarnings, err := resolveConfig(root, cfgPath, o.RunnerDefault, o.Presets)
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
@@ -250,6 +268,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
+			if o.Released != "" && d.SkipReason == "" && !report.RefersTo(report.Key(d), o.Released) {
+				d.SkipReason = "not the released package " + o.Released + "; the scheduled run covers it"
+			}
 			plan.Deps = append(plan.Deps, applyDepRules(engine, resolved.Raw, d))
 		}
 	}
@@ -272,6 +293,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
 	fetcher := &lookup.Fetcher{Registry: o.Datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: now}
+	if o.Released != "" {
+		fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
+	}
 	results := fetcher.Fetch(ctx, plan.Deps)
 	fromCache := 0
 	for _, r := range results {

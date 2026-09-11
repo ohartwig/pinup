@@ -112,6 +112,10 @@ type Fetcher struct {
 	Cache Cache
 	TTL   time.Duration
 	Now   time.Time
+	// Bypass, when set, names refs whose cached answer is not to be used:
+	// the release fast lane must see the tag that was pushed a minute ago,
+	// not last hour's list. The fresh answer is still written back.
+	Bypass func(Ref) bool
 }
 
 // Fetch looks up every unique ref among the dependencies once.
@@ -158,7 +162,7 @@ func (f *Fetcher) Fetch(ctx context.Context, deps []model.Dependency) map[string
 func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 	key := ref.Key()
 	var stale *model.ReleaseSet
-	if f.Cache != nil {
+	if f.Cache != nil && (f.Bypass == nil || !f.Bypass(ref)) {
 		payload, fresh, cerr := f.Cache.GetReleases(key, f.ttl(), f.Now)
 		if cerr == nil && payload != nil {
 			var cached model.ReleaseSet

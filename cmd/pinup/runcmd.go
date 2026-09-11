@@ -21,6 +21,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/runner"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
@@ -40,8 +41,10 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	repoDir := fs.String("repo", "", "path to an existing checkout with an origin remote")
 	project := fs.String("project", "", "project path to clone and run against, e.g. devops/images/ci-tools")
 	autodiscover := fs.String("autodiscover", "", `run against every project the token can see that matches these patterns, a JSON list of globs with ! negations, e.g. '["devops/images/**", "!devops/images/pinup"]'`)
+	released := fs.String("released", "", "the fast lane: a project path that was just released, optionally @version; runs only its consumers from the index, only for that dependency, with fresh lookups")
+	indexPath := fs.String("index", "", "path of the consumer index (default: consumers.json beside --cache)")
 	cfgPath := fs.String("config", "", "configuration file to resolve (required)")
-	report := fs.String("report", "", "write the plan as JSON to this path")
+	reportPath := fs.String("report", "", "write the plan as JSON to this path; with several projects a %s in it becomes the project path")
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt)")
 	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
 	dryRun := fs.Bool("dry-run", false, "plan only; push nothing, open nothing")
@@ -52,13 +55,16 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		return fmt.Errorf("run: --config is required")
 	}
 	chosen := 0
-	for _, v := range []string{*repoDir, *project, *autodiscover} {
+	for _, v := range []string{*repoDir, *project, *autodiscover, *released} {
 		if v != "" {
 			chosen++
 		}
 	}
 	if chosen != 1 {
-		return fmt.Errorf("run: exactly one of --repo, --project and --autodiscover is required")
+		return fmt.Errorf("run: exactly one of --repo, --project, --autodiscover and --released is required")
+	}
+	if *indexPath == "" && *cachePath != "" {
+		*indexPath = filepath.Join(filepath.Dir(*cachePath), "consumers.json")
 	}
 	env, err := platformFromEnv(os.Getenv)
 	if err != nil {
@@ -80,13 +86,30 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	// path: "local>devops/renovate-runner". The job that runs pinup against
 	// its own repository has no checkout of the runner project, and a copy
 	// of the file would be a second truth.
+	runnerDefault := ""
 	if strings.HasPrefix(*cfgPath, "local>") {
 		local, err := fetchConfig(ctx, platform, *cfgPath)
 		if err != nil {
 			return err
 		}
 		defer os.Remove(local)
+		// The alias the repositories extend is the project's default.json,
+		// whichever file of that project this run is configured with:
+		// release-fast.json extends it too.
+		project, path, _, _ := preset.ParseLocal(strings.TrimPrefix(*cfgPath, "local>"))
+		if path != "default.json" {
+			def, err := fetchConfig(ctx, platform, "local>"+project)
+			if err != nil {
+				return err
+			}
+			defer os.Remove(def)
+			runnerDefault = def
+		}
 		*cfgPath = local
+	} else if def := filepath.Join(filepath.Dir(*cfgPath), "default.json"); filepath.Base(*cfgPath) != "default.json" {
+		if _, err := os.Stat(def); err == nil {
+			runnerDefault = def
+		}
 	}
 
 	var store lookup.Cache
@@ -99,8 +122,19 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		store = s
 	}
 	one := runOptions{
-		cfgPath: *cfgPath, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
+		cfgPath: *cfgPath, runnerDefault: runnerDefault, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
 		identity: identity, signing: signing, platform: platform, now: now,
+	}
+	if *indexPath != "" {
+		idx, err := report.LoadIndex(*indexPath)
+		if err != nil {
+			return fmt.Errorf("index: %w", err)
+		}
+		one.index, one.indexPath = idx, *indexPath
+	}
+
+	if *released != "" {
+		return runReleased(ctx, one, *released, *reportPath, out, errw)
 	}
 
 	if *autodiscover != "" {
@@ -125,7 +159,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		}
 		failed := 0
 		for _, p := range selected {
-			if err := runProject(ctx, one, p, "", *report, out, errw); err != nil {
+			if err := runProject(ctx, one, p, "", *reportPath, out, errw); err != nil {
 				failed++
 				fmt.Fprintf(errw, "%s: %v\n", p, err)
 			}
@@ -135,20 +169,101 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		}
 		return nil
 	}
-	return runProject(ctx, one, *project, *repoDir, *report, out, errw)
+	return runProject(ctx, one, *project, *repoDir, *reportPath, out, errw)
 }
 
 // runOptions is what every project in one invocation shares.
 type runOptions struct {
-	cfgPath  string
-	cache    lookup.Cache
-	cacheTTL time.Duration
-	dryRun   bool
-	env      platformEnv
-	identity git.Identity
-	signing  git.Signing
-	platform publish.Platform
-	now      time.Time
+	cfgPath       string
+	runnerDefault string
+	cache         lookup.Cache
+	cacheTTL      time.Duration
+	dryRun        bool
+	env           platformEnv
+	identity      git.Identity
+	signing       git.Signing
+	platform      publish.Platform
+	now           time.Time
+	// index is the consumer index, updated after every plan; nil means
+	// none is kept.
+	index     *report.Index
+	indexPath string
+	// released narrows a run to one dependency; see whatifOptions.
+	released string
+}
+
+// runReleased is the fast lane. The consumers come from the index the
+// scheduled runs maintain - no search, no clone of the estate - and a
+// package nobody is known to consume is a no-op, not a full scan: the run
+// that is too broad is what queued the Renovate runner's triggers for a
+// day. A package@version seen within the last hour is not run again; 36
+// triggers for 16 packages are 16 runs.
+func runReleased(ctx context.Context, o runOptions, spec, reportPath string, out, errw io.Writer) error {
+	path, version, _ := strings.Cut(spec, "@")
+	if o.index == nil {
+		return fmt.Errorf("run --released needs the consumer index: pass --cache or --index")
+	}
+	seenPath := filepath.Join(filepath.Dir(o.indexPath), "released.json")
+	if seenRecently(seenPath, spec, o.now) {
+		fmt.Fprintf(out, "%s: already run within the hour; skipped\n", spec)
+		return nil
+	}
+	consumers := o.index.ConsumersOf(path)
+	if len(consumers) == 0 {
+		fmt.Fprintf(out, "%s: no known consumer in the index (%d repositories indexed); nothing to do\n", path, len(o.index.Repositories))
+		return nil
+	}
+	fmt.Fprintf(errw, "fast lane: %s%s has %d consumers\n", path, atVersion(version), len(consumers))
+	o.released = path
+	failed := 0
+	for _, p := range consumers {
+		if err := runProject(ctx, o, p, "", reportPath, out, errw); err != nil {
+			failed++
+			fmt.Fprintf(errw, "%s: %v\n", p, err)
+		}
+	}
+	if failed > 0 {
+		return fmt.Errorf("run: %d of %d consumers failed", failed, len(consumers))
+	}
+	// Only a run that went through counts as done; a failed one may be
+	// retried by the next trigger.
+	if !o.dryRun {
+		markSeen(seenPath, spec, o.now)
+	}
+	return nil
+}
+
+func atVersion(v string) string {
+	if v == "" {
+		return ""
+	}
+	return "@" + v
+}
+
+// seenRecently and markSeen keep the debounce record: spec -> last run.
+func seenRecently(path, spec string, now time.Time) bool {
+	seen := map[string]time.Time{}
+	if raw, err := os.ReadFile(path); err == nil {
+		_ = json.Unmarshal(raw, &seen)
+	}
+	t, ok := seen[spec]
+	return ok && now.Sub(t) < time.Hour
+}
+
+func markSeen(path, spec string, now time.Time) {
+	seen := map[string]time.Time{}
+	if raw, err := os.ReadFile(path); err == nil {
+		_ = json.Unmarshal(raw, &seen)
+	}
+	for k, t := range seen {
+		if now.Sub(t) > 24*time.Hour {
+			delete(seen, k)
+		}
+	}
+	seen[spec] = now.UTC()
+	if raw, err := json.MarshalIndent(seen, "", " "); err == nil {
+		_ = os.WriteFile(path, raw, 0o644)
+	}
 }
 
 // runProject plans and executes one project, given as a path to clone or
@@ -191,14 +306,24 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 
 	opts := whatifOptions{
 		Root: repo.Dir, ConfigPath: o.cfgPath, RepoName: proj.Path, Now: o.now,
-		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
-		Cache:       o.cache,
-		CacheTTL:    o.cacheTTL,
-		Presets:     preset.Remote{Reader: platform, Ctx: ctx},
+		Datasources:   wire.Datasources(httpClient(env), datasourceOptions(env)),
+		Cache:         o.cache,
+		CacheTTL:      o.cacheTTL,
+		Presets:       preset.Remote{Reader: platform, Ctx: ctx},
+		Released:      o.released,
+		RunnerDefault: o.runnerDefault,
 	}
 	plan, err := whatif(ctx, opts)
 	if err != nil {
 		return err
+	}
+	// The index is fed by every full plan; a fast-lane plan sees one
+	// dependency and must not overwrite what the repository has.
+	if o.index != nil && o.released == "" {
+		o.index.Record(proj.Path, plan, o.now)
+		if err := o.index.Save(o.indexPath); err != nil {
+			fmt.Fprintf(errw, "warning: index: %v\n", err)
+		}
 	}
 
 	var outcomes []runner.Outcome
