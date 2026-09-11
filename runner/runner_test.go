@@ -6,6 +6,7 @@ package runner
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -253,5 +254,106 @@ func TestConcurrentLimitCountsOpenRequests(t *testing.T) {
 	}
 	if held := p.Updates[1]; len(held.Blocks) != 1 || held.Blocks[0].Reason != model.BlockConcurrentLimit || !strings.Contains(held.Blocks[0].Note, "3 merge requests already open") {
 		t.Errorf("held update %+v", held)
+	}
+}
+
+// fakeTasks stands in for the toolchain: it writes whatever files the test
+// says a task produced, so the commit and scope rules can be checked
+// without composer or npm - the acceptance of P1d.6 in hermetic form.
+type fakeTasks struct {
+	writes  map[string]string // path relative to the checkout -> content
+	missing string
+	ran     int
+}
+
+func (f *fakeTasks) Available(tasks []model.Task) error {
+	for _, t := range tasks {
+		if t.Command[0] == f.missing {
+			return fmt.Errorf("the %s toolchain is not on PATH", f.missing)
+		}
+	}
+	return nil
+}
+
+func (f *fakeTasks) Run(_ context.Context, root string, t model.Task) error {
+	f.ran++
+	for p, c := range f.writes {
+		if err := os.WriteFile(filepath.Join(root, p), []byte(c), 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// A manifest edit with a lock refresh task lands as one commit carrying
+// both files; a task that writes outside its scope has everything it did
+// discarded and the branch fails naming the path; a missing toolchain
+// fails the branch before anything runs.
+func TestATaskCommitsItsLockWithTheEditOrNothing(t *testing.T) {
+	remote, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := context.Background()
+	lock := model.Task{Kind: model.TaskLockRefresh, Manager: "composer", Command: []string{"composer", "update", "alpine"},
+		ExecutionMode: model.ExecBranch, FileFilters: []string{"composer.lock"}, AllowedBy: -1}
+	branch := func() model.Branch {
+		return model.Branch{
+			Name: "renovate/alpine-3.x", Title: "chore(deps): update alpine to v3.21",
+			UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}, Tasks: []model.Task{lock},
+		}
+	}
+
+	tasks := &fakeTasks{writes: map[string]string{"composer.lock": "{\"refreshed\": true}\n"}}
+	o := options(repo, pf)
+	o.Tasks = tasks
+	outs, err := Execute(ctx, plan(branch()), o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if outs[0].Action != "created" || tasks.ran != 1 {
+		t.Fatalf("with a lock refresh: %+v, ran %d", outs, tasks.ran)
+	}
+	check := filepath.Join(filepath.Dir(repo.Dir), "check")
+	mustGit(t, filepath.Dir(repo.Dir), "clone", "--quiet", "--branch", "renovate/alpine-3.x", remote, check)
+	if got, _ := os.ReadFile(filepath.Join(check, "composer.lock")); string(got) != "{\"refreshed\": true}\n" {
+		t.Errorf("the lock the task wrote is not on the branch: %q", got)
+	}
+	if got, _ := os.ReadFile(filepath.Join(check, "Containerfile")); !strings.Contains(string(got), "3.21") {
+		t.Errorf("the edit is not on the branch: %q", got)
+	}
+	cmd := exec.Command("git", "-C", check, "rev-list", "--count", "origin/main..HEAD")
+	cmd.Env = append(os.Environ(), testEnv...)
+	if out, err := cmd.Output(); err != nil || strings.TrimSpace(string(out)) != "1" {
+		t.Errorf("edit and lock must be one commit, got %q %v", out, err)
+	}
+
+	// Out of scope: vendor/ is not composer.lock.
+	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), 0, testEnv)
+	repo2.Env = testEnv
+	bad := &fakeTasks{writes: map[string]string{"composer.lock": "x", "vendor.php": "<?php"}}
+	o2 := options(repo2, pf)
+	o2.Tasks = bad
+	b2 := branch()
+	b2.Name, b2.UpdateKeys = "renovate/golang-1.x", []string{"Containerfile|golang|1.26"}
+	b2.Edits = []model.Edit{edit("1.26", "1.27")}
+	outs, _ = Execute(ctx, plan(b2), o2)
+	if outs[0].Action != "failed" || !strings.Contains(outs[0].Message, "vendor.php") {
+		t.Errorf("out of scope: %+v", outs)
+	}
+	if st, _ := repo2.Status(ctx); st != "" {
+		t.Errorf("the refused result was not discarded: %q", st)
+	}
+	if len(pf.MRs) != 1 {
+		t.Errorf("a failed branch opened a merge request: %d", len(pf.MRs))
+	}
+
+	// No toolchain: nothing runs, the branch fails naming the tool.
+	repo3, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work3"), 0, testEnv)
+	repo3.Env = testEnv
+	none := &fakeTasks{missing: "composer"}
+	o3 := options(repo3, pf)
+	o3.Tasks = none
+	outs, _ = Execute(ctx, plan(b2), o3)
+	if outs[0].Action != "failed" || !strings.Contains(outs[0].Message, "composer toolchain") || none.ran != 0 {
+		t.Errorf("missing toolchain: %+v, ran %d", outs, none.ran)
 	}
 }
