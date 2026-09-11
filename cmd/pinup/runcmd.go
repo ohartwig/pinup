@@ -334,10 +334,11 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 		RunnerDefault: o.runnerDefault,
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
-	opts.Advisories = &osv.Client{}
+	advisories := &osv.Client{}
 	if o.cache != nil {
-		opts.Advisories.Store = advisoryStore{cache: o.cache, now: o.now}
+		advisories.Store = advisoryStore{cache: o.cache, now: o.now}
 	}
+	opts.Advisories = advisories
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
 		return err

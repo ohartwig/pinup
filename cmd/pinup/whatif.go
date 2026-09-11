@@ -27,6 +27,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/rules"
+	"git.ole-hartwig.eu/pinup/pinup/versioning"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
 
@@ -76,7 +77,8 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		CacheTTL:    *cacheTTL,
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
-	opts.Advisories = &osv.Client{}
+	advisories := &osv.Client{}
+	opts.Advisories = advisories
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
 		return err
@@ -94,7 +96,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		}
 		defer store.Close()
 		opts.Cache = store
-		opts.Advisories.Store = advisoryStore{cache: store, now: now}
+		advisories.Store = advisoryStore{cache: store, now: now}
 	}
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -150,7 +152,7 @@ type whatifOptions struct {
 	// Advisories asks the advisory database about current versions when
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
-	Advisories *osv.Client
+	Advisories advisoryChecker
 	// LookPath tells whether a task's toolchain is on this machine; nil
 	// means the plan lists tasks without judging them, which is what a
 	// plan produced away from the runner should do.
@@ -628,6 +630,12 @@ func origin(res rules.Resolution, key string) model.Origin {
 	return model.Origin{Source: "packageRules", Rule: chain[len(chain)-1]}
 }
 
+// advisoryChecker is what the run asks about advisories; osv.Client is
+// the one that talks to OSV, the golden harness replays recorded answers.
+type advisoryChecker interface {
+	Check(ctx context.Context, vs versioning.Registry, queries []osv.Query) ([]osv.Finding, error)
+}
+
 // checkAdvisories is the vulnerability fast path's first half: every
 // dependency at a single version is asked about at the advisory database
 // (osvVulnerabilityAlerts), and one that is affected gets its advisories
@@ -635,7 +643,7 @@ func origin(res rules.Resolution, key string) model.Origin {
 // that cannot be reached is a warning, never a failed run - the ordinary
 // updates still happen. Measured: Renovate queries npm and Packagist
 // dependencies this way and skips a range like ^1.2.5.
-func checkAdvisories(ctx context.Context, client *osv.Client, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string) []model.Warning {
+func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string) []model.Warning {
 	if on, _ := cfg["osvVulnerabilityAlerts"].(bool); !on {
 		return nil
 	}
