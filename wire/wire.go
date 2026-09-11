@@ -14,6 +14,7 @@ package wire
 import (
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
@@ -289,6 +290,15 @@ func DiscoveryPatterns(decoded config.Decoded, managers extract.Registry) map[st
 func EnabledKeys(decoded config.Decoded) []string {
 	var out []string
 	for _, name := range decoded.EnabledManagers {
+		if covered, ok := coveredBy[name]; ok {
+			// Renovate splits what one file holds across two managers;
+			// pinup's one manager reads both shapes, so enabling the
+			// second is satisfied by the first and warns about nothing.
+			if !slices.Contains(decoded.EnabledManagers, covered) && !slices.Contains(out, covered) {
+				out = append(out, covered)
+			}
+			continue
+		}
 		if name != "custom.regex" {
 			out = append(out, name)
 			continue
@@ -298,6 +308,13 @@ func EnabledKeys(decoded config.Decoded) []string {
 		}
 	}
 	return out
+}
+
+// coveredBy maps a Renovate manager name onto the pinup manager that reads
+// the same lines: `include:` entries of .gitlab-ci.yml belong to Renovate's
+// gitlabci-include and to pinup's gitlabci.
+var coveredBy = map[string]string{
+	"gitlabci-include": "gitlabci",
 }
 
 // ManagerNameOf reports the manager name to record on a dependency, collapsing

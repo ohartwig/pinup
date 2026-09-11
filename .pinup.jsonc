@@ -1,0 +1,12 @@
+// pinup's own configuration - the tool updates itself from here, under the
+// runner's rules plus the one manager the runner never enables: gomod.
+// Arrays replace, so enabledManagers is repeated in full.
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["local>devops/renovate-runner"],
+  "enabledManagers": ["custom.regex", "dockerfile", "gitlabci", "gitlabci-include", "gomod"],
+  // The parity corpus carries deliberately outdated pins, and test files
+  // carry FROM lines and annotations as fixtures: Renovate's dockerfile
+  // pattern matches dockerfile_test.go, measured.
+  "ignorePaths": ["**/prometheus-exporter/**", "testdata/**", "**/*_test.go"]
+}
