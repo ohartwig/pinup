@@ -468,3 +468,21 @@ func TestDigestPinnedReferencesMoveWholeOrNotAtAll(t *testing.T) {
 		t.Errorf("unpinned: asked=%v %+v", asked, res.Updates)
 	}
 }
+
+// ignoreDeprecated defaults to true: a deprecated release is never offered.
+// Measured on lodash 4.17.20, where the deprecated 4.18.0 is passed over
+// for 4.18.1.
+func TestDeprecatedReleasesAreNotCandidates(t *testing.T) {
+	rs := releases("4.17.21", "4.18.0", "4.18.1")
+	rs.Releases[1].Deprecated = true
+	res := plan(t, dep("lodash", "4.17.20", "semver"), rs)
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "4.18.1" {
+		t.Fatalf("want 4.18.1, got %+v", res.Updates)
+	}
+	only := releases("4.18.0")
+	only.Releases[0].Deprecated = true
+	res = plan(t, dep("lodash", "4.17.20", "semver"), only)
+	if len(res.Updates) != 0 {
+		t.Errorf("a deprecated release was offered: %+v", res.Updates)
+	}
+}

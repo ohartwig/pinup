@@ -217,6 +217,12 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		if baseStable && !v.IsStable(c) {
 			continue
 		}
+		if r.Deprecated {
+			// ignoreDeprecated defaults to true: a release its registry
+			// marks deprecated is not a candidate. Measured on lodash,
+			// where the deprecated 4.18.0 is passed over for 4.18.1.
+			continue
+		}
 		if d.AllowedVersions != "" {
 			ok, err := allowed(v, d.AllowedVersions, c)
 			if err != nil {
