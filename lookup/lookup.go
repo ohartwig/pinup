@@ -136,13 +136,15 @@ func (f *Fetcher) Fetch(ctx context.Context, deps []model.Dependency) map[string
 
 func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 	ds, err := f.Registry.Get(ref.Datasource)
-	if err != nil {
-		return Result{Ref: ref, Warning: &model.Warning{
-			Stage: "lookup", Msg: fmt.Sprintf("%s: %v", ref.PackageName, err),
-		}}
+	var rs *model.ReleaseSet
+	if err == nil {
+		rs, err = ds.Releases(ctx, ref)
 	}
-	rs, err := ds.Releases(ctx, ref)
 	if err != nil {
+		// Same shape whether the datasource is missing or failed: a
+		// ReleaseSet with Err, so the planner writes "lookup failed: ..."
+		// and the dependency is visibly not looked up, rather than
+		// silently absent from the results.
 		return Result{
 			Ref: ref,
 			Releases: &model.ReleaseSet{

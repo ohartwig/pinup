@@ -223,9 +223,19 @@ func (w *walker) component(n *yamlx.Node) {
 	pathPart := ref[:at]
 
 	// Strip the host, whether written as a variable or literally. What is
-	// left is group/.../project/component-name.
-	if i := strings.Index(pathPart, "/"); i >= 0 && (strings.HasPrefix(pathPart, "$") || strings.Contains(pathPart[:i], ".")) {
-		pathPart = pathPart[i+1:]
+	// left is group/.../project/component-name. A literal host names the
+	// registry; a variable one (`${CI_SERVER_HOST}`, the estate's form) is
+	// resolved by the runner's configured instance, so the dependency
+	// carries no registry and the datasource falls back to it.
+	if i := strings.Index(pathPart, "/"); i >= 0 {
+		host := pathPart[:i]
+		switch {
+		case strings.HasPrefix(host, "$"):
+			pathPart = pathPart[i+1:]
+		case strings.Contains(host, "."):
+			dep.RegistryURLs = []string{"https://" + host}
+			pathPart = pathPart[i+1:]
+		}
 	}
 	// The last segment is the component's name inside the project; the
 	// project path is everything before it.

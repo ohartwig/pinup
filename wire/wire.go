@@ -16,7 +16,10 @@ import (
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
+	"git.ole-hartwig.eu/pinup/pinup/httpx"
+	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
@@ -58,6 +61,29 @@ func Managers() extract.Registry {
 	return extract.Registry{
 		"dockerfile": dockerfile.New(),
 		"gitlabci":   gitlabci.New(),
+	}
+}
+
+// Datasources returns every datasource, keyed by the name the configuration
+// uses. gitlabURL is the fallback instance for the three gitlab-* sources
+// when a dependency names no registryUrls.
+func Datasources(client *httpx.Client, gitlabURL string) lookup.Registry {
+	return lookup.Registry{
+		"gitlab-tags":     gitlabds.New(gitlabds.Tags, client, gitlabURL),
+		"gitlab-releases": gitlabds.New(gitlabds.Releases, client, gitlabURL),
+		"gitlab-packages": gitlabds.New(gitlabds.Packages, client, gitlabURL),
+	}
+}
+
+// DefaultVersioning names the scheme a datasource implies when neither the
+// dependency nor a rule names one. Unknown datasources answer "", and the
+// planner then says so rather than guessing.
+func DefaultVersioning(ds lookup.Registry) func(string) string {
+	return func(name string) string {
+		if d, ok := ds[name]; ok {
+			return d.DefaultVersioning()
+		}
+		return ""
 	}
 }
 

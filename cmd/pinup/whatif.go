@@ -15,7 +15,9 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/discover"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
+	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/planner"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
 
@@ -33,7 +35,12 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return fmt.Errorf("whatif: --config is required")
 	}
 
-	plan, err := whatif(context.Background(), *repo, *cfgPath, *name, time.Now())
+	env := platformFromEnv(os.Getenv)
+	opts := whatifOptions{
+		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: time.Now(),
+		Datasources: wire.Datasources(httpClient(env), env.URL),
+	}
+	plan, err := whatif(context.Background(), opts)
 	if err != nil {
 		return err
 	}
@@ -51,20 +58,32 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return err
 	}
 	if *report != "" {
-		fmt.Fprintf(errw, "%s: %d dependencies in %d files, %d warnings\n",
-			*report, plan.Stats.DepsExtracted, plan.Stats.FilesDiscovered, len(plan.Warnings))
+		fmt.Fprintf(errw, "%s: %d dependencies in %d files, %d lookups, %d updates, %d warnings\n",
+			*report, plan.Stats.DepsExtracted, plan.Stats.FilesDiscovered,
+			plan.Stats.LookupsIssued, plan.Stats.UpdatesFound, len(plan.Warnings))
 	}
 	return nil
+}
+
+// whatifOptions is everything a plan run needs. Datasources is injected so a
+// test can hand in a fake registry and prove the run touched no network.
+type whatifOptions struct {
+	Root        string
+	ConfigPath  string
+	RepoName    string
+	Now         time.Time
+	Datasources lookup.Registry
 }
 
 // whatif runs everything up to the plan. It writes nothing to the repository,
 // which is what makes it safe to point at anything.
 //
-// Lookup and classification are not wired yet, so the plan it produces records
-// what is there rather than what should change. That is deliberately still a
-// plan rather than a listing: the schema, the ordering and the skip reasons
-// are the parts that have to be right before an update can be built on them.
-func whatif(ctx context.Context, root, cfgPath, repoName string, now time.Time) (*model.Plan, error) {
+// config → discover → extract → lookup → plan. Rules are not applied yet, so
+// what comes out is the default policy's view: every newer release the
+// scheme accepts, separated into a minor and a major update. Once the rules
+// engine exists it filters and reshapes this; it does not replace it.
+func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
+	root, cfgPath, repoName, now := o.Root, o.ConfigPath, o.RepoName, o.Now
 	decoded, resolved, err := config.DecodeFile(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
@@ -132,20 +151,43 @@ func whatif(ctx context.Context, root, cfgPath, repoName string, now time.Time) 
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
-			// Nothing looks anything up yet, so every dependency is skipped
-			// with a reason rather than silently producing no update. A plan
-			// whose dependencies simply had no updates would be
-			// indistinguishable from one where lookup failed.
-			if d.SkipReason == "" {
-				d.SkipReason = "lookup is not wired yet, so no releases were fetched"
-			}
 			plan.Deps = append(plan.Deps, d)
 		}
 	}
 
+	// Every unique (datasource, package, registry) once, however many
+	// dependencies share it - the same component pinned in three jobs is
+	// one round trip.
+	fetcher := &lookup.Fetcher{Registry: o.Datasources}
+	results := fetcher.Fetch(ctx, plan.Deps)
+	for _, r := range results {
+		if r.Warning != nil {
+			plan.Warnings = append(plan.Warnings, *r.Warning)
+		}
+	}
+
+	planned := planner.Plan(planner.Request{
+		Deps: plan.Deps,
+		Releases: func(d model.Dependency) *model.ReleaseSet {
+			r, ok := results[lookup.RefOf(d).Key()]
+			if !ok {
+				return nil
+			}
+			return r.Releases
+		},
+		Versionings:       wire.Versionings(),
+		DefaultVersioning: wire.DefaultVersioning(o.Datasources),
+		Now:               now,
+	})
+	plan.Deps = planned.Deps
+	plan.Updates = planned.Updates
+	plan.Warnings = append(plan.Warnings, planned.Warnings...)
+
 	plan.Stats = model.Stats{
 		FilesDiscovered: found.Stats.FilesMatched,
 		DepsExtracted:   len(plan.Deps),
+		LookupsIssued:   len(results),
+		UpdatesFound:    len(plan.Updates),
 	}
 	plan.Sort()
 	if err := plan.Validate(); err != nil {
