@@ -99,6 +99,19 @@ type Response struct {
 	Header       http.Header
 }
 
+// StatusError is returned for a non-2xx, non-304 response. It carries the
+// code so a caller can tell 404 from 403 from 500 with errors.As instead of
+// parsing the message - a datasource needs that to say "does not exist or
+// the token cannot read it" for a 404 and something different for the rest.
+type StatusError struct {
+	StatusCode int
+	URL        string
+}
+
+func (e *StatusError) Error() string {
+	return fmt.Sprintf("httpx: unexpected status %d from %s", e.StatusCode, e.URL)
+}
+
 // Client is a shared, concurrency-safe HTTP client for datasources.
 type Client struct {
 	hc         *http.Client
@@ -347,11 +360,11 @@ func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rul
 	case resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500:
 		drain(resp.Body)
 		wait, _ := parseRetryAfter(resp.Header.Get("Retry-After"), c.now())
-		return nil, true, wait, fmt.Errorf("httpx: unexpected status %d", resp.StatusCode)
+		return nil, true, wait, &StatusError{StatusCode: resp.StatusCode, URL: rawURL}
 
 	default:
 		drain(resp.Body)
-		return nil, false, 0, fmt.Errorf("httpx: unexpected status %d", resp.StatusCode)
+		return nil, false, 0, &StatusError{StatusCode: resp.StatusCode, URL: rawURL}
 	}
 }
 
