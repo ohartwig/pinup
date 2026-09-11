@@ -22,6 +22,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/datasource/dockerds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/githubds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/gods"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/npmds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/packagist"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/terraformds"
@@ -137,6 +138,8 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		// pins every provider to registry.opentofu.org instead.
 		"terraform-provider": terraformds.New(terraformds.Provider, client, "https://registry.terraform.io"),
 		"terraform-module":   terraformds.New(terraformds.Module, client, "https://registry.terraform.io"),
+		"go":                 gods.New(gods.Module, client, "https://proxy.golang.org"),
+		"golang-version":     gods.New(gods.Toolchain, client, "https://go.dev"),
 	}
 	for name, view := range ApkViews {
 		r[name] = apkds.New(name, client, view)
