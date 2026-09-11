@@ -1,0 +1,15 @@
+{
+  // markdownlint-cli2 config for this repository.
+  //
+  // Without this file the shared lint-markdown component falls back to its own
+  // default, `{ default: true, MD013: false, MD034: false, MD060: false }`.
+  // Those three stay off for the reasons it gives. Everything else applies:
+  // the documents here are read more than they are written, and the rules
+  // that remain are the ones that make them read the same everywhere.
+  "default": true,
+
+  // Line length, bare URLs, table pipe style - as the component's default.
+  "MD013": false,
+  "MD034": false,
+  "MD060": false
+}
