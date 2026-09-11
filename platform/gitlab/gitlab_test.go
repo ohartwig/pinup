@@ -53,10 +53,18 @@ func (m *fakeMR) toJSON() mrJSON {
 
 // fakeProject is one project's state: its merge requests and any recorded
 // commit signatures.
+type fakeIssue struct {
+	iid         int
+	title, desc string
+	labels      []string
+	state       string
+}
+
 type fakeProject struct {
 	pathWithNamespace string
 	defaultBranch     string
 	mrs               []*fakeMR
+	issues            []*fakeIssue
 	nextIID           int
 	signatures        map[string]string // sha -> verification_status
 	files             map[string]string // "path@ref" -> content
@@ -194,6 +202,8 @@ func (s *gitlabServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.serveMergeRequests(w, r, proj, body)
 	case strings.HasPrefix(remainder, "merge_requests/"):
 		s.serveOneMergeRequest(w, r, proj, strings.TrimPrefix(remainder, "merge_requests/"), body)
+	case remainder == "issues" || strings.HasPrefix(remainder, "issues/"):
+		s.serveIssues(w, r, proj, strings.TrimPrefix(strings.TrimPrefix(remainder, "issues"), "/"), body)
 	case strings.HasPrefix(remainder, "repository/commits/"):
 		s.serveSignature(w, proj, strings.TrimPrefix(remainder, "repository/commits/"))
 	case strings.HasPrefix(remainder, "repository/files/"):
@@ -716,5 +726,97 @@ func TestListProjectsPaginates(t *testing.T) {
 	}
 	if n := rt.Count("git.example.org"); n != 2 {
 		t.Errorf("three projects at two per page are two requests, got %d", n)
+	}
+}
+
+// serveIssues: GET lists open issues (search is matched on the title),
+// POST creates, PUT <iid> updates. Speaks enough of the protocol for
+// UpsertIssue to be measured against.
+func (s *gitlabServer) serveIssues(w http.ResponseWriter, r *http.Request, proj *fakeProject, rest string, body []byte) {
+	encode := func(is *fakeIssue) map[string]any {
+		return map[string]any{"iid": is.iid, "title": is.title, "description": is.desc, "labels": is.labels, "state": is.state,
+			"web_url": fmt.Sprintf("https://git.example.org/%s/-/issues/%d", proj.pathWithNamespace, is.iid)}
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	switch {
+	case r.Method == http.MethodGet && rest == "":
+		search := r.URL.Query().Get("search")
+		var out []map[string]any
+		for _, is := range proj.issues {
+			if is.state == "opened" && strings.Contains(is.title, search) {
+				out = append(out, encode(is))
+			}
+		}
+		if out == nil {
+			out = []map[string]any{}
+		}
+		_ = json.NewEncoder(w).Encode(out)
+	case r.Method == http.MethodPost && rest == "":
+		var in struct{ Title, Description, Labels string }
+		_ = json.Unmarshal(body, &in)
+		proj.nextIID++
+		is := &fakeIssue{iid: proj.nextIID, title: in.Title, desc: in.Description, state: "opened"}
+		if in.Labels != "" {
+			is.labels = strings.Split(in.Labels, ",")
+		}
+		proj.issues = append(proj.issues, is)
+		w.WriteHeader(http.StatusCreated)
+		_ = json.NewEncoder(w).Encode(encode(is))
+	case r.Method == http.MethodPut && rest != "":
+		var in map[string]string
+		_ = json.Unmarshal(body, &in)
+		for _, is := range proj.issues {
+			if fmt.Sprint(is.iid) != rest {
+				continue
+			}
+			if d, ok := in["description"]; ok {
+				is.desc = d
+			}
+			if l, ok := in["labels"]; ok {
+				is.labels = strings.Split(l, ",")
+			}
+			_ = json.NewEncoder(w).Encode(encode(is))
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+// An issue is created once, updated only when its text or labels differ,
+// and found by its exact title - a search hit with a longer title is not it.
+func TestUpsertIssueCreatesThenUpdatesOnlyOnChange(t *testing.T) {
+	p, srv, _ := newFixture(t, "tok")
+	proj := srv.addProject("pinup/runner", "main")
+	proj.issues = append(proj.issues, &fakeIssue{iid: 1, title: "Rolling majors (old)", desc: "x", state: "opened"})
+	proj.nextIID = 1
+	ctx := context.Background()
+	pr := publish.Project{Path: "pinup/runner", DefaultBranch: "main"}
+
+	is, changed, err := p.UpsertIssue(ctx, pr, "Rolling majors", "body v1", []string{"pinup"})
+	if err != nil || !changed || is.IID != 2 {
+		t.Fatalf("create: %+v %v %v", is, changed, err)
+	}
+	if n := srv.requestCountOf(http.MethodPost, "issues"); n != 1 {
+		t.Errorf("POSTs = %d, want 1", n)
+	}
+	is, changed, err = p.UpsertIssue(ctx, pr, "Rolling majors", "body v1\n", []string{"pinup"})
+	if err != nil || changed || is.IID != 2 {
+		t.Errorf("unchanged (trailing newline): %+v %v %v", is, changed, err)
+	}
+	if n := srv.requestCountOf(http.MethodPut, "issues/2"); n != 0 {
+		t.Errorf("an unchanged issue was written: %d PUTs", n)
+	}
+	is, changed, err = p.UpsertIssue(ctx, pr, "Rolling majors", "body v2", []string{"pinup"})
+	if err != nil || !changed || is.IID != 2 {
+		t.Errorf("update: %+v %v %v", is, changed, err)
+	}
+	if n := srv.requestCountOf(http.MethodPost, "issues"); n != 1 {
+		t.Errorf("a second issue was opened: %d POSTs", n)
+	}
+	if got := proj.issues[1].desc; got != "body v2" {
+		t.Errorf("description = %q", got)
 	}
 }

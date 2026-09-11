@@ -296,6 +296,94 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 	return resp.body, nil
 }
 
+// UpsertIssue searches the project's open issues for the exact title and
+// updates description and labels when they differ, or creates the issue.
+func (p *Platform) UpsertIssue(ctx context.Context, proj publish.Project, title, description string, labels []string) (publish.Issue, bool, error) {
+	base := fmt.Sprintf("%s/api/v4/projects/%s/issues", p.base, url.PathEscape(proj.Path))
+	q := url.Values{"state": {"opened"}, "search": {title}, "in": {"title"}, "per_page": {"100"}}
+	resp, err := p.do(ctx, http.MethodGet, base+"?"+q.Encode(), nil)
+	if err != nil {
+		return publish.Issue{}, false, err
+	}
+	if err := classify(resp, proj.Path); err != nil {
+		return publish.Issue{}, false, err
+	}
+	var found []issueJSON
+	if err := json.Unmarshal(resp.body, &found); err != nil {
+		return publish.Issue{}, false, fmt.Errorf("gitlab: decode issues of %q: %w", proj.Path, err)
+	}
+	for _, is := range found {
+		if is.Title != title {
+			continue
+		}
+		fields := map[string]any{}
+		if strings.TrimSpace(is.Description) != strings.TrimSpace(description) {
+			fields["description"] = description
+		}
+		if !sameSet(is.Labels, labels) {
+			fields["labels"] = strings.Join(labels, ",")
+		}
+		if len(fields) == 0 {
+			return is.issue(), false, nil
+		}
+		resp, err := p.do(ctx, http.MethodPut, fmt.Sprintf("%s/%d", base, is.IID), fields)
+		if err != nil {
+			return publish.Issue{}, false, err
+		}
+		if err := classify(resp, proj.Path); err != nil {
+			return publish.Issue{}, false, err
+		}
+		var updated issueJSON
+		if err := json.Unmarshal(resp.body, &updated); err != nil {
+			return publish.Issue{}, false, fmt.Errorf("gitlab: decode updated issue %d of %q: %w", is.IID, proj.Path, err)
+		}
+		return updated.issue(), true, nil
+	}
+	resp, err = p.do(ctx, http.MethodPost, base, map[string]any{
+		"title": title, "description": description, "labels": strings.Join(labels, ","),
+	})
+	if err != nil {
+		return publish.Issue{}, false, err
+	}
+	if err := classify(resp, proj.Path); err != nil {
+		return publish.Issue{}, false, err
+	}
+	var created issueJSON
+	if err := json.Unmarshal(resp.body, &created); err != nil {
+		return publish.Issue{}, false, fmt.Errorf("gitlab: decode created issue of %q: %w", proj.Path, err)
+	}
+	return created.issue(), true, nil
+}
+
+type issueJSON struct {
+	IID         int      `json:"iid"`
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	Labels      []string `json:"labels"`
+	State       string   `json:"state"`
+	WebURL      string   `json:"web_url"`
+}
+
+func (i issueJSON) issue() publish.Issue {
+	return publish.Issue{IID: i.IID, Title: i.Title, URL: i.WebURL, State: i.State}
+}
+
+func sameSet(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	seen := map[string]bool{}
+	for _, x := range a {
+		seen[x] = true
+	}
+	for _, x := range b {
+		if !seen[x] {
+			return false
+		}
+	}
+	return true
+}
+
 // OpenMergeRequests lists the open merge requests whose source branch
 // starts with prefix.
 func (p *Platform) OpenMergeRequests(ctx context.Context, proj publish.Project, prefix string) ([]publish.MergeRequest, error) {

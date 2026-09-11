@@ -34,6 +34,7 @@ func commands() []command {
 		{"run", "plan, then apply and publish", cmdRun},
 		{"print-config", "print the resolved config, optionally explained", cmdPrintConfig},
 		{"shadow", "compare plan reports with the merge requests Renovate has open", cmdShadow},
+		{"notify", "keep the estate-wide rolling-major notice in one issue (notify rolling-major)", cmdNotify},
 		{"migrate", "convert a renovate config and report what is supported", cmdMigrate},
 		{"version", "print the version", cmdVersion},
 		// askpass is git's credential prompt, answered from the environment.

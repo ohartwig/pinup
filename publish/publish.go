@@ -98,4 +98,18 @@ type Platform interface {
 	// source branch starts with prefix - the other tool's side of the
 	// shadow comparison.
 	OpenMergeRequests(ctx context.Context, p Project, prefix string) ([]MergeRequest, error)
+
+	// UpsertIssue finds the open issue of a project with exactly this
+	// title and brings its description and labels in line, or opens it.
+	// It reports the issue and whether anything changed. The rolling-major
+	// notice is one such issue: a report that stays, updated per run.
+	UpsertIssue(ctx context.Context, p Project, title, description string, labels []string) (Issue, bool, error)
+}
+
+// Issue is an issue on the platform, as much of it as pinup reads back.
+type Issue struct {
+	IID   int
+	Title string
+	URL   string
+	State string
 }

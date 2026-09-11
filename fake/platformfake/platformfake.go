@@ -31,7 +31,11 @@ type Platform struct {
 	Files map[string]string
 	// Projects answers ListProjects.
 	Projects []string
-	nextIID  int
+	// Issues holds every issue upserted, by title.
+	Issues map[string]publish.Issue
+	// IssueBodies holds the last description per title.
+	IssueBodies map[string]string
+	nextIID     int
 }
 
 var _ publish.Platform = (*Platform)(nil)
@@ -156,4 +160,28 @@ func (p *Platform) OpenMergeRequests(_ context.Context, _ publish.Project, prefi
 		}
 	}
 	return out, nil
+}
+
+// UpsertIssue records the issue by title; a second call with the same
+// description reports no change.
+func (p *Platform) UpsertIssue(_ context.Context, _ publish.Project, title, description string, labels []string) (publish.Issue, bool, error) {
+	p.record("UpsertIssue")
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.Issues == nil {
+		p.Issues = map[string]publish.Issue{}
+		p.IssueBodies = map[string]string{}
+	}
+	if is, ok := p.Issues[title]; ok {
+		if p.IssueBodies[title] == description {
+			return is, false, nil
+		}
+		p.IssueBodies[title] = description
+		return is, true, nil
+	}
+	p.nextIID++
+	is := publish.Issue{IID: p.nextIID, Title: title, State: "opened", URL: "https://fake/issues/" + title}
+	p.Issues[title] = is
+	p.IssueBodies[title] = description
+	return is, true, nil
 }
