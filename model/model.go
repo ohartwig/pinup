@@ -88,6 +88,10 @@ type Dependency struct {
 	Datasource   string   `json:"datasource"`
 	Versioning   string   `json:"versioning,omitempty"`
 	RegistryURLs []string `json:"registryUrls,omitempty"`
+	// SourceURL is where the package's source lives, as the datasource
+	// reported it during lookup. Empty until then; the rules that match on
+	// it (matchSourceUrls, 445 of the resolved rules) cannot fire before.
+	SourceURL string `json:"sourceUrl,omitempty"`
 	// AllowedVersions, when set by a rule, restricts the candidates: a range
 	// in the dependency's scheme, or /regex/, or !/regex/.
 	AllowedVersions string `json:"allowedVersions,omitempty"`

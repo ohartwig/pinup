@@ -102,6 +102,11 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		Datasource:  string(d.kind),
 		RegistryURL: base,
 	}
+	// Measured in the pinned container: tags and releases report the
+	// project page as the source URL; the package registry reports none.
+	if d.kind != Packages {
+		rs.SourceURL = base + "/" + project
+	}
 
 	// Walk every page. X-Next-Page is empty on the last one; a server that
 	// omitted the header entirely would end the walk after one page, which

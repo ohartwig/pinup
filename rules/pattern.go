@@ -27,6 +27,9 @@ type pattern struct {
 	exact  string
 	nocase bool
 	all    bool
+	// swallow marks a glob that ended in `/**`: glob holds the prefix and
+	// the rest of the input is swallowed after a slash.
+	swallow bool
 }
 
 func compilePattern(raw string) (pattern, error) {
@@ -63,11 +66,47 @@ func compilePattern(raw string) (pattern, error) {
 		return p, nil
 	}
 	if glob.HasMeta(body) {
+		// A pattern ending in `/**` is measured (source-urls.ndjson) to
+		// need the slash in the input: `foo/**` admits `foo/` and `foo/x`
+		// but not `foo`. The glob package lets a trailing globstar match
+		// zero segments, so that suffix is matched here by hand.
+		if strings.HasSuffix(body, "/**") {
+			p.swallow = true
+			body = strings.TrimSuffix(body, "/**")
+		}
 		p.glob = glob.Compile(strings.ToLower(body))
 	} else {
 		p.exact = strings.ToLower(body)
 	}
 	return p, nil
+}
+
+// matchesGlobOrExact applies minimatch's one leniency: an input that ends in
+// `/` matches a pattern that does not, because the empty last segment is
+// forgiven once the pattern has run out. The reverse is not forgiven - a
+// pattern ending in `/` needs the slash in the input. Measured in
+// source-urls.ndjson; the same rule holds for every string matcher, since
+// Renovate runs them all through the same function.
+func (p pattern) matchesGlobOrExact(s string) bool {
+	s = strings.ToLower(s)
+	if p.swallow {
+		// `prefix/**`: the prefix has to be a whole run of segments, and
+		// the input has to continue with a slash - with anything or nothing
+		// after it.
+		for i := 0; i < len(s); i++ {
+			if s[i] == '/' && p.glob.Match(s[:i]) {
+				return true
+			}
+		}
+		return false
+	}
+	hit := func(s string) bool {
+		if p.glob != nil {
+			return p.glob.Match(s)
+		}
+		return s == p.exact
+	}
+	return hit(s) || (strings.HasSuffix(s, "/") && hit(strings.TrimSuffix(s, "/")))
 }
 
 // matches ignores negation; the list decides what a negative hit means.
@@ -78,10 +117,8 @@ func (p pattern) matches(s string) bool {
 	case p.re != nil:
 		_, ok := p.re.Find(s)
 		return ok
-	case p.glob != nil:
-		return p.glob.Match(strings.ToLower(s))
 	default:
-		return strings.ToLower(s) == p.exact
+		return p.matchesGlobOrExact(s)
 	}
 }
 

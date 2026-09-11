@@ -325,3 +325,26 @@ func TestAllowedVersionsNarrowsCandidates(t *testing.T) {
 		t.Errorf("a negated range is refused: %q %v", res.Deps[0].SkipReason, res.Warnings)
 	}
 }
+
+// The source URL is a lookup result, and the rules that key on it
+// (matchSourceUrls, 445 resolved rules) run per update, after lookup. The
+// planner writes it back to the dependency so the update carries it; a
+// dependency whose manager already knew it keeps its own.
+func TestLookupSourceURLReachesTheUpdate(t *testing.T) {
+	rs := releases("1.33.60")
+	rs.SourceURL = "https://github.com/foo/bar"
+	res := plan(t, dep("lint", "1.33.59", "semver"), rs)
+	if len(res.Updates) != 1 || res.Updates[0].Dep.SourceURL != rs.SourceURL {
+		t.Fatalf("update does not carry the looked-up source URL: %+v", res.Updates)
+	}
+	if res.Deps[0].SourceURL != rs.SourceURL {
+		t.Errorf("dependency in the plan lacks the source URL: %+v", res.Deps[0])
+	}
+
+	own := dep("lint", "1.33.59", "semver")
+	own.SourceURL = "https://gitlab.example/foo/bar"
+	res = plan(t, own, rs)
+	if res.Updates[0].Dep.SourceURL != own.SourceURL {
+		t.Errorf("the manager's own source URL was overwritten: %q", res.Updates[0].Dep.SourceURL)
+	}
+}

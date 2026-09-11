@@ -111,6 +111,11 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		}
 	}
 	d.Versioning = scheme
+	// The source URL is a lookup result. Writing it back is what lets the
+	// per-update rule pass see it - the pre-lookup pass could not.
+	if d.SourceURL == "" {
+		d.SourceURL = rs.SourceURL
+	}
 
 	// extractVersion rewrites every release's version before anything is
 	// compared: "^v?(?<version>.+)$" turns the tag v3.11.3 into 3.11.3. A

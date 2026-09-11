@@ -193,7 +193,11 @@ func compileMatcher(key string, v any) (matcher, error) {
 			return func(s Subject, _ versioning.Registry) bool { return s.CurrentValue != "" && l.match(s.CurrentValue) }, nil
 		case "matchSourceUrls":
 			return func(s Subject, _ versioning.Registry) bool {
-				return s.SourceURL != "" && l.match(strings.TrimRight(s.SourceURL, "/"))
+				// The URL is matched as the datasource reported it; the
+				// trailing-slash leniency lives in the pattern, where it
+				// is measured to be (a regex sees the slash, a glob
+				// forgives it).
+				return s.SourceURL != "" && l.match(s.SourceURL)
 			}, nil
 		case "matchFileNames":
 			// File names are paths and case-sensitive; minimatch semantics
@@ -445,6 +449,6 @@ func SubjectOf(d model.Dependency, updateType string) Subject {
 		DepName: d.DepName, PackageName: d.PackageName, Datasource: d.Datasource,
 		Manager: manager, PackageFile: d.File, DepType: d.DepType,
 		CurrentValue: d.CurrentValue, CurrentVersion: d.CurrentValue,
-		Versioning: d.Versioning, UpdateType: updateType,
+		Versioning: d.Versioning, UpdateType: updateType, SourceURL: d.SourceURL,
 	}
 }

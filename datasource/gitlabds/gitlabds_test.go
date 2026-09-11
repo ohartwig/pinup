@@ -148,6 +148,11 @@ func TestTagsPaginateAndCarryTimestamps(t *testing.T) {
 			t.Errorf("%s carries no commit id", rel.Version)
 		}
 	}
+	// Measured: the source URL is the project page under the registry,
+	// which is what the matchSourceUrls rules see after lookup.
+	if want := "https://git.example/devops/ci-cd-components/lint-tools"; rs.SourceURL != want {
+		t.Errorf("sourceUrl = %q, want %q", rs.SourceURL, want)
+	}
 }
 
 func TestTokenIsSentWhenConfigured(t *testing.T) {
