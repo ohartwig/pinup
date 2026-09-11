@@ -44,13 +44,15 @@ func (c cannedDS) Releases(_ context.Context, ref lookup.Ref) (*model.ReleaseSet
 // tag within their major and one beyond it, so both the "up to date within
 // the rolling major" and the "a newer major exists" paths are exercised.
 func canned() lookup.Registry {
+	releases := map[string][]string{
+		"devops/ci-cd-components/lint-tools":          {"1.33.59", "1.33.64", "2.0.0"},
+		"devops/ci-cd-components/release-tools":       {"1.0.0", "1.2.0"},
+		"devops/ci-cd-components/container-scanning":  {"3.0.0", "3.1.0"},
+		"devops/ci-cd-components/supply-chain-verify": {"2.0.0", "2.4.1"},
+	}
 	return lookup.Registry{
-		"gitlab-tags": cannedDS{name: "gitlab-tags", scheme: "semver", releases: map[string][]string{
-			"devops/ci-cd-components/lint-tools":          {"1.33.59", "1.33.64", "2.0.0"},
-			"devops/ci-cd-components/release-tools":       {"1.0.0", "1.2.0"},
-			"devops/ci-cd-components/container-scanning":  {"3.0.0", "3.1.0"},
-			"devops/ci-cd-components/supply-chain-verify": {"2.0.0", "2.4.1"},
-		}},
+		"gitlab-tags":     cannedDS{name: "gitlab-tags", scheme: "semver", releases: releases},
+		"gitlab-releases": cannedDS{name: "gitlab-releases", scheme: "semver", releases: releases},
 	}
 }
 
@@ -227,20 +229,55 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 		}
 	}
 
-	// lint-tools is pinned @1 and 2.0.0 exists: a major update to "2",
-	// written in the pin's own precision, and nothing within the major -
-	// "1" already covers 1.33.64.
+	// lint-tools is pinned @1 and 2.0.0 exists. Via gitlab-tags under
+	// semver-partial that is a major update to "2", written in the pin's
+	// own precision, and nothing within the major - "1" already covers
+	// 1.33.64. Via gitlab-releases under loose it is 1 -> 1.33.64 and
+	// 1 -> 2.0.0, both blocked by rules below.
 	lint := byDep["devops/ci-cd-components/lint-tools"]
 	if len(lint) == 0 {
 		t.Fatal("no update for lint-tools although 2.0.0 is canned")
 	}
+	tags := 0
 	for _, u := range lint {
+		if u.Dep.Datasource != "gitlab-tags" {
+			continue
+		}
+		tags++
 		if u.Type != model.UpdateMajor || u.NewValue != "2" {
-			t.Errorf("lint-tools: got %s to %q, want major to \"2\"", u.Type, u.NewValue)
+			t.Errorf("lint-tools via gitlab-tags: got %s to %q, want major to \"2\"", u.Type, u.NewValue)
 		}
 	}
-	// release-tools is pinned @1 and only 1.x exists: up to date.
-	if rt := byDep["devops/ci-cd-components/release-tools"]; len(rt) != 0 {
-		t.Errorf("release-tools @1 with only 1.x released must not update, got %+v", rt)
+	if tags != 1 {
+		t.Errorf("want exactly one gitlab-tags update for lint-tools, got %d", tags)
+	}
+	// release-tools is pinned @1 and only 1.x exists: up to date via
+	// gitlab-tags. The regex manager reads the same pin as gitlab-releases
+	// under loose, where "1" is a version and 1.2.0 is newer - and rule 46
+	// exists precisely to disable that reading. The update is held, not
+	// deleted, and names the rule.
+	for _, u := range byDep["devops/ci-cd-components/release-tools"] {
+		if u.Dep.Datasource != "gitlab-releases" {
+			t.Errorf("release-tools via %s: only the gitlab-releases reading may propose anything, got %+v", u.Dep.Datasource, u)
+			continue
+		}
+		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDisabled || u.Blocks[0].Org.Rule != 46 {
+			t.Errorf("release-tools 1 -> %s must be disabled by packageRules[46], got blocks %+v", u.NewValue, u.Blocks)
+		}
+		if u.SuppressedBy != model.BlockDisabled {
+			t.Errorf("suppressedBy = %q", u.SuppressedBy)
+		}
+	}
+	// A major on a gitlab-tags pin needs dashboard approval (rule 18).
+	for _, u := range lint {
+		if u.Dep.Datasource != "gitlab-tags" {
+			continue
+		}
+		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDashboardApproval {
+			t.Errorf("lint-tools major must wait for dashboard approval, got %+v", u.Blocks)
+		}
+	}
+	if plan.Stats.UpdatesBlocked == 0 {
+		t.Error("stats must count the blocked updates")
 	}
 }

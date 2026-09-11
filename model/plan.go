@@ -226,6 +226,19 @@ func (p *Plan) Validate() error {
 // tests rest on.
 func WritePlan(w io.Writer, p *Plan) error {
 	p.Sort()
+	// Empty lists are written as [], never null: a reader that ranges over
+	// "updates": null sees nothing either way, but a schema check and a
+	// human do not, and the two spellings would make two identical plans
+	// differ by bytes.
+	if p.Deps == nil {
+		p.Deps = []Dependency{}
+	}
+	if p.Updates == nil {
+		p.Updates = []Update{}
+	}
+	if p.Branches == nil {
+		p.Branches = []Branch{}
+	}
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetIndent("", "  ")

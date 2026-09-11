@@ -4,6 +4,7 @@
 package main
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 	"time"
@@ -34,7 +35,7 @@ type platformEnv struct {
 	Header string
 }
 
-func platformFromEnv(getenv func(string) string) platformEnv {
+func platformFromEnv(getenv func(string) string) (platformEnv, error) {
 	var p platformEnv
 	p.URL = strings.TrimRight(firstSet(getenv, "PINUP_GITLAB_URL", "CI_SERVER_URL"), "/")
 	if u, err := url.Parse(p.URL); err == nil {
@@ -45,7 +46,13 @@ func platformFromEnv(getenv func(string) string) platformEnv {
 	} else if tok := getenv("CI_JOB_TOKEN"); tok != "" {
 		p.Token, p.Header = tok, "JOB-TOKEN"
 	}
-	return p
+	// A token with no host to bind it to would never be sent, and every
+	// private project would answer 404 "does not exist or the token cannot
+	// read it" - true, and useless. Refuse the configuration instead.
+	if p.Token != "" && p.Host == "" {
+		return p, fmt.Errorf("a GitLab token is set but no instance to send it to: set PINUP_GITLAB_URL (or CI_SERVER_URL)")
+	}
+	return p, nil
 }
 
 func firstSet(getenv func(string) string, names ...string) string {

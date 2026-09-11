@@ -18,6 +18,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/planner"
+	"git.ole-hartwig.eu/pinup/pinup/rules"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
 
@@ -35,7 +36,10 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return fmt.Errorf("whatif: --config is required")
 	}
 
-	env := platformFromEnv(os.Getenv)
+	env, err := platformFromEnv(os.Getenv)
+	if err != nil {
+		return err
+	}
 	opts := whatifOptions{
 		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: time.Now(),
 		Datasources: wire.Datasources(httpClient(env), env.URL),
@@ -78,17 +82,21 @@ type whatifOptions struct {
 // whatif runs everything up to the plan. It writes nothing to the repository,
 // which is what makes it safe to point at anything.
 //
-// config → discover → extract → lookup → plan. Rules are not applied yet, so
-// what comes out is the default policy's view: every newer release the
-// scheme accepts, separated into a minor and a major update. Once the rules
-// engine exists it filters and reshapes this; it does not replace it.
+// config → discover → extract → rules → lookup → plan → rules. Rules run
+// twice, as they do in Renovate: once per dependency before lookup, where
+// they can disable it or change its versioning and registries, and once per
+// update, where the update type is known and a rule can hold it.
 func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	root, cfgPath, repoName, now := o.Root, o.ConfigPath, o.RepoName, o.Now
 	decoded, resolved, err := config.DecodeFile(cfgPath)
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
-	_ = resolved
+	packageRules, _ := resolved.Raw["packageRules"].([]any)
+	engine, err := rules.Compile(packageRules, wire.Versionings())
+	if err != nil {
+		return nil, fmt.Errorf("packageRules: %w", err)
+	}
 
 	managers := wire.Managers()
 	req := discover.Request{
@@ -108,6 +116,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		GeneratedAt:   now.UTC(),
 		Repo:          model.RepoRef{Path: repoName},
 		Warnings:      found.Warnings,
+	}
+	for _, w := range engine.Warnings {
+		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "rules", Msg: w})
 	}
 
 	// One read per file, however many managers claim it. Reading a file once
@@ -151,7 +162,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
-			plan.Deps = append(plan.Deps, d)
+			plan.Deps = append(plan.Deps, applyDepRules(engine, resolved.Raw, d))
 		}
 	}
 
@@ -180,18 +191,93 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		Now:               now,
 	})
 	plan.Deps = planned.Deps
-	plan.Updates = planned.Updates
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
+	for _, u := range planned.Updates {
+		plan.Updates = append(plan.Updates, applyUpdateRules(engine, resolved.Raw, u))
+	}
 
+	blocked := 0
+	for _, u := range plan.Updates {
+		if u.Blocked() {
+			blocked++
+		}
+	}
 	plan.Stats = model.Stats{
 		FilesDiscovered: found.Stats.FilesMatched,
 		DepsExtracted:   len(plan.Deps),
 		LookupsIssued:   len(results),
 		UpdatesFound:    len(plan.Updates),
+		UpdatesBlocked:  blocked,
 	}
 	plan.Sort()
 	if err := plan.Validate(); err != nil {
 		return nil, fmt.Errorf("the plan this run produced is not valid: %w", err)
 	}
 	return plan, nil
+}
+
+// applyDepRules is the pre-lookup pass: a rule may disable the dependency
+// or change how it is looked up. The rule that decided is named, because
+// "disabled" without a rule index is the question, not the answer.
+func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency) model.Dependency {
+	if d.SkipReason != "" {
+		return d
+	}
+	res := engine.Apply(base, rules.SubjectOf(d, ""))
+	if res.SkipReason != "" {
+		d.SkipReason = fmt.Sprintf("disabled by %s", lastWriter(res, "enabled"))
+		return d
+	}
+	if v, ok := res.Config["versioning"].(string); ok && v != "" && len(res.Wrote["versioning"]) > 0 {
+		d.Versioning = v
+	}
+	if urls, ok := res.Config["registryUrls"].([]any); ok && len(res.Wrote["registryUrls"]) > 0 {
+		d.RegistryURLs = d.RegistryURLs[:0:0]
+		for _, u := range urls {
+			if s, ok := u.(string); ok {
+				d.RegistryURLs = append(d.RegistryURLs, s)
+			}
+		}
+	}
+	return d
+}
+
+// applyUpdateRules is the per-update pass. A rule that disables the update
+// type, or demands dashboard approval, holds the update rather than
+// deleting it: the plan still says what would have happened and why not.
+func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update) model.Update {
+	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.String()))
+	if res.SkipReason != "" {
+		u.Blocks = append(u.Blocks, model.Block{
+			Reason: model.BlockDisabled,
+			Org:    origin(res, "enabled"),
+			Note:   "enabled: false for this update type",
+		})
+	}
+	if approval, ok := res.Config["dependencyDashboardApproval"].(bool); ok && approval {
+		u.Blocks = append(u.Blocks, model.Block{
+			Reason: model.BlockDashboardApproval,
+			Org:    origin(res, "dependencyDashboardApproval"),
+		})
+	}
+	if len(u.Blocks) > 0 {
+		u.SuppressedBy = u.Blocks[0].Reason
+	}
+	return u
+}
+
+func lastWriter(res rules.Resolution, key string) string {
+	chain := res.Wrote[key]
+	if len(chain) == 0 {
+		return "the base configuration"
+	}
+	return fmt.Sprintf("packageRules[%d]", chain[len(chain)-1])
+}
+
+func origin(res rules.Resolution, key string) model.Origin {
+	chain := res.Wrote[key]
+	if len(chain) == 0 {
+		return model.Origin{Source: "config", Rule: model.NoRule}
+	}
+	return model.Origin{Source: "packageRules", Rule: chain[len(chain)-1]}
 }
