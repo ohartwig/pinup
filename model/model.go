@@ -80,10 +80,18 @@ type Dependency struct {
 
 	CurrentValue  string `json:"currentValue"`
 	CurrentDigest string `json:"currentDigest,omitempty"`
+	// LockedVersion is the version a lock file pins this dependency to, when
+	// a manager's caller supplies one; extraction from the manifest alone
+	// leaves it empty.
+	LockedVersion string `json:"lockedVersion,omitempty"`
 
 	Datasource   string   `json:"datasource"`
 	Versioning   string   `json:"versioning,omitempty"`
 	RegistryURLs []string `json:"registryUrls,omitempty"`
+	// AllowedVersions, when set by a rule, restricts the candidates: a range
+	// in the dependency's scheme, or /regex/, or !/regex/.
+	AllowedVersions string `json:"allowedVersions,omitempty"`
+
 	// ExtractVersion is a regex with a named group "version", applied to a
 	// release before comparison.
 	ExtractVersion string `json:"extractVersion,omitempty"`

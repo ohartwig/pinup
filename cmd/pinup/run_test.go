@@ -4,7 +4,9 @@
 package main
 
 import (
+	"encoding/json"
 	"bytes"
+	"io"
 	"strings"
 	"testing"
 )
@@ -96,4 +98,57 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 	if err == nil || !strings.Contains(out.String(), "packageRules[1539]") {
 		t.Errorf("diff against the 1540-rule capture must fail and show the extra rules: err=%v", err)
 	}
+}
+
+// Every key default.json uses lands in exactly one class, and the classes
+// are printed. The counts are asserted so the table cannot silently shrink.
+func TestMigrateClassifiesEveryKey(t *testing.T) {
+	var out strings.Builder
+	if err := run([]string{"migrate", "--config", "../../testdata/parity/config/default.json", "--json"}, &out, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		Supported   []string `json:"supported"`
+		Partial     []string `json:"partial"`
+		Unsupported []string `json:"x-unsupported"`
+		Managers    []string `json:"managersNotImplemented"`
+	}
+	if err := json.Unmarshal([]byte(out.String()), &got); err != nil {
+		t.Fatal(err)
+	}
+	all := len(got.Supported) + len(got.Partial) + len(got.Unsupported)
+	if all < 40 {
+		t.Errorf("only %d keys classified", all)
+	}
+	seen := map[string]int{}
+	for _, list := range [][]string{got.Supported, got.Partial, got.Unsupported} {
+		for _, k := range list {
+			seen[k]++
+		}
+	}
+	for k, n := range seen {
+		if n != 1 {
+			t.Errorf("%s classified %d times", k, n)
+		}
+	}
+	for _, want := range []string{"extends", "packageRules", "packageRules[].matchPackageNames"} {
+		if seen[want] == 0 {
+			t.Errorf("%s not classified", want)
+		}
+	}
+	if !contains(got.Unsupported, "lockFileMaintenance") || !contains(got.Unsupported, "packageRules[].postUpgradeTasks") {
+		t.Errorf("unsupported must name what is not built: %v", got.Unsupported)
+	}
+	if len(got.Managers) == 0 {
+		t.Error("the managers still missing must be named")
+	}
+}
+
+func contains(ss []string, s string) bool {
+	for _, x := range ss {
+		if x == s {
+			return true
+		}
+	}
+	return false
 }

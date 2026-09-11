@@ -16,6 +16,7 @@ package planner
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/model"
@@ -191,6 +192,17 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		if baseStable && !v.IsStable(c) {
 			continue
 		}
+		if d.AllowedVersions != "" {
+			ok, err := allowed(v, d.AllowedVersions, c)
+			if err != nil {
+				return nil, fmt.Sprintf("allowedVersions %q: %v", d.AllowedVersions, err), &model.Warning{
+					Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: allowedVersions %q: %v", d.DepName, d.AllowedVersions, err),
+				}
+			}
+			if !ok {
+				continue
+			}
+		}
 		switch versioning.UpdateType(v, base, c) {
 		case model.UpdateMajor:
 			majors = append(majors, c)
@@ -246,6 +258,36 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		return nil, fmt.Sprintf("up to date: none of %d releases is newer than %s", seen, cur), nil
 	}
 	return ups, "", nil
+}
+
+// allowed applies an allowedVersions constraint to one candidate: /regex/
+// matches the version string, !/regex/ must not match, anything else is a
+// range the candidate must satisfy under the dependency's scheme.
+func allowed(v versioning.Versioning, constraint, candidate string) (bool, error) {
+	negate := strings.HasPrefix(constraint, "!")
+	body := strings.TrimPrefix(constraint, "!")
+	if strings.HasPrefix(body, "/") && strings.LastIndex(body, "/") > 0 {
+		end := strings.LastIndex(body, "/")
+		expr, flags := body[1:end], body[end+1:]
+		if flags == "i" {
+			expr = "(?i)" + expr
+		} else if flags != "" {
+			return false, fmt.Errorf("unsupported regex flag %q", flags)
+		}
+		re, err := re2x.Compile(expr)
+		if err != nil {
+			return false, err
+		}
+		_, matched := re.Find(candidate)
+		return matched != negate, nil
+	}
+	if negate {
+		return false, fmt.Errorf("negation is only supported for a /regex/")
+	}
+	if !v.IsValid(constraint) {
+		return false, fmt.Errorf("not a valid %s range", v.Name())
+	}
+	return v.Satisfies(candidate, constraint), nil
 }
 
 // extractVersions applies an extractVersion pattern to a release set,

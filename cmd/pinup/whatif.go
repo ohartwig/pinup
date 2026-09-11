@@ -217,6 +217,16 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		return nil, fmt.Errorf("packageRules: %w", err)
 	}
 
+	// ignoreDeps names dependencies that are never looked up.
+	ignored := map[string]bool{}
+	if list, ok := resolved.Raw["ignoreDeps"].([]any); ok {
+		for _, e := range list {
+			if name, ok := e.(string); ok {
+				ignored[name] = true
+			}
+		}
+	}
+
 	managers := wire.Managers()
 	req := discover.Request{
 		Root:            root,
@@ -285,6 +295,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
+			if d.SkipReason == "" && ignored[d.DepName] {
+				d.SkipReason = "listed in ignoreDeps"
+			}
 			if o.Released != "" && d.SkipReason == "" && !report.RefersTo(report.Key(d), o.Released) {
 				d.SkipReason = "not the released package " + o.Released + "; the scheduled run covers it"
 			}
@@ -471,6 +484,9 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	}
 	if v, ok := res.Config["versioning"].(string); ok && v != "" && len(res.Wrote["versioning"]) > 0 {
 		d.Versioning = v
+	}
+	if av, ok := res.Config["allowedVersions"].(string); ok && av != "" {
+		d.AllowedVersions = av
 	}
 	if urls, ok := res.Config["registryUrls"].([]any); ok && len(res.Wrote["registryUrls"]) > 0 {
 		d.RegistryURLs = d.RegistryURLs[:0:0]

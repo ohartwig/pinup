@@ -300,3 +300,28 @@ func TestExtractVersionAndRecordedScheme(t *testing.T) {
 		t.Errorf("a pattern without a version group must be refused: skip=%q warnings=%v", res.Deps[0].SkipReason, res.Warnings)
 	}
 }
+
+// allowedVersions narrows the candidates: a range, a regex, a negated regex.
+func TestAllowedVersionsNarrowsCandidates(t *testing.T) {
+	d := dep("x", "1.0.0", "semver")
+	d.AllowedVersions = "!/^2\\./"
+	res := plan(t, d, releases("1.1.0", "2.0.0", "2.1.0"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "1.1.0" {
+		t.Errorf("negated regex: %+v", res.Updates)
+	}
+	d.AllowedVersions = "/^2\\.1/"
+	res = plan(t, d, releases("1.1.0", "2.0.0", "2.1.0"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "2.1.0" {
+		t.Errorf("regex: %+v", res.Updates)
+	}
+	d.AllowedVersions = "1.1.0" // the test scheme's Satisfies is equality
+	res = plan(t, d, releases("1.1.0", "2.0.0"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "1.1.0" {
+		t.Errorf("range: %+v", res.Updates)
+	}
+	d.AllowedVersions = "!1.1.0"
+	res = plan(t, d, releases("1.1.0"))
+	if !strings.Contains(res.Deps[0].SkipReason, "allowedVersions") || len(res.Warnings) != 1 {
+		t.Errorf("a negated range is refused: %q %v", res.Deps[0].SkipReason, res.Warnings)
+	}
+}

@@ -85,8 +85,6 @@ func cmdVersion(args []string, out, errw io.Writer) error {
 // The remaining subcommands are wired in later phases; they exist now so the
 // CLI surface is fixed and `usage` cannot drift from what is implemented.
 
-func cmdMigrate(args []string, out, errw io.Writer) error { return errNotYet("migrate") }
-
 // cmdAskpass is what git calls when it needs a credential and GIT_ASKPASS
 // points at this binary. The token never touches a file or a URL: git
 // asks, the environment answers. The username is whatever the token kind
