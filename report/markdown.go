@@ -112,11 +112,13 @@ func Markdown(p *model.Plan) string {
 	return b.String()
 }
 
+// note renders a block's note as code: a cron expression's asterisks are
+// emphasis markers to Markdown otherwise.
 func note(blk model.Block) string {
 	if blk.Note == "" {
 		return ""
 	}
-	return " (" + blk.Note + ")"
+	return " `" + strings.ReplaceAll(blk.Note, "`", "'") + "`"
 }
 
 func origin(o model.Origin) string {
