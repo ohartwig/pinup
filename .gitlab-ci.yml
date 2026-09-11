@@ -86,10 +86,10 @@ default:
 # --------------------------------------------------------------------------- #
 # Quick
 # --------------------------------------------------------------------------- #
-# Asks the pipeline what jobs exist, rather than asking the file what it says.
-# Fails when the resolved job list loses a name that .gitlab/expected-jobs.txt
-# still claims - which is what an upstream stage-list change looks like from
-# inside this repository.
+# Asks the running pipeline which jobs it created, rather than asking the
+# file what it says. Fails when that list loses a name that
+# .gitlab/expected-jobs.txt still claims - which is what an upstream
+# stage-list change looks like from inside this repository.
 lint:ci-resolved:
   stage: quick
   image: ${GO_IMAGE}

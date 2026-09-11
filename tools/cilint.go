@@ -3,28 +3,31 @@
 
 //go:build ignore
 
-// Command cilint asks GitLab which jobs the resolved pipeline contains and
-// checks every name in .gitlab/expected-jobs.txt is among them.
+// Command cilint checks that every job named in .gitlab/expected-jobs.txt
+// exists in the pipeline this job is running in.
 //
 // It asks the pipeline, not the file: an upstream stage-list change in the
-// composed template drops jobs silently, and only the resolved job list shows
-// it. Why not curl and jq: no image in the estate ships jq, and pulling one in
+// composed template drops jobs silently, and only the created job list shows
+// it. The list comes from GET /projects/:id/pipelines/:pipeline_id/jobs, an
+// endpoint the job's own token may read, so nothing needs provisioning.
+// (POST /ci/lint, the obvious alternative, refuses a job token with 404.)
+// Why not curl and jq: no image in the estate ships jq, and pulling one in
 // would be a second package channel in a pipeline that otherwise needs
 // nothing but Go.
 //
-// Usage: go run tools/cilint.go [.gitlab-ci.yml] [.gitlab/expected-jobs.txt]
+// Usage: go run tools/cilint.go [.gitlab/expected-jobs.txt]
 //
-// Reads CI_API_V4_URL, CI_PROJECT_ID and CI_JOB_TOKEN from the environment.
+// Reads CI_API_V4_URL, CI_PROJECT_ID, CI_PIPELINE_ID and CI_JOB_TOKEN.
 package main
 
 import (
 	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -36,58 +39,47 @@ func main() {
 }
 
 func run() error {
-	ciFile, expectedFile := ".gitlab-ci.yml", ".gitlab/expected-jobs.txt"
+	expectedFile := ".gitlab/expected-jobs.txt"
 	if len(os.Args) > 1 {
-		ciFile = os.Args[1]
+		expectedFile = os.Args[1]
 	}
-	if len(os.Args) > 2 {
-		expectedFile = os.Args[2]
-	}
-	api, project, token := os.Getenv("CI_API_V4_URL"), os.Getenv("CI_PROJECT_ID"), os.Getenv("CI_JOB_TOKEN")
-	if api == "" || project == "" || token == "" {
-		return fmt.Errorf("CI_API_V4_URL, CI_PROJECT_ID and CI_JOB_TOKEN must all be set")
+	api, project, pipeline, token := os.Getenv("CI_API_V4_URL"), os.Getenv("CI_PROJECT_ID"),
+		os.Getenv("CI_PIPELINE_ID"), os.Getenv("CI_JOB_TOKEN")
+	if api == "" || project == "" || pipeline == "" || token == "" {
+		return fmt.Errorf("CI_API_V4_URL, CI_PROJECT_ID, CI_PIPELINE_ID and CI_JOB_TOKEN must all be set")
 	}
 
-	content, err := os.ReadFile(ciFile)
-	if err != nil {
-		return err
-	}
-	body, _ := json.Marshal(map[string]string{"content": string(content)})
-	req, err := http.NewRequest(http.MethodPost,
-		fmt.Sprintf("%s/projects/%s/ci/lint?include_jobs=true", api, project), bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("JOB-TOKEN", token)
-	req.Header.Set("Content-Type", "application/json")
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	raw, _ := io.ReadAll(resp.Body)
-	// Check the status, never the emptiness of the body: a 404 body is a
-	// non-empty string and would read as success.
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("ci/lint returned HTTP %d: %s", resp.StatusCode, raw)
-	}
-
-	var lint struct {
-		Valid  bool     `json:"valid"`
-		Errors []string `json:"errors"`
-		Jobs   []struct {
-			Name string `json:"name"`
-		} `json:"jobs"`
-	}
-	if err := json.Unmarshal(raw, &lint); err != nil {
-		return fmt.Errorf("ci/lint answered something that is not its schema: %w", err)
-	}
-	if !lint.Valid {
-		return fmt.Errorf("pipeline is not valid:\n  %s", strings.Join(lint.Errors, "\n  "))
-	}
+	// Paginate: a pipeline with more jobs than one page would otherwise
+	// report the ones on page two as missing.
 	resolved := map[string]bool{}
-	for _, j := range lint.Jobs {
-		resolved[j.Name] = true
+	for page := 1; page != 0; {
+		url := fmt.Sprintf("%s/projects/%s/pipelines/%s/jobs?per_page=100&page=%d", api, project, pipeline, page)
+		req, err := http.NewRequest(http.MethodGet, url, nil)
+		if err != nil {
+			return err
+		}
+		req.Header.Set("JOB-TOKEN", token)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return err
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		// Check the status, never the emptiness of the body: a 404 body is
+		// a non-empty string and would read as success.
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("pipeline jobs returned HTTP %d: %s", resp.StatusCode, raw)
+		}
+		var jobs []struct {
+			Name string `json:"name"`
+		}
+		if err := json.Unmarshal(raw, &jobs); err != nil {
+			return fmt.Errorf("pipeline jobs answered something that is not its schema: %w", err)
+		}
+		for _, j := range jobs {
+			resolved[j.Name] = true
+		}
+		page, _ = strconv.Atoi(resp.Header.Get("X-Next-Page"))
 	}
 
 	f, err := os.Open(expectedFile)
