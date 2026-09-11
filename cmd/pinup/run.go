@@ -73,8 +73,7 @@ func cmdVersion(args []string, out, errw io.Writer) error {
 // The remaining subcommands are wired in later phases; they exist now so the
 // CLI surface is fixed and `usage` cannot drift from what is implemented.
 
-func cmdWhatif(args []string, out, errw io.Writer) error { return errNotYet("whatif") }
-func cmdRun(args []string, out, errw io.Writer) error    { return errNotYet("run") }
+func cmdRun(args []string, out, errw io.Writer) error { return errNotYet("run") }
 func cmdPrintConfig(args []string, out, errw io.Writer) error {
 	return errNotYet("print-config")
 }

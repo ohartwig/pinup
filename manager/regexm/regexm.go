@@ -176,7 +176,7 @@ func findMatches(src string, patterns []string, strategy, file string, index int
 
 // dependency turns one match into a Dependency, rendering every template
 // against the groups the match bound.
-func (m *Manager) dependency(file string, def *extract.CustomManager, s span) (model.Dependency, *model.Warning) {
+func (m *Manager) dependency(file string, def *model.CustomManager, s span) (model.Dependency, *model.Warning) {
 	env := environment(s.m)
 
 	render := func(what, tmpl, fromGroup string) (string, bool, error) {
@@ -336,7 +336,7 @@ func (*Manager) Edit(_ context.Context, f extract.File, up model.Update) (model.
 
 // Describe renders a one-line summary of a definition, for diagnostics that
 // have to name which of thirty-seven definitions did something.
-func Describe(def *extract.CustomManager) string {
+func Describe(def *model.CustomManager) string {
 	if def == nil {
 		return "custom manager <nil>"
 	}

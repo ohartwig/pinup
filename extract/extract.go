@@ -45,34 +45,11 @@ type ManagerConfig struct {
 	// Custom carries the definition of one custom manager - matchStrings,
 	// templates and so on - for managers that are configured rather than
 	// coded. It is nil for a built-in manager.
-	Custom *CustomManager
+	Custom *model.CustomManager
 	// RegistryURLs and Versioning are defaults a manager may stamp onto the
 	// dependencies it produces when its own extraction does not name one.
 	RegistryURLs []string
 	Versioning   string
-}
-
-// CustomManager is one `customManagers` entry from the configuration.
-type CustomManager struct {
-	// Index is the position in the flattened customManagers array. It travels
-	// onto every dependency this manager produces, so a plan can say which
-	// definition found a thing.
-	Index int
-
-	FilePatterns  []string
-	MatchStrings  []string
-	MatchStrategy string // "any" (default) or "recursive"; "combination" is refused
-
-	DepNameTemplate        string
-	PackageNameTemplate    string
-	DatasourceTemplate     string
-	VersioningTemplate     string
-	RegistryURLTemplate    string
-	ExtractVersionTemplate string
-	DepTypeTemplate        string
-	CurrentValueTemplate   string
-
-	Description []string
 }
 
 // Manager finds and rewrites dependency references in files.

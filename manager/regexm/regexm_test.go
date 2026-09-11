@@ -55,7 +55,7 @@ func TestManager10CompositePackageNames(t *testing.T) {
 	pattern := firstMatchString(t, def)
 	tmpl, _ := def["packageNameTemplate"].(string)
 
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index:               10,
 		MatchStrings:        []string{pattern},
 		PackageNameTemplate: tmpl,
@@ -108,7 +108,7 @@ func TestManager10CompositePackageNames(t *testing.T) {
 // express this - #14/#15, #16/#17 and #21/#22 differ by nothing but the
 // presence of a registryUrl group.
 func TestAnAbsentGroupLeavesTheFieldUnset(t *testing.T) {
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index: 99,
 		MatchStrings: []string{
 			`depName=(?<depName>\S+)(?: registryUrl=(?<registryUrl>\S+))?\s+tag:\s*"(?<currentValue>[^"]+)"`,
@@ -160,7 +160,7 @@ func TestAnAbsentGroupLeavesTheFieldUnset(t *testing.T) {
 // series inside the version it captured.
 func TestNestedGroupFeedsATemplate(t *testing.T) {
 	def := loadDefinition(t, 20)
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index:              20,
 		MatchStrings:       []string{firstMatchString(t, def)},
 		DepNameTemplate:    def["depNameTemplate"].(string),
@@ -193,7 +193,7 @@ func TestNestedGroupFeedsATemplate(t *testing.T) {
 func TestRecursiveStrategyConfinesTheInnerMatch(t *testing.T) {
 	def := loadDefinition(t, 0)
 	ms, _ := def["matchStrings"].([]any)
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index:              0,
 		MatchStrings:       []string{ms[0].(string), ms[1].(string)},
 		MatchStrategy:      StrategyRecursive,
@@ -237,7 +237,7 @@ func TestRecursiveStrategyConfinesTheInnerMatch(t *testing.T) {
 
 func TestDigestIsCapturedWithItsOwnSpan(t *testing.T) {
 	const digest = "sha256:b39029a467a389c506e0dab9ea75707b393467e653c876ff13d77fd4e35228a7"
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index: 1,
 		MatchStrings: []string{
 			`(?<depName>[a-z./-]+):(?<currentValue>[\w.-]+)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?`,
@@ -267,7 +267,7 @@ func TestDigestIsCapturedWithItsOwnSpan(t *testing.T) {
 }
 
 func TestEditRefusesAChangedFile(t *testing.T) {
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index:              2,
 		MatchStrings:       []string{`tag:\s*"(?<currentValue>[^"]+)"`},
 		DepNameTemplate:    "img",
@@ -299,7 +299,7 @@ func TestEditRefusesAChangedFile(t *testing.T) {
 // combination is not implemented, and says so rather than guessing at
 // semantics nothing in the estate exercises.
 func TestCombinationStrategyIsRefused(t *testing.T) {
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index:         3,
 		MatchStrings:  []string{`(?<currentValue>\d+)`},
 		MatchStrategy: StrategyCombine,
@@ -312,7 +312,7 @@ func TestCombinationStrategyIsRefused(t *testing.T) {
 }
 
 func TestAPatternThatDoesNotCompileIsAWarningNotAFailure(t *testing.T) {
-	cm := &extract.CustomManager{
+	cm := &model.CustomManager{
 		Index:        4,
 		MatchStrings: []string{`(?<currentValue>\d+)`, `(?=lookahead)`},
 	}
