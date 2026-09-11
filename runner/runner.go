@@ -47,6 +47,12 @@ type Options struct {
 	// branches are held with Reason hourlyLimit and recorded, not dropped.
 	// Zero means no cap.
 	HourlyLimit int
+	// ConcurrentLimit caps the merge requests open at once, counting the
+	// ones already open under Prefix; further new branches are held with
+	// Reason concurrentLimit. Zero means no cap.
+	ConcurrentLimit int
+	// Prefix is the branch prefix the open-request count looks at.
+	Prefix string
 
 	Now time.Time
 }
@@ -72,6 +78,18 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 	}
 	var outcomes []Outcome
 	created := 0
+	openNow := 0
+	if o.ConcurrentLimit > 0 {
+		prefix := o.Prefix
+		if prefix == "" {
+			prefix = "renovate/"
+		}
+		open, err := o.Platform.OpenMergeRequests(ctx, o.Project, prefix)
+		if err != nil {
+			return nil, fmt.Errorf("runner: counting open merge requests: %w", err)
+		}
+		openNow = len(open)
+	}
 	for i := range plan.Branches {
 		b := &plan.Branches[i]
 		if b.SuppressedBy != "" || len(b.Edits) == 0 {
@@ -80,6 +98,14 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		mr, hasMR, err := o.Platform.FindMergeRequest(ctx, o.Project, b.Name)
 		if err != nil {
 			outcomes = append(outcomes, fail(plan, b, "find merge request", err))
+			continue
+		}
+		if !hasMR && o.ConcurrentLimit > 0 && openNow+created >= o.ConcurrentLimit {
+			hold(plan, b, model.Block{
+				Reason: model.BlockConcurrentLimit, Org: model.Origin{Source: "config", Rule: model.NoRule},
+				Note: fmt.Sprintf("prConcurrentLimit %d: %d merge requests already open", o.ConcurrentLimit, openNow+created),
+			})
+			outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "held", Message: "concurrent limit"})
 			continue
 		}
 		if !hasMR && o.HourlyLimit > 0 && created >= o.HourlyLimit {

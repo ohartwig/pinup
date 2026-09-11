@@ -142,11 +142,21 @@ type Plan struct {
 
 	Repo RepoRef `json:"repo"`
 
+	// Limits are the run-wide caps the configuration set; the runner
+	// enforces them and records what they held.
+	Limits Limits `json:"limits,omitzero"`
+
 	Deps     []Dependency `json:"deps"`
 	Updates  []Update     `json:"updates"`
 	Branches []Branch     `json:"branches"`
 	Warnings []Warning    `json:"warnings,omitempty"`
 	Stats    Stats        `json:"stats"`
+}
+
+// Limits are the run-wide caps from the configuration. Zero means none.
+type Limits struct {
+	PRHourlyLimit     int `json:"prHourlyLimit"`
+	PRConcurrentLimit int `json:"prConcurrentLimit"`
 }
 
 // Sort puts a plan in canonical order. Determinism is asserted rather than

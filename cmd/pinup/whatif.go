@@ -239,6 +239,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	for _, w := range presetWarnings {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "config", Msg: w})
 	}
+	plan.Limits = model.Limits{PRHourlyLimit: intOf(resolved.Raw["prHourlyLimit"]), PRConcurrentLimit: intOf(resolved.Raw["prConcurrentLimit"])}
 	for _, w := range engine.Warnings {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "rules", Msg: w})
 	}
@@ -519,4 +520,13 @@ func customDatasourcesHook(env platformEnv) func(map[string]model.CustomDatasour
 	return func(defs map[string]model.CustomDatasource) lookup.Registry {
 		return wire.CustomDatasources(client, defs)
 	}
+}
+
+// intOf reads a JSON number as an int; anything else is zero.
+func intOf(v any) int {
+	f, ok := v.(float64)
+	if !ok {
+		return 0
+	}
+	return int(f)
 }

@@ -16,6 +16,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/fake/platformfake"
 	"git.ole-hartwig.eu/pinup/pinup/git"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/publish"
 )
 
 var (
@@ -226,4 +227,31 @@ func headOf(t *testing.T, dir string) string {
 		t.Fatal(err)
 	}
 	return strings.TrimSpace(string(out))
+}
+
+// prConcurrentLimit counts what is already open: with two open and a limit
+// of three, one more is created and the next is held with a record.
+func TestConcurrentLimitCountsOpenRequests(t *testing.T) {
+	_, repo := fixture(t)
+	pf := &platformfake.Platform{MRs: []publish.MergeRequest{
+		{IID: 1, State: "opened", SourceBranch: "renovate/old-1.x"},
+		{IID: 2, State: "opened", SourceBranch: "renovate/old-2.x"},
+		{IID: 3, State: "merged", SourceBranch: "renovate/gone-1.x"},
+	}}
+	p := plan(
+		model.Branch{Name: "renovate/a", Title: "a", UpdateKeys: []string{"a"}, Edits: []model.Edit{edit("3.20", "3.21")}},
+		model.Branch{Name: "renovate/b", Title: "b", UpdateKeys: []string{"b"}, Edits: []model.Edit{edit("1.26", "1.27")}},
+	)
+	o := options(repo, pf)
+	o.ConcurrentLimit = 3
+	outs, err := Execute(context.Background(), p, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if outs[0].Action != "created" || outs[1].Action != "held" || outs[1].Message != "concurrent limit" {
+		t.Fatalf("outcomes %+v", outs)
+	}
+	if held := p.Updates[1]; len(held.Blocks) != 1 || held.Blocks[0].Reason != model.BlockConcurrentLimit || !strings.Contains(held.Blocks[0].Note, "3 merge requests already open") {
+		t.Errorf("held update %+v", held)
+	}
 }
