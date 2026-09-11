@@ -71,7 +71,7 @@ func (r Remote) Get(name string) (map[string]any, string, bool, error) {
 	if !strings.HasPrefix(name, "local>") {
 		return nil, "", false, nil
 	}
-	project, path, ref, err := parseLocal(strings.TrimPrefix(name, "local>"))
+	project, path, ref, err := ParseLocal(strings.TrimPrefix(name, "local>"))
 	if err != nil {
 		return nil, "", false, err
 	}
@@ -90,8 +90,9 @@ func (r Remote) Get(name string) (map[string]any, string, bool, error) {
 	return doc, "", true, nil
 }
 
-// parseLocal splits "group/project[//dir][:name][#ref]".
-func parseLocal(s string) (project, path, ref string, err error) {
+// ParseLocal splits "group/project[//dir][:name][#ref]" into the project,
+// the file path and the ref.
+func ParseLocal(s string) (project, path, ref string, err error) {
 	if i := strings.LastIndexByte(s, '#'); i >= 0 {
 		ref = s[i+1:]
 		s = s[:i]

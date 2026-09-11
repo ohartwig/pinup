@@ -97,6 +97,19 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		return fmt.Errorf("run: %w", err)
 	}
 
+	// --config may name the runner's file on the platform rather than a
+	// path: "local>devops/renovate-runner". The job that runs pinup against
+	// its own repository has no checkout of the runner project, and a copy
+	// of the file would be a second truth.
+	if strings.HasPrefix(*cfgPath, "local>") {
+		local, err := fetchConfig(ctx, platform, *cfgPath)
+		if err != nil {
+			return err
+		}
+		defer os.Remove(local)
+		*cfgPath = local
+	}
+
 	opts := whatifOptions{
 		Root: repo.Dir, ConfigPath: *cfgPath, RepoName: proj.Path, Now: now,
 		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
@@ -185,4 +198,28 @@ func gitIdentityFromEnv(getenv func(string) string) (git.Identity, git.Signing, 
 		return id, s, nil
 	}
 	return id, git.Signing{}, fmt.Errorf("PINUP_SIGNING_FORMAT must be ssh, openpgp, or the explicit word none")
+}
+
+// fetchConfig fetches a local> configuration through the platform into a
+// temporary file, named so provenance still reads as the preset it is.
+func fetchConfig(ctx context.Context, platform interface {
+	ReadFile(ctx context.Context, project, path, ref string) ([]byte, error)
+}, name string) (string, error) {
+	project, path, ref, err := preset.ParseLocal(strings.TrimPrefix(name, "local>"))
+	if err != nil {
+		return "", err
+	}
+	raw, err := platform.ReadFile(ctx, project, path, ref)
+	if err != nil {
+		return "", fmt.Errorf("run: %s: %w", name, err)
+	}
+	f, err := os.CreateTemp("", "pinup-config-*.json")
+	if err != nil {
+		return "", err
+	}
+	if _, err := f.Write(raw); err != nil {
+		f.Close()
+		return "", err
+	}
+	return f.Name(), f.Close()
 }

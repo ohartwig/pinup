@@ -32,12 +32,12 @@ func TestParseLocal(t *testing.T) {
 		"moselwal/dev//config/renovate/default":      {"moselwal/dev", "config/renovate/default/default.json", ""},
 		"moselwal/dev//config/renovate:default#main": {"moselwal/dev", "config/renovate/default.json", "main"},
 	} {
-		p, path, ref, err := parseLocal(in)
+		p, path, ref, err := ParseLocal(in)
 		if err != nil || p != want[0] || path != want[1] || ref != want[2] {
-			t.Errorf("parseLocal(%q) = %q %q %q %v, want %v", in, p, path, ref, err, want)
+			t.Errorf("ParseLocal(%q) = %q %q %q %v, want %v", in, p, path, ref, err, want)
 		}
 	}
-	if _, _, _, err := parseLocal("noslash"); err == nil {
+	if _, _, _, err := ParseLocal("noslash"); err == nil {
 		t.Error("a name without a project path must be refused")
 	}
 }

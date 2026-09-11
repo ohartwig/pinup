@@ -96,9 +96,16 @@ func run() error {
 		if want == "" || strings.HasPrefix(want, "#") {
 			continue
 		}
-		// "name @tag": expected in tag pipelines only.
+		// "name @tag": expected in tag pipelines only; "name @schedule" in
+		// scheduled ones.
 		if name, ok := strings.CutSuffix(want, " @tag"); ok {
 			if !onTag {
+				continue
+			}
+			want = name
+		}
+		if name, ok := strings.CutSuffix(want, " @schedule"); ok {
+			if os.Getenv("CI_PIPELINE_SOURCE") != "schedule" {
 				continue
 			}
 			want = name
