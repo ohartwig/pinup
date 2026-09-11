@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
+	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/discover"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
@@ -88,7 +89,7 @@ type whatifOptions struct {
 // update, where the update type is known and a rule can hold it.
 func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	root, cfgPath, repoName, now := o.Root, o.ConfigPath, o.RepoName, o.Now
-	decoded, resolved, err := config.DecodeFile(cfgPath)
+	decoded, resolved, presetWarnings, err := config.DecodeFile(cfgPath, preset.Builtin())
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
@@ -116,6 +117,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		GeneratedAt:   now.UTC(),
 		Repo:          model.RepoRef{Path: repoName},
 		Warnings:      found.Warnings,
+	}
+	for _, w := range presetWarnings {
+		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "config", Msg: w})
 	}
 	for _, w := range engine.Warnings {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "rules", Msg: w})

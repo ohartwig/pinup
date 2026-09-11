@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 )
@@ -326,5 +327,40 @@ func TestAPatternThatDoesNotCompileIsAWarningNotAFailure(t *testing.T) {
 	}
 	if len(res.Deps) != 1 {
 		t.Errorf("the good pattern contributed %d deps, want 1", len(res.Deps))
+	}
+}
+
+// The customManagers:dockerfileVersions preset is what extracts a
+// "# renovate:" annotated ARG in every estate configuration (the dockerfile
+// manager reports FROM references only, measured). Its pattern stops the
+// value at whitespace, so a trailing comment on the ARG line is not swallowed
+// into the version - Docker itself would read the rest of the line as the
+// value, and a version carrying a comment resolves against no datasource.
+func TestDockerfileVersionsPresetStopsAtWhitespace(t *testing.T) {
+	def := preset.Builtin().Presets["customManagers:dockerfileVersions"].Definition
+	managers := def["customManagers"].([]any)
+	pattern := managers[0].(map[string]any)["matchStrings"].([]any)[0].(string)
+	cm := &model.CustomManager{Index: 0, MatchStrings: []string{pattern}}
+
+	const src = "FROM alpine:3.20\n" +
+		"# renovate: datasource=custom.wolfi depName=go-1.27 versioning=apk\n" +
+		"ARG GO_APK_VERSION=1.27.0-r1\t# a trailing comment\n"
+	res, err := New().Extract(context.Background(),
+		extract.File{Path: "Containerfile", Content: []byte(src)}, extract.ManagerConfig{Custom: cm})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Deps) != 1 {
+		t.Fatalf("want one dependency, got %+v", res.Deps)
+	}
+	d := res.Deps[0]
+	if d.DepName != "go-1.27" || d.Datasource != "custom.wolfi" || d.Versioning != "apk" {
+		t.Errorf("fields: %+v", d)
+	}
+	if d.CurrentValue != "1.27.0-r1" {
+		t.Errorf("CurrentValue = %q, want 1.27.0-r1", d.CurrentValue)
+	}
+	if got := src[d.Locus.ValueStart:d.Locus.ValueEnd]; got != d.CurrentValue {
+		t.Errorf("the offsets point at %q, not at the value", got)
 	}
 }

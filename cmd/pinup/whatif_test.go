@@ -70,6 +70,11 @@ func ciToolsOptions(at time.Time) whatifOptions {
 // The repository lives outside this module, so the test skips when it is not
 // checked out. CI must not require a sibling checkout; a developer who has one
 // should be told when the two disagree.
+// fileRule maps an index in default.json's own packageRules to its index in
+// the resolved configuration, where 722 preset rules precede the file's 48.
+// Rules are always reported in the resolved numbering, which is Renovate's.
+func fileRule(i int) int { return 722 + i }
+
 const (
 	ciToolsRepo   = "/Volumes/Samsung_X5/Projects/moselwal/devops/images/ci-tools"
 	ciToolsCorpus = "../../testdata/parity/renovate-43.288.0/extract/ci-tools.json"
@@ -92,6 +97,10 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 	}
 	t.Logf("%d dependencies in %d files", plan.Stats.DepsExtracted, plan.Stats.FilesDiscovered)
 
+	// Keyed by file, name, value AND manager: the component pins are
+	// legitimately reported twice, by gitlabci (gitlab-tags) and by the
+	// estate's custom regex manager (gitlab-releases), and the rules tell
+	// the two apart by manager.
 	mine := map[string]bool{}
 	for _, d := range plan.Deps {
 		// A dependency extraction skipped is a recorded decision Renovate
@@ -101,7 +110,11 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 		if d.SkipReason != "" && !skippedAfterExtraction(d.SkipReason) {
 			continue
 		}
-		mine[d.File+"|"+d.DepName+"|"+d.CurrentValue] = true
+		mgr := d.Manager
+		if d.CustomManager != model.NoCustomManager {
+			mgr = "regex"
+		}
+		mine[d.File+"|"+d.DepName+"|"+d.CurrentValue+"|"+mgr] = true
 	}
 
 	raw, err := os.ReadFile(ciToolsCorpus)
@@ -123,7 +136,7 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 	for mgr, files := range corpus {
 		for _, f := range files {
 			for _, d := range f.Deps {
-				theirs[f.PackageFile+"|"+d.DepName+"|"+d.CurrentValue] = mgr
+				theirs[f.PackageFile+"|"+d.DepName+"|"+d.CurrentValue+"|"+mgr] = mgr
 			}
 		}
 	}
@@ -146,7 +159,7 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 	// known gap is meant to behave.
 	missingByManager := map[string]int{}
 	for k, mgr := range theirs {
-		if !mine[k] {
+		if _, ok := mine[k]; !ok {
 			missingByManager[mgr]++
 		}
 	}
@@ -261,8 +274,8 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 			t.Errorf("release-tools via %s: only the gitlab-releases reading may propose anything, got %+v", u.Dep.Datasource, u)
 			continue
 		}
-		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDisabled || u.Blocks[0].Org.Rule != 46 {
-			t.Errorf("release-tools 1 -> %s must be disabled by packageRules[46], got blocks %+v", u.NewValue, u.Blocks)
+		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDisabled || u.Blocks[0].Org.Rule != fileRule(46) {
+			t.Errorf("release-tools 1 -> %s must be disabled by the file's packageRules[46] (resolved %d), got blocks %+v", u.NewValue, fileRule(46), u.Blocks)
 		}
 		if u.SuppressedBy != model.BlockDisabled {
 			t.Errorf("suppressedBy = %q", u.SuppressedBy)
@@ -273,8 +286,8 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 		if u.Dep.Datasource != "gitlab-tags" {
 			continue
 		}
-		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDashboardApproval {
-			t.Errorf("lint-tools major must wait for dashboard approval, got %+v", u.Blocks)
+		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDashboardApproval || u.Blocks[0].Org.Rule != fileRule(18) {
+			t.Errorf("lint-tools major must wait for dashboard approval by the file's packageRules[18], got %+v", u.Blocks)
 		}
 	}
 	if plan.Stats.UpdatesBlocked == 0 {

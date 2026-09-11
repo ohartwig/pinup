@@ -102,44 +102,19 @@ const renovateArg = `FROM golang:1.27
 ARG GO_APK_VERSION=1.27.0-r1
 `
 
-func TestRenovateAnnotatedArg(t *testing.T) {
+func TestAnnotatedArgIsNotThisManagersDependency(t *testing.T) {
+	// Measured: Renovate's dockerfile manager reports FROM references
+	// only. The annotated ARG is extracted by the
+	// customManagers:dockerfileVersions preset (see manager/regexm), and
+	// reporting it here too made every such dependency appear twice.
 	_, deps := extractAll(t, renovateArg)
-
-	arg := depNamed(t, deps, "go-1.27")
-	if arg.Datasource != "custom.wolfi" {
-		t.Errorf("Datasource = %q, want custom.wolfi", arg.Datasource)
+	for _, d := range deps {
+		if d.DepName == "go-1.27" {
+			t.Fatalf("the annotated ARG was extracted by the dockerfile manager: %+v", d)
+		}
 	}
-	if arg.Versioning != "apk" {
-		t.Errorf("Versioning = %q, want apk", arg.Versioning)
-	}
-	if arg.CurrentValue != "1.27.0-r1" {
-		t.Errorf("CurrentValue = %q, want 1.27.0-r1", arg.CurrentValue)
-	}
-	if arg.SkipReason != "" {
-		t.Errorf("an annotated ARG with a real default must not be skipped, got %q", arg.SkipReason)
-	}
-}
-
-// registryUrl and extractVersion are rarer annotation fields; assert they are
-// picked up too, alongside a manager-config default that should NOT override
-// an annotation the extraction already named.
-func TestRenovateAnnotationAllFields(t *testing.T) {
-	src := "# renovate: datasource=github-releases depName=foo/bar versioning=semver registryUrl=https://example.com extractVersion=^v(?P<version>.*)$\n" +
-		"ARG BAR_VERSION=1.2.3\n"
-	f := extract.File{Path: "Dockerfile", Content: []byte(src)}
-	res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{Versioning: "loose", RegistryURLs: []string{"https://fallback.example.com"}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	dep := depNamed(t, res.Deps, "foo/bar")
-	if dep.Versioning != "semver" {
-		t.Errorf("Versioning = %q, want the annotation's semver, not the config default", dep.Versioning)
-	}
-	if len(dep.RegistryURLs) != 1 || dep.RegistryURLs[0] != "https://example.com" {
-		t.Errorf("RegistryURLs = %v, want the annotation's URL", dep.RegistryURLs)
-	}
-	if dep.ExtractVersion != `^v(?P<version>.*)$` {
-		t.Errorf("ExtractVersion = %q", dep.ExtractVersion)
+	if len(deps) != 1 || deps[0].DepName != "golang" {
+		t.Errorf("want only the FROM dependency, got %+v", deps)
 	}
 }
 
@@ -398,64 +373,10 @@ func TestRealGolangImageContainerfile(t *testing.T) {
 		t.Errorf("wolfi-base is digest-pinned with a tag; it must not be skipped, got %q", wolfi.SkipReason)
 	}
 
-	goArg := depNamed(t, res.Deps, "go-1.27")
-	if goArg.Datasource != "custom.wolfi" {
-		t.Errorf("go-1.27 Datasource = %q, want custom.wolfi", goArg.Datasource)
-	}
-	if goArg.Versioning != "apk" {
-		t.Errorf("go-1.27 Versioning = %q, want apk", goArg.Versioning)
-	}
-	if goArg.CurrentValue == "" {
-		t.Error("go-1.27 CurrentValue is empty")
-	}
-	if goArg.SkipReason != "" {
-		t.Errorf("go-1.27 must not be skipped, got %q", goArg.SkipReason)
-	}
-
 	// Re-confirm the offset invariant against real, unmodified bytes.
 	for _, d := range res.Deps {
 		if got := string(content[d.Locus.ValueStart:d.Locus.ValueEnd]); got != d.CurrentValue {
 			t.Errorf("%s: real-file offsets do not match CurrentValue: got %q, want %q", d.DepName, got, d.CurrentValue)
 		}
-	}
-}
-
-// An ARG value stops at whitespace, so a trailing comment is not swallowed
-// into the version.
-//
-// Docker itself would disagree: a # is a comment only at the start of a line,
-// so Docker reads the rest of the line as the value. Renovate stops at the
-// space, measured against the pinned container - and it is the better reading
-// here, because a version carrying a comment resolves against no datasource
-// and an Edit would replace the comment along with it.
-//
-// The real Containerfiles in this estate have no trailing comment on an ARG
-// line, which is exactly why this needed its own test: the case that bites is
-// the one the sample files happen not to contain.
-func TestARGValueStopsAtWhitespace(t *testing.T) {
-	const src = "FROM alpine:3.20\n" +
-		"# renovate: datasource=custom.wolfi depName=go-1.27 versioning=apk\n" +
-		"ARG GO_APK_VERSION=1.27.0-r1\t# a trailing comment\n"
-
-	res, err := New().Extract(context.Background(),
-		extract.File{Path: "Containerfile", Content: []byte(src)}, extract.ManagerConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var found bool
-	for _, d := range res.Deps {
-		if d.DepName != "go-1.27" {
-			continue
-		}
-		found = true
-		if d.CurrentValue != "1.27.0-r1" {
-			t.Errorf("CurrentValue = %q, want %q", d.CurrentValue, "1.27.0-r1")
-		}
-		if got := src[d.Locus.ValueStart:d.Locus.ValueEnd]; got != d.CurrentValue {
-			t.Errorf("the offsets point at %q, not at the value %q", got, d.CurrentValue)
-		}
-	}
-	if !found {
-		t.Error("the annotated ARG was not extracted at all")
 	}
 }

@@ -6,6 +6,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 
 	"git.ole-hartwig.eu/pinup/pinup/model"
 )
@@ -107,16 +108,26 @@ func Decode(raw map[string]any) (Decoded, error) {
 	return d, nil
 }
 
-// DecodeFile is the common case: load one file and decode it on its own.
-func DecodeFile(path string) (Decoded, *Resolved, error) {
-	l, err := LoadFile(path)
-	if err != nil {
-		return Decoded{}, nil, err
+// DecodeFile is the common case: load one file, expand its extends against
+// src, and decode. A nil src resolves nothing, which is right only for a
+// file with no extends - and wrong loudly otherwise, since an unexpanded
+// extends is an error, not a silent no-op.
+func DecodeFile(path string, src preset.Source) (Decoded, *Resolved, []string, error) {
+	if src == nil {
+		src = noPresets{}
 	}
-	r := Merge(l)
+	r, warnings, err := ResolveFile(path, src)
+	if err != nil {
+		return Decoded{}, nil, nil, err
+	}
 	d, err := Decode(r.Raw)
-	return d, r, err
+	return d, r, warnings, err
 }
+
+// noPresets knows no preset at all.
+type noPresets struct{}
+
+func (noPresets) Get(string) (map[string]any, string, bool, error) { return nil, "", false, nil }
 
 func str(v any) string {
 	s, _ := v.(string)

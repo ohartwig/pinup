@@ -16,12 +16,15 @@ import (
 // `versioning` sits at L1 (three stages consume its vocabulary) while
 // `versioning/semver` sits at L3 as an implementation.
 var layerOf = map[string]int{
-	// L0 - pure. stdlib only, plus yaml.v3 inside yamlx.
+	// L0 - pure. stdlib only, plus yaml.v3 inside yamlx. config/preset is
+	// here rather than beside config because config consumes it: the
+	// library and the extends resolver know nothing about files.
 	"model": 0, "hbs": 0, "glob": 0, "sched": 0, "jsonata": 0,
 	"jsonc": 0, "yamlx": 0, "apkindex": 0, "re2x": 0, "semverx": 0,
+	"config/preset": 0,
 
 	// L1 - services.
-	"config": 1, "config/preset": 1, "versioning": 1,
+	"config": 1, "versioning": 1,
 	"httpx": 1, "cache": 1, "git": 1,
 
 	// L2 - stages. Each declares the interface its implementations satisfy.

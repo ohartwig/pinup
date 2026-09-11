@@ -54,7 +54,7 @@ func TestLayerAssignment(t *testing.T) {
 		{"model", 0, true},
 		{"hbs", 0, true},
 		{"config", 1, true},
-		{"config/preset", 1, true},
+		{"config/preset", 0, true}, // longer prefix wins over "config"
 		{"versioning", 1, true},
 		{"versioning/semver", 3, true}, // longest prefix wins over "versioning"
 		{"extract", 2, true},

@@ -7,8 +7,7 @@
 // It never re-serializes a file: every dependency it reports carries a
 // model.Locus - byte offsets into the file exactly as read - and Edit turns
 // one model.Update into a model.Edit, a byte-range replacement. That is what
-// lets comments, indentation and the renovate annotation convention this
-// estate uses heavily survive untouched.
+// lets comments and indentation survive untouched.
 package dockerfile
 
 import (
@@ -73,10 +72,6 @@ var (
 	// would produce a version no datasource can resolve, and an Edit that
 	// replaced the comment along with it.
 	reArg = regexp.MustCompile(`(?i)^[ \t]*ARG[ \t]+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:=(?P<val>[^ \t]*))?[ \t]*.*$`)
-	// reRenovate matches the annotation comment this estate puts on the line
-	// directly above an ARG default it wants Renovate (and now pinup) to
-	// track: "# renovate: datasource=... depName=... versioning=...".
-	reRenovate = regexp.MustCompile(`^[ \t]*#[ \t]*renovate:[ \t]*(.*)$`)
 )
 
 // Extract implements extract.Manager. It never returns an error for a
@@ -115,12 +110,13 @@ func (m *Manager) Extract(_ context.Context, f extract.File, cfg extract.Manager
 			if !sawFrom {
 				globalArgs[argName] = bare[vs:ve]
 			}
-
-			ann := renovateAnnotation(lines, i)
-			if ann == nil {
-				continue // not annotated: this manager does not track plain ARGs
-			}
-			deps = append(deps, argDependency(f.Path, i+1, argName, bare, vs, ve, ln.start, ann))
+			// An ARG is never a dependency of this manager, annotated or not.
+			// Measured: Renovate's dockerfile manager reports FROM references
+			// only; a "# renovate:" annotated ARG belongs to the
+			// customManagers:dockerfileVersions preset, which resolves into
+			// every estate configuration and extracts it as a custom regex
+			// dependency. Extracting it here as well produced every such
+			// dependency twice.
 			continue
 		}
 
@@ -162,36 +158,6 @@ func applyManagerDefaults(deps []model.Dependency, cfg extract.ManagerConfig) {
 		if len(deps[i].RegistryURLs) == 0 && len(cfg.RegistryURLs) > 0 {
 			deps[i].RegistryURLs = cfg.RegistryURLs
 		}
-	}
-}
-
-// argDependency builds the Dependency for one renovate-annotated ARG default.
-func argDependency(file string, lineNo int, argName, bare string, vs, ve, lineStart int, ann map[string]string) model.Dependency {
-	depName := ann["depName"]
-	if depName == "" {
-		depName = argName
-	}
-	var registryURLs []string
-	if u := ann["registryUrl"]; u != "" {
-		registryURLs = []string{u}
-	}
-	return model.Dependency{
-		Manager:        name,
-		File:           file,
-		CustomManager:  model.NoCustomManager,
-		DepName:        depName,
-		CurrentValue:   bare[vs:ve],
-		Datasource:     ann["datasource"],
-		Versioning:     ann["versioning"],
-		RegistryURLs:   registryURLs,
-		ExtractVersion: ann["extractVersion"],
-		Locus: model.Locus{
-			ValueStart:  lineStart + vs,
-			ValueEnd:    lineStart + ve,
-			DigestStart: model.NoDigest,
-			DigestEnd:   model.NoDigest,
-			Line:        lineNo,
-		},
 	}
 }
 
@@ -349,30 +315,6 @@ func splitRef(ref string) (name string, tagStart, tagEnd, digestStart, digestEnd
 		return rest[:abs], abs + 1, len(rest), digestStart, digestEnd
 	}
 	return rest, len(rest), len(rest), digestStart, digestEnd
-}
-
-// renovateAnnotation reads the "# renovate: ..." comment directly above line
-// index i, and parses it, or returns nil when the preceding line is not one.
-// "Directly above" is deliberately literal - not the nearest comment skipping
-// blank lines - because that is what the estate's own convention (see
-// Containerfile) writes.
-func renovateAnnotation(lines []lineInfo, i int) map[string]string {
-	if i == 0 {
-		return nil
-	}
-	prev := strings.TrimSuffix(lines[i-1].text, "\r")
-	m := reRenovate.FindStringSubmatch(prev)
-	if m == nil {
-		return nil
-	}
-	fields := strings.Fields(m[1])
-	ann := make(map[string]string, len(fields))
-	for _, field := range fields {
-		if k, v, ok := strings.Cut(field, "="); ok {
-			ann[k] = v
-		}
-	}
-	return ann
 }
 
 // trimValueSpan narrows an ARG value's [start, end) span to exclude trailing
