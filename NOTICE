@@ -1,0 +1,19 @@
+pinup
+Copyright (c) 2026 Kai Ole Hartwig
+
+Licensed under the MIT License; see LICENSE.
+
+--------------------------------------------------------------------------
+
+Behavioural compatibility with Renovate (https://github.com/renovatebot/renovate)
+is a goal of this project. Renovate is licensed under the GNU Affero General
+Public License v3.0.
+
+No source code, configuration preset, fixture table or other copyrightable
+expression from the Renovate project has been copied into this repository.
+Where compatibility required knowledge of Renovate's behaviour, that behaviour
+was observed by executing a pinned Renovate container and recording its
+input/output pairs; the implementation here was written from those recordings.
+
+This separation is what allows pinup to be MIT-licensed while reproducing the
+decisions of an AGPL-licensed program. See docs/tech-spec.md section 0.1.
