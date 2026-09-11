@@ -1,0 +1,7 @@
+# Go build artefact: `go build ./cmd/pinup` drops the binary here
+/pinup
+/dist/
+# Module cache when GOPATH is redirected into the project (CI does this)
+/.go/
+coverage.out
+.DS_Store

@@ -1,0 +1,196 @@
+# SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
+# SPDX-License-Identifier: MIT
+#
+# pinup's own pipeline. Two traps govern the shape of this file, both recorded
+# in docs/plan.md section 6.2:
+#
+#   1. Declaring `stages:` REPLACES the list the composed template supplies.
+#      A job in a stage that is not declared here does not produce a YAML
+#      error - it produces a pipeline with zero jobs, which reads as broken
+#      infrastructure. The same is true of `workflow:`.
+#   2. This file therefore declares both, as supersets, and `lint:ci-resolved`
+#      asserts the resolved job list against .gitlab/expected-jobs.txt so the
+#      mismatch is caught at merge time rather than at the next upstream bump.
+
+include:
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/composed-default-pipelines
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@1.62.17
+    inputs:
+      working-directory: '.'
+
+  # These three are NOT part of the go composed pipeline. Shipping .gitsigners
+  # and an SPDX header without the job that reads them is decoration, not a
+  # gate - so they are included by name.
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.33.64
+    inputs:
+      stage: quick
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.33.64
+    inputs:
+      stage: quick
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.33.64
+    inputs:
+      stage: quick
+
+# A superset of the composed list. `build` and `release` are ours.
+stages:
+  - quick
+  - test
+  - build
+  - release
+
+# A superset of the composed workflow. Only the `schedule` line is ours: the
+# self-update job (docs/tasks.md D.4) runs on a schedule, and the composed
+# workflow does not admit that source - without this line that pipeline would
+# silently not be created.
+workflow:
+  auto_cancel:
+    on_job_failure: all
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "pipeline"
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - when: never
+
+variables:
+  # renovate: datasource=docker depName=devops/images/golang
+  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27"
+  # renovate: datasource=docker depName=devops/images/curl
+  CURL_IMAGE: "registry.ole-hartwig.eu/devops/images/curl:8.21"
+  # Do not quietly pull a different Go version: what is in the image is what
+  # counts. go.mod says 1.27 and the image is 1.27; with `auto` a future bump
+  # to the directive would silently download a toolchain the image does not
+  # have, and the pin would be documenting a fiction.
+  GOTOOLCHAIN: "local"
+  # -mod=mod lets CI repair go.sum instead of reporting that it is wrong.
+  GOFLAGS: "-mod=readonly"
+  GOPATH: "${CI_PROJECT_DIR}/.go"
+  PACKAGE_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/pinup"
+
+default:
+  image: ${GO_IMAGE}
+  # The fleet is spot instances: an instance can be reclaimed mid-job. That is
+  # not a fault in what was built. `runner_configuration_error` covers failed
+  # image pulls. Deliberately not stuck_or_timeout_failure - deprecated, and
+  # /ci/lint warns about it.
+  retry:
+    max: 2
+    when:
+      - runner_system_failure
+      - scheduler_failure
+      - runner_external_dependency_failure
+      - runner_configuration_error
+
+# --------------------------------------------------------------------------- #
+# Quick
+# --------------------------------------------------------------------------- #
+# Asks the pipeline what jobs exist, rather than asking the file what it says.
+# Fails when the resolved job list loses a name that .gitlab/expected-jobs.txt
+# still claims - which is what an upstream stage-list change looks like from
+# inside this repository.
+lint:ci-resolved:
+  stage: quick
+  image: ${CURL_IMAGE}
+  cache: []
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - |
+      set -eu
+      body="$(jq -Rs '{content: .}' < .gitlab-ci.yml)"
+      printf '%s' "$body" > /tmp/lint-body.json
+      code="$(curl -sS -o /tmp/lint.json -w '%{http_code}' \
+        -X POST \
+        -H "JOB-TOKEN: ${CI_JOB_TOKEN}" \
+        -H 'Content-Type: application/json' \
+        --data @/tmp/lint-body.json \
+        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/ci/lint?include_jobs=true")"
+      # Check the status, never the emptiness of the body: a 404 body is a
+      # non-empty string and would read as success.
+      test "$code" = "200" || { echo "ci/lint returned HTTP $code"; cat /tmp/lint.json; exit 1; }
+      jq -e '.valid == true' /tmp/lint.json > /dev/null \
+        || { echo "pipeline is not valid:"; jq -r '.errors[]?' /tmp/lint.json; exit 1; }
+      jq -r '.jobs[].name' /tmp/lint.json | sort -u > /tmp/resolved-jobs.txt
+      missing=0
+      while read -r want; do
+        [ -z "$want" ] && continue
+        case "$want" in \#*) continue ;; esac
+        grep -qxF "$want" /tmp/resolved-jobs.txt || { echo "MISSING JOB: $want"; missing=1; }
+      done < .gitlab/expected-jobs.txt
+      echo "resolved $(wc -l < /tmp/resolved-jobs.txt) jobs, expected $(grep -cve '^\s*$' -e '^#' .gitlab/expected-jobs.txt)"
+      test "$missing" = "0"
+
+# --------------------------------------------------------------------------- #
+# Test
+# --------------------------------------------------------------------------- #
+# Extended, not replaced: image, cache, stage and working directory stay as the
+# composed template defines them. Only coverage and -race are added here.
+#
+# The count assertion is the point of the second script line. A suite that runs
+# zero tests and a suite that does not run at all are both green otherwise.
+test:go:
+  script:
+    - go test -race -coverprofile=coverage.out ./...
+    - |
+      set -eu
+      pkgs="$(go list ./... | wc -l | tr -d ' ')"
+      echo "packages under test: $pkgs"
+      test "$pkgs" -gt 0 || { echo "no packages - the suite did not run"; exit 1; }
+    - go tool cover -func=coverage.out | tail -1
+  coverage: '/total:\s+\(statements\)\s+(\d+\.\d+)%/'
+  artifacts:
+    paths:
+      - coverage.out
+    expire_in: 1 week
+
+# --------------------------------------------------------------------------- #
+# Build - four platforms from one arm64 runner, nothing needs CGO
+# --------------------------------------------------------------------------- #
+.build:
+  stage: build
+  needs: [test:go]
+  cache:
+    key:
+      files:
+        - go.sum
+    paths:
+      - .go/pkg/mod
+    policy: pull
+  script:
+    - |
+      set -eu
+      VERSION="${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}"
+      mkdir -p dist
+      CGO_ENABLED=0 GOOS="$TARGET_OS" GOARCH="$TARGET_ARCH" \
+        go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" \
+        -o "dist/${BINARY}" ./cmd/pinup
+      cd dist
+      # The golden image ships no /usr/bin/zip, and an apt-get for it would be
+      # a second package channel in a pipeline that otherwise needs only Go.
+      go run ../tools/zip.go "pinup-${LABEL}.zip" "${BINARY}"
+      sha256sum "pinup-${LABEL}.zip" > "pinup-${LABEL}.zip.sha256"
+  artifacts:
+    paths:
+      - dist/*.zip
+      - dist/*.sha256
+    expire_in: 1 week
+
+build:linux-arm64:
+  extends: .build
+  variables: {TARGET_OS: linux, TARGET_ARCH: arm64, LABEL: linux-arm64, BINARY: pinup}
+
+build:linux-amd64:
+  extends: .build
+  variables: {TARGET_OS: linux, TARGET_ARCH: amd64, LABEL: linux-amd64, BINARY: pinup}
+
+build:darwin-arm64:
+  extends: .build
+  variables: {TARGET_OS: darwin, TARGET_ARCH: arm64, LABEL: darwin-arm64, BINARY: pinup}
+
+build:darwin-amd64:
+  extends: .build
+  variables: {TARGET_OS: darwin, TARGET_ARCH: amd64, LABEL: darwin-amd64, BINARY: pinup}
