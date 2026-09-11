@@ -36,7 +36,12 @@ var layerOf = map[string]int{
 	"runner": 4, "report": 4,
 
 	// L5 - wiring. The only place that knows every implementation.
-	"wire": 5, "cmd": 5,
+	"wire": 5,
+
+	// L6 - the binary. It calls wire and nothing else of ours directly, so
+	// wire sits below it rather than beside it: cmd depends on wiring, not
+	// the other way round.
+	"cmd": 6,
 }
 
 // declaredBy names, for each L3 group, the single L2 package that declares the
