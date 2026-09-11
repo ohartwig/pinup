@@ -314,3 +314,105 @@ func TestCorpusRecordsTheSuggestBlockOverMatch(t *testing.T) {
 		t.Logf("  over-match: %s = %q", d.DepName, d.CurrentValue)
 	}
 }
+
+// --------------------------------------------------------------------------
+// Versioning behaviour tables. Until versioning/* exists these assert that the
+// captured tables are usable and pin the semantics that are easy to get wrong.
+// --------------------------------------------------------------------------
+
+type verRow struct {
+	In      any `json:"in"`
+	A       any `json:"a"`
+	B       any `json:"b"`
+	Version any `json:"version"`
+	Range   any `json:"range"`
+	Out     any `json:"out"`
+}
+
+type verTable struct {
+	Module        string   `json:"module"`
+	Source        string   `json:"source"`
+	IsValid       []verRow `json:"isValid"`
+	IsStable      []verRow `json:"isStable"`
+	IsGreaterThan []verRow `json:"isGreaterThan"`
+	Matches       []verRow `json:"matches"`
+}
+
+func verTableFor(t *testing.T, module string) verTable {
+	t.Helper()
+	return readJSON[verTable](t, filepath.Join(snapshotDir(t), "versioning", module+".json"))
+}
+
+func TestVersioningTablesAreUsable(t *testing.T) {
+	var total int
+	for _, m := range []string{
+		"semver", "docker", "composer", "loose", "npm", "go", "apk",
+		"semver-partial", "semver-coerced", "regex-alpine",
+	} {
+		tbl := verTableFor(t, m)
+		n := len(tbl.IsValid) + len(tbl.IsStable) + len(tbl.IsGreaterThan) + len(tbl.Matches)
+		if n == 0 {
+			t.Errorf("%s: table is empty", m)
+		}
+		if !strings.Contains(tbl.Source, "renovate/renovate:43.288.0") {
+			t.Errorf("%s: table does not record what produced it (%q)", m, tbl.Source)
+		}
+		total += n
+	}
+	// Counts only the four operations this struct decodes, not every row in
+	// the files - the tables carry getMajor, equals, sortVersions,
+	// getSatisfyingVersion and getNewValue too, which versioning/* will read
+	// when it exists.
+	t.Logf("%d rows across 10 schemes, in the four operations decoded here", total)
+	if total < 4000 {
+		t.Errorf("only %d rows; the capture is thinner than it should be", total)
+	}
+}
+
+// The compatibility segment does not give an ordering, which is why it needs
+// its own update type rather than a version comparison. Asserted from the
+// captured behaviour rather than from reasoning about it.
+func TestDockerCompatibilityDoesNotOrder(t *testing.T) {
+	tbl := verTableFor(t, "docker")
+	get := func(a, b string) (bool, bool) {
+		for _, r := range tbl.IsGreaterThan {
+			if r.A == a && r.B == b {
+				v, ok := r.Out.(bool)
+				return v, ok
+			}
+		}
+		return false, false
+	}
+	fwd, ok1 := get("22-alpine3.21", "22-alpine3.20")
+	rev, ok2 := get("22-alpine3.20", "22-alpine3.21")
+	if !ok1 || !ok2 {
+		t.Fatal("the compatibility pair is missing from the captured table")
+	}
+	if fwd == rev {
+		t.Errorf("expected the two directions to disagree; both are %v", fwd)
+	}
+	// 3.21 is the newer compatibility, yet it is not reported as greater.
+	if fwd {
+		t.Error("22-alpine3.21 > 22-alpine3.20 held after all; " +
+			"if Renovate's docker versioning learned to order compatibility, " +
+			"UpdateCompatibility can be reconsidered")
+	}
+}
+
+// Eight corpus vectors use semver-partial, and its matching rule is not the
+// obvious one.
+func TestSemverPartialMatching(t *testing.T) {
+	tbl := verTableFor(t, "semver-partial")
+	got := map[string]any{}
+	for _, r := range tbl.Matches {
+		if r.Range == "1" {
+			got[r.Version.(string)] = r.Out
+		}
+	}
+	if got["1.10.17"] != true {
+		t.Errorf(`matches("1.10.17", "1") = %v, want true`, got["1.10.17"])
+	}
+	if got["1.22"] != false {
+		t.Errorf(`matches("1.22", "1") = %v, want false - a two-part version is not comparable`, got["1.22"])
+	}
+}
