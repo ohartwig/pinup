@@ -392,3 +392,79 @@ func TestBareMajorPinPlansANotificationNotAnEdit(t *testing.T) {
 		}
 	}
 }
+
+// A reference pinned by digest moves value and digest together or not at
+// all. The planner asks for the digest of every value it would write, drops
+// the update - with a warning - when it cannot learn it, refreshes the
+// digest when the tag is current, and reads a bare digest as latest.
+func TestDigestPinnedReferencesMoveWholeOrNotAtAll(t *testing.T) {
+	digests := map[string]string{"3.22": "sha256:new22", "3.23": "sha256:new23", "latest": "sha256:latest"}
+	req := func(d model.Dependency, rs *model.ReleaseSet) Request {
+		return Request{
+			Deps:        []model.Dependency{d},
+			Releases:    func(model.Dependency) *model.ReleaseSet { return rs },
+			Versionings: registry(),
+			Digest: func(_ model.Dependency, version string) (string, error) {
+				if v, ok := digests[version]; ok {
+					return v, nil
+				}
+				return "", fmt.Errorf("manifest for %s: 404", version)
+			},
+			Now: now,
+		}
+	}
+	pinned := dep("alpine", "3.22", "semver")
+	pinned.CurrentDigest = "sha256:old22"
+
+	// A newer tag carries its own digest.
+	res := Plan(req(pinned, releases("3.22", "3.23")))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "3.23" || res.Updates[0].NewDigest != "sha256:new23" {
+		t.Fatalf("want 3.23@sha256:new23, got %+v", res.Updates)
+	}
+	// The tag is current but its digest moved: a digest update.
+	res = Plan(req(pinned, releases("3.22")))
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdateDigest || res.Updates[0].NewValue != "3.22" || res.Updates[0].NewDigest != "sha256:new22" {
+		t.Fatalf("want a digest update to sha256:new22, got %+v", res.Updates)
+	}
+	// Nothing moved.
+	same := pinned
+	same.CurrentDigest = "sha256:new22"
+	res = Plan(req(same, releases("3.22")))
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "still resolves") {
+		t.Errorf("unchanged digest: %+v %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	// The new tag's digest cannot be learned: that update is dropped with
+	// a warning; the current tag's moved digest is still refreshed.
+	res = Plan(req(pinned, releases("3.22", "3.24")))
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdateDigest || len(res.Warnings) != 1 || !strings.Contains(res.Warnings[0].Msg, "3.24") {
+		t.Errorf("unknown digest: updates %+v, warnings %+v", res.Updates, res.Warnings)
+	}
+	// ... and with nothing to refresh either, the dependency says which
+	// update it dropped rather than "up to date".
+	res = Plan(req(same, releases("3.22", "3.24")))
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "3.24") {
+		t.Errorf("unknown digest, nothing to refresh: %+v %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	// No digest source at all: nothing is written half-way.
+	noSource := req(pinned, releases("3.22", "3.23"))
+	noSource.Digest = nil
+	res = Plan(noSource)
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "no digest source") {
+		t.Errorf("no digest source: %+v %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	// A bare digest is the digest of latest.
+	bare := dep("alpine", "", "semver")
+	bare.CurrentDigest = "sha256:old"
+	res = Plan(req(bare, releases("3.22")))
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdateDigest || res.Updates[0].NewDigest != "sha256:latest" || res.Updates[0].NewValue != "" {
+		t.Errorf("bare digest: %+v", res.Updates)
+	}
+	// An unpinned reference is never asked for a digest.
+	asked := false
+	plain := req(dep("alpine", "3.22", "semver"), releases("3.22", "3.23"))
+	plain.Digest = func(model.Dependency, string) (string, error) { asked = true; return "", nil }
+	res = Plan(plain)
+	if asked || len(res.Updates) != 1 || res.Updates[0].NewDigest != "" {
+		t.Errorf("unpinned: asked=%v %+v", asked, res.Updates)
+	}
+}

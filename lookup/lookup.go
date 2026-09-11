@@ -68,6 +68,14 @@ type Datasource interface {
 	DefaultVersioning() string
 }
 
+// DigestSource is a datasource that can name the content digest of one
+// version - a container registry, where a tag is a moving pointer and the
+// digest is what actually gets pulled. Releases deliberately does not fetch
+// digests: one manifest request per tag would turn a lookup into hundreds.
+type DigestSource interface {
+	Digest(ctx context.Context, ref Ref, version string) (string, error)
+}
+
 // Registry maps a datasource name to its implementation. wire fills it.
 type Registry map[string]Datasource
 
@@ -236,6 +244,40 @@ func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 		return res
 	}
 	return Result{Ref: ref, Releases: rs}
+}
+
+// Digest answers the content digest of one version through the dependency's
+// datasource, cached like a release set: a tag that moved is a digest
+// update, and the cache TTL bounds how late that is noticed. A datasource
+// that offers no digests is an error, not an empty answer - the planner
+// must not write a value whose digest it could not learn.
+func (f *Fetcher) Digest(ctx context.Context, d model.Dependency, version string) (string, error) {
+	ref := RefOf(d)
+	key := "digest\x00" + ref.Key() + "\x00" + version
+	if f.Cache != nil && (f.Bypass == nil || !f.Bypass(ref)) {
+		if payload, fresh, err := f.Cache.GetReleases(key, f.ttl(), f.Now); err == nil && fresh && len(payload) > 0 {
+			return string(payload), nil
+		}
+	}
+	ds, err := f.Registry.Get(ref.Datasource)
+	if err != nil {
+		return "", err
+	}
+	src, ok := ds.(DigestSource)
+	if !ok {
+		return "", fmt.Errorf("%s offers no digests", ref.Datasource)
+	}
+	digest, err := src.Digest(ctx, ref, version)
+	if err != nil {
+		return "", err
+	}
+	if digest == "" {
+		return "", fmt.Errorf("%s answered an empty digest for %s %s", ref.Datasource, ref.PackageName, version)
+	}
+	if f.Cache != nil {
+		_ = f.Cache.PutReleases(key, []byte(digest), f.Now)
+	}
+	return digest, nil
 }
 
 func (f *Fetcher) ttl() time.Duration {

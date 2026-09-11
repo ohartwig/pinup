@@ -117,6 +117,30 @@ func TestBranchNamesAndTitlesMatchTheEstate(t *testing.T) {
 			title:  "fix(deps): update golang.org/x/mobile digest to 8b95e45",
 		},
 		{
+			// Measured live: "renovate/registry.ole-hartwig.eu-devops-images-python-3.14",
+			// "chore(deps): update registry.ole-hartwig.eu/devops/images/python:3.14 docker digest to 0c9dec5".
+			name: "docker digest keeps the tag in branch and title",
+			u: model.Update{
+				DepKey: "python", Type: model.UpdateDigest, NewValue: "3.14", NewVersion: "3.14", NewDigest: "sha256:0c9dec5fffffffffffff",
+				Dep: model.Dependency{Manager: "gitlabci", Datasource: "docker", DepName: "registry.ole-hartwig.eu/devops/images/python", CurrentValue: "3.14", CurrentDigest: "sha256:aaaa", CustomManager: model.NoCustomManager},
+			},
+			cfg:    base,
+			branch: "renovate/registry.ole-hartwig.eu-devops-images-python-3.14",
+			title:  "chore(deps): update registry.ole-hartwig.eu/devops/images/python:3.14 docker digest to 0c9dec5",
+		},
+		{
+			// Measured live: "renovate/registry.ole-hartwig.eu-devops-ci-mirrors-wolfi-base-latest",
+			// "... update registry.ole-hartwig.eu/devops/ci-mirrors/wolfi-base:latest docker digest to 65e1acb".
+			name: "docker digest on latest",
+			u: model.Update{
+				DepKey: "wolfi", Type: model.UpdateDigest, NewValue: "latest", NewVersion: "latest", NewDigest: "sha256:65e1acbfffffffffffff",
+				Dep: model.Dependency{Manager: "dockerfile", Datasource: "docker", DepName: "registry.ole-hartwig.eu/devops/ci-mirrors/wolfi-base", CurrentValue: "latest", CurrentDigest: "sha256:aaaa", CustomManager: model.NoCustomManager},
+			},
+			cfg:    base,
+			branch: "renovate/registry.ole-hartwig.eu-devops-ci-mirrors-wolfi-base-latest",
+			title:  "chore(deps): update registry.ole-hartwig.eu/devops/ci-mirrors/wolfi-base:latest docker digest to 65e1acb",
+		},
+		{
 			name: "pin digest joins the pin group",
 			u: model.Update{
 				DepKey: "python", Type: model.UpdatePinDigest, NewDigest: "sha256:c6ead21fffffffffffff",

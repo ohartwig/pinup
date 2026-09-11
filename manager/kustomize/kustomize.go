@@ -73,7 +73,6 @@ package kustomize
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/extract"
@@ -449,40 +448,9 @@ func scalarOffset(src []byte, n *yamlx.Node) int {
 	return off
 }
 
-// Edit implements extract.Manager. It replaces the value span, or the digest
-// span when the update carries only a new digest, and refuses when the bytes
-// it recorded at extraction time no longer match what is on disk now - that
-// is the file having changed underneath the run, and writing anyway would
-// corrupt it.
+// Edit implements extract.Manager: the value span, the digest span, or
+// both, through the shared reference editor - which also refuses a new
+// tag for an image pinned by digest unless the digest moves with it.
 func (*Manager) Edit(_ context.Context, f extract.File, up model.Update) (model.Edit, error) {
-	dep := up.Dep
-	l := dep.Locus
-
-	if up.NewValue == "" && up.NewDigest != "" {
-		if l.DigestStart < 0 || l.DigestEnd > len(f.Content) || l.DigestStart >= l.DigestEnd {
-			return model.Edit{}, fmt.Errorf("kustomize: %s: no editable digest range recorded for %s", f.Path, dep.DepName)
-		}
-		got := string(f.Content[l.DigestStart:l.DigestEnd])
-		if got != dep.CurrentDigest {
-			return model.Edit{}, fmt.Errorf("kustomize: %s changed since extraction: expected digest %q at [%d:%d], found %q",
-				f.Path, dep.CurrentDigest, l.DigestStart, l.DigestEnd, got)
-		}
-		return model.Edit{
-			File: f.Path, Start: l.DigestStart, End: l.DigestEnd,
-			Old: got, New: up.NewDigest, Manager: name,
-		}, nil
-	}
-
-	if l.ValueStart < 0 || l.ValueEnd > len(f.Content) || l.ValueStart >= l.ValueEnd {
-		return model.Edit{}, fmt.Errorf("kustomize: %s: no editable range recorded for %s", f.Path, dep.DepName)
-	}
-	got := string(f.Content[l.ValueStart:l.ValueEnd])
-	if got != dep.CurrentValue {
-		return model.Edit{}, fmt.Errorf("kustomize: %s changed since extraction: expected %q at [%d:%d], found %q",
-			f.Path, dep.CurrentValue, l.ValueStart, l.ValueEnd, got)
-	}
-	return model.Edit{
-		File: f.Path, Start: l.ValueStart, End: l.ValueEnd,
-		Old: got, New: up.NewValue, Manager: name,
-	}, nil
+	return extract.EditRef(name, f, up)
 }

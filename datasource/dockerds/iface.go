@@ -5,4 +5,7 @@ package dockerds
 
 import "git.ole-hartwig.eu/pinup/pinup/lookup"
 
-var _ lookup.Datasource = (*Datasource)(nil)
+var (
+	_ lookup.Datasource   = (*Datasource)(nil)
+	_ lookup.DigestSource = (*Datasource)(nil)
+)

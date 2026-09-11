@@ -39,6 +39,13 @@ type Request struct {
 	// datasource; the planner then falls back to semver and says so.
 	DefaultVersioning func(datasource string) string
 
+	// Digest answers the content digest of one version of a dependency,
+	// for references pinned by digest: every update of such a reference
+	// carries the digest of the value it writes, and a tag whose digest
+	// moved is itself an update. nil means digests cannot be learned, and
+	// a digest-pinned reference is then skipped rather than half-moved.
+	Digest func(d model.Dependency, version string) (string, error)
+
 	// Now is the plan's clock. Required; the planner never reads time.Now.
 	Now time.Time
 }
@@ -132,7 +139,20 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 
 	cur := d.CurrentValue
+	if cur == "" && d.CurrentDigest != "" {
+		// A reference by digest alone - `image@sha256:…` - has no version
+		// to compare; what can move is the digest behind the tag it
+		// implies. Renovate reads that tag as "latest" when none is
+		// written (documented, not measured here).
+		return digestRefresh(req, d, "latest")
+	}
 	if !v.IsValid(cur) {
+		if d.CurrentDigest != "" {
+			// `latest@sha256:…`: the tag is not a version and never
+			// moves, but the digest behind it does. Measured: Renovate
+			// opens "update …/wolfi-base:latest docker digest to 65e1acb".
+			return digestRefresh(req, d, cur)
+		}
 		return nil, fmt.Sprintf("current value %q is not a valid %s version", cur, scheme), nil
 	}
 	if len(rs.Releases) == 0 {
@@ -264,6 +284,42 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		}
 		ups = append(ups, u)
 	}
+	if d.CurrentDigest != "" {
+		// A digest-pinned reference moves value and digest together, or
+		// not at all: a runtime pulls by digest and ignores the tag, so
+		// `newtag@olddigest` would claim a version it does not run.
+		kept := ups[:0]
+		var warn *model.Warning
+		for _, u := range ups {
+			if u.NewDigest != "" {
+				kept = append(kept, u)
+				continue
+			}
+			digest, err := lookupDigest(req, *d, u.NewVersion)
+			if err != nil {
+				warn = &model.Warning{Stage: "plan", File: d.File,
+					Msg: fmt.Sprintf("%s: %s to %s not planned: %v", d.DepName, u.Type, u.NewValue, err)}
+				continue
+			}
+			u.NewDigest = digest
+			kept = append(kept, u)
+		}
+		ups = kept
+		if len(ups) > 0 {
+			return ups, "", warn
+		}
+		// The tag stays; the digest behind it may not have.
+		refresh, skip, rwarn := digestRefresh(req, d, base)
+		if warn != nil {
+			// A version update was dropped for want of its digest; that,
+			// not "up to date", is what the dependency reports.
+			if len(refresh) == 0 {
+				skip = warn.Msg
+			}
+			return refresh, skip, warn
+		}
+		return refresh, skip, rwarn
+	}
 	if len(ups) == 0 {
 		if isRange {
 			return nil, fmt.Sprintf("up to date: %q admits %s, and none of %d releases is newer", cur, base, seen), nil
@@ -334,6 +390,39 @@ func extractVersions(rs *model.ReleaseSet, pattern string) (*model.ReleaseSet, e
 		out.Releases = append(out.Releases, r)
 	}
 	return &out, nil
+}
+
+// lookupDigest asks the request for a digest, naming the gap when it has
+// no way to answer.
+func lookupDigest(req Request, d model.Dependency, version string) (string, error) {
+	if req.Digest == nil {
+		return "", fmt.Errorf("no digest source for %s", d.Datasource)
+	}
+	return req.Digest(d, version)
+}
+
+// digestRefresh plans the one update a digest-pinned reference has when its
+// value is current: the digest the tag points at now, if it moved.
+func digestRefresh(req Request, d *model.Dependency, tag string) ([]model.Update, string, *model.Warning) {
+	digest, err := lookupDigest(req, *d, tag)
+	if err != nil {
+		return nil, fmt.Sprintf("digest of %s unknown: %v", tag, err), &model.Warning{
+			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: digest of %s: %v", d.DepName, tag, err),
+		}
+	}
+	if digest == d.CurrentDigest {
+		return nil, fmt.Sprintf("up to date: %s still resolves to the pinned digest", tag), nil
+	}
+	return []model.Update{{
+		DepKey:     d.Key(),
+		Dep:        *d,
+		NewValue:   d.CurrentValue,
+		NewVersion: d.CurrentValue,
+		NewDigest:  digest,
+		Type:       model.UpdateDigest,
+		Declared:   declaredRisk(model.UpdateDigest),
+		TimeSource: model.TimeUnknown,
+	}}, "", nil
 }
 
 // isRollingMajor is whether a current value is a bare major: digits and

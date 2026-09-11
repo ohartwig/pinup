@@ -214,3 +214,46 @@ func TestPackageNameWinsOverDepNameForTheLookup(t *testing.T) {
 		t.Error("a different registry is a different lookup")
 	}
 }
+
+type digestDS struct {
+	countingDS
+	digests map[string]string
+	asked   int
+}
+
+func (d *digestDS) Digest(_ context.Context, ref Ref, version string) (string, error) {
+	d.asked++
+	if v, ok := d.digests[version]; ok {
+		return v, nil
+	}
+	return "", errors.New("no such tag")
+}
+
+// A digest is fetched through the datasource once per version and then
+// served from the cache within the TTL; a datasource without digests, an
+// unknown tag and an empty answer are all errors, never a value the
+// planner could write.
+func TestDigestIsCachedPerVersionAndNeverEmpty(t *testing.T) {
+	ds := &digestDS{countingDS: countingDS{calls: map[string]int{}}, digests: map[string]string{"1.0": "sha256:aa", "empty": ""}}
+	f := &Fetcher{Registry: Registry{"fake": ds}, Cache: newMemCache(), Now: now}
+	d := dep("a", "fake")
+	for range 3 {
+		got, err := f.Digest(context.Background(), d, "1.0")
+		if err != nil || got != "sha256:aa" {
+			t.Fatalf("got %q, %v", got, err)
+		}
+	}
+	if ds.asked != 1 {
+		t.Errorf("the datasource was asked %d times for one version, want 1", ds.asked)
+	}
+	if _, err := f.Digest(context.Background(), d, "9.9"); err == nil {
+		t.Error("an unknown tag yielded a digest")
+	}
+	if _, err := f.Digest(context.Background(), d, "empty"); err == nil {
+		t.Error("an empty digest was accepted")
+	}
+	plain := &Fetcher{Registry: Registry{"fake": &countingDS{calls: map[string]int{}}}, Now: now}
+	if _, err := plain.Digest(context.Background(), d, "1.0"); err == nil {
+		t.Error("a datasource without digests answered one")
+	}
+}

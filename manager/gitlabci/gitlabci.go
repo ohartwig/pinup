@@ -319,19 +319,9 @@ func scalarOffset(src []byte, n *yamlx.Node) int {
 	return off
 }
 
-// Edit replaces the recorded bytes, refusing when they have moved.
+// Edit replaces the recorded bytes, refusing when they have moved - and
+// refusing a new tag for an image pinned by digest unless the digest moves
+// with it.
 func (*Manager) Edit(_ context.Context, f extract.File, up model.Update) (model.Edit, error) {
-	l := up.Dep.Locus
-	if l.ValueStart < 0 || l.ValueEnd > len(f.Content) || l.ValueStart >= l.ValueEnd {
-		return model.Edit{}, fmt.Errorf("gitlabci: %s: no editable range recorded for %s", f.Path, up.Dep.DepName)
-	}
-	got := string(f.Content[l.ValueStart:l.ValueEnd])
-	if got != up.Dep.CurrentValue {
-		return model.Edit{}, fmt.Errorf("gitlabci: %s changed since extraction: expected %q at [%d:%d], found %q",
-			f.Path, up.Dep.CurrentValue, l.ValueStart, l.ValueEnd, got)
-	}
-	return model.Edit{
-		File: f.Path, Start: l.ValueStart, End: l.ValueEnd,
-		Old: got, New: up.NewValue, Manager: "gitlabci",
-	}, nil
+	return extract.EditRef("gitlabci", f, up)
 }

@@ -362,6 +362,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 	}
 
+	digestLookups := 0
 	planned := planner.Plan(planner.Request{
 		Deps: plan.Deps,
 		Releases: func(d model.Dependency) *model.ReleaseSet {
@@ -373,7 +374,11 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		},
 		Versionings:       wire.Versionings(),
 		DefaultVersioning: wire.DefaultVersioning(datasources),
-		Now:               now,
+		Digest: func(d model.Dependency, version string) (string, error) {
+			digestLookups++
+			return fetcher.Digest(ctx, d, version)
+		},
+		Now: now,
 	})
 	plan.Deps = planned.Deps
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
@@ -430,7 +435,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	plan.Stats = model.Stats{
 		FilesDiscovered:  found.Stats.FilesMatched,
 		DepsExtracted:    len(plan.Deps),
-		LookupsIssued:    len(results),
+		LookupsIssued:    len(results) + digestLookups,
 		LookupsFromCache: fromCache,
 		UpdatesFound:     len(plan.Updates),
 		UpdatesBlocked:   blocked,

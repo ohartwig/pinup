@@ -26,6 +26,53 @@ import (
 // topics Renovate keeps outside the configuration, the "(major)" group
 // split, and the cleaning a branch name goes through.
 
+// Builtin digest templates, as captured in config/defaults.json; a
+// datasource's own replace them the way ManagerTopic replaces the topic.
+const (
+	builtinDigestBranchTopic = "{{{depNameSanitized}}}-digest"
+	builtinDigestCommitTopic = "{{{depName}}} digest"
+	dockerDigestBranchTopic  = "{{{depNameSanitized}}}-{{{currentValue}}}"
+	dockerDigestCommitTopic  = "{{{depName}}}{{#if currentValue}}:{{{currentValue}}}{{/if}} Docker digest"
+	dockerDigestCommitExtra  = "to {{newDigestShort}}"
+	digestConfigKey          = "digest"
+)
+
+// withDatasourceDigestDefaults applies the digest templates a datasource
+// supplies over the builtin ones. Measured from the estate's open merge
+// requests: a docker digest update travels on
+// "renovate/registry.ole-hartwig.eu-devops-images-python-3.14" titled
+// "update registry.ole-hartwig.eu/devops/images/python:3.14 docker digest to
+// 0c9dec5" - the tag in the branch, the tag and the short digest in the
+// title - where the builtin templates would say "...-python-digest" and
+// "update ... digest to 0c9dec5". A template the configuration changed is
+// left alone.
+func withDatasourceDigestDefaults(cfg map[string]any, datasource string) map[string]any {
+	if datasource != "docker" {
+		return cfg
+	}
+	out := make(map[string]any, len(cfg)+1)
+	for k, v := range cfg {
+		out[k] = v
+	}
+	digest := map[string]any{}
+	if existing, ok := cfg[digestConfigKey].(map[string]any); ok {
+		for k, v := range existing {
+			digest[k] = v
+		}
+	}
+	if t, _ := digest["branchTopic"].(string); t == "" || t == builtinDigestBranchTopic {
+		digest["branchTopic"] = dockerDigestBranchTopic
+	}
+	if t, _ := digest["commitMessageTopic"].(string); t == "" || t == builtinDigestCommitTopic {
+		digest["commitMessageTopic"] = dockerDigestCommitTopic
+	}
+	if _, ok := digest["commitMessageExtra"]; !ok {
+		digest["commitMessageExtra"] = dockerDigestCommitExtra
+	}
+	out[digestConfigKey] = digest
+	return out
+}
+
 // ManagerTopic is the commitMessageTopic a manager supplies when the
 // configuration names none. Measured from merge-request titles: "update
 // registry.../code-signing docker tag to v1.3.10" for an image, "update
@@ -94,6 +141,7 @@ type Named struct {
 // configuration the rules produced for it. vs is used to read the new
 // version's components for the template variables.
 func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, error) {
+	cfg = withDatasourceDigestDefaults(cfg, u.Dep.Datasource)
 	cfg = overlay(cfg, updateTypeKey(u.Type.Renovate()))
 
 	// The configuration before the group overlay names a single update;
