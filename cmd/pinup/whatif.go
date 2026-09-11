@@ -536,11 +536,27 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.Renovate().String()))
 	// The update type's own object - lockFileMaintenance.schedule, say -
 	// applies over the rules' result before the policy is read.
-	policy := planner.PolicyOf(planner.Overlay(res.Config, u.Type), func(key string) model.Origin { return origin(res, key) })
+	cfg := planner.Overlay(res.Config, u.Type)
+	if u.SecurityFix {
+		// Measured: a security fix travels under the vulnerabilityAlerts
+		// object - its own branch topic, the security label, no release
+		// age, no schedule, no dashboard approval - forced over whatever
+		// the rules said. The branch is named from the same view.
+		cfg = planner.OverlayKey(cfg, "vulnerabilityAlerts")
+	}
+	policy := planner.PolicyOf(cfg, func(key string) model.Origin { return origin(res, key) })
 	if res.SkipReason != "" {
 		policy.Enabled = false
 	}
+	if u.SecurityFix {
+		if enabled, ok := cfg["enabled"].(bool); ok {
+			policy.Enabled = enabled
+		}
+	}
 	decided, err := planner.Decide(u, policy, now)
+	if u.SecurityFix {
+		return decided, cfg, err
+	}
 	return decided, res.Config, err
 }
 

@@ -250,6 +250,47 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		return nil, fmt.Sprintf("none of the %d releases is a valid %s version", len(rs.Releases), scheme), nil
 	}
 
+	if d.VulnerabilityBound != "" {
+		// The fast path. Measured: with advisories against the current
+		// version, Renovate's one update is the LOWEST released,
+		// non-deprecated version at or above the highest fix version -
+		// lodash 4.17.20 goes to 4.18.1 (4.18.0 is deprecated), guzzle
+		// 7.4.4 to 7.15.2 - on the vulnerabilityAlerts branch, whatever
+		// the usual buckets would have offered.
+		if !v.IsValid(d.VulnerabilityBound) {
+			return nil, fmt.Sprintf("vulnerability bound %q is not a valid %s version", d.VulnerabilityBound, scheme), &model.Warning{
+				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: advisory fix version %q is not a %s version", d.DepName, d.VulnerabilityBound, scheme),
+			}
+		}
+		fix, ok := "", false
+		for c := range byVersion {
+			if v.Compare(c, d.VulnerabilityBound) < 0 {
+				continue
+			}
+			if !ok || v.Compare(c, fix) < 0 {
+				fix, ok = c, true
+			}
+		}
+		if !ok {
+			ids := make([]string, 0, len(d.Advisories))
+			for _, a := range d.Advisories {
+				ids = append(ids, a.ID)
+			}
+			return nil, fmt.Sprintf("vulnerable (%s): no release at or above the fix version %s", strings.Join(ids, ", "), d.VulnerabilityBound), &model.Warning{
+				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s %s is affected by %s and no release at or above %s exists", d.DepName, cur, strings.Join(ids, ", "), d.VulnerabilityBound),
+			}
+		}
+		u, skip := buildUpdate(v, d, cur, base, fix, byVersion[fix], scheme)
+		if strings.HasPrefix(skip, unchangedPrefix) {
+			return nil, fmt.Sprintf("up to date: %q written as a %s value already admits the fix %s", cur, scheme, fix), nil
+		}
+		if skip != "" {
+			return nil, skip, nil
+		}
+		u.SecurityFix = true
+		return []model.Update{u}, "", nil
+	}
+
 	var ups []model.Update
 	unchanged := ""
 	for _, bucket := range [][]string{others, majors} {
@@ -257,45 +298,18 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		if !ok {
 			continue
 		}
-		newValue, err := v.NewValue(cur, target, versioning.StrategyAuto)
-		if err != nil {
-			return nil, fmt.Sprintf("cannot write %s as a %s value: %v", target, scheme, err), nil
-		}
-		if newValue == cur {
-			// The scheme keeps the value as written - a go directive
-			// "1.27.0" already admits 1.27.1 - so there is nothing to
-			// write, and an update that changes nothing is not an update.
-			// Measured: Renovate plans none for `go 1.27.0` with 1.27.1 out.
-			unchanged = target
-			continue
-		}
-		t := versioning.UpdateType(v, base, target)
-		if t == model.UpdateMajor && isRollingMajor(cur) {
-			// `@1`-style pins float within their major by design (measured
-			// across 44 image repositories: 55 % of all commits on main
-			// were component bumps before the estate switched to them).
-			// A newer major is the one thing such a pin cannot see on its
-			// own, so it is planned as a notification, never as an edit.
-			t = model.UpdateMajorAvailable
-		}
-		rel := byVersion[target]
-		u := model.Update{
-			DepKey:     d.Key(),
-			Dep:        *d,
-			NewValue:   newValue,
-			NewVersion: target,
-			NewDigest:  rel.Digest,
-			Type:       t,
-			Declared:   declaredRisk(t),
-			TimeSource: model.TimeUnknown,
-		}
-		switch {
-		case !rel.Timestamp.IsZero():
-			u.ReleaseTime = rel.Timestamp
-			u.TimeSource = model.TimeFromDatasource
-		case !rel.FirstSeen.IsZero():
-			u.ReleaseTime = rel.FirstSeen
-			u.TimeSource = model.TimeFromFirstSeen
+		u, skip := buildUpdate(v, d, cur, base, target, byVersion[target], scheme)
+		if skip != "" {
+			if strings.HasPrefix(skip, unchangedPrefix) {
+				// The scheme keeps the value as written - a go directive
+				// "1.27.0" already admits 1.27.1 - so there is nothing
+				// to write, and an update that changes nothing is not an
+				// update. Measured: Renovate plans none for `go 1.27.0`
+				// with 1.27.1 out.
+				unchanged = target
+				continue
+			}
+			return nil, skip, nil
 		}
 		ups = append(ups, u)
 	}
@@ -408,6 +422,50 @@ func extractVersions(rs *model.ReleaseSet, pattern string) (*model.ReleaseSet, e
 		out.Releases = append(out.Releases, r)
 	}
 	return &out, nil
+}
+
+// unchangedPrefix marks buildUpdate's answer for a target the scheme would
+// write back as the current value.
+const unchangedPrefix = "unchanged:"
+
+// buildUpdate turns one chosen target release into an update, or names why
+// it cannot: the scheme refuses to write it, or writing it changes nothing.
+func buildUpdate(v versioning.Versioning, d *model.Dependency, cur, base, target string, rel model.Release, scheme string) (model.Update, string) {
+	newValue, err := v.NewValue(cur, target, versioning.StrategyAuto)
+	if err != nil {
+		return model.Update{}, fmt.Sprintf("cannot write %s as a %s value: %v", target, scheme, err)
+	}
+	if newValue == cur {
+		return model.Update{}, unchangedPrefix + target
+	}
+	t := versioning.UpdateType(v, base, target)
+	if t == model.UpdateMajor && isRollingMajor(cur) {
+		// `@1`-style pins float within their major by design (measured
+		// across 44 image repositories: 55 % of all commits on main were
+		// component bumps before the estate switched to them). A newer
+		// major is the one thing such a pin cannot see on its own, so it
+		// is planned as a notification, never as an edit.
+		t = model.UpdateMajorAvailable
+	}
+	u := model.Update{
+		DepKey:     d.Key(),
+		Dep:        *d,
+		NewValue:   newValue,
+		NewVersion: target,
+		NewDigest:  rel.Digest,
+		Type:       t,
+		Declared:   declaredRisk(t),
+		TimeSource: model.TimeUnknown,
+	}
+	switch {
+	case !rel.Timestamp.IsZero():
+		u.ReleaseTime = rel.Timestamp
+		u.TimeSource = model.TimeFromDatasource
+	case !rel.FirstSeen.IsZero():
+		u.ReleaseTime = rel.FirstSeen
+		u.TimeSource = model.TimeFromFirstSeen
+	}
+	return u, ""
 }
 
 // lookupDigest asks the request for a digest, naming the gap when it has

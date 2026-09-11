@@ -351,6 +351,13 @@ func Overlay(cfg map[string]any, t model.UpdateType) map[string]any {
 	return overlay(cfg, updateTypeKey(t.Renovate()))
 }
 
+// OverlayKey merges the named configuration object over a copy of cfg -
+// "vulnerabilityAlerts" over a security fix, after the rules and the
+// update type's own object, which is the order Renovate forces it in.
+func OverlayKey(cfg map[string]any, key string) map[string]any {
+	return overlay(cfg, key)
+}
+
 // overlay merges cfg[key], when it is an object, over a copy of cfg -
 // Renovate's per-update-type and group configuration. Objects merge one
 // level deep; that is as deep as these objects go.

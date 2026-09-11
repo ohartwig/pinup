@@ -486,3 +486,31 @@ func TestDeprecatedReleasesAreNotCandidates(t *testing.T) {
 		t.Errorf("a deprecated release was offered: %+v", res.Updates)
 	}
 }
+
+// The vulnerability fast path, measured on lodash 4.17.20: with a bound of
+// 4.18.0 the one update is the lowest released, non-deprecated version at
+// or above it - 4.18.1 - whatever the buckets would have offered, and it is
+// marked as a security fix. No release at or above the bound is a warning
+// and a skip that names the advisories, never a silent nothing.
+func TestVulnerabilityBoundPlansTheLowestFixOnly(t *testing.T) {
+	d := dep("lodash", "4.17.20", "semver")
+	d.VulnerabilityBound = "4.18.0"
+	d.Advisories = []model.Advisory{{ID: "GHSA-r5fr-rjxr-66jc", Fixed: "4.18.0"}, {ID: "GHSA-29mw-wpgm-hmr9", Fixed: "4.17.21"}}
+	rs := releases("4.17.21", "4.17.23", "4.18.0", "4.18.1", "4.19.0", "5.0.0")
+	rs.Releases[2].Deprecated = true
+	res := plan(t, d, rs)
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "4.18.1" || !res.Updates[0].SecurityFix || res.Updates[0].Type != model.UpdateMinor {
+		t.Fatalf("want one security fix to 4.18.1, got %+v", res.Updates)
+	}
+
+	none := plan(t, d, releases("4.17.21", "4.17.23"))
+	if len(none.Updates) != 0 || !strings.Contains(none.Deps[0].SkipReason, "GHSA-r5fr-rjxr-66jc") || len(none.Warnings) != 1 {
+		t.Errorf("no fix available: %+v %q %+v", none.Updates, none.Deps[0].SkipReason, none.Warnings)
+	}
+
+	// Without a bound the same releases plan the usual buckets.
+	plain := plan(t, dep("lodash", "4.17.20", "semver"), rs)
+	if len(plain.Updates) != 2 {
+		t.Errorf("without a bound: %+v", plain.Updates)
+	}
+}
