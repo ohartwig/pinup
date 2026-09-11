@@ -19,6 +19,7 @@ package lookup
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"sync"
@@ -28,6 +29,15 @@ import (
 )
 
 // Ref is what a datasource needs to find a package.
+// DeclinedError is what a datasource returns when it will not look a
+// reference up at all - a registry written as a CI variable, say. The
+// dependency records the reason as its lookup failure like any other, but
+// the run does not warn: declining is the datasource's decision, made the
+// same way every run, not something that went wrong.
+type DeclinedError struct{ Reason string }
+
+func (e *DeclinedError) Error() string { return e.Reason }
+
 type Ref struct {
 	Datasource   string
 	PackageName  string
@@ -207,16 +217,23 @@ func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 		// ReleaseSet with Err, so the planner writes "lookup failed: ..."
 		// and the dependency is visibly not looked up, rather than
 		// silently absent from the results.
-		return Result{
+		res := Result{
 			Ref: ref,
 			Releases: &model.ReleaseSet{
 				PackageName: ref.PackageName, Datasource: ref.Datasource, Err: err.Error(),
 			},
-			Warning: &model.Warning{
+		}
+		// A datasource that declines by design - a registry it cannot
+		// name - is a recorded decision, not a failure worth a warning
+		// on every run.
+		var declined *DeclinedError
+		if !errors.As(err, &declined) {
+			res.Warning = &model.Warning{
 				Stage: "lookup",
 				Msg:   fmt.Sprintf("%s via %s: %v", ref.PackageName, ref.Datasource, err),
-			},
+			}
 		}
+		return res
 	}
 	return Result{Ref: ref, Releases: rs}
 }

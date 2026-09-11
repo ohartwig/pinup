@@ -74,6 +74,17 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	if base == "" {
 		return nil, fmt.Errorf("%s: no registry URL for %s", d.kind, ref.PackageName)
 	}
+	// `https://${CI_SERVER_HOST}` is how a component include with a
+	// templated host is recorded - by Renovate and by manager/gitlabci
+	// alike. In the estate a rule rewrites registryUrls for every gitlab-*
+	// datasource to the canonical host before lookup (rule 10 of the
+	// resolved config), so this is only reached when no rule did; then
+	// there is nothing to resolve the variable against, and declining is
+	// better than a DNS error dressed as a registry outage.
+	if strings.Contains(base, "$") {
+		return nil, &lookup.DeclinedError{Reason: fmt.Sprintf(
+			"registry %s is a CI variable; no rule rewrote it to a host", base)}
+	}
 
 	project, pkg := ref.PackageName, ""
 	if d.kind == Packages {

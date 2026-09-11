@@ -24,6 +24,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/npmds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/packagist"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/terraformds"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
@@ -130,6 +131,10 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"docker":          dockerds.New(o.Transport, o.RegistryCredentials),
 		"packagist":       packagist.New(client),
 		"npm":             npmds.New(client),
+		// Renovate's default registry; the estate's terraform manager
+		// pins every provider to registry.opentofu.org instead.
+		"terraform-provider": terraformds.New(terraformds.Provider, client, "https://registry.terraform.io"),
+		"terraform-module":   terraformds.New(terraformds.Module, client, "https://registry.terraform.io"),
 	}
 	for name, view := range ApkViews {
 		r[name] = apkds.New(name, client, view)

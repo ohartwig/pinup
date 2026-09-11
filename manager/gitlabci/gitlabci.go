@@ -223,14 +223,17 @@ func (w *walker) component(n *yamlx.Node) {
 	pathPart := ref[:at]
 
 	// Strip the host, whether written as a variable or literally. What is
-	// left is group/.../project/component-name. A literal host names the
-	// registry; a variable one (`${CI_SERVER_HOST}`, the estate's form) is
-	// resolved by the runner's configured instance, so the dependency
-	// carries no registry and the datasource falls back to it.
+	// left is group/.../project/component-name. Either host names the
+	// registry, a variable one (`${CI_SERVER_HOST}`, the estate's form)
+	// verbatim, as Renovate records it. A rule rewrites it to the real
+	// host before lookup - the estate's does, for every gitlab-*
+	// datasource - and a configuration without such a rule has the lookup
+	// declined by datasource/gitlabds rather than resolved by guesswork.
 	if i := strings.Index(pathPart, "/"); i >= 0 {
 		host := pathPart[:i]
 		switch {
 		case strings.HasPrefix(host, "$"):
+			dep.RegistryURLs = []string{"https://" + host}
 			pathPart = pathPart[i+1:]
 		case strings.Contains(host, "."):
 			dep.RegistryURLs = []string{"https://" + host}

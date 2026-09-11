@@ -75,6 +75,20 @@ sign:
 			t.Errorf("missing: %+v", w)
 		}
 	}
+	// The templated host is recorded verbatim, as Renovate records it, for
+	// a rule to rewrite; the literal host is a registry.
+	for _, d := range res.Deps {
+		switch d.DepName {
+		case "devops/ci-cd-components/lint-tools":
+			if d.SkipReason != "" || len(d.RegistryURLs) != 1 || d.RegistryURLs[0] != "https://${CI_SERVER_HOST}" {
+				t.Errorf("templated host: skip=%q registry=%v", d.SkipReason, d.RegistryURLs)
+			}
+		case "devops/ci-cd-components/release-tools":
+			if d.SkipReason != "" || len(d.RegistryURLs) != 1 || d.RegistryURLs[0] != "https://git.example" {
+				t.Errorf("literal host: skip=%q registry=%v", d.SkipReason, d.RegistryURLs)
+			}
+		}
+	}
 	// The digest-pinned buildkit reference must carry its digest span too.
 	for _, d := range res.Deps {
 		if d.CurrentDigest != "" {

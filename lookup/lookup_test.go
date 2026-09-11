@@ -6,6 +6,7 @@ package lookup
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -173,6 +174,28 @@ func TestFailureWithNoCacheIsAnErrorResult(t *testing.T) {
 	r := res[RefOf(dep("a", "fake")).Key()]
 	if r.Releases == nil || r.Releases.Err != "boom" || r.Warning == nil {
 		t.Errorf("got %+v", r)
+	}
+}
+
+// A datasource that declines by design records the reason on the release
+// set - the planner still says "lookup failed: ..." - but raises no
+// warning: it is the same decision every run, not something that broke.
+func TestADeclinedLookupIsRecordedWithoutAWarning(t *testing.T) {
+	ds := &countingDS{calls: map[string]int{}, err: &DeclinedError{Reason: "registry is a CI variable"}}
+	f := &Fetcher{Registry: Registry{"fake": ds}, Cache: newMemCache(), Now: now}
+	res := f.Fetch(context.Background(), []model.Dependency{dep("a", "fake")})
+	r := res[RefOf(dep("a", "fake")).Key()]
+	if r.Releases == nil || r.Releases.Err != "registry is a CI variable" {
+		t.Errorf("the reason is not recorded: %+v", r)
+	}
+	if r.Warning != nil {
+		t.Errorf("a declined lookup warned: %+v", r.Warning)
+	}
+	// And a wrapped one is still recognised.
+	ds.err = fmt.Errorf("gitlab-tags: %w", &DeclinedError{Reason: "declined"})
+	res = f.Fetch(context.Background(), []model.Dependency{dep("b", "fake")})
+	if r := res[RefOf(dep("b", "fake")).Key()]; r.Warning != nil {
+		t.Errorf("a wrapped declined lookup warned: %+v", r.Warning)
 	}
 }
 
