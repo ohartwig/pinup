@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -240,8 +241,8 @@ func corpusDeps(t *testing.T) []corpusDep {
 func TestCorpusIsRepresentative(t *testing.T) {
 	deps := corpusDeps(t)
 	t.Logf("%d dependency vectors from %d repositories", len(deps), len(loadCorpus(t)))
-	if len(deps) != 54 {
-		t.Errorf("corpus has %d vectors, expected 54 - it was recaptured", len(deps))
+	if len(deps) != 350 {
+		t.Errorf("corpus has %d vectors, expected 350 - it was recaptured", len(deps))
 	}
 
 	seen := map[string]bool{}
@@ -256,7 +257,8 @@ func TestCorpusIsRepresentative(t *testing.T) {
 	for _, want := range []string{
 		"ds:docker", "ds:gitlab-tags", "ds:gitlab-releases", "ds:gitlab-packages",
 		"ds:github-tags", "ds:github-releases", "ds:packagist", "ds:npm",
-		"ver:composer", "ver:loose", "ver:semver-partial",
+		"ds:terraform-provider", "ds:custom.wolfi",
+		"ver:composer", "ver:loose", "ver:semver-partial", "ver:docker", "ver:hashicorp",
 	} {
 		if !seen[want] {
 			t.Errorf("corpus does not cover %s", want)
@@ -296,14 +298,33 @@ func TestCorpusPinsTheTemplatedPackageNames(t *testing.T) {
 // name to a human description, so the manager reads those descriptions as
 // version constraints and emits dependencies whose currentValue is prose.
 //
-// They cannot resolve, so today they are noise rather than damage. The test
+// They cannot resolve, so today this is noise rather than damage. The test
 // exists so the noise is recorded rather than tolerated: if the config is
 // fixed, this goes red and gets deleted, which is the point.
 func TestCorpusRecordsTheSuggestBlockOverMatch(t *testing.T) {
+	// Discriminating prose from a constraint needs care, and the obvious rule
+	// is wrong. "contains a space" flags `^0.3 || ^0.4 || ^0.5` - twenty-one
+	// perfectly valid composer OR-ranges in moselwal-websites - and asserting
+	// those are a defect would have been worse than not testing at all.
+	//
+	// A composer constraint is digits and the operators . ^ ~ > < = * | -,
+	// plus `dev-<branch>` and a leading v. So: a word of three or more
+	// letters, outside a dev- prefix, is prose.
+	word := regexp.MustCompile(`[A-Za-z]{3,}`)
+	isProse := func(v string) bool {
+		if strings.HasPrefix(v, "dev-") {
+			return false
+		}
+		return word.MatchString(v)
+	}
+
 	var prose []corpusDep
 	for _, d := range corpusDeps(t) {
-		if strings.Contains(d.CurrentValue, " ") && d.Datasource == "gitlab-packages" {
-			prose = append(prose, d)
+		switch d.Datasource {
+		case "gitlab-packages", "packagist":
+			if isProse(d.CurrentValue) {
+				prose = append(prose, d)
+			}
 		}
 	}
 	if len(prose) != 3 {
@@ -347,7 +368,7 @@ func TestVersioningTablesAreUsable(t *testing.T) {
 	var total int
 	for _, m := range []string{
 		"semver", "docker", "composer", "loose", "npm", "go", "apk",
-		"semver-partial", "semver-coerced", "regex-alpine",
+		"semver-partial", "semver-coerced", "hashicorp", "regex-alpine",
 	} {
 		tbl := verTableFor(t, m)
 		n := len(tbl.IsValid) + len(tbl.IsStable) + len(tbl.IsGreaterThan) + len(tbl.Matches)
@@ -363,7 +384,7 @@ func TestVersioningTablesAreUsable(t *testing.T) {
 	// the files - the tables carry getMajor, equals, sortVersions,
 	// getSatisfyingVersion and getNewValue too, which versioning/* will read
 	// when it exists.
-	t.Logf("%d rows across 10 schemes, in the four operations decoded here", total)
+	t.Logf("%d rows across 11 schemes, in the four operations decoded here", total)
 	if total < 4000 {
 		t.Errorf("only %d rows; the capture is thinner than it should be", total)
 	}

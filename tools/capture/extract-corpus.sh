@@ -49,7 +49,11 @@ json.dump(d, open(p,'w'), indent=2)" "${dst}/renovate.json"
 
   git -C "$dst" init -q .
   git -C "$dst" add -A
-  git -C "$dst" -c user.email=capture@example.invalid -c user.name=capture commit -q -m corpus
+  # gpgsign off: the staging repo is a throwaway scaffold for the container to
+  # read, and inheriting the global signing config would ask for a YubiKey PIN
+  # once per corpus entry.
+  git -C "$dst" -c user.email=capture@example.invalid -c user.name=capture \
+          -c commit.gpgsign=false commit -q -m corpus
 
   log="$(mktemp)"
   docker run --rm \
