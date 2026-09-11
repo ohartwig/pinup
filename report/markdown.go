@@ -47,7 +47,7 @@ func Markdown(p *model.Plan) string {
 			for _, t := range br.Tasks {
 				changes = append(changes, "`"+strings.Join(t.Command, " ")+"`")
 			}
-			fmt.Fprintf(&b, "| `%s` | %s | %s |\n", br.Name, br.Title, strings.Join(changes, "<br>"))
+			fmt.Fprintf(&b, "| `%s` | %s | %s |\n", br.Name, cell(br.Title), strings.Join(changes, "; "))
 		}
 		b.WriteString("\n")
 	}
@@ -58,7 +58,7 @@ func Markdown(p *model.Plan) string {
 				for _, u := range updates[k] {
 					for _, blk := range u.Blocks {
 						fmt.Fprintf(&b, "| `%s` | %s %s → %s | %s%s | %s | %s |\n",
-							br.Name, u.Dep.DepName, u.Dep.CurrentValue, u.NewValue, blk.Reason, note(blk), origin(blk.Org), thaw(blk.Until))
+							br.Name, cell(u.Dep.DepName), cell(u.Dep.CurrentValue), cell(u.NewValue), blk.Reason, note(blk), origin(blk.Org), thaw(blk.Until))
 					}
 				}
 			}
@@ -75,7 +75,7 @@ func Markdown(p *model.Plan) string {
 	if len(skipped) > 0 {
 		b.WriteString("## Not planned\n\n| Dependency | File | Reason |\n|---|---|---|\n")
 		for _, d := range skipped {
-			fmt.Fprintf(&b, "| %s %s | `%s` | %s |\n", d.DepName, d.CurrentValue, d.File, d.SkipReason)
+			fmt.Fprintf(&b, "| %s %s | `%s` | %s |\n", cell(d.DepName), cell(d.CurrentValue), d.File, cell(d.SkipReason))
 		}
 		b.WriteString("\n")
 	}
@@ -92,7 +92,7 @@ func Markdown(p *model.Plan) string {
 			for _, a := range d.Advisories {
 				ids = append(ids, a.ID)
 			}
-			fmt.Fprintf(&b, "| %s %s | %s | %s |\n", d.DepName, d.CurrentValue, strings.Join(ids, ", "), d.VulnerabilityBound)
+			fmt.Fprintf(&b, "| %s %s | %s | %s |\n", cell(d.DepName), cell(d.CurrentValue), strings.Join(ids, ", "), d.VulnerabilityBound)
 		}
 		b.WriteString("\n")
 	}
@@ -105,11 +105,19 @@ func Markdown(p *model.Plan) string {
 			if w.File != "" {
 				loc = " `" + w.File + "`"
 			}
-			fmt.Fprintf(&b, "- **%s**%s: %s\n", w.Stage, loc, w.Msg)
+			fmt.Fprintf(&b, "- **%s**%s: %s\n", w.Stage, loc, cell(w.Msg))
 		}
 		b.WriteString("\n")
 	}
-	return b.String()
+	return strings.TrimRight(b.String(), "\n") + "\n"
+}
+
+// cell makes a value safe inside a table row: a newline would end the row
+// and a pipe would start a column.
+func cell(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", " ")
+	s = strings.ReplaceAll(s, "\n", " ")
+	return strings.ReplaceAll(s, "|", "\\|")
 }
 
 // note renders a block's note as code: a cron expression's asterisks are
@@ -118,7 +126,7 @@ func note(blk model.Block) string {
 	if blk.Note == "" {
 		return ""
 	}
-	return " `" + strings.ReplaceAll(blk.Note, "`", "'") + "`"
+	return " `" + cell(strings.ReplaceAll(blk.Note, "`", "'")) + "`"
 }
 
 func origin(o model.Origin) string {
