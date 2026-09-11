@@ -32,6 +32,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
 	"git.ole-hartwig.eu/pinup/pinup/manager/npmman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
+	"git.ole-hartwig.eu/pinup/pinup/manager/terraform"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/platform/gitlab"
 	"git.ole-hartwig.eu/pinup/pinup/publish"
@@ -75,6 +76,7 @@ func Managers() extract.Registry {
 		"gitlabci":   gitlabci.New(),
 		"composer":   composerman.New(),
 		"npm":        npmman.New(),
+		"terraform":  terraform.New(),
 	}
 }
 
@@ -171,6 +173,8 @@ func LockedVersions(manager string, lock []byte) (map[string]string, error) {
 		return composerman.LockedVersions(lock)
 	case "npm":
 		return npmman.LockedVersions(lock)
+	case "terraform":
+		return terraform.LockedVersions(lock)
 	}
 	return nil, nil
 }

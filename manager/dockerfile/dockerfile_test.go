@@ -349,7 +349,10 @@ func TestNameAndFilePatterns(t *testing.T) {
 // --- the real fixture -------------------------------------------------------
 
 // The estate's own golang-image Containerfile, read directly rather than
-// copied into testdata - the fixture this manager must actually handle.
+// copied into testdata - the fixture this manager must actually handle. The
+// file moves with that repository, so the expectations are derived from its
+// FROM lines rather than pinned: every FROM that names a tag and a digest
+// must come out as exactly one digest-pinned, unskipped dependency.
 func TestRealGolangImageContainerfile(t *testing.T) {
 	path := "/Volumes/Samsung_X5/Projects/golang-image/Containerfile"
 	content, err := os.ReadFile(path)
@@ -362,15 +365,37 @@ func TestRealGolangImageContainerfile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wolfi := depNamed(t, res.Deps, "registry.ole-hartwig.eu/devops/ci-mirrors/wolfi-base")
-	if wolfi.CurrentValue != "latest" {
-		t.Errorf("wolfi-base CurrentValue = %q, want latest", wolfi.CurrentValue)
+	froms := 0
+	for _, line := range strings.Split(string(content), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) < 2 || !strings.EqualFold(fields[0], "FROM") {
+			continue
+		}
+		ref := fields[1]
+		if strings.HasPrefix(ref, "--") && len(fields) > 2 {
+			ref = fields[2]
+		}
+		name, rest, hasTag := strings.Cut(ref, ":")
+		if !hasTag {
+			continue
+		}
+		tag, digest, hasDigest := strings.Cut(rest, "@")
+		if !hasDigest {
+			continue
+		}
+		froms++
+		d := depNamed(t, res.Deps, name)
+		if d.CurrentValue != tag || d.CurrentDigest != digest {
+			t.Errorf("%s: extracted %s@%s, the line says %s@%s", name, d.CurrentValue, d.CurrentDigest, tag, digest)
+		}
+		if d.SkipReason != "" {
+			t.Errorf("%s is digest-pinned with a tag; it must not be skipped, got %q", name, d.SkipReason)
+		}
 	}
-	if !strings.HasPrefix(wolfi.CurrentDigest, "sha256:") {
-		t.Errorf("wolfi-base CurrentDigest = %q, want a sha256 digest", wolfi.CurrentDigest)
-	}
-	if wolfi.SkipReason != "" {
-		t.Errorf("wolfi-base is digest-pinned with a tag; it must not be skipped, got %q", wolfi.SkipReason)
+	// The denominator: a Containerfile without a pinned FROM would make
+	// this test pass by looking at nothing.
+	if froms == 0 {
+		t.Fatal("no digest-pinned FROM line in the real fixture; the test checked nothing")
 	}
 
 	// Re-confirm the offset invariant against real, unmodified bytes.

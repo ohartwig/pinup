@@ -296,7 +296,13 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		locked := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), res.Deps, plan)
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
-			if v, ok := locked[d.DepName]; ok {
+			// A lock keys by whatever the lock file calls the package:
+			// composer and npm by the name the manifest uses, terraform by
+			// the registry source (`cloudflare/cloudflare`) behind the
+			// local name (`cloudflare`).
+			if v, ok := locked[d.PackageName]; ok && d.PackageName != "" {
+				d.LockedVersion = v
+			} else if v, ok := locked[d.DepName]; ok {
 				d.LockedVersion = v
 			}
 			if d.SkipReason == "" && ignored[d.DepName] {
