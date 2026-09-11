@@ -139,16 +139,39 @@ func (r *Resolved) Winner(pointer string) (model.Origin, bool) {
 	return chain[len(chain)-1], true
 }
 
+// Nearest returns the pointer at or above p that carries provenance, and
+// whether one exists. A rule's keys are written together with the rule -
+// provenance is recorded per rule element, not per field - so asking about
+// /packageRules/768/enabled is answered by /packageRules/768.
+func (r *Resolved) Nearest(p string) (string, bool) {
+	for p != "" {
+		if len(r.Prov[p]) > 0 {
+			return p, true
+		}
+		i := strings.LastIndexByte(p, '/')
+		if i < 0 {
+			break
+		}
+		p = p[:i]
+	}
+	return "", false
+}
+
 // Explain renders the full origin chain for a pointer, winner last. An empty
 // result means nothing ever set it, which is a different answer from "it is
 // set to the default" and is reported as such.
 func (r *Resolved) Explain(pointer string) string {
-	chain := r.Prov[pointer]
-	if len(chain) == 0 {
+	at, ok := r.Nearest(pointer)
+	if !ok {
 		return fmt.Sprintf("%s: never set by any layer", pointer)
 	}
+	chain := r.Prov[at]
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n", pointer)
+	if at != pointer {
+		fmt.Fprintf(&b, "%s (written as part of %s)\n", pointer, at)
+	} else {
+		fmt.Fprintf(&b, "%s\n", pointer)
+	}
 	for i, o := range chain {
 		mark := "  "
 		if i == len(chain)-1 {
