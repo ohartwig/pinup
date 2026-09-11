@@ -70,6 +70,14 @@ func (*Scheme) IsValid(s string) bool {
 	return ok
 }
 
+// IsVersion is true only for a full three-part version. "1" is valid and is
+// not a version: it is the range every 1.x.y satisfies, which is how a
+// rolling major pin is read.
+func (*Scheme) IsVersion(s string) bool {
+	_, ok := full(s)
+	return ok
+}
+
 // IsStable is true only for a complete version without a prerelease. A
 // partial is never stable, because it does not name a release.
 func (*Scheme) IsStable(s string) bool {

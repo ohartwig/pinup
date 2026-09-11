@@ -110,6 +110,9 @@ func (s *Scheme) parse(v string) (parsed, bool) {
 	return p, p.hasMajor
 }
 
+// IsVersion is IsValid: a regex scheme has no range form.
+func (s *Scheme) IsVersion(v string) bool { return s.IsValid(v) }
+
 func (s *Scheme) IsValid(v string) bool {
 	_, ok := s.parse(v)
 	return ok

@@ -85,13 +85,18 @@ for (const name of schemes) {
   const t = {
     module: name,
     source: 'executed in renovate/renovate:43.288.0',
-    isValid: [], isStable: [], getMajor: [], getMinor: [], getPatch: [],
-    equals: [], isGreaterThan: [], sortVersions: [],
+    isValid: [], isVersion: [], isSingleVersion: [], isStable: [], getMajor: [], getMinor: [], getPatch: [],
+    equals: [], isGreaterThan: [], sortVersions: [], isCompatible: [],
     matches: [], getSatisfyingVersion: [], getNewValue: [],
   };
 
   for (const v of inputs) {
     t.isValid.push({ in: v, out: safe(() => api.isValid(v)) });
+    // isValid accepts ranges; isVersion does not. Which of the two the
+    // current value passes decides whether lookup treats it as a pin or as
+    // a constraint to be satisfied - "1" under semver-partial is the case.
+    t.isVersion.push({ in: v, out: safe(() => api.isVersion(v)) });
+    t.isSingleVersion.push({ in: v, out: safe(() => api.isSingleVersion(v)) });
     t.isStable.push({ in: v, out: safe(() => api.isStable(v)) });
     t.getMajor.push({ in: v, out: safe(() => api.getMajor(v)) });
     t.getMinor.push({ in: v, out: safe(() => api.getMinor(v)) });
@@ -102,6 +107,10 @@ for (const name of schemes) {
       t.equals.push({ a, b, out: safe(() => api.equals(a, b)) });
       t.isGreaterThan.push({ a, b, out: safe(() => api.isGreaterThan(a, b)) });
       t.sortVersions.push({ a, b, out: safe(() => api.sortVersions(a, b)) });
+      // isCompatible(version, current): whether a release may follow the
+      // current value at all. Docker's answer is what decides whether
+      // 22-alpine3.21 is ever offered for 22-alpine3.20.
+      t.isCompatible.push({ a, b, out: safe(() => api.isCompatible(a, b)) });
     }
   }
   for (const r of rs) {

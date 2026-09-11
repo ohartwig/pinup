@@ -238,11 +238,24 @@ func parseConstraint(tok string) (constraint, bool) {
 	return c, true
 }
 
+// IsVersion accepts a single version; a constraint is valid but not one.
+func (*Scheme) IsVersion(s string) bool {
+	_, ok := parseVersion(s)
+	return ok
+}
+
 func (*Scheme) IsValid(s string) bool {
 	if _, ok := parseVersion(s); ok {
 		return true
 	}
 	_, ok := parseRange(s)
+	return ok
+}
+
+// IsCompatible is measured as "the candidate is a single version": a
+// constraint is a valid value but never a release that could follow anything.
+func (*Scheme) IsCompatible(candidate, _ string) bool {
+	_, ok := parseVersion(candidate)
 	return ok
 }
 

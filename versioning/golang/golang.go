@@ -91,6 +91,9 @@ func isPseudo(pre string) bool {
 	return true
 }
 
+// IsVersion is IsValid: this scheme has no range form.
+func (v *Scheme) IsVersion(s string) bool { return v.IsValid(s) }
+
 func (*Scheme) IsValid(s string) bool {
 	_, ok := parse(s)
 	return ok

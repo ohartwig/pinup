@@ -80,6 +80,9 @@ func parse(s string) (tag, bool) {
 	return t, true
 }
 
+// IsVersion is IsValid: this scheme has no range form.
+func (v *Scheme) IsVersion(s string) bool { return v.IsValid(s) }
+
 func (*Scheme) IsValid(s string) bool {
 	_, ok := parse(s)
 	return ok
@@ -157,6 +160,20 @@ func (s *Scheme) Satisfies(version, rng string) bool {
 		}
 	}
 	return tv.suffix == tr.suffix
+}
+
+// IsCompatible is the measured rule: same number of numeric components and
+// the same suffix, byte for byte. So "22-alpine3.21" may not follow
+// "22-alpine3.20", and "1.2" may not follow "1.0.0" - the first is a different
+// base image, the second a different precision, and Renovate offers neither.
+// A compatibility move is a distinct, opt-in update type, not a candidate.
+func (*Scheme) IsCompatible(candidate, current string) bool {
+	tc, okC := parse(candidate)
+	tr, okR := parse(current)
+	if !okC || !okR {
+		return false
+	}
+	return len(tc.nums) == len(tr.nums) && tc.suffix == tr.suffix
 }
 
 // Family is the alphabetic head of a tag's compatibility suffix: "alpine" for

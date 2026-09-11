@@ -122,6 +122,12 @@ func parseComparator(tok string) (comparator, bool) {
 	return c, true
 }
 
+// IsVersion accepts a single exact version; a range is valid but not one.
+func (*Scheme) IsVersion(s string) bool {
+	_, ok := exact(s)
+	return ok
+}
+
 func (*Scheme) IsValid(s string) bool {
 	if _, ok := exact(s); ok {
 		return true
@@ -132,6 +138,13 @@ func (*Scheme) IsValid(s string) bool {
 
 // IsStable is true only for a plain release version. "1.2" is a range in npm,
 // and a range names no release.
+// IsCompatible is measured as "the candidate is a single version": a range
+// is a valid value but never a release that could follow anything.
+func (*Scheme) IsCompatible(candidate, _ string) bool {
+	_, ok := exact(candidate)
+	return ok
+}
+
 func (*Scheme) IsStable(s string) bool {
 	v, ok := exact(s)
 	return ok && len(v.Pre) == 0

@@ -104,6 +104,19 @@ func (c constraint) version() semverx.Version {
 	return semverx.Version{Major: c.at(0), Minor: c.at(1), Patch: c.at(2), Pre: c.pre}
 }
 
+// IsCompatible is measured as "the candidate is a single version"; a
+// constraint is a valid value but never a release.
+func (*Scheme) IsCompatible(candidate, _ string) bool {
+	_, ok := exact(candidate)
+	return ok
+}
+
+// IsVersion accepts a single exact version; a constraint is valid but not one.
+func (*Scheme) IsVersion(s string) bool {
+	_, ok := exact(s)
+	return ok
+}
+
 func (*Scheme) IsValid(s string) bool {
 	if _, ok := exact(s); ok {
 		return true

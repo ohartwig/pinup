@@ -15,7 +15,8 @@ import (
 // layering this package sits above.
 type stub struct{ invalid map[string]bool }
 
-func (s stub) Name() string { return "stub" }
+func (s stub) Name() string            { return "stub" }
+func (s stub) IsVersion(v string) bool { return s.IsValid(v) }
 func (s stub) IsValid(v string) bool {
 	return !s.invalid[v] && len(strings.Split(v, ".")) == 3
 }

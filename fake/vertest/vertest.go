@@ -36,15 +36,17 @@ type Table struct {
 	Module string `json:"module"`
 	Source string `json:"source"`
 
-	IsValid  []row `json:"isValid"`
-	IsStable []row `json:"isStable"`
-	GetMajor []row `json:"getMajor"`
-	GetMinor []row `json:"getMinor"`
-	GetPatch []row `json:"getPatch"`
+	IsValid   []row `json:"isValid"`
+	IsVersion []row `json:"isVersion"`
+	IsStable  []row `json:"isStable"`
+	GetMajor  []row `json:"getMajor"`
+	GetMinor  []row `json:"getMinor"`
+	GetPatch  []row `json:"getPatch"`
 
 	Equals        []row `json:"equals"`
 	IsGreaterThan []row `json:"isGreaterThan"`
 	SortVersions  []row `json:"sortVersions"`
+	IsCompatible  []row `json:"isCompatible"`
 
 	Matches     []row `json:"matches"`
 	GetNewValue []row `json:"getNewValue"`
@@ -218,6 +220,14 @@ func Run(t harness.T, v versioning.Versioning, tbl *Table, divergences []Diverge
 		want, ok := r.boolOut()
 		check("isValid", *r.In, v.IsValid(*r.In), want, ok)
 	}
+	for _, r := range tbl.IsVersion {
+		if r.In == nil || r.errored() {
+			res.Skipped++
+			continue
+		}
+		want, ok := r.boolOut()
+		check("isVersion", *r.In, v.IsVersion(*r.In), want, ok)
+	}
 	for _, r := range tbl.IsStable {
 		if r.In == nil || r.errored() {
 			res.Skipped++
@@ -289,6 +299,17 @@ func Run(t harness.T, v versioning.Versioning, tbl *Table, divergences []Diverge
 		}
 		want, ok := r.boolOut()
 		check("isGreaterThan", *r.A+"|"+*r.B, v.Compare(*r.A, *r.B) > 0, want, ok)
+	}
+	// No garbage skip here: isCompatible on an invalid input is a real
+	// answer (false), and a scheme that said true for garbage would offer
+	// "latest" as an update.
+	for _, r := range tbl.IsCompatible {
+		if r.A == nil || r.B == nil || r.errored() {
+			res.Skipped++
+			continue
+		}
+		want, ok := r.boolOut()
+		check("isCompatible", *r.A+"|"+*r.B, versioning.IsCompatible(v, *r.A, *r.B), want, ok)
 	}
 	for _, r := range tbl.Matches {
 		if r.Version == nil || r.Range == nil || r.errored() {

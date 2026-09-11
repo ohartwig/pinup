@@ -52,7 +52,13 @@ const (
 type Versioning interface {
 	Name() string
 
+	// IsValid accepts anything the scheme can read: a version or, for
+	// schemes that have them, a range. IsVersion accepts a single version
+	// only. Which of the two the current value passes decides how lookup
+	// treats it - a pin is compared, a range is satisfied - and "1" under
+	// semver-partial is a range, measured.
 	IsValid(v string) bool
+	IsVersion(v string) bool
 	IsStable(v string) bool
 
 	// Major, Minor and Patch report a component, and whether the scheme could
@@ -115,6 +121,24 @@ func UpdateType(v Versioning, from, to string) model.UpdateType {
 		return model.UpdateMinor
 	}
 	return model.UpdatePatch
+}
+
+// Compatible is implemented by schemes that restrict which releases may follow
+// a given current value at all. Measured in the container: for most schemes
+// isCompatible(candidate, current) is simply "candidate is valid", which is
+// what IsCompatible returns when a scheme does not implement this. docker is
+// the exception - a candidate with a different suffix or a different number
+// of components is a different image, not an update.
+type Compatible interface {
+	IsCompatible(candidate, current string) bool
+}
+
+// IsCompatible answers whether candidate may follow current under v.
+func IsCompatible(v Versioning, candidate, current string) bool {
+	if c, ok := v.(Compatible); ok {
+		return c.IsCompatible(candidate, current)
+	}
+	return v.IsValid(candidate)
 }
 
 // Classifier is implemented by schemes whose update classification does not
