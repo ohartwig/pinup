@@ -18,9 +18,11 @@ package lookup
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/model"
 )
@@ -86,11 +88,30 @@ type Result struct {
 	Warning *model.Warning
 }
 
+// Cache is what the fetcher needs from a store: TTL'd release sets and the
+// permanent first-seen record. cache.Store satisfies it; a nil Cache means
+// every lookup is cold.
+type Cache interface {
+	GetReleases(key string, ttl time.Duration, now time.Time) (payload []byte, fresh bool, err error)
+	PutReleases(key string, payload []byte, now time.Time) error
+	// FirstSeenAll records every version of one key that is not yet known
+	// and returns the first-seen moment of each, in one transaction.
+	FirstSeenAll(key string, versions []string, now time.Time) (map[string]time.Time, error)
+}
+
 // Fetcher runs lookups with dedupe and bounded parallelism.
 type Fetcher struct {
 	Registry Registry
 	// Parallel bounds the number of lookups in flight. Zero means eight.
 	Parallel int
+
+	// Cache, when set, answers fresh entries without a round trip and
+	// serves a stale entry - marked, and with a warning - when the
+	// datasource fails. TTL is how long an entry counts as fresh; zero
+	// means one hour. Now is required when Cache is set.
+	Cache Cache
+	TTL   time.Duration
+	Now   time.Time
 }
 
 // Fetch looks up every unique ref among the dependencies once.
@@ -135,10 +156,47 @@ func (f *Fetcher) Fetch(ctx context.Context, deps []model.Dependency) map[string
 }
 
 func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
+	key := ref.Key()
+	var stale *model.ReleaseSet
+	if f.Cache != nil {
+		payload, fresh, cerr := f.Cache.GetReleases(key, f.ttl(), f.Now)
+		if cerr == nil && payload != nil {
+			var cached model.ReleaseSet
+			if json.Unmarshal(payload, &cached) == nil {
+				if fresh {
+					cached.FromCache = true
+					f.recordFirstSeen(key, &cached)
+					return Result{Ref: ref, Releases: &cached}
+				}
+				stale = &cached
+			}
+		}
+	}
+
 	ds, err := f.Registry.Get(ref.Datasource)
 	var rs *model.ReleaseSet
 	if err == nil {
 		rs, err = ds.Releases(ctx, ref)
+	}
+	if err == nil && f.Cache != nil {
+		rs.FetchedAt = f.Now
+		if payload, jerr := json.Marshal(rs); jerr == nil {
+			// A cache write failure is not a lookup failure: the answer is
+			// in hand, only the next run pays for it again.
+			_ = f.Cache.PutReleases(key, payload, f.Now)
+		}
+		f.recordFirstSeen(key, rs)
+	}
+	if err != nil && stale != nil {
+		// Stale-while-revalidate: an old answer beats no answer, as long
+		// as the plan says so. The warning is what keeps a registry that
+		// has been down for a week from looking like a quiet one.
+		stale.FromCache = true
+		return Result{Ref: ref, Releases: stale, Warning: &model.Warning{
+			Stage: "lookup",
+			Msg: fmt.Sprintf("%s via %s: %v; using releases cached at %s",
+				ref.PackageName, ref.Datasource, err, stale.FetchedAt.UTC().Format(time.RFC3339)),
+		}}
 	}
 	if err != nil {
 		// Same shape whether the datasource is missing or failed: a
@@ -157,6 +215,34 @@ func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 		}
 	}
 	return Result{Ref: ref, Releases: rs}
+}
+
+func (f *Fetcher) ttl() time.Duration {
+	if f.TTL > 0 {
+		return f.TTL
+	}
+	return time.Hour
+}
+
+// recordFirstSeen stamps every release with the moment this cache first
+// saw it. A release that carries no timestamp from its datasource gets its
+// age from here; one that does keeps both, and the planner prefers the
+// datasource's.
+func (f *Fetcher) recordFirstSeen(key string, rs *model.ReleaseSet) {
+	if f.Cache == nil {
+		return
+	}
+	versions := make([]string, 0, len(rs.Releases))
+	for _, r := range rs.Releases {
+		versions = append(versions, r.Version)
+	}
+	seen, err := f.Cache.FirstSeenAll(key, versions, f.Now)
+	if err != nil {
+		return
+	}
+	for i := range rs.Releases {
+		rs.Releases[i].FirstSeen = seen[rs.Releases[i].Version]
+	}
 }
 
 // RefOf builds the lookup identity for a dependency. PackageName wins over

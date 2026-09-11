@@ -370,3 +370,34 @@ func TestStatsReportsCounts(t *testing.T) {
 		t.Errorf("Stats.SchemaVersion = %d, want %d", st.SchemaVersion, currentSchemaVersion)
 	}
 }
+
+// FirstSeenAll answers exactly as FirstSeen would, per version, and a
+// second call with a later now moves nothing.
+func TestFirstSeenAllMatchesFirstSeen(t *testing.T) {
+	s := openTestStore(t)
+	t0 := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
+	single, err := s.FirstSeen("k", "1.0.0", t0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, err := s.FirstSeenAll("k", []string{"1.0.0", "1.1.0"}, t0.Add(time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !all["1.0.0"].Equal(single) {
+		t.Errorf("1.0.0: batch %v, single %v", all["1.0.0"], single)
+	}
+	if !all["1.1.0"].Equal(t0.Add(time.Hour)) {
+		t.Errorf("1.1.0 first seen at %v", all["1.1.0"])
+	}
+	again, err := s.FirstSeenAll("k", []string{"1.1.0"}, t0.Add(2*time.Hour))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !again["1.1.0"].Equal(t0.Add(time.Hour)) {
+		t.Errorf("a later call moved the first-seen moment to %v", again["1.1.0"])
+	}
+	if n, _ := s.FirstSeenCount(); n != 2 {
+		t.Errorf("count = %d", n)
+	}
+}

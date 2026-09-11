@@ -210,9 +210,13 @@ func planOne(req Request, d model.Dependency) ([]model.Update, string, *model.Wa
 			Declared:   declaredRisk(t),
 			TimeSource: model.TimeUnknown,
 		}
-		if !rel.Timestamp.IsZero() {
+		switch {
+		case !rel.Timestamp.IsZero():
 			u.ReleaseTime = rel.Timestamp
 			u.TimeSource = model.TimeFromDatasource
+		case !rel.FirstSeen.IsZero():
+			u.ReleaseTime = rel.FirstSeen
+			u.TimeSource = model.TimeFromFirstSeen
 		}
 		ups = append(ups, u)
 	}

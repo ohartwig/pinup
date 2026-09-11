@@ -123,7 +123,12 @@ type Release struct {
 	// Timestamp is the zero time when the datasource supplies none. That is a
 	// correctness-relevant distinction: it drives minimumReleaseAgeBehaviour
 	// and the firstseen fallback.
-	Timestamp   time.Time `json:"timestamp,omitzero"`
+	Timestamp time.Time `json:"timestamp,omitzero"`
+	// FirstSeen is when this process's cache first observed the version -
+	// the fallback age for a datasource that publishes no timestamp. It is
+	// never earlier than the cache's own life, which is why a near-empty
+	// cache must be warned about rather than trusted.
+	FirstSeen   time.Time `json:"firstSeen,omitzero"`
 	Deprecated  bool      `json:"deprecated,omitempty"`
 	RegistryURL string    `json:"registryUrl,omitempty"`
 	SourceURL   string    `json:"sourceUrl,omitempty"`

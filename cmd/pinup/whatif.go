@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"git.ole-hartwig.eu/pinup/pinup/cache"
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/discover"
@@ -30,6 +31,8 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	cfgPath := fs.String("config", "", "configuration file to resolve (required until preset resolution lands)")
 	report := fs.String("report", "", "write the plan as JSON to this path instead of stdout")
 	name := fs.String("name", "", "repository path to record in the plan, e.g. devops/images/ci-tools")
+	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt); empty means every lookup is cold")
+	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -44,6 +47,15 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts := whatifOptions{
 		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: time.Now(),
 		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
+		CacheTTL:    *cacheTTL,
+	}
+	if *cachePath != "" {
+		store, err := cache.Open(*cachePath)
+		if err != nil {
+			return fmt.Errorf("cache: %w", err)
+		}
+		defer store.Close()
+		opts.Cache = store
 	}
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -78,6 +90,9 @@ type whatifOptions struct {
 	RepoName    string
 	Now         time.Time
 	Datasources lookup.Registry
+	// Cache is optional; nil means every lookup is cold.
+	Cache    lookup.Cache
+	CacheTTL time.Duration
 }
 
 // whatif runs everything up to the plan. It writes nothing to the repository,
@@ -173,11 +188,15 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// Every unique (datasource, package, registry) once, however many
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
-	fetcher := &lookup.Fetcher{Registry: o.Datasources}
+	fetcher := &lookup.Fetcher{Registry: o.Datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: now}
 	results := fetcher.Fetch(ctx, plan.Deps)
+	fromCache := 0
 	for _, r := range results {
 		if r.Warning != nil {
 			plan.Warnings = append(plan.Warnings, *r.Warning)
+		}
+		if r.Releases != nil && r.Releases.FromCache {
+			fromCache++
 		}
 	}
 
@@ -207,11 +226,12 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 	}
 	plan.Stats = model.Stats{
-		FilesDiscovered: found.Stats.FilesMatched,
-		DepsExtracted:   len(plan.Deps),
-		LookupsIssued:   len(results),
-		UpdatesFound:    len(plan.Updates),
-		UpdatesBlocked:  blocked,
+		FilesDiscovered:  found.Stats.FilesMatched,
+		DepsExtracted:    len(plan.Deps),
+		LookupsIssued:    len(results),
+		LookupsFromCache: fromCache,
+		UpdatesFound:     len(plan.Updates),
+		UpdatesBlocked:   blocked,
 	}
 	plan.Sort()
 	if err := plan.Validate(); err != nil {

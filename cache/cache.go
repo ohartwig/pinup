@@ -243,6 +243,46 @@ func (s *Store) FirstSeen(key, version string, now time.Time) (time.Time, error)
 	return result, err
 }
 
+// FirstSeenAll is FirstSeen for every version of one key in a single
+// transaction. bbolt syncs on every Update, and a release set of three
+// hundred tags recorded one transaction at a time is three hundred fsyncs -
+// measured at eighteen seconds for one small repository. The answer per
+// version is the same as FirstSeen would give.
+func (s *Store) FirstSeenAll(key string, versions []string, now time.Time) (map[string]time.Time, error) {
+	out := make(map[string]time.Time, len(versions))
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		top := tx.Bucket(firstSeenBucket)
+		if top == nil {
+			return errBucketMissing
+		}
+		sub, err := top.CreateBucketIfNotExists([]byte(key))
+		if err != nil {
+			return err
+		}
+		stamp := now.UTC()
+		encoded, err := stamp.MarshalBinary()
+		if err != nil {
+			return err
+		}
+		for _, v := range versions {
+			if raw := sub.Get([]byte(v)); raw != nil {
+				t, err := decodeTime(raw)
+				if err != nil {
+					return err
+				}
+				out[v] = t
+				continue
+			}
+			if err := sub.Put([]byte(v), encoded); err != nil {
+				return err
+			}
+			out[v] = stamp
+		}
+		return nil
+	})
+	return out, err
+}
+
 // FirstSeenCount returns the total number of (key, version) pairs recorded
 // across all firstseen entries.
 func (s *Store) FirstSeenCount() (int, error) {
