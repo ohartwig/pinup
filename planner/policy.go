@@ -94,7 +94,16 @@ func PolicyOf(cfg map[string]any, origin func(key string) model.Origin) Policy {
 // is disabled, whatever its age; one awaiting approval waits, whatever the
 // clock says.
 func Decide(u model.Update, p Policy, now time.Time) (model.Update, error) {
-	u.Blocks = nil
+	// Blocks the planner put on the update stay - a lock refresh that no
+	// plugin can carry out is held whatever the policy says - and the
+	// policy's own are recomputed.
+	var kept []model.Block
+	for _, b := range u.Blocks {
+		if b.Reason == model.BlockPluginRequired {
+			kept = append(kept, b)
+		}
+	}
+	u.Blocks = kept
 	if !p.Enabled {
 		u.Blocks = append(u.Blocks, model.Block{
 			Reason: model.BlockDisabled, Org: p.Origins["enabled"],
@@ -119,7 +128,8 @@ func Decide(u model.Update, p Policy, now time.Time) (model.Update, error) {
 	if err != nil {
 		return u, fmt.Errorf("minimumReleaseAge: %w", err)
 	}
-	if age > 0 {
+	// A lock refresh has no release to be old; the age applies to versions.
+	if age > 0 && u.Type != model.UpdateLockFileMaintenance {
 		switch {
 		case u.TimeSource == model.TimeUnknown && !p.TimestampOptional:
 			u.Blocks = append(u.Blocks, model.Block{

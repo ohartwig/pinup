@@ -155,6 +155,11 @@ const (
 	BlockDisabled          BlockReason = "disabled"
 	BlockAllowedVersions   BlockReason = "allowedVersions"
 	BlockInternalChecks    BlockReason = "internalChecksFilter"
+	// BlockPluginRequired holds an update this version of pinup can plan
+	// but not carry out: a lock-file refresh needs the package manager in a
+	// container, and until that plugin exists the plan says so rather than
+	// pretending the branch was pushed.
+	BlockPluginRequired BlockReason = "pluginRequired"
 )
 
 // Block is one reason an update is held, with the rule that held it. Every

@@ -143,3 +143,16 @@ func TestBlockOrderAndSuppressedBy(t *testing.T) {
 		t.Error("an unparseable age must be an error, not a silent release")
 	}
 }
+
+// A lock refresh keeps the planner's pluginRequired block and is not aged.
+func TestLockFileMaintenanceKeepsItsBlockAndIsNotAged(t *testing.T) {
+	u := model.Update{DepKey: "lock", Type: model.UpdateLockFileMaintenance, TimeSource: model.TimeUnknown,
+		Blocks: []model.Block{{Reason: model.BlockPluginRequired}}, SuppressedBy: model.BlockPluginRequired}
+	got, err := Decide(u, PolicyOf(map[string]any{"minimumReleaseAge": "24 hours"}, origins), now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Blocks) != 1 || got.Blocks[0].Reason != model.BlockPluginRequired || got.SuppressedBy != model.BlockPluginRequired {
+		t.Errorf("blocks %+v", got.Blocks)
+	}
+}

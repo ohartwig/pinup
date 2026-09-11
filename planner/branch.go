@@ -295,6 +295,14 @@ func Compose(named []Named) ([]model.Branch, error) {
 	return out, nil
 }
 
+// Overlay merges the configuration object for an update type - config.digest
+// for a digest update, config.lockFileMaintenance for a lock refresh - over
+// a copy of cfg, the way Renovate applies per-update-type settings. The
+// policy and the branch naming both read the result.
+func Overlay(cfg map[string]any, t model.UpdateType) map[string]any {
+	return overlay(cfg, updateTypeKey(t))
+}
+
 // overlay merges cfg[key], when it is an object, over a copy of cfg -
 // Renovate's per-update-type and group configuration. Objects merge one
 // level deep; that is as deep as these objects go.

@@ -371,6 +371,12 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	})
 	plan.Deps = planned.Deps
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
+	// lockFileMaintenance: one refresh per lock file the run read, planned
+	// as its own update so the branch Renovate opens for it exists here
+	// too - and held, because refreshing a lock needs the package manager
+	// in a container, which no plugin provides yet.
+	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps)...)
+
 	var named []planner.Named
 	for _, u := range planned.Updates {
 		decided, cfg, err := applyUpdateRules(engine, resolved.Raw, u, now)
@@ -509,7 +515,9 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 // not, with the thaw time and the rule that held it.
 func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, map[string]any, error) {
 	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.String()))
-	policy := planner.PolicyOf(res.Config, func(key string) model.Origin { return origin(res, key) })
+	// The update type's own object - lockFileMaintenance.schedule, say -
+	// applies over the rules' result before the policy is read.
+	policy := planner.PolicyOf(planner.Overlay(res.Config, u.Type), func(key string) model.Origin { return origin(res, key) })
 	if res.SkipReason != "" {
 		policy.Enabled = false
 	}
@@ -575,4 +583,45 @@ func lockedVersions(root, manifest, manager string, deps []model.Dependency, pla
 		return locked
 	}
 	return nil
+}
+
+// lockMaintenance plans the lock-file refreshes lockFileMaintenance asks
+// for: one per (manager, lock file) among the dependencies that carry a
+// locked version, each an update of type lockFileMaintenance, held as
+// pluginRequired.
+func lockMaintenance(cfg map[string]any, deps []model.Dependency) []model.Update {
+	lfm, ok := cfg["lockFileMaintenance"].(map[string]any)
+	if !ok {
+		return nil
+	}
+	if enabled, _ := lfm["enabled"].(bool); !enabled {
+		return nil
+	}
+	seen := map[string]bool{}
+	var out []model.Update
+	for _, d := range deps {
+		if d.LockedVersion == "" || len(d.LockFiles) == 0 {
+			continue
+		}
+		lock := filepath.Join(filepath.Dir(d.File), d.LockFiles[0])
+		key := d.Manager + "|" + lock
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, model.Update{
+			DepKey: "lockFileMaintenance|" + key,
+			Dep: model.Dependency{
+				Manager: d.Manager, File: lock, DepName: "lock file", CustomManager: model.NoCustomManager,
+				Locus: model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest},
+			},
+			Type: model.UpdateLockFileMaintenance, TimeSource: model.TimeUnknown,
+			Blocks: []model.Block{{
+				Reason: model.BlockPluginRequired, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
+				Note: "refreshing " + lock + " needs the " + d.Manager + " toolchain in a container; no plugin provides it yet",
+			}},
+			SuppressedBy: model.BlockPluginRequired,
+		})
+	}
+	return out
 }
