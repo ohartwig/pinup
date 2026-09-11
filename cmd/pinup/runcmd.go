@@ -313,6 +313,7 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 		Released:      o.released,
 		RunnerDefault: o.runnerDefault,
 	}
+	opts.CustomDatasources = customDatasourcesHook(env)
 	plan, err := whatif(ctx, opts)
 	if err != nil {
 		return err

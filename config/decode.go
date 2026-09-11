@@ -20,8 +20,11 @@ import (
 // behaviour nobody has written, and every one of those guesses would have to
 // be revisited.
 type Decoded struct {
-	EnabledManagers []string
-	IgnorePaths     []string
+	// CustomDatasources is `customDatasources`, keyed by name; a dependency
+	// names one as "custom.<name>".
+	CustomDatasources map[string]model.CustomDatasource
+	EnabledManagers   []string
+	IgnorePaths       []string
 	// FilePatterns maps a manager name to its configured patterns, including
 	// one synthetic entry per custom manager.
 	FilePatterns map[string][]string
@@ -88,6 +91,22 @@ func Decode(raw map[string]any) (Decoded, error) {
 		}
 		d.CustomManagers = append(d.CustomManagers, cm)
 		d.FilePatterns[CustomManagerName(i)] = cm.FilePatterns
+	}
+
+	d.CustomDatasources = map[string]model.CustomDatasource{}
+	if cds, ok := raw["customDatasources"].(map[string]any); ok {
+		for name, v := range cds {
+			m, ok := v.(map[string]any)
+			if !ok {
+				continue
+			}
+			d.CustomDatasources[name] = model.CustomDatasource{
+				Name:                       name,
+				DefaultRegistryURLTemplate: str(m["defaultRegistryUrlTemplate"]),
+				Format:                     str(m["format"]),
+				TransformTemplates:         stringSlice(m["transformTemplates"]),
+			}
+		}
 	}
 
 	// Per-manager overrides for the built-in managers, which the config

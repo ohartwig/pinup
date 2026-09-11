@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/apply"
@@ -55,11 +56,23 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	if err != nil {
 		return err
 	}
+	if strings.HasPrefix(*cfgPath, "local>") {
+		if env.Host == "" {
+			return fmt.Errorf("whatif: --config %s needs the instance: set PINUP_GITLAB_URL or CI_SERVER_URL", *cfgPath)
+		}
+		local, err := fetchConfig(context.Background(), wire.Platform(env.URL, env.Token, env.Header), *cfgPath)
+		if err != nil {
+			return err
+		}
+		defer os.Remove(local)
+		*cfgPath = local
+	}
 	opts := whatifOptions{
 		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: now,
 		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
 		CacheTTL:    *cacheTTL,
 	}
+	opts.CustomDatasources = customDatasourcesHook(env)
 	if *cachePath != "" {
 		store, err := cache.Open(*cachePath)
 		if err != nil {
@@ -116,6 +129,9 @@ type whatifOptions struct {
 	// released: only dependencies on it are planned, every other one is
 	// skipped by name, and its lookups bypass the cache.
 	Released string
+	// CustomDatasources builds the datasources a configuration declares;
+	// nil means customDatasources are unknown. wire supplies it.
+	CustomDatasources func(map[string]model.CustomDatasource) lookup.Registry
 	// RunnerDefault is the runner's default.json, what the estate's
 	// repositories extend as local>devops/renovate-runner. Empty means
 	// ConfigPath is that file. It differs for the fast lane, whose
@@ -289,10 +305,25 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 	}
 
+	// The configuration's own datasources join the registry now that the
+	// configuration is known; a name the registry already serves natively
+	// stays native.
+	datasources := lookup.Registry{}
+	for k, v := range o.Datasources {
+		datasources[k] = v
+	}
+	if o.CustomDatasources != nil {
+		for k, v := range o.CustomDatasources(decoded.CustomDatasources) {
+			if _, ok := datasources[k]; !ok {
+				datasources[k] = v
+			}
+		}
+	}
+
 	// Every unique (datasource, package, registry) once, however many
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
-	fetcher := &lookup.Fetcher{Registry: o.Datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: now}
+	fetcher := &lookup.Fetcher{Registry: datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: now}
 	if o.Released != "" {
 		fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}
@@ -317,7 +348,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			return r.Releases
 		},
 		Versionings:       wire.Versionings(),
-		DefaultVersioning: wire.DefaultVersioning(o.Datasources),
+		DefaultVersioning: wire.DefaultVersioning(datasources),
 		Now:               now,
 	})
 	plan.Deps = planned.Deps
@@ -470,4 +501,13 @@ func origin(res rules.Resolution, key string) model.Origin {
 		return model.Origin{Source: "config", Rule: model.NoRule}
 	}
 	return model.Origin{Source: "packageRules", Rule: chain[len(chain)-1]}
+}
+
+// customDatasourcesHook lets whatif build the datasources a configuration
+// declares, with the same client the fixed ones use.
+func customDatasourcesHook(env platformEnv) func(map[string]model.CustomDatasource) lookup.Registry {
+	client := httpClient(env)
+	return func(defs map[string]model.CustomDatasource) lookup.Registry {
+		return wire.CustomDatasources(client, defs)
+	}
 }

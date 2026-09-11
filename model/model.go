@@ -148,6 +148,18 @@ type ReleaseSet struct {
 	Err string `json:"err,omitempty"`
 }
 
+// CustomDatasource is one `customDatasources` entry from the configuration:
+// a URL template, a format, and JSONata transforms that shape the fetched
+// document into {"releases": [{"version": ...}]}.
+type CustomDatasource struct {
+	Name string
+	// DefaultRegistryURLTemplate renders with {{packageName}}.
+	DefaultRegistryURLTemplate string
+	// Format is "json" or "plain" (one version per line).
+	Format             string
+	TransformTemplates []string
+}
+
 // CustomManager is one `customManagers` entry from the configuration.
 type CustomManager struct {
 	// Index is the position in the flattened customManagers array. It travels

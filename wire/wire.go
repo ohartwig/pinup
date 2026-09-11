@@ -17,6 +17,8 @@ import (
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/apkds"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/customds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/dockerds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/githubds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
@@ -26,6 +28,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
+	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/platform/gitlab"
 	"git.ole-hartwig.eu/pinup/pinup/publish"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
@@ -82,12 +85,31 @@ type DatasourceOptions struct {
 	// host, e.g. git.ole-hartwig.eu for registry.ole-hartwig.eu. nil means
 	// every realm is asked anonymously.
 	RegistryCredentials dockerds.Credentials
+	// CustomDatasources are the configuration's customDatasources, served
+	// generically - except the names ApkViews serves natively.
+	CustomDatasources map[string]model.CustomDatasource
+}
+
+// ApkViews are the apk datasources served natively rather than through the
+// Renovate runner's sidecar. custom.wolfi is what at least one of the public
+// Wolfi repository and the estate's mirror carries, on both architectures;
+// custom.koh-apk is the estate's own packages only - the sidecar's two
+// views, measured in datasource/apkds.
+var ApkViews = map[string]apkds.View{
+	"custom.wolfi": {
+		Mirrors: []string{"https://packages.wolfi.dev/os", "https://pub-e45431adaf86477786d9d2ef6ec04768.r2.dev"},
+		Arches:  []string{"x86_64", "aarch64"},
+	},
+	"custom.koh-apk": {
+		Mirrors: []string{"https://pub-e45431adaf86477786d9d2ef6ec04768.r2.dev"},
+		Arches:  []string{"x86_64", "aarch64"},
+	},
 }
 
 // Datasources returns every datasource, keyed by the name the configuration
 // uses.
 func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
-	return lookup.Registry{
+	r := lookup.Registry{
 		"gitlab-tags":     gitlabds.New(gitlabds.Tags, client, o.GitLabURL),
 		"gitlab-releases": gitlabds.New(gitlabds.Releases, client, o.GitLabURL),
 		"gitlab-packages": gitlabds.New(gitlabds.Packages, client, o.GitLabURL),
@@ -95,6 +117,29 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"github-tags":     githubds.New(githubds.Tags, client, ""),
 		"docker":          dockerds.New(o.Transport, o.RegistryCredentials),
 	}
+	for name, view := range ApkViews {
+		r[name] = apkds.New(name, client, view)
+	}
+	for name, ds := range CustomDatasources(client, o.CustomDatasources) {
+		r[name] = ds
+	}
+	return r
+}
+
+// CustomDatasources returns the generic datasources for a configuration's
+// customDatasources, skipping the names served natively. The
+// configuration is known only once it is resolved, so this is called from
+// the run as well, with what the repository's configuration declares.
+func CustomDatasources(client *httpx.Client, defs map[string]model.CustomDatasource) lookup.Registry {
+	r := lookup.Registry{}
+	for _, def := range defs {
+		name := "custom." + def.Name
+		if _, native := ApkViews[name]; native {
+			continue
+		}
+		r[name] = customds.New(def, client)
+	}
+	return r
 }
 
 // DefaultVersioning names the scheme a datasource implies when neither the
