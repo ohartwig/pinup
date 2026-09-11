@@ -90,9 +90,9 @@ func normalise(v any) (any, error) {
 	}
 }
 
-// Node parses a document into a yaml.Node tree, preserving positions. Managers
-// use it to locate a scalar's bytes without re-serializing the file.
-func Node(src []byte) (*yaml.Node, error) {
+// ParseTree parses a document into a node tree, preserving positions.
+// Managers use it to locate a scalar's bytes without re-serializing the file.
+func ParseTree(src []byte) (*Node, error) {
 	var n yaml.Node
 	if err := yaml.Unmarshal(src, &n); err != nil {
 		return nil, err
@@ -126,3 +126,17 @@ func Offset(src []byte, line, column int) int {
 	}
 	return off
 }
+
+// The node vocabulary, re-exported so a consumer can walk a tree without
+// importing yaml.v3 itself. A convention test holds every other package to
+// that: the dependency is meant to be swappable, and it is only swappable if
+// exactly one package names it.
+type Node = yaml.Node
+
+const (
+	DocumentNode = yaml.DocumentNode
+	MappingNode  = yaml.MappingNode
+	SequenceNode = yaml.SequenceNode
+	ScalarNode   = yaml.ScalarNode
+	AliasNode    = yaml.AliasNode
+)

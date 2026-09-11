@@ -130,6 +130,12 @@ func TestEveryCheckCanFail(t *testing.T) {
 			wantMsg: "do not reach the network",
 		},
 		{
+			check:   "YAMLConfined",
+			files:   map[string]string{"model/a.go": hdr + "package model\n\nimport _ \"gopkg.in/yaml.v3\"\n"},
+			wantIn:  "model/a.go",
+			wantMsg: "confined to yamlx",
+		},
+		{
 			check:   "CommentsAreEnglish",
 			files:   map[string]string{"model/a.go": germanCmt},
 			wantIn:  "model/a.go",

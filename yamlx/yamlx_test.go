@@ -98,7 +98,7 @@ func TestOffset(t *testing.T) {
 
 func TestNodePreservesPositions(t *testing.T) {
 	src := []byte("image: alpine:3.21\n")
-	n, err := Node(src)
+	n, err := ParseTree(src)
 	if err != nil {
 		t.Fatal(err)
 	}

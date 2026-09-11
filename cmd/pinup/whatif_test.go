@@ -90,25 +90,19 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 		t.Errorf("pinup produced %d dependencies Renovate does not: %v", len(invented), invented)
 	}
 
-	// The other direction is a known gap rather than a defect, and it is
-	// pinned so that implementing a manager shows up here as progress.
+	// The other direction: everything Renovate found, pinup must find too.
+	// This expectation started life as "exactly 3 gitlabci dependencies still
+	// missing" and was deleted when manager/gitlabci landed - which is how a
+	// known gap is meant to behave.
 	missingByManager := map[string]int{}
 	for k, mgr := range theirs {
 		if !mine[k] {
 			missingByManager[mgr]++
 		}
 	}
-	t.Logf("agreed on %d of %d; still missing by manager: %v", len(mine), len(theirs), missingByManager)
-
+	t.Logf("agreed on %d of %d; missing by manager: %v", len(mine), len(theirs), missingByManager)
 	for mgr, n := range missingByManager {
-		if mgr != "gitlabci" {
-			t.Errorf("%d dependencies missing from manager %q, which pinup implements", n, mgr)
-		}
-	}
-	if missingByManager["gitlabci"] != 3 {
-		t.Errorf("expected exactly 3 gitlabci dependencies still missing, got %d - "+
-			"if manager/gitlabci landed, this number should be 0 and this expectation deleted",
-			missingByManager["gitlabci"])
+		t.Errorf("%d dependencies Renovate found via %q are missing", n, mgr)
 	}
 }
 

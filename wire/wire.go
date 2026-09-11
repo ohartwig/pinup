@@ -18,6 +18,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
+	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/apk"
@@ -56,6 +57,7 @@ func Versionings() versioning.Registry {
 func Managers() extract.Registry {
 	return extract.Registry{
 		"dockerfile": dockerfile.New(),
+		"gitlabci":   gitlabci.New(),
 	}
 }
 

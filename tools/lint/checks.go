@@ -192,6 +192,26 @@ func CheckCommentsAreEnglish(files []File) []Violation {
 	return vs
 }
 
+// CheckYAMLConfined keeps gopkg.in/yaml.v3 inside yamlx. The dependency is
+// meant to be swappable, and it is only swappable if exactly one package names
+// it; yamlx re-exports the node vocabulary so nobody else needs to.
+func CheckYAMLConfined(files []File) []Violation {
+	const dep = "gopkg.in/" + "yaml.v3"
+	var vs []Violation
+	for _, f := range files {
+		if f.Pkg == "yamlx" {
+			continue
+		}
+		for _, im := range imports(f) {
+			if im.Path == dep {
+				vs = append(vs, Violation{f.Path, im.Line,
+					"yaml.v3 is confined to yamlx; use yamlx.Node and the re-exported kinds"})
+			}
+		}
+	}
+	return vs
+}
+
 // Check is one named rule, so the test table and the mutation suite can
 // address them uniformly.
 type Check struct {
@@ -212,5 +232,6 @@ func All() []Check {
 		{"NoTestWritesTestdata", CheckNoTestWritesTestdata},
 		{"NoNetworkInTests", CheckNoNetworkInTests},
 		{"CommentsAreEnglish", CheckCommentsAreEnglish},
+		{"YAMLConfined", CheckYAMLConfined},
 	}
 }
