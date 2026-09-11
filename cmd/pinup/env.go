@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
+	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
 
 // platformEnv is what the process learns about its GitLab instance from the
@@ -62,6 +63,28 @@ func firstSet(getenv func(string) string, names ...string) string {
 		}
 	}
 	return ""
+}
+
+// datasourceOptions binds the environment's GitLab identity to the docker
+// datasource's token realm as well: the estate's registry authenticates at
+// https://<instance>/jwt/auth with the same token, as basic auth. A job
+// token uses the fixed username GitLab documents for it.
+func datasourceOptions(p platformEnv) wire.DatasourceOptions {
+	o := wire.DatasourceOptions{GitLabURL: p.URL}
+	if p.Host == "" || p.Token == "" {
+		return o
+	}
+	user := "oauth2"
+	if p.Header == "JOB-TOKEN" {
+		user = "gitlab-ci-token"
+	}
+	o.RegistryCredentials = func(realmHost string) (string, string, bool) {
+		if !strings.EqualFold(realmHost, p.Host) {
+			return "", "", false
+		}
+		return user, p.Token, true
+	}
+	return o
 }
 
 // httpClient builds the one HTTP client every datasource shares. The token

@@ -106,6 +106,9 @@ type Response struct {
 type StatusError struct {
 	StatusCode int
 	URL        string
+	// Header carries the response headers: a rate-limited 403 is only
+	// distinguishable from a permission 403 by X-RateLimit-Remaining.
+	Header http.Header
 }
 
 func (e *StatusError) Error() string {
@@ -360,11 +363,11 @@ func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rul
 	case resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500:
 		drain(resp.Body)
 		wait, _ := parseRetryAfter(resp.Header.Get("Retry-After"), c.now())
-		return nil, true, wait, &StatusError{StatusCode: resp.StatusCode, URL: rawURL}
+		return nil, true, wait, &StatusError{StatusCode: resp.StatusCode, URL: rawURL, Header: resp.Header.Clone()}
 
 	default:
 		drain(resp.Body)
-		return nil, false, 0, &StatusError{StatusCode: resp.StatusCode, URL: rawURL}
+		return nil, false, 0, &StatusError{StatusCode: resp.StatusCode, URL: rawURL, Header: resp.Header.Clone()}
 	}
 }
 

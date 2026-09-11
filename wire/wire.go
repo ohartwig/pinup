@@ -13,9 +13,12 @@ package wire
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/dockerds"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/githubds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
@@ -64,14 +67,31 @@ func Managers() extract.Registry {
 	}
 }
 
+// DatasourceOptions is what the datasources need beyond the shared client.
+type DatasourceOptions struct {
+	// GitLabURL is the fallback instance for the three gitlab-* sources when
+	// a dependency names no registryUrls.
+	GitLabURL string
+	// Transport is what the docker datasource dials registries and token
+	// realms through; it manages bearer tokens itself, which httpx has no
+	// hook for. nil means http.DefaultTransport.
+	Transport http.RoundTripper
+	// RegistryCredentials answers basic-auth credentials for a token realm
+	// host, e.g. git.ole-hartwig.eu for registry.ole-hartwig.eu. nil means
+	// every realm is asked anonymously.
+	RegistryCredentials dockerds.Credentials
+}
+
 // Datasources returns every datasource, keyed by the name the configuration
-// uses. gitlabURL is the fallback instance for the three gitlab-* sources
-// when a dependency names no registryUrls.
-func Datasources(client *httpx.Client, gitlabURL string) lookup.Registry {
+// uses.
+func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 	return lookup.Registry{
-		"gitlab-tags":     gitlabds.New(gitlabds.Tags, client, gitlabURL),
-		"gitlab-releases": gitlabds.New(gitlabds.Releases, client, gitlabURL),
-		"gitlab-packages": gitlabds.New(gitlabds.Packages, client, gitlabURL),
+		"gitlab-tags":     gitlabds.New(gitlabds.Tags, client, o.GitLabURL),
+		"gitlab-releases": gitlabds.New(gitlabds.Releases, client, o.GitLabURL),
+		"gitlab-packages": gitlabds.New(gitlabds.Packages, client, o.GitLabURL),
+		"github-releases": githubds.New(githubds.Releases, client, ""),
+		"github-tags":     githubds.New(githubds.Tags, client, ""),
+		"docker":          dockerds.New(o.Transport, o.RegistryCredentials),
 	}
 }
 

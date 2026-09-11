@@ -42,7 +42,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	}
 	opts := whatifOptions{
 		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: time.Now(),
-		Datasources: wire.Datasources(httpClient(env), env.URL),
+		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
 	}
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
