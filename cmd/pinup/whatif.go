@@ -293,8 +293,12 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			continue
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
+		locked := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), res.Deps, plan)
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
+			if v, ok := locked[d.DepName]; ok {
+				d.LockedVersion = v
+			}
 			if d.SkipReason == "" && ignored[d.DepName] {
 				d.SkipReason = "listed in ignoreDeps"
 			}
@@ -545,4 +549,30 @@ func intOf(v any) int {
 		return 0
 	}
 	return int(f)
+}
+
+// lockedVersions reads the lock file next to a manifest, once, and returns
+// the versions it pins by package name. A manager receives the manifest
+// only; the lock is the run's to read. A missing lock is nothing pinned; an
+// unreadable one is a warning, since "no locked version" is a different
+// fact from "the lock could not be read".
+func lockedVersions(root, manifest, manager string, deps []model.Dependency, plan *model.Plan) map[string]string {
+	if len(deps) == 0 || len(deps[0].LockFiles) == 0 {
+		return nil
+	}
+	dir := filepath.Dir(manifest)
+	for _, name := range deps[0].LockFiles {
+		path := filepath.Join(dir, name)
+		raw, err := os.ReadFile(filepath.Join(root, path))
+		if err != nil {
+			continue
+		}
+		locked, err := wire.LockedVersions(manager, raw)
+		if err != nil {
+			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "extract", File: path, Msg: err.Error()})
+			continue
+		}
+		return locked
+	}
+	return nil
 }

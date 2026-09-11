@@ -4,8 +4,8 @@
 package main
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"io"
 	"strings"
 	"testing"

@@ -22,11 +22,15 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/datasource/dockerds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/githubds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/npmds"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/packagist"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
+	"git.ole-hartwig.eu/pinup/pinup/manager/composerman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
+	"git.ole-hartwig.eu/pinup/pinup/manager/npmman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/platform/gitlab"
@@ -69,6 +73,8 @@ func Managers() extract.Registry {
 	return extract.Registry{
 		"dockerfile": dockerfile.New(),
 		"gitlabci":   gitlabci.New(),
+		"composer":   composerman.New(),
+		"npm":        npmman.New(),
 	}
 }
 
@@ -116,6 +122,8 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"github-releases": githubds.New(githubds.Releases, client, ""),
 		"github-tags":     githubds.New(githubds.Tags, client, ""),
 		"docker":          dockerds.New(o.Transport, o.RegistryCredentials),
+		"packagist":       packagist.New(client),
+		"npm":             npmds.New(client),
 	}
 	for name, view := range ApkViews {
 		r[name] = apkds.New(name, client, view)
@@ -152,6 +160,19 @@ func DefaultVersioning(ds lookup.Registry) func(string) string {
 		}
 		return ""
 	}
+}
+
+// LockedVersions reads the versions a manager's lock file pins, keyed by
+// package name. A manager receives one file, the manifest; the lock is a
+// sibling the run reads for it. Managers without a lock answer nil.
+func LockedVersions(manager string, lock []byte) (map[string]string, error) {
+	switch manager {
+	case "composer":
+		return composerman.LockedVersions(lock)
+	case "npm":
+		return npmman.LockedVersions(lock)
+	}
+	return nil, nil
 }
 
 // Platform returns the GitLab platform for an instance. header is the

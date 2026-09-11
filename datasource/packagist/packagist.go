@@ -32,6 +32,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
@@ -51,12 +52,15 @@ const minifiedComposer2 = "composer/2.0"
 // Datasource implements the packagist datasource.
 type Datasource struct {
 	client *httpx.Client
+
+	mu    sync.Mutex
+	roots map[string]rootEntry
 }
 
 // New returns a packagist datasource using client for every registry a
 // dependency names.
 func New(client *httpx.Client) *Datasource {
-	return &Datasource{client: client}
+	return &Datasource{client: client, roots: map[string]rootEntry{}}
 }
 
 func (d *Datasource) Name() string { return "packagist" }
@@ -100,22 +104,9 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 // does not have the package" (a 404 on the package's own metadata); every
 // other problem is returned as an error.
 func (d *Datasource) lookupOne(ctx context.Context, base, pkg string) (*model.ReleaseSet, bool, error) {
-	resp, err := d.client.Get(ctx, base+"/packages.json", httpx.ReqOptions{Accept: "application/json"})
+	root, err := d.root(ctx, base)
 	if err != nil {
-		if ae := authError(base, "packages.json", err); ae != nil {
-			return nil, false, ae
-		}
-		return nil, false, fmt.Errorf("packagist: registry %s: fetching packages.json: %w", base, err)
-	}
-
-	var root struct {
-		MetadataURL      string          `json:"metadata-url"`
-		ProvidersURL     string          `json:"providers-url"`
-		ProviderIncludes json.RawMessage `json:"provider-includes"`
-		Packages         json.RawMessage `json:"packages"`
-	}
-	if err := json.Unmarshal(resp.Body, &root); err != nil {
-		return nil, false, fmt.Errorf("packagist: registry %s: parsing packages.json: %w", base, err)
+		return nil, false, err
 	}
 
 	switch {
@@ -130,6 +121,51 @@ func (d *Datasource) lookupOne(ctx context.Context, base, pkg string) (*model.Re
 	default:
 		return nil, false, fmt.Errorf("packagist: registry %s: packages.json declares no recognised repository format", base)
 	}
+}
+
+// rootDoc is a registry's packages.json, the part this package reads.
+type rootDoc struct {
+	MetadataURL      string          `json:"metadata-url"`
+	ProvidersURL     string          `json:"providers-url"`
+	ProviderIncludes json.RawMessage `json:"provider-includes"`
+	Packages         json.RawMessage `json:"packages"`
+}
+
+// root fetches a registry's packages.json once per process: a repository
+// with sixty composer dependencies asks the same two registries sixty
+// times otherwise. An inline registry's package list is in it, and its
+// staleness is bounded by the process, not by the run.
+func (d *Datasource) root(ctx context.Context, base string) (*rootDoc, error) {
+	d.mu.Lock()
+	if cached, ok := d.roots[base]; ok {
+		d.mu.Unlock()
+		return cached.doc, cached.err
+	}
+	d.mu.Unlock()
+
+	var doc *rootDoc
+	resp, err := d.client.Get(ctx, base+"/packages.json", httpx.ReqOptions{Accept: "application/json"})
+	if err != nil {
+		if ae := authError(base, "packages.json", err); ae != nil {
+			err = ae
+		} else {
+			err = fmt.Errorf("packagist: registry %s: fetching packages.json: %w", base, err)
+		}
+	} else {
+		doc = &rootDoc{}
+		if jerr := json.Unmarshal(resp.Body, doc); jerr != nil {
+			doc, err = nil, fmt.Errorf("packagist: registry %s: parsing packages.json: %w", base, jerr)
+		}
+	}
+	d.mu.Lock()
+	d.roots[base] = rootEntry{doc, err}
+	d.mu.Unlock()
+	return doc, err
+}
+
+type rootEntry struct {
+	doc *rootDoc
+	err error
 }
 
 // lookupP2 fetches the Composer 2 metadata-url document for pkg, plus its
@@ -160,7 +196,10 @@ func (d *Datasource) lookupP2(ctx context.Context, base, pkg, metadataURLTemplat
 // fetchP2 fetches and expands one metadata-url document, for either pkg
 // itself or its "pkg~dev" variant.
 func (d *Datasource) fetchP2(ctx context.Context, base, metadataURLTemplate, pkgVariant string) ([]releaseEntry, bool, error) {
-	url := base + strings.ReplaceAll(metadataURLTemplate, "%package%", pkgVariant)
+	// metadata-url is relative to the repository root on most registries
+	// ("/p2/%package%.json") and absolute on packagist.org itself
+	// ("https://repo.packagist.org/p2/%package%.json"); measured live.
+	url := resolveMetadataURL(base, strings.ReplaceAll(metadataURLTemplate, "%package%", pkgVariant))
 	resp, err := d.client.Get(ctx, url, httpx.ReqOptions{Accept: "application/json"})
 	if err != nil {
 		if isNotFound(err) {
@@ -347,4 +386,13 @@ func authError(base, what string, err error) error {
 			base, se.StatusCode, what)
 	}
 	return nil
+}
+
+// resolveMetadataURL joins a metadata-url template with the registry base,
+// leaving an absolute template as it is.
+func resolveMetadataURL(base, tmpl string) string {
+	if strings.HasPrefix(tmpl, "http://") || strings.HasPrefix(tmpl, "https://") {
+		return tmpl
+	}
+	return strings.TrimRight(base, "/") + "/" + strings.TrimLeft(tmpl, "/")
 }
