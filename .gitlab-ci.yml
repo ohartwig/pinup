@@ -94,35 +94,12 @@ default:
 # inside this repository.
 lint:ci-resolved:
   stage: quick
-  image: ${CURL_IMAGE}
+  image: ${GO_IMAGE}
   cache: []
   variables:
     GIT_DEPTH: "1"
   script:
-    - |
-      set -eu
-      body="$(jq -Rs '{content: .}' < .gitlab-ci.yml)"
-      printf '%s' "$body" > /tmp/lint-body.json
-      code="$(curl -sS -o /tmp/lint.json -w '%{http_code}' \
-        -X POST \
-        -H "JOB-TOKEN: ${CI_JOB_TOKEN}" \
-        -H 'Content-Type: application/json' \
-        --data @/tmp/lint-body.json \
-        "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/ci/lint?include_jobs=true")"
-      # Check the status, never the emptiness of the body: a 404 body is a
-      # non-empty string and would read as success.
-      test "$code" = "200" || { echo "ci/lint returned HTTP $code"; cat /tmp/lint.json; exit 1; }
-      jq -e '.valid == true' /tmp/lint.json > /dev/null \
-        || { echo "pipeline is not valid:"; jq -r '.errors[]?' /tmp/lint.json; exit 1; }
-      jq -r '.jobs[].name' /tmp/lint.json | sort -u > /tmp/resolved-jobs.txt
-      missing=0
-      while read -r want; do
-        [ -z "$want" ] && continue
-        case "$want" in \#*) continue ;; esac
-        grep -qxF "$want" /tmp/resolved-jobs.txt || { echo "MISSING JOB: $want"; missing=1; }
-      done < .gitlab/expected-jobs.txt
-      echo "resolved $(wc -l < /tmp/resolved-jobs.txt) jobs, expected $(grep -cve '^\s*$' -e '^#' .gitlab/expected-jobs.txt)"
-      test "$missing" = "0"
+    - go run tools/cilint.go
 
 # --------------------------------------------------------------------------- #
 # Test
