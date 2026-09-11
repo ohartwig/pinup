@@ -390,10 +390,11 @@ func TestVersioningTablesAreUsable(t *testing.T) {
 	}
 }
 
-// The compatibility segment does not give an ordering, which is why it needs
-// its own update type rather than a version comparison. Asserted from the
-// captured behaviour rather than from reasoning about it.
-func TestDockerCompatibilityDoesNotOrder(t *testing.T) {
+// The compatibility segment orders in REVERSE lexicographic order. An earlier
+// version of this test asserted only that the two directions disagree and
+// concluded there was no ordering - which is backwards, since disagreeing
+// directions are what an ordering is. It now asserts the actual rule.
+func TestDockerCompatibilityOrdersInReverse(t *testing.T) {
 	tbl := verTableFor(t, "docker")
 	get := func(a, b string) (bool, bool) {
 		for _, r := range tbl.IsGreaterThan {
@@ -404,19 +405,26 @@ func TestDockerCompatibilityDoesNotOrder(t *testing.T) {
 		}
 		return false, false
 	}
-	fwd, ok1 := get("22-alpine3.21", "22-alpine3.20")
-	rev, ok2 := get("22-alpine3.20", "22-alpine3.21")
-	if !ok1 || !ok2 {
-		t.Fatal("the compatibility pair is missing from the captured table")
-	}
-	if fwd == rev {
-		t.Errorf("expected the two directions to disagree; both are %v", fwd)
-	}
-	// 3.21 is the newer compatibility, yet it is not reported as greater.
-	if fwd {
-		t.Error("22-alpine3.21 > 22-alpine3.20 held after all; " +
-			"if Renovate's docker versioning learned to order compatibility, " +
-			"UpdateCompatibility can be reconsidered")
+	for _, c := range []struct {
+		a, b string
+		want bool
+	}{
+		{"1.0.0", "1.0.0-alpha", true},
+		{"22-alpine3.20", "22-alpine3.21", true},
+		{"22-alpine3.21", "22-alpine3.20", false},
+		{"22-alpine3.21", "22-bookworm", true},
+		{"22-bookworm", "22-alpine3.21", false},
+	} {
+		got, ok := get(c.a, c.b)
+		if !ok {
+			t.Errorf("pair (%q,%q) missing from the captured table", c.a, c.b)
+			continue
+		}
+		if got != c.want {
+			t.Errorf("captured isGreaterThan(%q,%q) = %v, want %v - "+
+				"if Renovate changed the suffix ordering, versioning/docker must change with it",
+				c.a, c.b, got, c.want)
+		}
 	}
 }
 

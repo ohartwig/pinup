@@ -18,7 +18,7 @@ import (
 var layerOf = map[string]int{
 	// L0 - pure. stdlib only, plus yaml.v3 inside yamlx.
 	"model": 0, "hbs": 0, "glob": 0, "sched": 0, "jsonata": 0,
-	"jsonc": 0, "yamlx": 0, "apkindex": 0, "re2x": 0,
+	"jsonc": 0, "yamlx": 0, "apkindex": 0, "re2x": 0, "semverx": 0,
 
 	// L1 - services.
 	"config": 1, "config/preset": 1, "versioning": 1,

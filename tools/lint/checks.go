@@ -47,10 +47,14 @@ func CheckSPDXHeader(files []File) []Violation {
 
 // CheckNoFakesInBinary keeps test doubles out of anything that ships. They
 // live in their own package precisely so this check is possible.
+//
+// A fake may import another fake: the conformance runner is built on the
+// recording T, and both are test infrastructure. What matters is that nothing
+// reachable from cmd/ imports either.
 func CheckNoFakesInBinary(files []File) []Violation {
 	var vs []Violation
 	for _, f := range files {
-		if f.IsTest {
+		if f.IsTest || f.Pkg == "fake" || strings.HasPrefix(f.Pkg, "fake/") {
 			continue
 		}
 		for _, im := range imports(f) {

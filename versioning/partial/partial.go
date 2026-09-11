@@ -21,8 +21,8 @@ import (
 	"strconv"
 	"strings"
 
+	"git.ole-hartwig.eu/pinup/pinup/semverx"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
-	"git.ole-hartwig.eu/pinup/pinup/versioning/semver"
 )
 
 type Scheme struct{}
@@ -57,12 +57,12 @@ func numericParts(s string) ([]int, bool) {
 
 // full reports whether a value is a complete three-part version, which is the
 // only shape this scheme treats as a version rather than a pattern.
-func full(s string) (semver.Version, bool) {
+func full(s string) (semverx.Version, bool) {
 	parts, ok := numericParts(s)
 	if !ok || len(parts) != 3 {
-		return semver.Version{}, false
+		return semverx.Version{}, false
 	}
-	return semver.Parse(s)
+	return semverx.Parse(s)
 }
 
 func (*Scheme) IsValid(s string) bool {
@@ -77,7 +77,7 @@ func (*Scheme) IsStable(s string) bool {
 	return ok && len(v.Pre) == 0
 }
 
-func component(s string, pick func(semver.Version) int) (int, bool) {
+func component(s string, pick func(semverx.Version) int) (int, bool) {
 	v, ok := full(s)
 	if !ok {
 		return 0, false
@@ -86,13 +86,13 @@ func component(s string, pick func(semver.Version) int) (int, bool) {
 }
 
 func (*Scheme) Major(s string) (int, bool) {
-	return component(s, func(v semver.Version) int { return v.Major })
+	return component(s, func(v semverx.Version) int { return v.Major })
 }
 func (*Scheme) Minor(s string) (int, bool) {
-	return component(s, func(v semver.Version) int { return v.Minor })
+	return component(s, func(v semverx.Version) int { return v.Minor })
 }
 func (*Scheme) Patch(s string) (int, bool) {
-	return component(s, func(v semver.Version) int { return v.Patch })
+	return component(s, func(v semverx.Version) int { return v.Patch })
 }
 
 // Compare orders complete versions only. A partial does not participate at
@@ -108,7 +108,7 @@ func (*Scheme) Compare(a, b string) int {
 	if !okA || !okB {
 		return 0
 	}
-	return semver.CompareVersions(va, vb)
+	return semverx.CompareVersions(va, vb)
 }
 
 // Equal answers only for complete versions. A partial is not equal to
@@ -125,7 +125,7 @@ func (*Scheme) Equal(a, b string) bool {
 	if !okA || !okB {
 		return false
 	}
-	return semver.CompareVersions(va, vb) == 0
+	return semverx.CompareVersions(va, vb) == 0
 }
 
 // Satisfies matches a complete, released version against a partial prefix.
