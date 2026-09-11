@@ -182,3 +182,135 @@ func TestResolvedRulesNeedMatchersTheWrittenConfigDoesNot(t *testing.T) {
 			"the rebuild is no longer bounded by the estate's dependency set", affected-named)
 	}
 }
+
+// --------------------------------------------------------------------------
+// The extraction corpus: real dependency vectors from three real repositories,
+// captured by running the pinned container over copies of them.
+//
+// Until the managers exist this pins the target rather than comparing against
+// it. Once manager/regexm lands, these vectors are what it must reproduce.
+// --------------------------------------------------------------------------
+
+type corpusDep struct {
+	DepName       string `json:"depName"`
+	PackageName   string `json:"packageName"`
+	CurrentValue  string `json:"currentValue"`
+	CurrentDigest string `json:"currentDigest"`
+	Datasource    string `json:"datasource"`
+	Versioning    string `json:"versioning"`
+	SkipReason    string `json:"skipReason"`
+}
+
+type corpusFile struct {
+	PackageFile string      `json:"packageFile"`
+	Deps        []corpusDep `json:"deps"`
+}
+
+func loadCorpus(t *testing.T) map[string]map[string][]corpusFile {
+	t.Helper()
+	dir := filepath.Join(snapshotDir(t), "extract")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Skipf("no extraction corpus: %v", err)
+	}
+	out := map[string]map[string][]corpusFile{}
+	for _, e := range entries {
+		if !strings.HasSuffix(e.Name(), ".json") {
+			continue
+		}
+		repo := strings.TrimSuffix(e.Name(), ".json")
+		out[repo] = readJSON[map[string][]corpusFile](t, filepath.Join(dir, e.Name()))
+	}
+	return out
+}
+
+func corpusDeps(t *testing.T) []corpusDep {
+	t.Helper()
+	var all []corpusDep
+	for _, managers := range loadCorpus(t) {
+		for _, files := range managers {
+			for _, f := range files {
+				all = append(all, f.Deps...)
+			}
+		}
+	}
+	return all
+}
+
+func TestCorpusIsRepresentative(t *testing.T) {
+	deps := corpusDeps(t)
+	t.Logf("%d dependency vectors from %d repositories", len(deps), len(loadCorpus(t)))
+	if len(deps) != 54 {
+		t.Errorf("corpus has %d vectors, expected 54 - it was recaptured", len(deps))
+	}
+
+	seen := map[string]bool{}
+	for _, d := range deps {
+		seen["ds:"+d.Datasource] = true
+		if d.Versioning != "" {
+			seen["ver:"+d.Versioning] = true
+		}
+	}
+	// The corpus earns its place by covering datasources a hand-written
+	// fixture would not have thought to include.
+	for _, want := range []string{
+		"ds:docker", "ds:gitlab-tags", "ds:gitlab-releases", "ds:gitlab-packages",
+		"ds:github-tags", "ds:github-releases", "ds:packagist", "ds:npm",
+		"ver:composer", "ver:loose", "ver:semver-partial",
+	} {
+		if !seen[want] {
+			t.Errorf("corpus does not cover %s", want)
+		}
+	}
+}
+
+// Custom manager #10 builds a composite packageName with a triple-nested
+// Handlebars conditional. These are the real outputs it produces, and they are
+// what hbs and manager/regexm together must reproduce.
+func TestCorpusPinsTheTemplatedPackageNames(t *testing.T) {
+	want := map[string]string{
+		"moselwal/dev":                "development/moselwal/dev:moselwal/dev",
+		"moselwal/content-provenance": "development/moselwal/content-provenance:moselwal/content-provenance",
+		"moselwal/keyvalue-store":     "development/moselwal/keyvalue-store:moselwal/keyvalue-store",
+		"moselwal/typo3-config":       "development/moselwal/typo3-config:moselwal/typo3-config",
+		"moselwal/structured-content": "development/moselwal/structured-content:moselwal/structured-content",
+	}
+	got := map[string]string{}
+	for _, d := range corpusDeps(t) {
+		if strings.HasPrefix(d.DepName, "moselwal/") && d.PackageName != "" {
+			got[d.DepName] = d.PackageName
+		}
+	}
+	for dep, pkg := range want {
+		if got[dep] != pkg {
+			t.Errorf("packageName for %s:\n got %q\nwant %q", dep, got[dep], pkg)
+		}
+	}
+}
+
+// A defect in the estate configuration, found by running the corpus rather
+// than by reading the config.
+//
+// Custom manager #10 matches `"moselwal/x": "y"` anywhere in composer.json,
+// with no notion of which block it is in. composer's `suggest` maps a package
+// name to a human description, so the manager reads those descriptions as
+// version constraints and emits dependencies whose currentValue is prose.
+//
+// They cannot resolve, so today they are noise rather than damage. The test
+// exists so the noise is recorded rather than tolerated: if the config is
+// fixed, this goes red and gets deleted, which is the point.
+func TestCorpusRecordsTheSuggestBlockOverMatch(t *testing.T) {
+	var prose []corpusDep
+	for _, d := range corpusDeps(t) {
+		if strings.Contains(d.CurrentValue, " ") && d.Datasource == "gitlab-packages" {
+			prose = append(prose, d)
+		}
+	}
+	if len(prose) != 3 {
+		t.Errorf("found %d dependencies whose currentValue is prose, expected 3 "+
+			"(the composer `suggest` over-match). If the estate config was fixed, delete this test.", len(prose))
+	}
+	for _, d := range prose {
+		t.Logf("  over-match: %s = %q", d.DepName, d.CurrentValue)
+	}
+}
