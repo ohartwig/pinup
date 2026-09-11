@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/re2x"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
 )
 
@@ -67,7 +68,7 @@ func Plan(req Request) Result {
 	var res Result
 	res.Deps = make([]model.Dependency, 0, len(req.Deps))
 	for _, d := range req.Deps {
-		ups, skip, warn := planOne(req, d)
+		ups, skip, warn := planOne(req, &d)
 		if warn != nil {
 			res.Warnings = append(res.Warnings, *warn)
 		}
@@ -80,11 +81,14 @@ func Plan(req Request) Result {
 	return res
 }
 
-func planOne(req Request, d model.Dependency) ([]model.Update, string, *model.Warning) {
+// planOne decides one dependency. It writes back the versioning scheme it
+// resolved, so the plan names the scheme every comparison used rather than
+// leaving "" for "whatever the datasource implied".
+func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.Warning) {
 	if d.SkipReason != "" {
 		return nil, d.SkipReason, nil
 	}
-	rs := req.Releases(d)
+	rs := req.Releases(*d)
 	if rs == nil {
 		return nil, "no lookup was made for this dependency", nil
 	}
@@ -104,6 +108,21 @@ func planOne(req Request, d model.Dependency) ([]model.Update, string, *model.Wa
 		return nil, fmt.Sprintf("versioning: %v", err), &model.Warning{
 			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: %v", d.DepName, err),
 		}
+	}
+	d.Versioning = scheme
+
+	// extractVersion rewrites every release's version before anything is
+	// compared: "^v?(?<version>.+)$" turns the tag v3.11.3 into 3.11.3. A
+	// release the pattern does not match is not a release of this
+	// dependency and is dropped.
+	if d.ExtractVersion != "" {
+		extracted, err := extractVersions(rs, d.ExtractVersion)
+		if err != nil {
+			return nil, fmt.Sprintf("extractVersion: %v", err), &model.Warning{
+				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: extractVersion %q: %v", d.DepName, d.ExtractVersion, err),
+			}
+		}
+		rs = extracted
 	}
 
 	cur := d.CurrentValue
@@ -202,7 +221,7 @@ func planOne(req Request, d model.Dependency) ([]model.Update, string, *model.Wa
 		rel := byVersion[target]
 		u := model.Update{
 			DepKey:     d.Key(),
-			Dep:        d,
+			Dep:        *d,
 			NewValue:   newValue,
 			NewVersion: target,
 			NewDigest:  rel.Digest,
@@ -227,6 +246,39 @@ func planOne(req Request, d model.Dependency) ([]model.Update, string, *model.Wa
 		return nil, fmt.Sprintf("up to date: none of %d releases is newer than %s", seen, cur), nil
 	}
 	return ups, "", nil
+}
+
+// extractVersions applies an extractVersion pattern to a release set,
+// returning a copy with the rewritten versions.
+func extractVersions(rs *model.ReleaseSet, pattern string) (*model.ReleaseSet, error) {
+	re, err := re2x.Compile(pattern)
+	if err != nil {
+		return nil, err
+	}
+	hasGroup := false
+	for _, n := range re.Names() {
+		if n == "version" {
+			hasGroup = true
+		}
+	}
+	if !hasGroup {
+		return nil, fmt.Errorf("pattern has no (?<version>...) group")
+	}
+	out := *rs
+	out.Releases = make([]model.Release, 0, len(rs.Releases))
+	for _, r := range rs.Releases {
+		m, ok := re.Find(r.Version)
+		if !ok {
+			continue
+		}
+		v, present := m.Get("version")
+		if !present || v == "" {
+			continue
+		}
+		r.Version = v
+		out.Releases = append(out.Releases, r)
+	}
+	return &out, nil
 }
 
 // declaredRisk maps an update type onto the risk order. Digest and pin moves

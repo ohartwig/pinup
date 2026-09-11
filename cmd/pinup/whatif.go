@@ -33,8 +33,17 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	name := fs.String("name", "", "repository path to record in the plan, e.g. devops/images/ci-tools")
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt); empty means every lookup is cold")
 	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
+	nowFlag := fs.String("now", "", "plan as if it were this moment (RFC 3339); schedules and release ages are judged against it")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	now := time.Now()
+	if *nowFlag != "" {
+		t, err := time.Parse(time.RFC3339, *nowFlag)
+		if err != nil {
+			return fmt.Errorf("--now: %w", err)
+		}
+		now = t
 	}
 	if *cfgPath == "" {
 		return fmt.Errorf("whatif: --config is required")
@@ -45,7 +54,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return err
 	}
 	opts := whatifOptions{
-		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: time.Now(),
+		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: now,
 		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
 		CacheTTL:    *cacheTTL,
 	}
@@ -234,13 +243,24 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	})
 	plan.Deps = planned.Deps
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
+	var named []planner.Named
 	for _, u := range planned.Updates {
-		decided, err := applyUpdateRules(engine, resolved.Raw, u, now)
+		decided, cfg, err := applyUpdateRules(engine, resolved.Raw, u, now)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
 		}
 		plan.Updates = append(plan.Updates, decided)
+		n, err := planner.Name(decided, cfg, wire.Versionings())
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
+		}
+		named = append(named, n)
 	}
+	branches, err := planner.Compose(named)
+	if err != nil {
+		return nil, fmt.Errorf("branches: %w", err)
+	}
+	plan.Branches = branches
 
 	blocked := 0
 	for _, u := range plan.Updates {
@@ -255,6 +275,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		LookupsFromCache: fromCache,
 		UpdatesFound:     len(plan.Updates),
 		UpdatesBlocked:   blocked,
+		BranchesPlanned:  len(plan.Branches),
 	}
 	plan.Sort()
 	if err := plan.Validate(); err != nil {
@@ -293,13 +314,14 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 // and the policy they select decides whether the update is acted on now.
 // Held, not deleted: the plan still says what would have happened and why
 // not, with the thaw time and the rule that held it.
-func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, error) {
+func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, map[string]any, error) {
 	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.String()))
 	policy := planner.PolicyOf(res.Config, func(key string) model.Origin { return origin(res, key) })
 	if res.SkipReason != "" {
 		policy.Enabled = false
 	}
-	return planner.Decide(u, policy, now)
+	decided, err := planner.Decide(u, policy, now)
+	return decided, res.Config, err
 }
 
 func lastWriter(res rules.Resolution, key string) string {

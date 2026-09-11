@@ -64,31 +64,77 @@ func TestDiffSeesARuleSwap(t *testing.T) {
 	}
 }
 
-// print-config parity: the estate configuration resolved here, flattened,
-// equals the pinned container's direct resolution of the same file - every
-// path, every value, in order. The line count is asserted so an empty
-// comparison cannot pass.
+// print-config parity: the estate configuration resolved here - defaults,
+// presets, file - flattened, against what the pinned container printed for
+// the same file. Two adjustments to the captured surface, both measured
+// and recorded in testdata/parity/.../presets/README.md: keys that describe
+// the capture run rather than the program are dropped, and the four keys
+// the onboarding config:recommended overrode or reordered in that run
+// (ignorePaths, packageRules, description, customManagers) are taken from
+// the direct resolution of the file. Everything else must agree line for
+// line, and the line count is asserted so an empty comparison cannot pass.
 func TestPrintConfigParityWithTheCapturedResolution(t *testing.T) {
 	r, _, err := ResolveFile("../testdata/parity/config/default.json", preset.Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw, err := os.ReadFile("../testdata/parity/renovate-43.288.0/presets/default-resolved.json")
-	if err != nil {
-		t.Fatal(err)
+	want := loadJSON(t, "../testdata/parity/renovate-43.288.0/full-resolved.json")
+	// The direct resolution is pre-migration, as the container's own
+	// migration ran in the print-config path; apply ours, which is the
+	// thing under test as well.
+	direct, _ := Migrate(loadJSON(t, "../testdata/parity/renovate-43.288.0/presets/default-resolved.json"))
+	for _, k := range []string{"ignorePaths", "packageRules", "description", "customManagers"} {
+		want[k] = direct[k]
 	}
-	var want map[string]any
-	if err := json.Unmarshal(raw, &want); err != nil {
-		t.Fatal(err)
+	for k := range want {
+		if runSpecific[k] {
+			delete(want, k)
+		}
 	}
 	mine, theirs := Flatten(r.Raw), Flatten(want)
-	if len(theirs) < 5000 {
+	if len(theirs) < 6000 {
 		t.Fatalf("only %d lines captured; the snapshot was barely read", len(theirs))
 	}
 	d := Diff(mine, theirs)
 	if len(d) != 0 {
-		limit := min(len(d), 20)
+		limit := min(len(d), 30)
 		t.Errorf("%d lines differ from the captured resolution (first %d):\n%s", len(d), limit, strings.Join(d[:limit], "\n"))
 	}
 	t.Logf("%d flattened lines agree", len(theirs))
+}
+
+// runSpecific mirrors tools/defaultsgen: keys of the capture run, the
+// platform session or a secret.
+var runSpecific = map[string]bool{
+	"branchList": true, "defaultBranch": true, "errors": true, "warnings": true,
+	"repository": true, "repoFingerprint": true, "repoIsOnboarded": true, "renovateJsonPresent": true,
+	"isFork": true, "hostRules": true, "token": true, "password": true, "username": true,
+	"npmToken": true, "npmrc": true, "forkToken": true, "encrypted": true, "dryRun": true,
+	"printConfig": true, "reportPath": true, "reportType": true, "reportFormatting": true,
+	"privateKeyPath": true, "privateKeyPathOld": true, "gitAuthor": true, "gitUrl": true,
+	"logLevelRemap": true, "writeDiscoveredRepos": true, "detectHostRulesFromEnv": true,
+	"detectGlobalManagerConfig": true, "globalExtends": true, "onboardingBranch": true,
+	"onboardingRebaseCheckbox": true, "persistRepoData": true, "repositoryCache": true,
+	"repositoryCacheType": true, "useCloudMetadataServices": true, "mode": true,
+	"inheritConfig": true, "inheritConfigFileName": true, "inheritConfigRepoName": true,
+	"inheritConfigStrict": true, "platformCommit": true, "forkCreation": true, "forkOrg": true,
+	"forkModeDisallowMaintainerEdits": true, "forkProcessing": true, "cloneSubmodules": true,
+	"cloneSubmodulesFilter": true, "customizeDashboard": true,
+	"deleteConfigFile": true, "deleteAdditionalConfigFile": true, "optimizeForDisabled": true,
+	"expandCodeOwnersGroups": true, "filterUnavailableUsers": true, "azureWorkItemId": true,
+	"azureWorkItemType": true, "bbAutoResolvePrTasks": true, "bbUseDefaultReviewers": true,
+	"gitLabIgnoreApprovals": true, "milestone": true, "parentOrg": true,
+}
+
+func loadJSON(t *testing.T, path string) map[string]any {
+	t.Helper()
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatal(err)
+	}
+	return m
 }

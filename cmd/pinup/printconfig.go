@@ -40,6 +40,9 @@ func cmdPrintConfig(args []string, out, errw io.Writer) error {
 	for _, w := range warnings {
 		fmt.Fprintln(errw, "warning:", w)
 	}
+	for _, n := range r.Migrations {
+		fmt.Fprintln(errw, "migrated:", n)
+	}
 
 	switch {
 	case *explain != "":

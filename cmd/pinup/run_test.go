@@ -64,11 +64,29 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 		t.Error("an unset path must be an error, not silence")
 	}
 
+	// Against the direct resolution of the file - presets, no defaults -
+	// every line the snapshot has is present here, and what is only here
+	// is a builtin default.
 	out.Reset()
 	err = run([]string{"print-config", "--config", "../../testdata/parity/config/default.json",
 		"--diff", "../../testdata/parity/renovate-43.288.0/presets/default-resolved.json"}, &out, &errw)
-	if err != nil || out.Len() != 0 {
-		t.Errorf("diff against the captured resolution: err=%v out=%q", err, out.String())
+	if err == nil {
+		t.Error("the defaults make the resolution larger than the direct snapshot; the diff must say so")
+	}
+	for _, line := range strings.Split(out.String(), "\n") {
+		// The direct snapshot is pre-migration: its string descriptions
+		// are lists here, its minimumReleaseAge "0" is null, and the
+		// global-only executionTimeout is gone. Anything else the snapshot
+		// has and this lacks is a real difference.
+		if !strings.HasPrefix(line, "+ ") {
+			continue
+		}
+		migrated := strings.Contains(line, ".description \"") ||
+			strings.HasSuffix(line, `minimumReleaseAge "0"`) ||
+			strings.HasPrefix(line, "+ executionTimeout ")
+		if !migrated {
+			t.Errorf("the snapshot has a line this resolution lacks: %s", line)
+		}
 	}
 	// And the diff must be able to fail: the production-shape capture has
 	// 1540 rules and differs.

@@ -275,3 +275,28 @@ func TestRollingMajorPinIsResolvedAsARange(t *testing.T) {
 		t.Errorf("a range nothing satisfies must say so: %q", got)
 	}
 }
+
+// extractVersion rewrites release versions before comparison and drops
+// releases it does not match; the plan records the scheme that was used.
+func TestExtractVersionAndRecordedScheme(t *testing.T) {
+	d := dep("editorconfig-checker/editorconfig-checker", "3.11.1", "")
+	d.ExtractVersion = `^v?(?<version>.+)$`
+	res := Plan(Request{
+		Deps:              []model.Dependency{d},
+		Releases:          func(model.Dependency) *model.ReleaseSet { return releases("v3.11.2", "v3.11.3", "nightly-2026") },
+		Versionings:       registry(),
+		DefaultVersioning: func(string) string { return "semver" },
+		Now:               now,
+	})
+	if len(res.Updates) != 1 || res.Updates[0].NewVersion != "3.11.3" || res.Updates[0].NewValue != "3.11.3" {
+		t.Fatalf("want one update to 3.11.3 with the v stripped, got %+v", res.Updates)
+	}
+	if res.Deps[0].Versioning != "semver" || res.Updates[0].Dep.Versioning != "semver" {
+		t.Errorf("the resolved scheme must be written back: dep=%q update=%q", res.Deps[0].Versioning, res.Updates[0].Dep.Versioning)
+	}
+	d.ExtractVersion = `^v(.+)$` // no named group
+	res = Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return releases("v1.0.0") }, Versionings: registry(), Now: now})
+	if !strings.Contains(res.Deps[0].SkipReason, "version") || len(res.Warnings) != 1 {
+		t.Errorf("a pattern without a version group must be refused: skip=%q warnings=%v", res.Deps[0].SkipReason, res.Warnings)
+	}
+}

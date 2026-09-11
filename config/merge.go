@@ -31,6 +31,8 @@ type Resolved struct {
 	// --explain prints every place that set a key and which one won, which is
 	// what makes a rule-ordering surprise diagnosable rather than repeatable.
 	Prov map[string][]model.Origin
+	// Migrations lists what Migrate rewrote on the way, one note each.
+	Migrations []string
 }
 
 // Merge applies layers in order, parent first. Later layers override earlier
