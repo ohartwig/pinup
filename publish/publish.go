@@ -85,4 +85,8 @@ type Platform interface {
 	// CommitVerification reports how the platform judged a commit's
 	// signature: "verified", "unverified", or the platform's own word.
 	CommitVerification(ctx context.Context, p Project, sha string) (string, error)
+
+	// ReadFile returns a file from a project at ref (empty means the
+	// default branch) - how local> presets are fetched.
+	ReadFile(ctx context.Context, project, path, ref string) ([]byte, error)
 }

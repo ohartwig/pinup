@@ -274,6 +274,25 @@ func (p *Platform) CommitVerification(ctx context.Context, proj publish.Project,
 	return payload.VerificationStatus, nil
 }
 
+// ReadFile fetches a repository file through the raw-file endpoint.
+func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]byte, error) {
+	u := fmt.Sprintf("%s/api/v4/projects/%s/repository/files/%s/raw", p.base, url.PathEscape(project), url.PathEscape(path))
+	if ref != "" {
+		u += "?ref=" + url.QueryEscape(ref)
+	}
+	resp, err := p.do(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	if resp.status == http.StatusNotFound {
+		return nil, fmt.Errorf("gitlab: %s has no file %s at %q, or the token cannot read it", project, path, ref)
+	}
+	if err := classify(resp, project); err != nil {
+		return nil, err
+	}
+	return resp.body, nil
+}
+
 // trySetAutomerge asks GitLab to merge sourceBranch's request when its
 // pipeline succeeds. A 405 (pipeline has not started) or 406 (not currently
 // mergeable) is reported as ok=false with no error: the caller keeps

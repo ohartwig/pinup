@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/cache"
+	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/git"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/runner"
@@ -100,6 +101,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		Root: repo.Dir, ConfigPath: *cfgPath, RepoName: proj.Path, Now: now,
 		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
 		CacheTTL:    *cacheTTL,
+		Presets:     preset.Remote{Reader: platform, Ctx: ctx},
 	}
 	if *cachePath != "" {
 		store, err := cache.Open(*cachePath)

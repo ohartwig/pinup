@@ -444,3 +444,55 @@ func TestWhatifEditsApplyByteExact(t *testing.T) {
 		}
 	}
 }
+
+// A repository's own renovate.json is what runs, with the runner's file
+// answering the local> alias: its rules come last and decide.
+func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
+	if _, err := os.Stat(ciToolsRepo); err != nil {
+		t.Skipf("the ci-tools checkout is not present: %v", err)
+	}
+	root := t.TempDir()
+	for _, f := range []string{".gitlab-ci.yml", "Containerfile"} {
+		body, err := os.ReadFile(ciToolsRepo + "/" + f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		os.WriteFile(root+"/"+f, body, 0o644)
+	}
+	os.WriteFile(root+"/renovate.json", []byte(`{
+  "extends": ["local>devops/renovate-runner:default.json"],
+  "packageRules": [{"description": "the fixture's own rule", "matchPackageNames": ["*"], "enabled": false}]
+}`), 0o644)
+	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(at)
+	opts.Root = root
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Stats.DepsExtracted == 0 {
+		t.Fatal("nothing extracted: the alias did not resolve the runner's managers")
+	}
+	// A dependency disabled before lookup is skipped, not looked up: the
+	// repository's own rule is the 771st, after the runner's 770.
+	disabled := 0
+	for _, d := range plan.Deps {
+		if strings.Contains(d.SkipReason, "packageRules[770]") {
+			disabled++
+		}
+	}
+	if disabled == 0 {
+		t.Errorf("no dependency names the repository's rule; skip reasons: %v", skipReasons(plan))
+	}
+	if plan.Stats.LookupsIssued != 0 || len(plan.Branches) != 0 {
+		t.Errorf("a repository that disables everything looks nothing up and plans no branch: %+v", plan.Stats)
+	}
+}
+
+func skipReasons(p *model.Plan) []string {
+	var out []string
+	for _, d := range p.Deps {
+		out = append(out, d.SkipReason)
+	}
+	return out
+}

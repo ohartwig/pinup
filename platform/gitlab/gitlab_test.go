@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -57,6 +58,7 @@ type fakeProject struct {
 	mrs               []*fakeMR
 	nextIID           int
 	signatures        map[string]string // sha -> verification_status
+	files             map[string]string // "path@ref" -> content
 }
 
 // requestLog is one request the fake received, kept so tests can assert on
@@ -167,6 +169,18 @@ func (s *gitlabServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.serveOneMergeRequest(w, r, proj, strings.TrimPrefix(remainder, "merge_requests/"), body)
 	case strings.HasPrefix(remainder, "repository/commits/"):
 		s.serveSignature(w, proj, strings.TrimPrefix(remainder, "repository/commits/"))
+	case strings.HasPrefix(remainder, "repository/files/"):
+		// files/<escaped path>/raw?ref=
+		rest := strings.TrimPrefix(remainder, "repository/files/")
+		rest = strings.TrimSuffix(rest, "/raw")
+		if path, err := url.PathUnescape(rest); err == nil {
+			if body, ok := proj.files[path+"@"+r.URL.Query().Get("ref")]; ok {
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(body))
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
 	default:
 		w.WriteHeader(http.StatusNotFound)
 	}
@@ -638,4 +652,25 @@ func TestForbiddenHostIsNeverReached(t *testing.T) {
 
 func fixedTime(n int) time.Time {
 	return time.Date(2026, 1, 1+n, 0, 0, 0, 0, time.UTC)
+}
+
+func TestReadFileThroughTheRawEndpoint(t *testing.T) {
+	pf, srv, rt := newFixture(t, "")
+	proj := srv.addProject("devops/renovate-runner", "main")
+	proj.files = map[string]string{"default.json@": `{"labels":["renovate"]}`, "release-fast.json@v2": `{"schedule":["at any time"]}`}
+	body, err := pf.ReadFile(context.Background(), "devops/renovate-runner", "default.json", "")
+	if err != nil || string(body) != `{"labels":["renovate"]}` {
+		t.Fatalf("default.json: %q %v", body, err)
+	}
+	body, err = pf.ReadFile(context.Background(), "devops/renovate-runner", "release-fast.json", "v2")
+	if err != nil || !strings.Contains(string(body), "at any time") {
+		t.Fatalf("ref: %q %v", body, err)
+	}
+	_, err = pf.ReadFile(context.Background(), "devops/renovate-runner", "nonesuch.json", "")
+	if err == nil || !strings.Contains(err.Error(), "nonesuch.json") {
+		t.Errorf("a missing file must be named: %v", err)
+	}
+	if n := rt.Count("git.example.org"); n != 3 {
+		t.Errorf("%d requests, want 3", n)
+	}
 }

@@ -108,6 +108,60 @@ type whatifOptions struct {
 	// Cache is optional; nil means every lookup is cold.
 	Cache    lookup.Cache
 	CacheTTL time.Duration
+	// Presets answers local> presets other than the runner's own file;
+	// nil means only the builtin library is known.
+	Presets preset.Source
+}
+
+// runnerAliases are the names the estate's repositories extend the runner
+// configuration by. They resolve to the runner's own file without a fetch
+// and without changing a byte in any renovate.json.
+var runnerAliases = []string{
+	"local>devops/renovate-runner",
+	"local>devops/renovate-runner:default.json",
+	"local>devops/renovate-runner:default",
+}
+
+// resolveConfig resolves the configuration a repository runs under.
+//
+// The runner's file is the global configuration. A repository that carries
+// its own renovate.json (or .pinup.*) is resolved from that file, with the
+// runner's file answering the local> alias its extends name - the way
+// Renovate composes them in production, where the repository's own keys
+// and rules come last and decide (testdata/parity/.../presets/README.md).
+// A repository without one runs under the runner's file alone.
+func resolveConfig(root, cfgPath string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
+	global, err := config.LoadFile(cfgPath)
+	if err != nil {
+		return config.Decoded{}, nil, nil, err
+	}
+	aliases := preset.Aliases{}
+	for _, name := range runnerAliases {
+		aliases[name] = global.Raw
+	}
+	sources := preset.Chain{aliases}
+	if remote != nil {
+		sources = append(sources, remote)
+	}
+	sources = append(sources, preset.Builtin())
+
+	repoCfg, err := config.FindConfigFile(root)
+	if err != nil {
+		return config.Decoded{}, nil, nil, err
+	}
+	layer := global
+	if repoCfg != "" {
+		layer, err = config.LoadFile(repoCfg)
+		if err != nil {
+			return config.Decoded{}, nil, nil, err
+		}
+	}
+	r, warnings, err := config.ResolveLayer(layer, sources)
+	if err != nil {
+		return config.Decoded{}, nil, nil, err
+	}
+	d, err := config.Decode(r.Raw)
+	return d, r, warnings, err
 }
 
 // whatif runs everything up to the plan. It writes nothing to the repository,
@@ -119,7 +173,7 @@ type whatifOptions struct {
 // update, where the update type is known and a rule can hold it.
 func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	root, cfgPath, repoName, now := o.Root, o.ConfigPath, o.RepoName, o.Now
-	decoded, resolved, presetWarnings, err := config.DecodeFile(cfgPath, preset.Builtin())
+	decoded, resolved, presetWarnings, err := resolveConfig(root, cfgPath, o.Presets)
 	if err != nil {
 		return nil, fmt.Errorf("config: %w", err)
 	}
