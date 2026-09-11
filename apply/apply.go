@@ -41,7 +41,13 @@ func (c Conflict) Error() string {
 // validation a set of edits needs before a write: with no overlap, edits
 // commute, and applying them from the end of each file backwards keeps
 // every recorded offset valid.
+//
+// Two edits that are the same edit - same bytes, same replacement - do not
+// conflict: a component pin matched by the gitlabci manager and by the
+// estate's own regex manager is one change asked for twice, and Renovate
+// writes it once. Dedupe removes the repeat.
 func Check(edits []model.Edit) []Conflict {
+	edits = Dedupe(edits)
 	var out []Conflict
 	for i := range edits {
 		for j := i + 1; j < len(edits); j++ {
@@ -53,6 +59,27 @@ func Check(edits []model.Edit) []Conflict {
 	return out
 }
 
+// Dedupe drops edits identical to an earlier one in file, range, old and
+// new bytes, keeping the first's manager.
+func Dedupe(edits []model.Edit) []model.Edit {
+	type key struct {
+		file       string
+		start, end int
+		old, new   string
+	}
+	seen := map[key]bool{}
+	out := make([]model.Edit, 0, len(edits))
+	for _, e := range edits {
+		k := key{e.File, e.Start, e.End, e.Old, e.New}
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		out = append(out, e)
+	}
+	return out
+}
+
 // Apply returns the file content with edits applied. Every edit's Old must
 // be what the range holds; a mismatch means the file changed since the
 // plan was made, and writing anyway would corrupt it.
@@ -60,7 +87,7 @@ func Apply(content []byte, edits []model.Edit) ([]byte, error) {
 	if cs := Check(edits); len(cs) > 0 {
 		return nil, cs[0]
 	}
-	sorted := append([]model.Edit(nil), edits...)
+	sorted := Dedupe(edits)
 	sort.Slice(sorted, func(i, j int) bool { return sorted[i].Start > sorted[j].Start })
 	out := append([]byte(nil), content...)
 	for _, e := range sorted {

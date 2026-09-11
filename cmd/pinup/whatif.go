@@ -335,7 +335,7 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		}
 		return nil, warnings
 	}
-	return edits, warnings
+	return apply.Dedupe(edits), warnings
 }
 
 // applyDepRules is the pre-lookup pass: a rule may disable the dependency

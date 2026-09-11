@@ -28,12 +28,16 @@ import (
 
 // ManagerTopic is the commitMessageTopic a manager supplies when the
 // configuration names none. Measured from merge-request titles: "update
-// registry.../code-signing docker tag to v1.3.10", "update module
-// github.com/aws/aws-sdk-go-v2 to v1.47.0".
-func ManagerTopic(manager string) string {
+// registry.../code-signing docker tag to v1.3.10" for an image, "update
+// dependency devops/ci-cd-components/... to v..." for a component include
+// read by the same gitlabci manager, "update module
+// github.com/aws/aws-sdk-go-v2 to v1.47.0" for gomod.
+func ManagerTopic(manager, datasource string) string {
 	switch manager {
 	case "dockerfile", "gitlabci", "docker-compose", "kustomize", "helm-values":
-		return "{{{depName}}} Docker tag"
+		if datasource == "docker" {
+			return "{{{depName}}} Docker tag"
+		}
 	case "gomod":
 		return "module {{depName}}"
 	}
@@ -142,7 +146,7 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 	// anything the configuration set: it applies when the topic is still
 	// the builtin default.
 	if topic, _ := single["commitMessageTopic"].(string); topic == "" || topic == builtinTopic {
-		if mt := ManagerTopic(u.Dep.Manager); mt != "" {
+		if mt := ManagerTopic(u.Dep.Manager, u.Dep.Datasource); mt != "" {
 			single = overlay(single, "")
 			single["commitMessageTopic"] = mt
 		}
@@ -251,8 +255,16 @@ func Compose(named []Named) ([]model.Branch, error) {
 	for _, name := range order {
 		m := byName[name]
 		first := m.members[0]
+		// Measured: "renovate/ci-components" on moselwal-websites-deploy is
+		// titled "update dependency devops/ci-cd-components/deploy-tools
+		// to ..." - one dependency, read by two managers, is one update
+		// for the title's purposes.
+		distinct := map[string]bool{}
+		for _, n := range m.members {
+			distinct[n.Update.Dep.DepName+"\x00"+n.Update.NewValue] = true
+		}
 		switch {
-		case len(m.members) == 1 || first.GroupTitle == nil:
+		case len(distinct) == 1 || first.GroupTitle == nil:
 			m.branch.Title = first.Title
 		default:
 			shared := first.Extra

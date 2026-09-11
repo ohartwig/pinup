@@ -26,6 +26,8 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
+	"git.ole-hartwig.eu/pinup/pinup/platform/gitlab"
+	"git.ole-hartwig.eu/pinup/pinup/publish"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/apk"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/coerced"
@@ -105,6 +107,12 @@ func DefaultVersioning(ds lookup.Registry) func(string) string {
 		}
 		return ""
 	}
+}
+
+// Platform returns the GitLab platform for an instance. header is the
+// header the token travels in: PRIVATE-TOKEN or JOB-TOKEN.
+func Platform(baseURL, token, header string) publish.Platform {
+	return gitlab.New(baseURL, nil, gitlab.Token{Value: token, Header: header})
 }
 
 // Plan is a resolved manager assignment: which implementation handles a

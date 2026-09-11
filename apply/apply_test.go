@@ -108,3 +108,23 @@ func TestWriteFilesIsAllOrNothing(t *testing.T) {
 		t.Errorf("mode changed to %v", info.Mode())
 	}
 }
+
+// The same edit asked for twice - two managers on one component pin - is
+// one edit, not a conflict; a different replacement on the same bytes is.
+func TestIdenticalEditsAreOneEdit(t *testing.T) {
+	a := edit("3.20", "3.21")
+	b := a
+	b.Manager = "custom.regex"
+	if cs := Check([]model.Edit{a, b}); len(cs) != 0 {
+		t.Fatalf("identical edits conflict: %v", cs)
+	}
+	out, err := Apply([]byte(src), []model.Edit{a, b})
+	if err != nil || !strings.Contains(string(out), "alpine:3.21   ") {
+		t.Errorf("apply of a duplicated edit: %q %v", out, err)
+	}
+	c := a
+	c.New = "3.22"
+	if cs := Check([]model.Edit{a, c}); len(cs) != 1 {
+		t.Errorf("a different replacement on the same bytes must conflict, got %v", cs)
+	}
+}

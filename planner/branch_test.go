@@ -256,3 +256,16 @@ func splitDots(s string) []string {
 	}
 	return append(out, cur)
 }
+
+// One dependency read by two managers is one update for the title.
+func TestGroupOfOneDependencyReadTwiceIsTitledAsOne(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}, "loose": semverForTest{}}
+	ci := with(base, map[string]any{"groupName": "CI components", "groupSlug": "ci-components"})
+	a, _ := Name(upd("gitlabci", "gitlab-tags", "devops/ci-cd-components/deploy-tools", "1.2.0", "1.3.0", "1.3.0", model.UpdateMinor), ci, vs)
+	b, _ := Name(upd("regex", "gitlab-releases", "devops/ci-cd-components/deploy-tools", "1.2.0", "1.3.0", "1.3.0", model.UpdateMinor), ci, vs)
+	branches, _ := Compose([]Named{a, b})
+	if len(branches) != 1 || branches[0].Title != "chore(deps): update dependency devops/ci-cd-components/deploy-tools to v1.3.0" {
+		t.Errorf("got %+v", branches)
+	}
+}
