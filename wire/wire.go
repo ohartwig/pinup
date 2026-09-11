@@ -33,6 +33,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/manager/npmman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
 	"git.ole-hartwig.eu/pinup/pinup/manager/terraform"
+	"git.ole-hartwig.eu/pinup/pinup/manager/tfversion"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/platform/gitlab"
 	"git.ole-hartwig.eu/pinup/pinup/publish"
@@ -77,6 +78,9 @@ func Managers() extract.Registry {
 		"composer":   composerman.New(),
 		"npm":        npmman.New(),
 		"terraform":  terraform.New(),
+		// The registry key is the manager's Renovate name, which the
+		// enabledManagers list and the rules' matchManagers use.
+		"terraform-version": tfversion.New(),
 	}
 }
 
