@@ -5,6 +5,7 @@ package preset
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"reflect"
 	"sort"
@@ -52,9 +53,7 @@ func loadClosure(t *testing.T) closure {
 // for `{extends: [name]}` - config and the visited list both.
 func TestResolvesEveryCapturedPresetAsRenovateDid(t *testing.T) {
 	c := loadClosure(t)
-	// Against the full capture, dropped presets restored: this test is about
-	// resolution semantics, and the dropping is measured on its own below.
-	lib := restored(t, c)
+	lib := Builtin()
 	names := make([]string, 0, len(c.Presets))
 	for n := range c.Presets {
 		names = append(names, n)
@@ -113,52 +112,32 @@ func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// With the two dropped mergeConfidence presets restored from the capture,
-	// the resolution must be byte-for-byte what Renovate produced: 770 rules.
-	full, err := Resolve(cfg, restored(t, loadClosure(t)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(full.Warnings) != 0 {
-		t.Errorf("with every preset present there is nothing to warn about: %v", full.Warnings)
-	}
-	for _, k := range sortedKeys(want) {
-		if !reflect.DeepEqual(full.Config[k], want[k]) {
-			t.Errorf("key %s differs\n got: %s\nwant: %s", k, short(full.Config[k]), short(want[k]))
-		}
-	}
-	for k := range full.Config {
-		if _, ok := want[k]; !ok {
-			t.Errorf("key %s is set here and not by Renovate", k)
-		}
-	}
-	if rules, _ := full.Config["packageRules"].([]any); len(rules) != 770 {
-		t.Errorf("resolved %d rules, want 770", len(rules))
-	}
-
-	// With the shipped library: the two mergeConfidence presets are dropped -
-	// all-badges from default.json itself, age-confidence-badges through
-	// config:recommended - each warned once, and their two rules are the
-	// only difference.
 	got, err := Resolve(cfg, Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
+	for _, k := range sortedKeys(want) {
+		if !reflect.DeepEqual(got.Config[k], want[k]) {
+			t.Errorf("key %s differs\n got: %s\nwant: %s", k, short(got.Config[k]), short(want[k]))
+		}
+	}
+	for k := range got.Config {
+		if _, ok := want[k]; !ok {
+			t.Errorf("key %s is set here and not by Renovate", k)
+		}
+	}
+	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 770 {
+		t.Errorf("resolved %d rules, want 770 - the numbering must stay Renovate's", len(rules))
+	}
+	// The two mergeConfidence presets - all-badges from default.json itself,
+	// age-confidence-badges through config:recommended - resolve but have
+	// no effect, and each is warned about once.
 	if len(got.Warnings) != 2 {
-		t.Errorf("want one warning per dropped preset, got %v", got.Warnings)
+		t.Errorf("want one warning per inert preset, got %v", got.Warnings)
 	}
 	for _, w := range got.Warnings {
 		if !strings.Contains(w, "mergeConfidence:") || !strings.Contains(w, "developer.mend.io") {
 			t.Errorf("warning must name the preset and the reason: %q", w)
-		}
-	}
-	rules, _ := got.Config["packageRules"].([]any)
-	if len(rules) != 768 {
-		t.Errorf("resolved %d rules with the shipped library, want 768 (770 minus the two dropped)", len(rules))
-	}
-	for _, rule := range rules {
-		if _, has := rule.(map[string]any)["prBodyColumns"]; has {
-			t.Errorf("a merge-confidence rule survived: %s", short(rule))
 		}
 	}
 	// The closure the task names, as merged presets.
@@ -177,7 +156,7 @@ func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
 	}
 }
 
-func TestDroppedPresetIsEmptyPlusOneWarning(t *testing.T) {
+func TestInertPresetResolvesButWarnsOnce(t *testing.T) {
 	got, err := Resolve(map[string]any{"extends": []any{"mergeConfidence:all-badges", "mergeConfidence:all-badges"}, "x": 1}, Builtin())
 	if err != nil {
 		t.Fatal(err)
@@ -185,8 +164,8 @@ func TestDroppedPresetIsEmptyPlusOneWarning(t *testing.T) {
 	if len(got.Warnings) != 1 || !strings.Contains(got.Warnings[0], "developer.mend.io") {
 		t.Errorf("warnings %v", got.Warnings)
 	}
-	if len(got.Config) != 1 || got.Config["x"] != float64(1) && got.Config["x"] != 1 {
-		t.Errorf("config %v, want only the own key", got.Config)
+	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 2 {
+		t.Errorf("an inert preset still resolves its rules (numbering), got %d", len(rules))
 	}
 }
 
@@ -248,24 +227,6 @@ func TestLibraryMatchesGenerator(t *testing.T) {
 	}
 }
 
-// restored is the shipped library with every dropped preset's captured
-// definition put back.
-func restored(t *testing.T, c closure) *Library {
-	t.Helper()
-	lib := &Library{Presets: map[string]Entry{}}
-	for n, e := range Builtin().Presets {
-		if e.Dropped != "" {
-			def, ok := c.Presets[n]
-			if !ok {
-				t.Fatalf("dropped preset %s is not in the capture", n)
-			}
-			e = Entry{Definition: def.Definition}
-		}
-		lib.Presets[n] = e
-	}
-	return lib
-}
-
 type fakeSource map[string]map[string]any
 
 func (f fakeSource) Get(name string) (map[string]any, string, bool, error) {
@@ -294,7 +255,10 @@ func short(v any) string {
 // removed resolves config:recommended differently.
 func TestParityGoesRedWhenTheLibraryIsBroken(t *testing.T) {
 	c := loadClosure(t)
-	lib := restored(t, c)
+	lib := &Library{Presets: map[string]Entry{}}
+	for n, e := range Builtin().Presets {
+		lib.Presets[n] = e
+	}
 	broken := map[string]any{}
 	for k, v := range lib.Presets["group:nodeJs"].Definition {
 		if k != "packageRules" {
@@ -308,5 +272,56 @@ func TestParityGoesRedWhenTheLibraryIsBroken(t *testing.T) {
 	}
 	if reflect.DeepEqual(got.Config, c.Presets["config:recommended"].Resolved.Config) {
 		t.Fatal("a broken library resolved identically; the comparison is not comparing")
+	}
+}
+
+// Provenance names, for every resolved key, the chain that wrote it - and
+// for every rule, the preset it came from, at the index it ended up at.
+func TestOriginsNameThePresetThatWroteEachKey(t *testing.T) {
+	raw, err := os.ReadFile(defaultConfigPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cfg map[string]any
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Resolve(cfg, Builtin())
+	if err != nil {
+		t.Fatal(err)
+	}
+	rules := got.Config["packageRules"].([]any)
+	// Every rule has exactly one origin, and the config's own rules come
+	// last, after every preset's.
+	own := 0
+	for i := range rules {
+		chain := got.Origins[fmt.Sprintf("/packageRules/%d", i)]
+		if len(chain) != 1 {
+			t.Fatalf("packageRules[%d] has origin chain %v, want exactly one", i, chain)
+		}
+		if chain[0] == OwnSource {
+			own++
+		} else if own > 0 {
+			t.Fatalf("packageRules[%d] from %s follows the config's own rules", i, chain[0])
+		}
+	}
+	if own != 48 {
+		t.Errorf("%d rules attributed to the config itself, want 48 (what default.json writes)", own)
+	}
+	if chain := got.Origins["/packageRules/0"]; chain[0] != ":semanticPrefixFixDepsChoreOthers" {
+		t.Errorf("rule 0 comes from %v, want :semanticPrefixFixDepsChoreOthers via config:recommended", chain)
+	}
+	// dependencyDashboard: set by :dependencyDashboard, then by the file.
+	if chain := got.Origins["/dependencyDashboard"]; len(chain) != 2 || chain[0] != ":dependencyDashboard" || chain[1] != OwnSource {
+		t.Errorf("dependencyDashboard chain %v", chain)
+	}
+	// Every leaf key of the resolved config carries an origin.
+	for k := range got.Config {
+		if isConcat(k) {
+			continue
+		}
+		if len(got.Origins["/"+k]) == 0 {
+			t.Errorf("key %s has no origin", k)
+		}
 	}
 }

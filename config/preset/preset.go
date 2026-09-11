@@ -7,10 +7,11 @@
 // the transitive closure of the estate's configuration, recorded by running
 // the pinned Renovate container's resolver (tools/capture/presets.sh) and
 // generated into library.json by tools/presetgen - rebuilt once, from
-// behaviour, not embedded from the Renovate tree. Presets pinup deliberately
-// does not carry are marked dropped: resolving one yields nothing and a
-// warning that says why, so a configuration that names one is not silently
-// weaker than it reads.
+// behaviour, not embedded from the Renovate tree. Presets whose behaviour
+// pinup deliberately does not carry are marked inert: their definitions
+// still resolve, so packageRules keep Renovate's numbering, and resolving
+// one warns with the reason, so a configuration that names one is not
+// silently weaker than it reads.
 //
 // Resolution order is Renovate's, checked against 1085 captured presets: a
 // preset's own extends resolve before its body, presets listed later override
@@ -35,7 +36,9 @@ var libraryJSON []byte
 // Entry is one library preset.
 type Entry struct {
 	Definition map[string]any `json:"definition,omitempty"`
-	Dropped    string         `json:"dropped,omitempty"`
+	// Inert, when set, is the warning to raise when the preset is used:
+	// its keys resolve but have no effect in pinup.
+	Inert string `json:"inert,omitempty"`
 }
 
 // Library maps preset names to their definitions.
@@ -78,10 +81,11 @@ func (l *Library) Names() []string {
 // names; `local>` and other remote forms are answered by a Source the caller
 // composes in front of it.
 type Source interface {
-	// Get returns the preset definition. ok is false when the source does
-	// not know the name; an error means the source knows it and could not
-	// deliver it, which fails resolution.
-	Get(name string) (def map[string]any, dropped string, ok bool, err error)
+	// Get returns the preset definition and, for an inert preset, the
+	// warning to raise. ok is false when the source does not know the name;
+	// an error means the source knows it and could not deliver it, which
+	// fails resolution.
+	Get(name string) (def map[string]any, inert string, ok bool, err error)
 }
 
 // Get implements Source over the library.
@@ -90,7 +94,7 @@ func (l *Library) Get(name string) (map[string]any, string, bool, error) {
 	if !ok {
 		return nil, "", false, nil
 	}
-	return e.Definition, e.Dropped, true, nil
+	return e.Definition, e.Inert, true, nil
 }
 
 // Result is a resolved configuration with what resolution saw on the way.
@@ -98,9 +102,16 @@ type Result struct {
 	Config map[string]any
 	// Visited lists every preset merged, in the order it was merged.
 	Visited []string
-	// Warnings names dropped presets and the reasons.
+	// Warnings names inert presets that were used, and the reasons.
 	Warnings []string
+	// Origins maps an RFC 6901 pointer - "/schedule", "/packageRules/12" -
+	// to the chain of sources that wrote it, winner last. A preset is named
+	// by its name; the configuration's own keys by OwnSource.
+	Origins map[string][]string
 }
+
+// OwnSource is the origin recorded for keys the configuration sets itself.
+const OwnSource = "config"
 
 // Resolve expands config's extends, recursively, against src. config is not
 // modified.
@@ -110,43 +121,49 @@ type Result struct {
 // which for an ignore list or a disable rule means updates nobody asked for.
 func Resolve(config map[string]any, src Source) (*Result, error) {
 	r := &Result{}
-	cfg, err := r.resolve(config, src, nil)
+	cfg, prov, err := r.resolve(config, src, nil, OwnSource)
 	if err != nil {
 		return nil, err
 	}
 	r.Config = cfg
+	r.Origins = prov
 	return r, nil
 }
 
-func (r *Result) resolve(config map[string]any, src Source, stack []string) (map[string]any, error) {
-	acc := map[string]any{}
+// provenance maps pointers to the chain of sources that wrote them, in the
+// frame of one resolved document. Merging shifts the indices of concat keys,
+// so a child's provenance is remapped into the parent's frame as it merges.
+type provenance map[string][]string
+
+// resolve expands one configuration or preset. owner names it in provenance.
+func (r *Result) resolve(config map[string]any, src Source, stack []string, owner string) (map[string]any, provenance, error) {
+	acc, accProv := map[string]any{}, provenance{}
 	_, ownDescription := config["description"]
 	nested := len(stack) > 0
 	names, err := extendsOf(config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	for _, name := range names {
 		for _, s := range stack {
 			if s == name {
-				return nil, fmt.Errorf("preset %q extends itself through %s", name, strings.Join(append(stack, name), " > "))
+				return nil, nil, fmt.Errorf("preset %q extends itself through %s", name, strings.Join(append(stack, name), " > "))
 			}
 		}
-		def, dropped, ok, err := src.Get(name)
+		def, inert, ok, err := src.Get(name)
 		if err != nil {
-			return nil, fmt.Errorf("preset %q: %w", name, err)
+			return nil, nil, fmt.Errorf("preset %q: %w", name, err)
 		}
 		if !ok {
-			return nil, fmt.Errorf("preset %q is not known", name)
+			return nil, nil, fmt.Errorf("preset %q is not known", name)
 		}
 		r.Visited = append(r.Visited, name)
-		if dropped != "" {
-			r.warnOnce(fmt.Sprintf("preset %q is dropped: %s", name, dropped))
-			continue
+		if inert != "" {
+			r.warnOnce(fmt.Sprintf("preset %q has no effect: %s", name, inert))
 		}
-		resolved, err := r.resolve(def, src, append(stack, name))
+		resolved, resolvedProv, err := r.resolve(def, src, append(stack, name), name)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		// Measured over every parent/child pair in the captured closure
 		// (152 pairs, no exception): a nested preset that has a description
@@ -158,20 +175,28 @@ func (r *Result) resolve(config map[string]any, src Source, stack []string) (map
 		if _, hasRules := def["packageRules"]; nested && ownDescription && hasRules {
 			delete(resolved, "description")
 		}
-		acc = merge(acc, resolved)
+		acc, accProv = merge(acc, accProv, resolved, resolvedProv)
 	}
 
-	own := map[string]any{}
+	own, ownProv := map[string]any{}, provenance{}
 	for k, v := range config {
 		if k == "extends" {
 			continue
 		}
 		own[k] = v
+		if list, ok := v.([]any); ok && isConcat(k) {
+			for i := range list {
+				ownProv[fmt.Sprintf("/%s/%d", k, i)] = []string{owner}
+			}
+		} else {
+			ownProv["/"+k] = []string{owner}
+		}
 	}
-	out := merge(acc, own)
+	out, outProv := merge(acc, accProv, own, ownProv)
 
 	// Rule-level extends: group:<x>Monorepo is one rule extending
-	// monorepo:<x>, and the matchers arrive from the extended preset.
+	// monorepo:<x>, and the matchers arrive from the extended preset. The
+	// resolved rule keeps the provenance of the rule that named them.
 	if rules, ok := out["packageRules"].([]any); ok {
 		flat := make([]any, 0, len(rules))
 		for _, rule := range rules {
@@ -184,15 +209,15 @@ func (r *Result) resolve(config map[string]any, src Source, stack []string) (map
 				flat = append(flat, obj)
 				continue
 			}
-			resolvedRule, err := r.resolve(obj, src, stack)
+			resolvedRule, _, err := r.resolve(obj, src, stack, owner)
 			if err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 			flat = append(flat, resolvedRule)
 		}
 		out["packageRules"] = flat
 	}
-	return out, nil
+	return out, outProv, nil
 }
 
 func extendsOf(config map[string]any) ([]string, error) {
@@ -217,25 +242,46 @@ func extendsOf(config map[string]any) ([]string, error) {
 	return nil, fmt.Errorf("extends is %T, want a list of strings", raw)
 }
 
-// merge writes child over parent into a new map. packageRules,
-// customManagers and description concatenate - measured: workarounds:all
-// resolves to its own description only because its children carry theirs
-// inside packageRules, not because a parent's description wins. Everything
-// else, arrays and objects included, is replaced by the child's value.
-func merge(parent, child map[string]any) map[string]any {
+// isConcat names the keys that concatenate instead of replacing.
+// Measured: workarounds:all resolves to its own description only because
+// its children carry theirs inside packageRules, not because a parent's
+// description wins.
+func isConcat(k string) bool {
+	return k == "packageRules" || k == "customManagers" || k == "description"
+}
+
+// merge writes child over parent into a new map, and child's provenance
+// over parent's in the merged frame. Concat keys append and their pointers
+// shift by the parent's length; everything else - arrays and objects
+// included - is replaced by the child's value, and the chain grows.
+func merge(parent map[string]any, parentProv provenance, child map[string]any, childProv provenance) (map[string]any, provenance) {
 	out := make(map[string]any, len(parent)+len(child))
+	prov := make(provenance, len(parentProv)+len(childProv))
 	for k, v := range parent {
 		out[k] = v
 	}
-	for k, v := range child {
-		switch {
-		case k == "packageRules" || k == "customManagers" || k == "description":
-			out[k] = concat(out[k], v)
-		default:
-			out[k] = v
-		}
+	for p, chain := range parentProv {
+		prov[p] = append([]string(nil), chain...)
 	}
-	return out
+	for k, v := range child {
+		if isConcat(k) {
+			base := 0
+			if existing, ok := out[k].([]any); ok {
+				base = len(existing)
+			}
+			out[k] = concat(out[k], v)
+			n := len(out[k].([]any)) - base
+			for i := range n {
+				from := fmt.Sprintf("/%s/%d", k, i)
+				to := fmt.Sprintf("/%s/%d", k, base+i)
+				prov[to] = append([]string(nil), childProv[from]...)
+			}
+			continue
+		}
+		out[k] = v
+		prov["/"+k] = append(prov["/"+k], childProv["/"+k]...)
+	}
+	return out, prov
 }
 
 func (r *Result) warnOnce(w string) {
