@@ -251,6 +251,7 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 
 	var ups []model.Update
+	unchanged := ""
 	for _, bucket := range [][]string{others, majors} {
 		target, ok := versioning.Latest(v, bucket)
 		if !ok {
@@ -259,6 +260,14 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		newValue, err := v.NewValue(cur, target, versioning.StrategyAuto)
 		if err != nil {
 			return nil, fmt.Sprintf("cannot write %s as a %s value: %v", target, scheme, err), nil
+		}
+		if newValue == cur {
+			// The scheme keeps the value as written - a go directive
+			// "1.27.0" already admits 1.27.1 - so there is nothing to
+			// write, and an update that changes nothing is not an update.
+			// Measured: Renovate plans none for `go 1.27.0` with 1.27.1 out.
+			unchanged = target
+			continue
 		}
 		t := versioning.UpdateType(v, base, target)
 		if t == model.UpdateMajor && isRollingMajor(cur) {
@@ -329,6 +338,9 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	if len(ups) == 0 {
 		if isRange {
 			return nil, fmt.Sprintf("up to date: %q admits %s, and none of %d releases is newer", cur, base, seen), nil
+		}
+		if unchanged != "" {
+			return nil, fmt.Sprintf("up to date: %q written as a %s value already admits %s", cur, scheme, unchanged), nil
 		}
 		return nil, fmt.Sprintf("up to date: none of %d releases is newer than %s", seen, cur), nil
 	}

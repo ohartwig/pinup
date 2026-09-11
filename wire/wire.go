@@ -22,7 +22,9 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/datasource/dockerds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/githubds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gitlabds"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/gittagsds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/gods"
+	"git.ole-hartwig.eu/pinup/pinup/datasource/helmds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/npmds"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/packagist"
 	"git.ole-hartwig.eu/pinup/pinup/datasource/terraformds"
@@ -32,6 +34,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/manager/composerman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
+	"git.ole-hartwig.eu/pinup/pinup/manager/gomod"
 	"git.ole-hartwig.eu/pinup/pinup/manager/kustomize"
 	"git.ole-hartwig.eu/pinup/pinup/manager/npmman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
@@ -45,6 +48,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/versioning/coerced"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/composer"
 	vdocker "git.ole-hartwig.eu/pinup/pinup/versioning/docker"
+	"git.ole-hartwig.eu/pinup/pinup/versioning/godirective"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/golang"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/hashicorp"
 	"git.ole-hartwig.eu/pinup/pinup/versioning/loose"
@@ -58,17 +62,18 @@ import (
 // configuration uses.
 func Versionings() versioning.Registry {
 	return versioning.Registry{
-		"semver":         semver.New(),
-		"semver-partial": partial.New(),
-		"semver-coerced": coerced.New(),
-		"loose":          loose.New(),
-		"docker":         vdocker.New(),
-		"apk":            apk.New(),
-		"composer":       composer.New(),
-		"npm":            npm.New(),
-		"go":             golang.New(),
-		"hashicorp":      hashicorp.New(),
-		"regex":          regexver.New(),
+		"semver":           semver.New(),
+		"semver-partial":   partial.New(),
+		"semver-coerced":   coerced.New(),
+		"loose":            loose.New(),
+		"docker":           vdocker.New(),
+		"apk":              apk.New(),
+		"composer":         composer.New(),
+		"npm":              npm.New(),
+		"go":               golang.New(),
+		"go-mod-directive": godirective.New(),
+		"hashicorp":        hashicorp.New(),
+		"regex":            regexver.New(),
 	}
 }
 
@@ -79,6 +84,7 @@ func Managers() extract.Registry {
 		"dockerfile": dockerfile.New(),
 		"gitlabci":   gitlabci.New(),
 		"kustomize":  kustomize.New(),
+		"gomod":      gomod.New(),
 		"composer":   composerman.New(),
 		"npm":        npmman.New(),
 		"terraform":  terraform.New(),
@@ -140,6 +146,8 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"terraform-module":   terraformds.New(terraformds.Module, client, "https://registry.terraform.io"),
 		"go":                 gods.New(gods.Module, client, "https://proxy.golang.org"),
 		"golang-version":     gods.New(gods.Toolchain, client, "https://go.dev"),
+		"helm":               helmds.New(client),
+		"git-tags":           gittagsds.New(),
 	}
 	for name, view := range ApkViews {
 		r[name] = apkds.New(name, client, view)

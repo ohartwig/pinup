@@ -100,6 +100,15 @@ type Dependency struct {
 	// release before comparison.
 	ExtractVersion string `json:"extractVersion,omitempty"`
 
+	// Advisories are the security advisories that affect the current
+	// version, as the advisory database answered; VulnerabilityBound is
+	// the highest of their fix versions. A bound turns the dependency's
+	// plan into a fix: the lowest release at or above it, on the fast
+	// path, instead of the usual buckets. Empty when nothing affects the
+	// current version or the datasource has no advisory ecosystem.
+	Advisories         []Advisory `json:"advisories,omitempty"`
+	VulnerabilityBound string     `json:"vulnerabilityBound,omitempty"`
+
 	// Captures holds every named regex group the manager matched, so
 	// templates can reference groups this package has never heard of.
 	Captures map[string]string `json:"captures,omitempty"`
@@ -117,6 +126,18 @@ type Dependency struct {
 	SkipReason string `json:"skipReason,omitempty"`
 
 	LockFiles []string `json:"lockFiles,omitempty"`
+}
+
+// Advisory is one security advisory affecting a dependency's current
+// version. Fixed is the version that resolves it for the range the current
+// version sits in, or empty when the advisory names none.
+type Advisory struct {
+	ID        string    `json:"id"`
+	Aliases   []string  `json:"aliases,omitempty"`
+	Summary   string    `json:"summary,omitempty"`
+	Severity  string    `json:"severity,omitempty"`
+	Fixed     string    `json:"fixed,omitempty"`
+	Published time.Time `json:"published,omitzero"`
 }
 
 // NoCustomManager is the CustomManager value for a built-in manager.

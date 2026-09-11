@@ -221,6 +221,12 @@ type Update struct {
 	ReleaseTime time.Time  `json:"releaseTime,omitzero"`
 	TimeSource  TimeSource `json:"timeSource"`
 
+	// SecurityFix marks an update planned to clear the dependency's
+	// advisories: the lowest release at or above its vulnerability bound.
+	// The vulnerabilityAlerts configuration overlays such an update - its
+	// own branch, labels, no release age, no schedule.
+	SecurityFix bool `json:"securityFix,omitempty"`
+
 	// Blocks is empty for an update that will be acted on.
 	Blocks []Block `json:"blocks,omitempty"`
 
