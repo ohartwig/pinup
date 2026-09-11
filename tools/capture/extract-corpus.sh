@@ -12,6 +12,9 @@
 #
 #   tools/capture/extract-corpus.sh <repo-path>...
 #
+# CONFIG_NAME picks another file from testdata/parity/config (default.json
+# by default) - gomod.json enables the one manager the runner never does.
+#
 # NOTE ON MOUNTS: colima shares only $HOME and /Volumes/Samsung_X5. A corpus
 # staged anywhere else mounts EMPTY inside the container, and Renovate then
 # reports "Found 0 package file(s)" - which reads exactly like a repository
@@ -58,7 +61,7 @@ json.dump(d, open(p,'w'), indent=2)" "${dst}/renovate.json"
   log="$(mktemp)"
   docker run --rm \
     -v "${CFG}:/cfg:ro" -v "${dst}:/repo" \
-    -e RENOVATE_CONFIG_FILE=/cfg/default.json -e RENOVATE_PLATFORM=local \
+    -e RENOVATE_CONFIG_FILE=/cfg/${CONFIG_NAME:-default.json} -e RENOVATE_PLATFORM=local \
     -e LOG_LEVEL=debug -e LOG_FORMAT=json -e TZ=Europe/Berlin -w /repo \
     "$IMAGE" --dry-run=extract > "$log" 2>&1
 

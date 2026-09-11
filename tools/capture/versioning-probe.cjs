@@ -28,6 +28,7 @@ const perScheme = {
   go: ['v1.27.0', 'v0.0.0-20260101000000-abcdef123456', 'v2.0.0+incompatible'],
   'semver-partial': ['1', '2', '3', '1.22', '1.10.17', '1.1.2'],
   loose: ['1', '2', '3', '1.33.59', '1.33.64'],
+  'go-mod-directive': ['1.27', '1.27.0', '1.26', '1.27.1', '1.28.0', '1.21rc1', 'go1.27', '1.28', '1.27.0-rc1', '1.27.10'],
 };
 
 // A parameterised regex scheme needs inputs its own pattern can match, or the
@@ -48,9 +49,22 @@ const ranges = {
   go: ['v1.27.0'],
   loose: ['1'],
   'semver-partial': ['1'],
+  'go-mod-directive': ['1.27', '1.27.0'],
 };
 
 const strategies = ['replace', 'bump', 'pin', 'widen', 'update-lockfile', 'auto'];
+
+// Extra getNewValue cases where the generic 1.0.0 -> 1.1.0 pair says
+// nothing: the go directive keeps or drops the patch depending on how the
+// current value was written.
+const perSchemeNewValue = {
+  'go-mod-directive': [
+    { currentValue: '1.27', currentVersion: '1.27', newVersion: '1.28.1' },
+    { currentValue: '1.27.0', currentVersion: '1.27.0', newVersion: '1.28.1' },
+    { currentValue: '1.27', currentVersion: '1.27', newVersion: '1.27.3' },
+    { currentValue: '1.27.0', currentVersion: '1.27.0', newVersion: '1.27.3' },
+  ],
+};
 
 function safe(fn) {
   try {
@@ -77,9 +91,15 @@ for (const name of schemes) {
     if (name.includes(key)) extra = [...extra, ...values];
   }
   const inputs = [...generic, ...extra];
-  let rs = ranges[name] || ['1.0.0'];
-  for (const [key, values] of Object.entries(ranges)) {
-    if (key !== name && name.includes(key)) rs = values;
+  // An exact entry wins; the substring fallback serves the regex schemes
+  // ("regex-alpine" reads the "alpine" ranges) - without the guard,
+  // "go-mod-directive" would read go's.
+  let rs = ranges[name];
+  if (!rs) {
+    rs = ['1.0.0'];
+    for (const [key, values] of Object.entries(ranges)) {
+      if (key !== name && name.includes(key)) rs = values;
+    }
   }
 
   const t = {
@@ -129,6 +149,14 @@ for (const name of schemes) {
           currentValue: r, rangeStrategy: s,
           currentVersion: '1.0.0', newVersion: '1.1.0',
         })),
+      });
+    }
+  }
+  for (const c of perSchemeNewValue[name] || []) {
+    for (const s of strategies) {
+      t.getNewValue.push({
+        ...c, rangeStrategy: s,
+        out: safe(() => api.getNewValue({ ...c, rangeStrategy: s })),
       });
     }
   }

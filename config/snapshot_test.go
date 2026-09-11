@@ -244,8 +244,10 @@ func TestCorpusIsRepresentative(t *testing.T) {
 	// 350 from seven estate repositories, plus 14 from the synthetic tree
 	// under testdata/parity/synthetic that exercises the two enabled
 	// managers no estate repository uses yet (terraform-version, kustomize).
-	if len(deps) != 364 {
-		t.Errorf("corpus has %d vectors, expected 364 - it was recaptured", len(deps))
+	// ... plus 10 from the synthetic gomod tree captured with gomod.json,
+	// the one manager the runner never enables and pinup needs for itself.
+	if len(deps) != 374 {
+		t.Errorf("corpus has %d vectors, expected 374 - it was recaptured", len(deps))
 	}
 
 	seen := map[string]bool{}
@@ -260,8 +262,8 @@ func TestCorpusIsRepresentative(t *testing.T) {
 	for _, want := range []string{
 		"ds:docker", "ds:gitlab-tags", "ds:gitlab-releases", "ds:gitlab-packages",
 		"ds:github-tags", "ds:github-releases", "ds:packagist", "ds:npm",
-		"ds:terraform-provider", "ds:custom.wolfi", "ds:git-tags", "ds:helm",
-		"ver:composer", "ver:loose", "ver:semver-partial", "ver:docker", "ver:hashicorp",
+		"ds:terraform-provider", "ds:custom.wolfi", "ds:git-tags", "ds:helm", "ds:go", "ds:golang-version",
+		"ver:composer", "ver:loose", "ver:semver-partial", "ver:docker", "ver:hashicorp", "ver:go-mod-directive",
 	} {
 		if !seen[want] {
 			t.Errorf("corpus does not cover %s", want)
