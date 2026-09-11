@@ -226,3 +226,24 @@ func TestEveryPatternInTheRealConfigCompiles(t *testing.T) {
 		t.Errorf("found %d negated entries, expected 12", negated)
 	}
 }
+
+// The empty case is the whole reason IgnoreSet exists: Set and IgnoreSet
+// answer opposite questions, and each one's empty behaviour is a bug in the
+// other's caller.
+func TestEmptySetAndEmptyIgnoreSetDisagreeOnPurpose(t *testing.T) {
+	if !NewSet(nil).Match("anything") {
+		t.Error("an empty Set should match everything: a rule with only exclusions governs the rest")
+	}
+	if NewIgnoreSet(nil).Ignores("anything") {
+		t.Error("an empty IgnoreSet must ignore nothing; configuring no exclusions excludes none")
+	}
+	if !NewIgnoreSet([]string{"**/prometheus-exporter/**"}).Ignores("a/prometheus-exporter/b.json") {
+		t.Error("a configured exclusion did not exclude")
+	}
+	if NewIgnoreSet([]string{"**/prometheus-exporter/**"}).Ignores("a/other/b.json") {
+		t.Error("an exclusion matched something outside it")
+	}
+	if !NewIgnoreSet(nil).Empty() || NewIgnoreSet([]string{"x"}).Empty() {
+		t.Error("Empty() misreports whether patterns were configured")
+	}
+}

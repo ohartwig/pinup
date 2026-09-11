@@ -273,6 +273,16 @@ type Set struct {
 }
 
 // NewSet compiles a list of entries. A leading '!' marks a negation.
+//
+// BEWARE the empty set. NewSet(nil).Match(x) is TRUE for every x, because a
+// set with no positive patterns selects everything outside its negations. That
+// is right for the rule engine, where a rule listing only exclusions governs
+// all the packages it does not exclude - and it is exactly wrong for an
+// ignore list, where "nothing configured" must mean "ignore nothing".
+//
+// Use NewIgnoreSet for that reading rather than special-casing the emptiness
+// at each call site. The distinction cost one caller a debugging round before
+// it was written down here.
 func NewSet(entries []string) *Set {
 	s := &Set{exactPos: map[string]bool{}}
 	for _, e := range entries {
@@ -315,3 +325,33 @@ func (s *Set) Match(name string) bool {
 	}
 	return false
 }
+
+// IgnoreSet is a list of patterns to exclude, with the reading an ignore list
+// needs: an EMPTY set excludes nothing.
+//
+// It exists because Set answers the opposite question. Set is an allow-list
+// whose empty case means "everything qualifies"; an ignore list's empty case
+// means "nothing is ignored". Both are right for their own caller and each is
+// a bug in the other's, so the difference is a type rather than a comment.
+type IgnoreSet struct {
+	set *Set
+}
+
+// NewIgnoreSet compiles exclusion patterns.
+func NewIgnoreSet(patterns []string) *IgnoreSet {
+	if len(patterns) == 0 {
+		return &IgnoreSet{}
+	}
+	return &IgnoreSet{set: NewSet(patterns)}
+}
+
+// Ignores reports whether name is excluded. An empty set ignores nothing.
+func (s *IgnoreSet) Ignores(name string) bool {
+	if s == nil || s.set == nil {
+		return false
+	}
+	return s.set.Match(name)
+}
+
+// Empty reports whether any pattern was configured.
+func (s *IgnoreSet) Empty() bool { return s == nil || s.set == nil }
