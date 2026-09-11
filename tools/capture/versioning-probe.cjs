@@ -30,7 +30,16 @@ const perScheme = {
   loose: ['1', '2', '3', '1.33.59', '1.33.64'],
 };
 
+// A parameterised regex scheme needs inputs its own pattern can match, or the
+// capture records nothing but "invalid" and proves nothing. Keyed by pattern
+// so a second regex scheme gets its own grid rather than inheriting this one.
+const perPattern = {
+  'alpine': ['alpine3.21', 'alpine3.20', 'alpine3.9', 'alpine4.0',
+             'alpine3', 'alpine', '3.21', 'bookworm'],
+};
+
 const ranges = {
+  'alpine': ['alpine3.21', 'alpine3'],
   semver: ['1.0.0', '^1.0.0', '~1.0.0', '>=1.0.0'],
   docker: ['22', '3.21', 'v0.74.0'],
   composer: ['^8.5', '~0.9', '^13.4'],
@@ -63,8 +72,15 @@ for (const name of schemes) {
     result[name] = { __unavailable: String(e.message).slice(0, 120) };
     continue;
   }
-  const inputs = [...generic, ...(perScheme[name] || [])];
-  const rs = ranges[name] || ['1.0.0'];
+  let extra = perScheme[name] || [];
+  for (const [key, values] of Object.entries(perPattern)) {
+    if (name.includes(key)) extra = [...extra, ...values];
+  }
+  const inputs = [...generic, ...extra];
+  let rs = ranges[name] || ['1.0.0'];
+  for (const [key, values] of Object.entries(ranges)) {
+    if (key !== name && name.includes(key)) rs = values;
+  }
 
   const t = {
     module: name,
