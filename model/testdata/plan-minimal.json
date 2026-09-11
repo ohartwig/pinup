@@ -1,0 +1,211 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "dev",
+  "generatedAt": "2026-09-11T04:00:00Z",
+  "configSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "partition": "devops-images-components",
+  "repo": {
+    "path": "pinup/pinup",
+    "host": "git.ole-hartwig.eu",
+    "branch": "main",
+    "sha": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "deps": [
+    {
+      "manager": "custom.regex",
+      "file": ".gitlab-ci.yml",
+      "customManager": 13,
+      "depName": "devops/ci-cd-components/lint-tools",
+      "currentValue": "1.33.59",
+      "datasource": "gitlab-releases",
+      "versioning": "semver",
+      "registryUrls": [
+        "https://git.ole-hartwig.eu"
+      ],
+      "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "captures": {
+        "depName": "devops/ci-cd-components/lint-tools"
+      },
+      "absent": {
+        "registryUrl": true
+      },
+      "locus": {
+        "valueStart": 412,
+        "valueEnd": 419,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 9
+      }
+    },
+    {
+      "manager": "dockerfile",
+      "file": "Containerfile",
+      "customManager": -1,
+      "depName": "registry.ole-hartwig.eu/devops/images/golang",
+      "currentValue": "1.27",
+      "datasource": "docker",
+      "versioning": "docker",
+      "locus": {
+        "valueStart": 40,
+        "valueEnd": 44,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 1
+      }
+    },
+    {
+      "manager": "dockerfile",
+      "file": "Containerfile",
+      "customManager": -1,
+      "depName": "scratch",
+      "currentValue": "",
+      "datasource": "docker",
+      "locus": {
+        "valueStart": 100,
+        "valueEnd": 107,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 4
+      },
+      "skipReason": "no version to compare: a bare image reference"
+    }
+  ],
+  "updates": [
+    {
+      "depKey": ".gitlab-ci.yml|devops/ci-cd-components/lint-tools|1.33.59",
+      "dep": {
+        "manager": "custom.regex",
+        "file": ".gitlab-ci.yml",
+        "customManager": 13,
+        "depName": "devops/ci-cd-components/lint-tools",
+        "currentValue": "1.33.59",
+        "datasource": "gitlab-releases",
+        "versioning": "semver",
+        "registryUrls": [
+          "https://git.ole-hartwig.eu"
+        ],
+        "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+        "captures": {
+          "depName": "devops/ci-cd-components/lint-tools"
+        },
+        "absent": {
+          "registryUrl": true
+        },
+        "locus": {
+          "valueStart": 412,
+          "valueEnd": 419,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 9
+        }
+      },
+      "newValue": "1.33.64",
+      "newVersion": "1.33.64",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-08T04:00:00Z",
+      "timeSource": "datasource"
+    },
+    {
+      "depKey": "Containerfile|registry.ole-hartwig.eu/devops/images/golang|1.27",
+      "dep": {
+        "manager": "dockerfile",
+        "file": "Containerfile",
+        "customManager": -1,
+        "depName": "registry.ole-hartwig.eu/devops/images/golang",
+        "currentValue": "1.27",
+        "datasource": "docker",
+        "versioning": "docker",
+        "locus": {
+          "valueStart": 40,
+          "valueEnd": 44,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 1
+        }
+      },
+      "newValue": "1.28",
+      "newVersion": "1.28",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-11T02:00:00Z",
+      "timeSource": "firstseen",
+      "blocks": [
+        {
+          "reason": "minimumReleaseAge",
+          "until": "2026-09-12T02:00:00Z",
+          "origin": {
+            "source": "file:default.json",
+            "pointer": "/minimumReleaseAge",
+            "rule": -1,
+            "order": 3
+          },
+          "note": "24 hours; age taken from the firstseen cache"
+        }
+      ],
+      "suppressedBy": "minimumReleaseAge"
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/lint-tools-1.x",
+      "slug": "lint-tools-1.x",
+      "title": "chore(deps): update devops/ci-cd-components/lint-tools to 1.33.64",
+      "updateKeys": [
+        ".gitlab-ci.yml|devops/ci-cd-components/lint-tools|1.33.59"
+      ],
+      "edits": [
+        {
+          "file": ".gitlab-ci.yml",
+          "start": 412,
+          "end": 419,
+          "old": "1.33.59",
+          "new": "1.33.64",
+          "manager": "custom.regex"
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      },
+      "provenance": [
+        {
+          "source": "preset:config:recommended",
+          "pointer": "/automerge",
+          "rule": -1,
+          "order": 1
+        },
+        {
+          "source": "file:default.json",
+          "pointer": "/packageRules/4/automerge",
+          "rule": 4,
+          "order": 7
+        }
+      ]
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "discover",
+      "file": "renovate.json",
+      "msg": "unknown manager \"nix\": ignored, its dependencies are not managed"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 12,
+    "depsExtracted": 3,
+    "lookupsIssued": 2,
+    "lookupsFromCache": 1,
+    "updatesFound": 2,
+    "updatesBlocked": 1,
+    "branchesPlanned": 1
+  }
+}
