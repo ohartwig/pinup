@@ -34,6 +34,37 @@ include:
     inputs:
       stage: quick
 
+  # Releases: semantic-release cuts the tag on a push to main; the tag
+  # pipeline then builds, uploads and links the packages. Tag format with the
+  # v, as the estate's Go tools have it (S3mail), and as the trigger contract
+  # with yasrt accepts.
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/release-tools
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@1.17.59
+    inputs:
+      stage: release
+      config-preset: '@moselwal/semantic-release-config'
+      config-preset-group-id: "175"
+      config-preset-scope: moselwal
+      tag-format: 'v${version}'
+      # The pipeline builds the deliverable, so a pipeline-only change is a
+      # release: the same override yasrt and the golang image carry.
+      non-release-paths: '.pre-commit-config.yaml'
+
+  # Signing the manifest comes from the estate: a detached cosign signature
+  # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
+  # ends. Same component and same reasoning as S3mail.
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/build-provenance
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.96
+    inputs:
+      stage: release
+      artifact-file: SHA256SUMS
+      needs-config:
+        - job: manifest
+      # Must match manifest's own rule: the job must not exist where the
+      # manifest does not, or the pipeline is refused for a missing need.
+      rules-config:
+        - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+
 # A superset of the composed list. `build` and `release` are ours.
 stages:
   - quick
@@ -169,3 +200,61 @@ build:darwin-arm64:
 build:darwin-amd64:
   extends: .build
   variables: {TARGET_OS: darwin, TARGET_ARCH: amd64, LABEL: darwin-amd64, BINARY: pinup}
+
+# --------------------------------------------------------------------------- #
+# Release - manifest, upload, links. Complete version tags only: a pre-release
+# tag such as v0.1.0-rc1 builds in full and publishes nothing, which is how
+# the path is exercised without anybody being able to download the result.
+# --------------------------------------------------------------------------- #
+manifest:
+  stage: release
+  image: ${GO_IMAGE}
+  before_script: []
+  needs: [build:linux-arm64, build:linux-amd64, build:darwin-arm64, build:darwin-amd64]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+  script:
+    # Sorted, so two runs of the same state produce the same manifest.
+    - cd dist && sha256sum *.zip | sort -k2 > "$CI_PROJECT_DIR/SHA256SUMS"
+    - cat "$CI_PROJECT_DIR/SHA256SUMS"
+  artifacts:
+    paths: [SHA256SUMS]
+    expire_in: 1 month
+
+upload:
+  stage: release
+  image: ${GO_IMAGE}
+  before_script: []
+  needs:
+    - build:linux-arm64
+    - build:linux-amd64
+    - build:darwin-arm64
+    - build:darwin-amd64
+    - manifest
+    # The component's job is sign:artifact:<file>. Optional, because the
+    # component creates it only where signing is possible; whether the
+    # signature exists is checked below, not assumed.
+    - job: sign:artifact:SHA256SUMS
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+  script:
+    # The manifest must be there and its signature must be a real file: an
+    # unsigned or zero-byte manifest is not a release, and a release page
+    # linking a signature that is nowhere is worse than none (S3mail v1.0.0).
+    - test -s "$CI_PROJECT_DIR/SHA256SUMS"
+    - test -s "$CI_PROJECT_DIR/SHA256SUMS.sig" || { echo "SHA256SUMS.sig is missing or empty; refusing to publish an unsigned release"; exit 1; }
+    - cp "$CI_PROJECT_DIR/SHA256SUMS" "$CI_PROJECT_DIR/SHA256SUMS.sig" dist/
+    - cd dist && go run ../tools/upload.go "${PACKAGE_URL}/${CI_COMMIT_TAG}" *.zip *.sha256 SHA256SUMS SHA256SUMS.sig
+
+release:
+  stage: release
+  image: ${GO_IMAGE}
+  before_script: []
+  needs: [upload]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+  script:
+    # semantic-release created the release page when it cut the tag; the
+    # packages come from this pipeline, so this job adds the links only.
+    - go run tools/release.go "${PACKAGE_URL}/${CI_COMMIT_TAG}" pinup-linux-arm64.zip:package pinup-linux-amd64.zip:package pinup-darwin-arm64.zip:package pinup-darwin-amd64.zip:package SHA256SUMS:other SHA256SUMS.sig:other

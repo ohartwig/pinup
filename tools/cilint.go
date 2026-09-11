@@ -17,7 +17,8 @@
 //
 // Usage: go run tools/cilint.go [.gitlab/expected-jobs.txt]
 //
-// Reads CI_API_V4_URL, CI_PROJECT_ID, CI_PIPELINE_ID and CI_JOB_TOKEN.
+// Reads CI_API_V4_URL, CI_PROJECT_ID, CI_PIPELINE_ID and CI_JOB_TOKEN, and
+// CI_COMMIT_TAG to decide whether "@tag" entries apply.
 package main
 
 import (
@@ -87,12 +88,20 @@ func run() error {
 		return err
 	}
 	defer f.Close()
+	onTag := os.Getenv("CI_COMMIT_TAG") != ""
 	expected, missing := 0, 0
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		want := strings.TrimSpace(sc.Text())
 		if want == "" || strings.HasPrefix(want, "#") {
 			continue
+		}
+		// "name @tag": expected in tag pipelines only.
+		if name, ok := strings.CutSuffix(want, " @tag"); ok {
+			if !onTag {
+				continue
+			}
+			want = name
 		}
 		expected++
 		if !resolved[want] {
