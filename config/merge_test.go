@@ -5,6 +5,7 @@ package config
 
 import (
 	"encoding/json"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -227,4 +228,13 @@ func itoa(i int) string {
 		i /= 10
 	}
 	return string(b)
+}
+
+func mustRead(t *testing.T, path string) []byte {
+	t.Helper()
+	b, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("fixture missing: %v", err)
+	}
+	return b
 }
