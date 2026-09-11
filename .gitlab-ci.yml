@@ -309,5 +309,5 @@ update:pinup:
       # shellcheck disable=SC2086
       /tmp/pinup $mode --project "$CI_PROJECT_PATH" --config "local>devops/renovate-runner" --report pinup-plan.json
   artifacts:
-    paths: [pinup-plan.json]
+    paths: [pinup-plan.json, pinup-plan.md]
     expire_in: 1 week

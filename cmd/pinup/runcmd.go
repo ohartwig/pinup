@@ -385,6 +385,9 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 			return err
 		}
 		defer f.Close()
+		if err := writeMarkdown(path, plan); err != nil {
+			return err
+		}
 		if err := model.WritePlan(f, plan); err != nil {
 			return err
 		}

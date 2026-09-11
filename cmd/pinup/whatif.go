@@ -116,11 +116,23 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return err
 	}
 	if *report != "" {
+		// The rendering sits beside the plan, for the job summary and
+		// for a person reading the artefact.
+		if err := writeMarkdown(*report, plan); err != nil {
+			return err
+		}
 		fmt.Fprintf(errw, "%s: %d dependencies in %d files, %d lookups, %d updates, %d warnings\n",
 			*report, plan.Stats.DepsExtracted, plan.Stats.FilesDiscovered,
 			plan.Stats.LookupsIssued, plan.Stats.UpdatesFound, len(plan.Warnings))
 	}
 	return nil
+}
+
+// writeMarkdown writes the plan's rendering next to its JSON: plan.json
+// gets plan.md, anything else gets .md appended.
+func writeMarkdown(jsonPath string, plan *model.Plan) error {
+	path := strings.TrimSuffix(jsonPath, ".json") + ".md"
+	return os.WriteFile(path, []byte(report.Markdown(plan)), 0o644)
 }
 
 // nearlyEmptyFirstSeen is the first-seen entry count below which a cache is
