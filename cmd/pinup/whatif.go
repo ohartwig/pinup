@@ -21,6 +21,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/osv"
 	"git.ole-hartwig.eu/pinup/pinup/planner"
 	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/rules"
@@ -73,6 +74,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		CacheTTL:    *cacheTTL,
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
+	opts.Advisories = &osv.Client{}
 	// A repository's own `local>` presets are read from the instance when
 	// there is one to read from; without a token they stay unknown and the
 	// resolution says so.
@@ -86,6 +88,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		}
 		defer store.Close()
 		opts.Cache = store
+		opts.Advisories.Store = advisoryStore{cache: store, now: now}
 	}
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -138,6 +141,10 @@ type whatifOptions struct {
 	// CustomDatasources builds the datasources a configuration declares;
 	// nil means customDatasources are unknown. wire supplies it.
 	CustomDatasources func(map[string]model.CustomDatasource) lookup.Registry
+	// Advisories asks the advisory database about current versions when
+	// the configuration sets osvVulnerabilityAlerts; nil means it is never
+	// asked, whatever the configuration says.
+	Advisories *osv.Client
 	// RunnerDefault is the runner's default.json, what the estate's
 	// repositories extend as local>devops/renovate-runner. Empty means
 	// ConfigPath is that file. It differs for the fast lane, whose
@@ -358,6 +365,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}
 	results := fetcher.Fetch(ctx, plan.Deps)
+	if o.Advisories != nil {
+		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, resolved.Raw, plan.Deps, wire.DefaultVersioning(datasources))...)
+	}
 	fromCache := 0
 	for _, r := range results {
 		if r.Warning != nil {
@@ -574,6 +584,82 @@ func origin(res rules.Resolution, key string) model.Origin {
 		return model.Origin{Source: "config", Rule: model.NoRule}
 	}
 	return model.Origin{Source: "packageRules", Rule: chain[len(chain)-1]}
+}
+
+// checkAdvisories is the vulnerability fast path's first half: every
+// dependency at a single version is asked about at the advisory database
+// (osvVulnerabilityAlerts), and one that is affected gets its advisories
+// and the highest fix version written on it for the planner. A database
+// that cannot be reached is a warning, never a failed run - the ordinary
+// updates still happen. Measured: Renovate queries npm and Packagist
+// dependencies this way and skips a range like ^1.2.5.
+func checkAdvisories(ctx context.Context, client *osv.Client, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string) []model.Warning {
+	if on, _ := cfg["osvVulnerabilityAlerts"].(bool); !on {
+		return nil
+	}
+	if va, ok := cfg["vulnerabilityAlerts"].(map[string]any); ok {
+		if enabled, ok := va["enabled"].(bool); ok && !enabled {
+			return nil
+		}
+	}
+	var queries []osv.Query
+	var index []int
+	for i, d := range deps {
+		if d.SkipReason != "" || d.CurrentValue == "" || osv.Ecosystem(d.Datasource) == "" {
+			continue
+		}
+		name := d.PackageName
+		if name == "" {
+			name = d.DepName
+		}
+		scheme := d.Versioning
+		if scheme == "" {
+			scheme = defaultVersioning(d.Datasource)
+		}
+		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: d.CurrentValue, Versioning: scheme})
+		index = append(index, i)
+	}
+	if len(queries) == 0 {
+		return nil
+	}
+	findings, err := client.Check(ctx, wire.Versionings(), queries)
+	if err != nil {
+		return []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; updates are planned without vulnerability alerts", err)}}
+	}
+	var warns []model.Warning
+	for k, f := range findings {
+		d := &deps[index[k]]
+		for _, w := range f.Warnings {
+			warns = append(warns, model.Warning{Stage: "lookup", File: d.File, Msg: d.DepName + ": " + w})
+		}
+		if len(f.Advisories) == 0 {
+			continue
+		}
+		for _, a := range f.Advisories {
+			d.Advisories = append(d.Advisories, model.Advisory{
+				ID: a.ID, Aliases: a.Aliases, Summary: a.Summary, Severity: a.Severity, Fixed: a.Fixed, Published: a.Published,
+			})
+		}
+		d.VulnerabilityBound = f.Bound
+	}
+	return warns
+}
+
+// advisoryStore adapts the lookup cache to the advisory client: a record
+// is keyed by id and modification time, so it never goes stale, and thirty
+// days is only how long an unreferenced one lingers.
+type advisoryStore struct {
+	cache lookup.Cache
+	now   time.Time
+}
+
+func (s advisoryStore) Get(key string) ([]byte, bool) {
+	payload, fresh, err := s.cache.GetReleases("advisory\x00"+key, 30*24*time.Hour, s.now)
+	return payload, err == nil && fresh && len(payload) > 0
+}
+
+func (s advisoryStore) Put(key string, payload []byte) {
+	_ = s.cache.PutReleases("advisory\x00"+key, payload, s.now)
 }
 
 // customDatasourcesHook lets whatif build the datasources a configuration

@@ -20,6 +20,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/glob"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/osv"
 	"git.ole-hartwig.eu/pinup/pinup/publish"
 	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/runner"
@@ -316,6 +317,10 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 		RunnerDefault: o.runnerDefault,
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
+	opts.Advisories = &osv.Client{}
+	if o.cache != nil {
+		opts.Advisories.Store = advisoryStore{cache: o.cache, now: o.now}
+	}
 	plan, err := whatif(ctx, opts)
 	if err != nil {
 		return err
