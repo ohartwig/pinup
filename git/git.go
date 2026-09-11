@@ -100,13 +100,17 @@ func Clone(ctx context.Context, url, dir string, depth int, env []string) (*Repo
 // run executes git in the repository and returns stdout. stderr is folded
 // into the error, with anything that looks like a credential removed.
 func (r *Repo) run(ctx context.Context, args ...string) (string, error) {
+	return r.runWith(ctx, nil, args...)
+}
+
+func (r *Repo) runWith(ctx context.Context, env []string, args ...string) (string, error) {
 	bin := r.Git
 	if bin == "" {
 		bin = "git"
 	}
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Dir = r.Dir
-	cmd.Env = append(os.Environ(), r.Env...)
+	cmd.Env = append(append(os.Environ(), r.Env...), env...)
 	var out, errb bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errb
 	if err := cmd.Run(); err != nil {
@@ -209,6 +213,49 @@ func (r *Repo) Adopt(ctx context.Context, remote, branch, base string) (existed 
 	return true, nil
 }
 
+// Recreate makes branch the checked-out branch starting fresh from start,
+// discarding any local branch of that name. The runner rebuilds its
+// branches from the base on every run - the plan's edits are relative to
+// the base - and compares the result with what the remote holds.
+func (r *Repo) Recreate(ctx context.Context, branch, start string) error {
+	_, err := r.run(ctx, "checkout", "--quiet", "-B", branch, start)
+	return err
+}
+
+// ForeignAuthors lists the author emails of commits on branch that are not
+// on base and were not made by who. A branch a person has committed to is
+// theirs now; the runner leaves it alone and says so.
+func (r *Repo) ForeignAuthors(ctx context.Context, base, branch string, who Identity) ([]string, error) {
+	out, err := r.run(ctx, "log", "--format=%ae", base+".."+branch)
+	if err != nil {
+		return nil, err
+	}
+	var foreign []string
+	seen := map[string]bool{}
+	for _, line := range strings.Split(out, "\n") {
+		email := strings.TrimSpace(line)
+		if email == "" || strings.EqualFold(email, who.Email) || seen[email] {
+			continue
+		}
+		seen[email] = true
+		foreign = append(foreign, email)
+	}
+	return foreign, nil
+}
+
+// SameTree reports whether two commits have identical trees.
+func (r *Repo) SameTree(ctx context.Context, a, b string) (bool, error) {
+	ta, err := r.run(ctx, "rev-parse", a+"^{tree}")
+	if err != nil {
+		return false, err
+	}
+	tb, err := r.run(ctx, "rev-parse", b+"^{tree}")
+	if err != nil {
+		return false, err
+	}
+	return ta == tb, nil
+}
+
 // Status returns the porcelain status, empty when the tree is clean.
 func (r *Repo) Status(ctx context.Context) (string, error) {
 	return r.run(ctx, "status", "--porcelain")
@@ -236,9 +283,14 @@ func (r *Repo) Commit(ctx context.Context, who Identity, sign Signing, message s
 	if staged == "" {
 		return "", false, nil
 	}
-	args := []string{
-		"-c", "user.name=" + who.Name, "-c", "user.email=" + who.Email,
+	// The identity goes in through the environment, which git reads
+	// before any config - so a GIT_AUTHOR_EMAIL set by the surrounding
+	// job cannot make the commit somebody else's.
+	env := []string{
+		"GIT_AUTHOR_NAME=" + who.Name, "GIT_AUTHOR_EMAIL=" + who.Email,
+		"GIT_COMMITTER_NAME=" + who.Name, "GIT_COMMITTER_EMAIL=" + who.Email,
 	}
+	var args []string
 	switch sign.Format {
 	case "":
 		args = append(args, "-c", "commit.gpgsign=false")
@@ -256,7 +308,7 @@ func (r *Repo) Commit(ctx context.Context, who Identity, sign Signing, message s
 	if sign.Format != "" {
 		args = append(args, "-S")
 	}
-	if _, err := r.run(ctx, args...); err != nil {
+	if _, err := r.runWith(ctx, env, args...); err != nil {
 		return "", false, err
 	}
 	sha, err = r.Head(ctx)
