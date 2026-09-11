@@ -520,7 +520,9 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 // Held, not deleted: the plan still says what would have happened and why
 // not, with the thaw time and the rule that held it.
 func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, map[string]any, error) {
-	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.String()))
+	// The rules were written for Renovate and see the type Renovate would
+	// report: a majorAvailable update is a major to them.
+	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.Renovate().String()))
 	// The update type's own object - lockFileMaintenance.schedule, say -
 	// applies over the rules' result before the policy is read.
 	policy := planner.PolicyOf(planner.Overlay(res.Config, u.Type), func(key string) model.Origin { return origin(res, key) })

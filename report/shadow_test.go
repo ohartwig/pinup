@@ -69,6 +69,13 @@ func TestCompareFailsOnEachDeadGateAndPassesOnAgreement(t *testing.T) {
 	if r := Compare([]*model.Plan{heldOpen}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/x-1.x", 4)}}, sup, nil, "0.1.0", now); !failsWith(r, "pinup holds") || r.HeldOpen != 1 {
 		t.Errorf("held_open: %v %+v", r.Failures, r)
 	}
+	// Renovate has open a major a human approved for a `@N` pin; pinup
+	// holds it as a rolling major by design - pre-declared, not a failure,
+	// and counted apart from the held_open that would be one.
+	rolling := plan("a/b", "0.1.0", model.Branch{Name: "renovate/x-2.x", SuppressedBy: model.BlockRollingMajor})
+	if r := Compare([]*model.Plan{rolling}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/x-2.x", 5)}}, sup, nil, "0.1.0", now); !r.Passed() || r.RollingMajor != 1 || r.HeldOpen != 0 || !strings.Contains(r.Summary(), "matched 1/1") {
+		t.Errorf("rolling major: %v %+v %s", r.Failures, r, r.Summary())
+	}
 	// The control yields nothing: the run is broken.
 	if r := Compare([]*model.Plan{plan("pinup/shadow-fixture", "0.1.0")}, map[string][]publish.MergeRequest{"pinup/shadow-fixture": {}}, sup, []string{"pinup/shadow-fixture"}, "0.1.0", now); !failsWith(r, "control pinup/shadow-fixture yielded 0") {
 		t.Errorf("control: %v", r.Failures)

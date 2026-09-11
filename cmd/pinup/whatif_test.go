@@ -272,8 +272,10 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 			continue
 		}
 		tags++
-		if u.Type != model.UpdateMajor || u.NewValue != "2" {
-			t.Errorf("lint-tools via gitlab-tags: got %s to %q, want major to \"2\"", u.Type, u.NewValue)
+		// `@1` is a rolling major: the newer major is planned as
+		// majorAvailable - reported, never written.
+		if u.Type != model.UpdateMajorAvailable || u.NewValue != "2" {
+			t.Errorf("lint-tools via gitlab-tags: got %s to %q, want majorAvailable to \"2\"", u.Type, u.NewValue)
 		}
 	}
 	if tags != 1 {
@@ -296,13 +298,25 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 			t.Errorf("suppressedBy = %q", u.SuppressedBy)
 		}
 	}
-	// A major on a gitlab-tags pin needs dashboard approval (rule 18).
+	// A major on a gitlab-tags pin is held twice over: as a rolling major
+	// by pinup itself, and by rule 18's dashboard approval - the rule was
+	// written for a "major" and still fires on majorAvailable.
 	for _, u := range lint {
 		if u.Dep.Datasource != "gitlab-tags" {
 			continue
 		}
-		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDashboardApproval || u.Blocks[0].Org.Rule != fileRule(18) {
+		reasons := map[model.BlockReason]model.Origin{}
+		for _, b := range u.Blocks {
+			reasons[b.Reason] = b.Org
+		}
+		if _, ok := reasons[model.BlockRollingMajor]; !ok {
+			t.Errorf("lint-tools majorAvailable is not held as a rolling major: %+v", u.Blocks)
+		}
+		if org, ok := reasons[model.BlockDashboardApproval]; !ok || org.Rule != fileRule(18) {
 			t.Errorf("lint-tools major must wait for dashboard approval by the file's packageRules[18], got %+v", u.Blocks)
+		}
+		if u.SuppressedBy != model.BlockRollingMajor {
+			t.Errorf("suppressedBy = %q, want the rolling-major hold first", u.SuppressedBy)
 		}
 	}
 	if plan.Stats.UpdatesBlocked == 0 {

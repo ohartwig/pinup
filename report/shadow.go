@@ -90,10 +90,15 @@ type Result struct {
 	Held         int `json:"held"`
 	// HeldOpen counts branches Renovate has open that pinup holds: the
 	// other tool acted, this one would not, and the reason is on the entry.
-	HeldOpen   int     `json:"heldOpen"`
-	Suppressed int     `json:"suppressed"`
-	Controls   int     `json:"controls"`
-	Entries    []Entry `json:"entries"`
+	HeldOpen int `json:"heldOpen"`
+	// RollingMajor counts the held_open entries pinup holds as a rolling
+	// major: Renovate, once a human approved it on the dashboard, writes
+	// the new major into a `@N` pin; pinup reports it and never will. The
+	// difference is by design and pre-declared, so it is not a failure.
+	RollingMajor int     `json:"rollingMajor"`
+	Suppressed   int     `json:"suppressed"`
+	Controls     int     `json:"controls"`
+	Entries      []Entry `json:"entries"`
 	// Failures are the reasons the comparison does not pass; empty means
 	// agreement within the rules.
 	Failures []string `json:"failures"`
@@ -146,7 +151,10 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 		}
 		for name, b := range mine {
 			e := Entry{Project: p.Repo.Path, Branch: name, SuppressedBy: b.SuppressedBy, Title: b.Title}
-			if m, ok := theirs[name]; ok && b.SuppressedBy != "" {
+			if m, ok := theirs[name]; ok && b.SuppressedBy == model.BlockRollingMajor {
+				e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "rolling-major"
+				r.RollingMajor++
+			} else if ok && b.SuppressedBy != "" {
 				e.Side, e.MRIID = "held_open", m.IID
 				r.HeldOpen++
 			} else if ok {
@@ -225,9 +233,9 @@ func suppressionFor(sup *Suppressions, project, branch string, now time.Time) st
 // Summary is the one line a job log needs: matched over total, and the
 // buckets.
 func (r Result) Summary() string {
-	total := r.Both + r.Held + r.HeldOpen + r.OnlyPinup + r.OnlyRenovate + r.Suppressed + r.Controls
-	return fmt.Sprintf("shadow: %d plans, %d deps, matched %d/%d (held %d, suppressed %d, controls %d, held_open %d, only_pinup %d, only_renovate %d)",
-		r.Plans, r.Deps, r.Both+r.Held+r.Suppressed+r.Controls, total, r.Held, r.Suppressed, r.Controls, r.HeldOpen, r.OnlyPinup, r.OnlyRenovate)
+	total := r.Both + r.Held + r.HeldOpen + r.RollingMajor + r.OnlyPinup + r.OnlyRenovate + r.Suppressed + r.Controls
+	return fmt.Sprintf("shadow: %d plans, %d deps, matched %d/%d (held %d, suppressed %d, controls %d, rolling_major %d, held_open %d, only_pinup %d, only_renovate %d)",
+		r.Plans, r.Deps, r.Both+r.Held+r.Suppressed+r.Controls+r.RollingMajor, total, r.Held, r.Suppressed, r.Controls, r.RollingMajor, r.HeldOpen, r.OnlyPinup, r.OnlyRenovate)
 }
 
 // Passed reports whether the comparison has no failure.

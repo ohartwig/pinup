@@ -266,8 +266,8 @@ func TestRollingMajorPinIsResolvedAsARange(t *testing.T) {
 		t.Fatalf("want exactly one major update, got %+v", res.Updates)
 	}
 	u := res.Updates[0]
-	if u.Type != model.UpdateMajor || u.NewValue != "2" || u.NewVersion != "2.3.0" {
-		t.Errorf("got %s to value %q version %q; want major to \"2\" (2.3.0)", u.Type, u.NewValue, u.NewVersion)
+	if u.Type != model.UpdateMajorAvailable || u.NewValue != "2" || u.NewVersion != "2.3.0" {
+		t.Errorf("got %s to value %q version %q; want majorAvailable to \"2\" (2.3.0)", u.Type, u.NewValue, u.NewVersion)
 	}
 
 	res = plan(t, dep("lint", "9", "semver-partial"), releases("1.0.0"))
@@ -346,5 +346,49 @@ func TestLookupSourceURLReachesTheUpdate(t *testing.T) {
 	res = plan(t, own, rs)
 	if res.Updates[0].Dep.SourceURL != own.SourceURL {
 		t.Errorf("the manager's own source URL was overwritten: %q", res.Updates[0].Dep.SourceURL)
+	}
+}
+
+// A bare-major pin (`@1`) floats within its major by design; a newer major
+// is planned as majorAvailable and held as a rolling major - reported,
+// never written. A full version with the same releases is an ordinary
+// major. Rules and templates see majorAvailable as "major".
+func TestBareMajorPinPlansANotificationNotAnEdit(t *testing.T) {
+	rs := releases("1.33.83", "2.0.0")
+	res := plan(t, dep("lint", "1", "semver-partial"), rs)
+	var got *model.Update
+	for i := range res.Updates {
+		if res.Updates[i].NewVersion == "2.0.0" {
+			got = &res.Updates[i]
+		}
+	}
+	if got == nil {
+		t.Fatalf("no update to 2.0.0 planned: %+v", res.Updates)
+	}
+	if got.Type != model.UpdateMajorAvailable {
+		t.Errorf("type = %s, want majorAvailable", got.Type)
+	}
+	if got.Type.Renovate() != model.UpdateMajor {
+		t.Errorf("Renovate() = %s, want major", got.Type.Renovate())
+	}
+	decided, err := Decide(*got, Policy{Enabled: true}, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(decided.Blocks) != 1 || decided.Blocks[0].Reason != model.BlockRollingMajor {
+		t.Errorf("blocks = %+v, want exactly the rolling-major hold", decided.Blocks)
+	}
+
+	full := plan(t, dep("lint", "1.33.83", "semver"), rs)
+	if len(full.Updates) != 1 || full.Updates[0].Type != model.UpdateMajor {
+		t.Errorf("a full version pin must plan an ordinary major: %+v", full.Updates)
+	}
+	for _, tc := range []struct {
+		cur  string
+		want bool
+	}{{"1", true}, {"12", true}, {"1.0", false}, {"v1", false}, {"^1", false}, {"", false}} {
+		if isRollingMajor(tc.cur) != tc.want {
+			t.Errorf("isRollingMajor(%q) = %v", tc.cur, !tc.want)
+		}
 	}
 }

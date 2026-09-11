@@ -235,6 +235,14 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 			return nil, fmt.Sprintf("cannot write %s as a %s value: %v", target, scheme, err), nil
 		}
 		t := versioning.UpdateType(v, base, target)
+		if t == model.UpdateMajor && isRollingMajor(cur) {
+			// `@1`-style pins float within their major by design (measured
+			// across 44 image repositories: 55 % of all commits on main
+			// were component bumps before the estate switched to them).
+			// A newer major is the one thing such a pin cannot see on its
+			// own, so it is planned as a notification, never as an edit.
+			t = model.UpdateMajorAvailable
+		}
 		rel := byVersion[target]
 		u := model.Update{
 			DepKey:     d.Key(),
@@ -326,6 +334,20 @@ func extractVersions(rs *model.ReleaseSet, pattern string) (*model.ReleaseSet, e
 		out.Releases = append(out.Releases, r)
 	}
 	return &out, nil
+}
+
+// isRollingMajor is whether a current value is a bare major: digits and
+// nothing else. `1` is; `1.0`, `v1` and `^1` are not.
+func isRollingMajor(cur string) bool {
+	if cur == "" {
+		return false
+	}
+	for _, c := range cur {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // declaredRisk maps an update type onto the risk order. Digest and pin moves

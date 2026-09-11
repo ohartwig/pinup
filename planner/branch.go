@@ -94,7 +94,7 @@ type Named struct {
 // configuration the rules produced for it. vs is used to read the new
 // version's components for the template variables.
 func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, error) {
-	cfg = overlay(cfg, updateTypeKey(u.Type))
+	cfg = overlay(cfg, updateTypeKey(u.Type.Renovate()))
 
 	// The configuration before the group overlay names a single update;
 	// measured, a group of one is titled like the update itself -
@@ -112,7 +112,7 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 		}
 		// A group's majors travel on their own branch. Measured:
 		// "renovate/major-hocuspocus-packages", "renovate/major-laravel".
-		if sep, _ := cfg["separateMajorMinor"].(bool); sep && u.Type == model.UpdateMajor {
+		if sep, _ := cfg["separateMajorMinor"].(bool); sep && u.Type.Renovate() == model.UpdateMajor {
 			majorGroup = true
 			groupSlug = "major-" + groupSlug
 		}
@@ -300,7 +300,7 @@ func Compose(named []Named) ([]model.Branch, error) {
 // a copy of cfg, the way Renovate applies per-update-type settings. The
 // policy and the branch naming both read the result.
 func Overlay(cfg map[string]any, t model.UpdateType) map[string]any {
-	return overlay(cfg, updateTypeKey(t))
+	return overlay(cfg, updateTypeKey(t.Renovate()))
 }
 
 // overlay merges cfg[key], when it is an object, over a copy of cfg -
@@ -381,7 +381,7 @@ func variables(u model.Update, cfg map[string]any, vs versioning.Registry, group
 		}
 	}
 	flags := map[string]bool{
-		"isMajor": u.Type == model.UpdateMajor, "isMinor": u.Type == model.UpdateMinor, "isPatch": u.Type == model.UpdatePatch,
+		"isMajor": u.Type.Renovate() == model.UpdateMajor, "isMinor": u.Type == model.UpdateMinor, "isPatch": u.Type == model.UpdatePatch,
 		"isDigest": u.Type == model.UpdateDigest, "isPin": u.Type == model.UpdatePin, "isPinDigest": u.Type == model.UpdatePinDigest,
 		"isLockfileUpdate": u.Type == model.UpdateLockFileMaintenance, "isReplacement": u.Type == model.UpdateReplacement,
 	}

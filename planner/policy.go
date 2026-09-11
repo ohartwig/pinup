@@ -104,6 +104,13 @@ func Decide(u model.Update, p Policy, now time.Time) (model.Update, error) {
 		}
 	}
 	u.Blocks = kept
+	if u.Type == model.UpdateMajorAvailable {
+		u.Blocks = append(u.Blocks, model.Block{
+			Reason: model.BlockRollingMajor,
+			Org:    model.Origin{Source: "pinup", Rule: model.NoRule},
+			Note:   "a rolling major reference is reported, never rewritten; adopting the major is a deliberate act",
+		})
+	}
 	if !p.Enabled {
 		u.Blocks = append(u.Blocks, model.Block{
 			Reason: model.BlockDisabled, Org: p.Origins["enabled"],

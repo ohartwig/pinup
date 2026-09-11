@@ -35,6 +35,17 @@ const (
 	UpdateMajorAvailable
 )
 
+// Renovate reports the update type Renovate would have used for the same
+// change: majorAvailable is a major to every rule, template and per-type
+// configuration object written for Renovate, and only the plan and the
+// policy know the difference.
+func (t UpdateType) Renovate() UpdateType {
+	if t == UpdateMajorAvailable {
+		return UpdateMajor
+	}
+	return t
+}
+
 var updateTypeNames = map[UpdateType]string{
 	UpdateUnknown:             "unknown",
 	UpdateMajor:               "major",
@@ -160,6 +171,11 @@ const (
 	// container, and until that plugin exists the plan says so rather than
 	// pretending the branch was pushed.
 	BlockPluginRequired BlockReason = "pluginRequired"
+	// BlockRollingMajor holds a majorAvailable update: the current value is
+	// a bare major (`@1`), GitLab's shorthand for the newest release of
+	// that major, so a newer major is reported and never written - adopting
+	// it is a decision with a rollout behind it, not a line a bot rewrites.
+	BlockRollingMajor BlockReason = "rollingMajor"
 )
 
 // Block is one reason an update is held, with the rule that held it. Every

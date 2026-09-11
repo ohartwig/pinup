@@ -31,6 +31,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/manager/composerman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/dockerfile"
 	"git.ole-hartwig.eu/pinup/pinup/manager/gitlabci"
+	"git.ole-hartwig.eu/pinup/pinup/manager/kustomize"
 	"git.ole-hartwig.eu/pinup/pinup/manager/npmman"
 	"git.ole-hartwig.eu/pinup/pinup/manager/regexm"
 	"git.ole-hartwig.eu/pinup/pinup/manager/terraform"
@@ -76,6 +77,7 @@ func Managers() extract.Registry {
 	return extract.Registry{
 		"dockerfile": dockerfile.New(),
 		"gitlabci":   gitlabci.New(),
+		"kustomize":  kustomize.New(),
 		"composer":   composerman.New(),
 		"npm":        npmman.New(),
 		"terraform":  terraform.New(),
