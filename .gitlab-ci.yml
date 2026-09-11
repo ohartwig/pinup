@@ -154,6 +154,21 @@ test:go:
       - coverage.out
     expire_in: 1 week
 
+# The mutation suite: every harness layer is broken on purpose, one
+# named change at a time, and its tests must go red - the answer to "how
+# do we know this gate can fail". It copies the tracked tree, so it needs
+# git and the full checkout, and runs go test twenty-odd times.
+test:mutation:
+  stage: test
+  image: ${GO_IMAGE}
+  needs: [test:go]
+  variables:
+    PINUP_MUTATE: "1"
+    GIT_DEPTH: "1"
+  script:
+    - go test -count=1 -timeout 30m -v ./tools/mutate/ 2>&1 | grep -E "detected|sentinel|^(ok|FAIL|---)"
+    - go test -count=1 -timeout 30m ./tools/mutate/
+
 # --------------------------------------------------------------------------- #
 # Build - four platforms from one arm64 runner, nothing needs CGO
 # --------------------------------------------------------------------------- #
