@@ -241,8 +241,11 @@ func corpusDeps(t *testing.T) []corpusDep {
 func TestCorpusIsRepresentative(t *testing.T) {
 	deps := corpusDeps(t)
 	t.Logf("%d dependency vectors from %d repositories", len(deps), len(loadCorpus(t)))
-	if len(deps) != 350 {
-		t.Errorf("corpus has %d vectors, expected 350 - it was recaptured", len(deps))
+	// 350 from seven estate repositories, plus 14 from the synthetic tree
+	// under testdata/parity/synthetic that exercises the two enabled
+	// managers no estate repository uses yet (terraform-version, kustomize).
+	if len(deps) != 364 {
+		t.Errorf("corpus has %d vectors, expected 364 - it was recaptured", len(deps))
 	}
 
 	seen := map[string]bool{}
@@ -257,7 +260,7 @@ func TestCorpusIsRepresentative(t *testing.T) {
 	for _, want := range []string{
 		"ds:docker", "ds:gitlab-tags", "ds:gitlab-releases", "ds:gitlab-packages",
 		"ds:github-tags", "ds:github-releases", "ds:packagist", "ds:npm",
-		"ds:terraform-provider", "ds:custom.wolfi",
+		"ds:terraform-provider", "ds:custom.wolfi", "ds:git-tags", "ds:helm",
 		"ver:composer", "ver:loose", "ver:semver-partial", "ver:docker", "ver:hashicorp",
 	} {
 		if !seen[want] {
