@@ -302,7 +302,14 @@ func Compose(named []Named) ([]model.Branch, error) {
 				if err != nil {
 					return nil, err
 				}
-				b.Schedule = model.Window{Expr: s.String(), Kind: sched.Kind(n.Schedule[0]), Timezone: s.Timezone()}
+				b.Schedule = model.Window{Expr: s.String(), Kind: sched.Kind(n.Schedule[0]), Timezone: s.Timezone(), Active: true}
+				// The decision was made per update, against the plan's
+				// clock; the window reports it rather than deciding again.
+				for _, blk := range n.Update.Blocks {
+					if blk.Reason == model.BlockSchedule {
+						b.Schedule.Active, b.Schedule.NextOpen = false, blk.Until
+					}
+				}
 			}
 			m = &member{branch: b}
 			byName[n.Branch] = m

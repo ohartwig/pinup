@@ -195,7 +195,10 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		fields["title"] = r.Title
 		changed = append(changed, "title")
 	}
-	if cur.Description != r.Description {
+	// GitLab stores a description without its trailing whitespace; a
+	// comparison on the bytes as sent would rewrite every request on
+	// every run.
+	if strings.TrimSpace(cur.Description) != strings.TrimSpace(r.Description) {
 		fields["description"] = r.Description
 		changed = append(changed, "description")
 	}
@@ -522,6 +525,39 @@ func classify(resp *apiResponse, projectPath string) error {
 	case resp.status == http.StatusTooManyRequests:
 		return fmt.Errorf("gitlab: rate limited while accessing project %q", projectPath)
 	default:
+		// GitLab explains a 4xx in the body ({"message": ...}); the
+		// explanation is what makes a 400 actionable, and it never carries
+		// the token.
+		if msg := apiMessage(resp.body); msg != "" {
+			return fmt.Errorf("gitlab: status %d for project %q: %s", resp.status, projectPath, msg)
+		}
 		return fmt.Errorf("gitlab: unexpected status %d for project %q", resp.status, projectPath)
 	}
+}
+
+// apiMessage extracts GitLab's "message" from an error body, whatever its
+// shape (a string, a list, or a map of field errors), truncated for a log
+// line.
+func apiMessage(body []byte) string {
+	var doc struct {
+		Message any    `json:"message"`
+		Error   string `json:"error"`
+	}
+	if err := json.Unmarshal(body, &doc); err != nil {
+		return ""
+	}
+	var msg string
+	switch m := doc.Message.(type) {
+	case string:
+		msg = m
+	case nil:
+		msg = doc.Error
+	default:
+		b, _ := json.Marshal(m)
+		msg = string(b)
+	}
+	if len(msg) > 300 {
+		msg = msg[:300] + "…"
+	}
+	return msg
 }

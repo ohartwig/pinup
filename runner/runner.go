@@ -57,6 +57,8 @@ type Options struct {
 	// on the checkout after its edits are written. nil means a branch with
 	// tasks fails rather than being pushed without them.
 	Tasks TaskRunner
+	// Sleep waits between retries; nil means no wait (tests).
+	Sleep func(time.Duration)
 
 	Now time.Time
 }
@@ -96,7 +98,9 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 	}
 	for i := range plan.Branches {
 		b := &plan.Branches[i]
-		if b.SuppressedBy != "" || len(b.Edits) == 0 {
+		// A branch with neither edits nor tasks has nothing to write; a
+		// lock-file maintenance branch has only tasks and still writes.
+		if b.SuppressedBy != "" || (len(b.Edits) == 0 && len(b.Tasks) == 0) {
 			continue
 		}
 		mr, hasMR, err := o.Platform.FindMergeRequest(ctx, o.Project, b.Name)
@@ -127,6 +131,12 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			outcomes = append(outcomes, fail(plan, b, "push", err))
 			continue
 		}
+		if sha == "" && !pushed {
+			// Nothing was pushed and no branch exists: a task-only branch
+			// whose tool found nothing to refresh. Nothing to open.
+			outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "unchanged", Message: "nothing to refresh"})
+			continue
+		}
 		req := publish.Request{
 			SourceBranch: b.Name, TargetBranch: o.Base, Title: b.Title,
 			Description: description(b, o.Footer), Labels: union(o.Labels, b.Labels),
@@ -147,7 +157,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			}
 			out = Outcome{Branch: b.Name, Action: action, MRIID: mr.IID, SHA: sha, Message: fmt.Sprint(changed)}
 		default:
-			mr, err = o.Platform.CreateMergeRequest(ctx, o.Project, req)
+			mr, err = createWithRetry(ctx, o, req)
 			if err != nil {
 				outcomes = append(outcomes, fail(plan, b, "create merge request", err))
 				continue
@@ -159,6 +169,30 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		outcomes = append(outcomes, out)
 	}
 	return outcomes, nil
+}
+
+// createWithRetry opens the merge request, retrying a 400 that says the
+// source branch does not exist: measured live, GitLab answered that for a
+// branch pushed a moment earlier and accepted the same request seconds
+// later. Three attempts, a second apart, then the error stands.
+func createWithRetry(ctx context.Context, o Options, req publish.Request) (publish.MergeRequest, error) {
+	var last error
+	for attempt := range 3 {
+		if attempt > 0 {
+			if o.Sleep != nil {
+				o.Sleep(time.Duration(attempt) * time.Second)
+			}
+		}
+		mr, err := o.Platform.CreateMergeRequest(ctx, o.Project, req)
+		if err == nil {
+			return mr, nil
+		}
+		last = err
+		if !strings.Contains(err.Error(), "does not exist") {
+			break
+		}
+	}
+	return publish.MergeRequest{}, last
 }
 
 // pushBranch rebuilds the branch from the base, writes the edits, commits,
@@ -217,6 +251,11 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, 
 				paths = append(paths, p)
 			}
 		}
+	}
+	if len(paths) == 0 {
+		// A task-only branch whose tool found nothing to refresh: not a
+		// failure, there is simply nothing to open.
+		return before, false, nil
 	}
 	sha, committed, err := o.Repo.Commit(ctx, o.Identity, o.Signing, b.Title+"\n\n"+commitBody(b), paths...)
 	if err != nil {
@@ -307,6 +346,11 @@ func description(b *model.Branch, footer string) string {
 	s := "| File | Change |\n|---|---|\n"
 	for _, e := range b.Edits {
 		s += fmt.Sprintf("| `%s` | `%s` → `%s` |\n", e.File, e.Old, e.New)
+	}
+	for _, t := range b.Tasks {
+		// A reader sees what ran on the branch beyond the edits - the
+		// lock refresh behind a manifest change - and can rerun it.
+		s += fmt.Sprintf("| `%s` | `%s` |\n", strings.Join(t.FileFilters, "`, `"), strings.Join(t.Command, " "))
 	}
 	if footer != "" {
 		s += "\n" + footer + "\n"

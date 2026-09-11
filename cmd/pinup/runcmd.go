@@ -51,6 +51,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt)")
 	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
 	dryRun := fs.Bool("dry-run", false, "plan only; push nothing, open nothing")
+	baseBranch := fs.String("base", "", "plan and branch from this branch instead of the project's default branch")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -128,7 +129,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	}
 	one := runOptions{
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
-		identity: identity, signing: signing, platform: platform, now: now,
+		identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 	}
 	if *indexPath != "" {
 		idx, err := report.LoadIndex(*indexPath)
@@ -195,6 +196,9 @@ type runOptions struct {
 	indexPath string
 	// released narrows a run to one dependency; see whatifOptions.
 	released string
+	// base, when set, replaces the project's default branch as the
+	// branch the run reads and branches from.
+	base string
 }
 
 // runReleased is the fast lane. The consumers come from the index the
@@ -297,6 +301,14 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 			return err
 		}
 		repo.Env = []string{"GIT_ASKPASS=" + self, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_PARAMETERS='credential.helper='"}
+		if o.base != "" {
+			if err := repo.Fetch(ctx, "origin", o.base); err != nil {
+				return err
+			}
+			if err := repo.Checkout(ctx, o.base, "origin/"+o.base); err != nil {
+				return err
+			}
+		}
 	} else {
 		repo, err = git.Open(repoDir)
 		if err != nil {
@@ -307,6 +319,9 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 	proj, err := platform.Project(ctx, repoName)
 	if err != nil {
 		return fmt.Errorf("run: %w", err)
+	}
+	if o.base != "" {
+		proj.DefaultBranch = o.base
 	}
 
 	opts := whatifOptions{
@@ -350,6 +365,7 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 			ConcurrentLimit: plan.Limits.PRConcurrentLimit,
 			Prefix:          "renovate/", Now: o.now,
 			Tasks: plugin.TaskRunner{Runner: taskRunner(os.Getenv)},
+			Sleep: time.Sleep,
 		})
 		if err != nil {
 			return err
