@@ -166,8 +166,7 @@ test:mutation:
     PINUP_MUTATE: "1"
     GIT_DEPTH: "1"
   script:
-    - go test -count=1 -timeout 30m -v ./tools/mutate/ 2>&1 | grep -E "detected|sentinel|^(ok|FAIL|---)"
-    - go test -count=1 -timeout 30m ./tools/mutate/
+    - go test -count=1 -timeout 30m -v ./tools/mutate/
 
 # --------------------------------------------------------------------------- #
 # Build - four platforms from one arm64 runner, nothing needs CGO

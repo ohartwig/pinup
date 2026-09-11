@@ -18,7 +18,6 @@
 package mutate
 
 import (
-	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -194,44 +193,55 @@ func TestEveryMutatorIsDetected(t *testing.T) {
 	}
 }
 
+// repoRoot is the module root: this package sits two levels below it. No
+// git here - the CI image the suite runs on does not carry git.
 func repoRoot(t *testing.T) string {
 	t.Helper()
-	out, err := exec.Command("git", "rev-parse", "--show-toplevel").Output()
-	if err != nil {
-		wd, _ := os.Getwd()
-		return filepath.Clean(filepath.Join(wd, "..", ".."))
-	}
-	return strings.TrimSpace(string(out))
-}
-
-func copyTracked(t *testing.T, root, work string) {
-	t.Helper()
-	cmd := exec.Command("git", "ls-files", "-z")
-	cmd.Dir = root
-	out, err := cmd.Output()
+	wd, err := os.Getwd()
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, rel := range bytes.Split(out, []byte{0}) {
-		if len(rel) == 0 {
-			continue
-		}
-		src := filepath.Join(root, string(rel))
-		dst := filepath.Join(work, string(rel))
-		info, err := os.Lstat(src)
+	root := filepath.Clean(filepath.Join(wd, "..", ".."))
+	if _, err := os.Stat(filepath.Join(root, "go.mod")); err != nil {
+		t.Fatalf("module root not found above %s: %v", wd, err)
+	}
+	return root
+}
+
+// copyTracked copies the source tree, leaving out what is never part of a
+// build: the git directory, the module cache, caches and coverage output.
+func copyTracked(t *testing.T, root, work string) {
+	t.Helper()
+	skip := map[string]bool{".git": true, ".go": true, ".pinup": true, "node_modules": true}
+	err := filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
-			continue
+			return err
 		}
-		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
-			t.Fatal(err)
+		rel, _ := filepath.Rel(root, path)
+		if rel == "." {
+			return nil
 		}
-		data, err := os.ReadFile(src)
+		if d.IsDir() {
+			if skip[d.Name()] {
+				return filepath.SkipDir
+			}
+			return os.MkdirAll(filepath.Join(work, rel), 0o755)
+		}
+		if !d.Type().IsRegular() {
+			return nil
+		}
+		info, err := d.Info()
 		if err != nil {
-			t.Fatal(err)
+			return err
 		}
-		if err := os.WriteFile(dst, data, info.Mode().Perm()); err != nil {
-			t.Fatal(err)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
 		}
+		return os.WriteFile(filepath.Join(work, rel), data, info.Mode().Perm())
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 
