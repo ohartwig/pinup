@@ -176,6 +176,12 @@ const (
 	// that major, so a newer major is reported and never written - adopting
 	// it is a decision with a rollout behind it, not a line a bot rewrites.
 	BlockRollingMajor BlockReason = "rollingMajor"
+	// BlockTaskRefused holds a branch whose post-upgrade command the
+	// allowlist does not admit. Renovate skips the command and pushes the
+	// branch anyway - which is how the estate lost every first-party lock
+	// refresh for weeks without a red job; pinup holds the branch and
+	// names the command instead.
+	BlockTaskRefused BlockReason = "taskRefused"
 )
 
 // Block is one reason an update is held, with the rule that held it. Every

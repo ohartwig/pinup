@@ -418,3 +418,26 @@ func TestMetadataURLMayBeAbsolute(t *testing.T) {
 		t.Errorf("relative: %s", got)
 	}
 }
+
+// GitLab documents a group registry as ".../composer/packages.json", and
+// the estate's composer.json files write it that way: the root document's
+// own name in the URL is not a path to append to.
+func TestARegistryURLNamingPackagesJSONIsTheRegistry(t *testing.T) {
+	client, _, gf, rec, _ := newFixture(t)
+	gf.packages["vendor1/firstparty"] = map[string]map[string]any{
+		"2.0.0": {"time": "2024-03-01T00:00:00Z"},
+	}
+	rs, err := New(client).Releases(t.Context(), lookup.Ref{
+		Datasource: "packagist", PackageName: "vendor1/firstparty",
+		RegistryURLs: []string{"https://" + gitlabHost + "/packages.json"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Failed() {
+		t.Fatalf("the transport was unhappy: %s", rec.String())
+	}
+	if len(rs.Releases) != 1 || rs.RegistryURL != "https://"+gitlabHost {
+		t.Errorf("releases %+v registry %q", rs.Releases, rs.RegistryURL)
+	}
+}

@@ -53,6 +53,10 @@ type Options struct {
 	ConcurrentLimit int
 	// Prefix is the branch prefix the open-request count looks at.
 	Prefix string
+	// Tasks runs a branch's tasks - lock refreshes and postUpgradeTasks -
+	// on the checkout after its edits are written. nil means a branch with
+	// tasks fails rather than being pushed without them.
+	Tasks TaskRunner
 
 	Now time.Time
 }
@@ -197,6 +201,23 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, 
 			paths = append(paths, e.File)
 		}
 	}
+	// Tasks run on the edited tree, one after the other; what each one
+	// changes must lie within its file scope, or everything it did is
+	// discarded and the branch fails by name. What survives is committed
+	// together with the edits: a manifest never lands without its lock.
+	for _, t := range b.Tasks {
+		changed, err := o.runTask(ctx, t)
+		if err != nil {
+			_ = o.Repo.Discard(ctx)
+			return "", false, err
+		}
+		for _, p := range changed {
+			if !files[p] {
+				files[p] = true
+				paths = append(paths, p)
+			}
+		}
+	}
 	sha, committed, err := o.Repo.Commit(ctx, o.Identity, o.Signing, b.Title+"\n\n"+commitBody(b), paths...)
 	if err != nil {
 		return "", false, err
@@ -223,6 +244,50 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, 
 		return "", false, err
 	}
 	return sha, true, nil
+}
+
+// TaskRunner executes a branch's tasks on the checkout. wire supplies the
+// exec flavour; Available answers before anything runs.
+type TaskRunner interface {
+	Available(tasks []model.Task) error
+	Run(ctx context.Context, root string, t model.Task) error
+}
+
+// runTask executes one task and reports the paths it changed, refusing a
+// change outside the task's scope. A task without a runner is a failed
+// branch, not a pushed one.
+func (o Options) runTask(ctx context.Context, t model.Task) ([]string, error) {
+	if o.Tasks == nil {
+		return nil, fmt.Errorf("no task runner for %s", strings.Join(t.Command, " "))
+	}
+	if err := o.Tasks.Available([]model.Task{t}); err != nil {
+		return nil, err
+	}
+	before, err := o.Repo.Changed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := o.Tasks.Run(ctx, o.Repo.Dir, t); err != nil {
+		return nil, err
+	}
+	after, err := o.Repo.Changed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	was := map[string]bool{}
+	for _, p := range before {
+		was[p] = true
+	}
+	var changed []string
+	for _, p := range after {
+		if !was[p] {
+			changed = append(changed, p)
+		}
+	}
+	if err := apply.InScope(t, changed); err != nil {
+		return nil, err
+	}
+	return changed, nil
 }
 
 func commitBody(b *model.Branch) string {

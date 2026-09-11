@@ -20,9 +20,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"git.ole-hartwig.eu/pinup/pinup/glob"
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/model"
 )
@@ -166,4 +168,36 @@ func WriteFiles(root string, edits []model.Edit) ([]Result, error) {
 func sum(b []byte) string {
 	h := sha256.Sum256(b)
 	return hex.EncodeToString(h[:])
+}
+
+// InScope checks the paths a task changed against its file filters, both
+// relative to the checkout. One path outside the scope is an error naming
+// it; the caller then discards everything the task did. A task without
+// filters may change nothing.
+func InScope(t model.Task, changed []string) error {
+	var ms []*glob.Matcher
+	for _, f := range t.FileFilters {
+		ms = append(ms, glob.Compile(f))
+	}
+	for _, p := range changed {
+		rel := p
+		if t.Dir != "" {
+			r, err := filepath.Rel(t.Dir, p)
+			if err != nil || strings.HasPrefix(r, "..") {
+				return fmt.Errorf("task %s changed %s outside its directory %s", strings.Join(t.Command, " "), p, t.Dir)
+			}
+			rel = r
+		}
+		ok := false
+		for _, m := range ms {
+			if m.Match(rel) {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			return fmt.Errorf("task %s changed %s, outside its fileFilters %v", strings.Join(t.Command, " "), p, t.FileFilters)
+		}
+	}
+	return nil
 }

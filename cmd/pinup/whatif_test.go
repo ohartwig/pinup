@@ -40,7 +40,9 @@ func (c cannedDS) Releases(_ context.Context, ref lookup.Ref) (*model.ReleaseSet
 		// Released a month before any plan time these tests use, so
 		// minimumReleaseAge holds nothing and the policy under test is
 		// the rules', not the clock's.
-		rs.Releases = append(rs.Releases, model.Release{Version: v, Timestamp: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)})
+		// Every release carries a digest, as a gitlab tag's commit id
+		// does: an edit must not append it to a reference that had none.
+		rs.Releases = append(rs.Releases, model.Release{Version: v, Digest: "9b49336126056907f46fcc0f954acb62639c1fbe", Timestamp: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)})
 	}
 	return rs, nil
 }
@@ -422,6 +424,12 @@ func TestWhatifEditsApplyByteExact(t *testing.T) {
 	for _, e := range all {
 		if e.Old == "2.15.1" && (e.File != "Containerfile" || e.New != "2.15.2") {
 			t.Errorf("hadolint edit %+v", e)
+		}
+		// Live, the gitlab-tags commit id was once appended to a component
+		// include - "1.63.3@9b49..." - by the digest-pinning path. Only a
+		// pinDigest update may do that.
+		if strings.Contains(e.New, "@") && !strings.Contains(e.Old, "@") {
+			t.Errorf("edit pins a digest onto an unpinned reference: %+v", e)
 		}
 	}
 	files := map[string][]byte{}

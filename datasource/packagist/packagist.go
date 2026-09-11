@@ -80,7 +80,10 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 
 	tried := make([]string, 0, len(registries))
 	for _, reg := range registries {
-		base := strings.TrimRight(reg, "/")
+		// Composer accepts a repository URL that names the root document
+		// itself - GitLab documents its group registry that way,
+		// ".../composer/packages.json" - and so does this.
+		base := strings.TrimSuffix(strings.TrimRight(reg, "/"), "/packages.json")
 		tried = append(tried, base)
 
 		rs, found, err := d.lookupOne(ctx, base, ref.PackageName)

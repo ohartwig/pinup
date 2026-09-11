@@ -23,8 +23,9 @@ import (
 //     the digest; this is the last line of defence.
 //   - a digest alone moves the digest span; a value alone moves the value
 //     span; both move the joined `value@digest` span, which must be
-//     contiguous with a single `@` between; a digest onto a reference that
-//     had none is appended to the value.
+//     contiguous with a single `@` between; a pinDigest update appends a
+//     digest to a reference that had none - and only that update type does,
+//     since any release may carry a digest (a tag's commit id, say).
 func EditRef(manager string, f File, up model.Update) (model.Edit, error) {
 	dep := up.Dep
 	src := f.Content
@@ -74,9 +75,10 @@ func EditRef(manager string, f File, up model.Update) (model.Edit, error) {
 			Old: dep.CurrentDigest, New: up.NewDigest, Manager: manager,
 		}, nil
 
-	case !hasDigest && up.NewDigest != "":
-		// Pinning a digest onto a reference that had none: appended to the
-		// value, since there is no digest span to target yet.
+	case !hasDigest && up.Type == model.UpdatePinDigest && up.NewDigest != "":
+		// Pinning a digest onto a reference that had none - only when the
+		// update says so. Every release may carry a digest (a tag's commit
+		// id, say) and an unpinned reference stays unpinned by default.
 		if err := verify(l.ValueStart, l.ValueEnd, dep.CurrentValue); err != nil {
 			return model.Edit{}, err
 		}

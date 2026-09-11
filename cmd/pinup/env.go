@@ -4,8 +4,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -104,4 +107,39 @@ func httpClient(p platformEnv) *httpx.Client {
 		Now:        time.Now,
 		Sleep:      time.Sleep,
 	})
+}
+
+// taskRunner builds the exec task runner from the job's environment:
+// PINUP_PLUGIN_ENV names the variables a task may see besides the
+// baseline (a registry credential for first-party packages, say),
+// PINUP_EXECUTION_TIMEOUT is minutes per task - Renovate's unit; the
+// estate's runner sets 45 for its largest composer repository.
+func taskRunner(getenv func(string) string) *plugin.Runner {
+	r := &plugin.Runner{Now: time.Now}
+	for _, name := range strings.Split(getenv("PINUP_PLUGIN_ENV"), ",") {
+		if name = strings.TrimSpace(name); name != "" {
+			r.PassEnv = append(r.PassEnv, name)
+		}
+	}
+	if v := getenv("PINUP_EXECUTION_TIMEOUT"); v != "" {
+		if minutes, err := strconv.Atoi(v); err == nil && minutes > 0 {
+			r.Timeout = time.Duration(minutes) * time.Minute
+		}
+	}
+	return r
+}
+
+// allowedCommands reads PINUP_ALLOWED_COMMANDS, a JSON array of anchored
+// patterns the runner - never a repository - decides on. nil means the
+// configuration file's own allowedCommands apply.
+func allowedCommands(getenv func(string) string) ([]string, error) {
+	v := getenv("PINUP_ALLOWED_COMMANDS")
+	if v == "" {
+		return nil, nil
+	}
+	var out []string
+	if err := json.Unmarshal([]byte(v), &out); err != nil {
+		return nil, fmt.Errorf("PINUP_ALLOWED_COMMANDS: %w", err)
+	}
+	return out, nil
 }

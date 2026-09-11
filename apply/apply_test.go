@@ -128,3 +128,26 @@ func TestIdenticalEditsAreOneEdit(t *testing.T) {
 		t.Errorf("a different replacement on the same bytes must conflict, got %v", cs)
 	}
 }
+
+// P1d.5: a change outside the task's scope names the path and fails the
+// check - the caller discards the whole result.
+func TestInScopeNamesTheOffendingPath(t *testing.T) {
+	task := model.Task{Command: []string{"composer", "update"}, Dir: "app", FileFilters: []string{"composer.json", "composer.lock"}}
+	if err := InScope(task, []string{"app/composer.lock", "app/composer.json"}); err != nil {
+		t.Errorf("in scope: %v", err)
+	}
+	err := InScope(task, []string{"app/composer.lock", "app/vendor/autoload.php"})
+	if err == nil || !strings.Contains(err.Error(), "app/vendor/autoload.php") {
+		t.Errorf("out of scope: %v", err)
+	}
+	if err := InScope(task, []string{"composer.lock"}); err == nil || !strings.Contains(err.Error(), "outside its directory") {
+		t.Errorf("outside the task directory: %v", err)
+	}
+	root := model.Task{Command: []string{"node", "x"}, FileFilters: []string{"**/Containerfile"}}
+	if err := InScope(root, []string{"images/a/Containerfile", "Containerfile"}); err != nil {
+		t.Errorf("globstar scope: %v", err)
+	}
+	if err := InScope(model.Task{Command: []string{"x"}}, []string{"a"}); err == nil {
+		t.Error("a task without filters may change nothing")
+	}
+}

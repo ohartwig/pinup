@@ -37,9 +37,14 @@ func TestEditRefMovesExactlyWhatChanges(t *testing.T) {
 		{"digest only", "FROM a:1.0@" + old + "\n", "1.0", old, "1.0", fresh, "FROM a:1.0@" + fresh + "\n"},
 		{"digest without a tag", "FROM a@" + old + "\n", "", old, "", fresh, "FROM a@" + fresh + "\n"},
 		{"pin a digest", "FROM a:1.0\n", "1.0", "", "1.0", fresh, "FROM a:1.0@" + fresh + "\n"},
+		{"a release digest does not pin an unpinned tag", "x@1.0\n", "1.0", "", "1.1", "9b4933", "x@1.1\n"},
 	} {
 		d := refDep(tc.src, tc.value, tc.digest)
-		e, err := EditRef("t", File{Path: "f", Content: []byte(tc.src)}, model.Update{Dep: d, NewValue: tc.newValue, NewDigest: tc.newDigest})
+		typ := model.UpdateMinor
+		if tc.name == "pin a digest" {
+			typ = model.UpdatePinDigest
+		}
+		e, err := EditRef("t", File{Path: "f", Content: []byte(tc.src)}, model.Update{Dep: d, NewValue: tc.newValue, NewDigest: tc.newDigest, Type: typ})
 		if err != nil {
 			t.Errorf("%s: %v", tc.name, err)
 			continue

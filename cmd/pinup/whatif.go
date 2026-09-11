@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -23,6 +24,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/osv"
 	"git.ole-hartwig.eu/pinup/pinup/planner"
+	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/rules"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
@@ -75,6 +77,10 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
 	opts.Advisories = &osv.Client{}
+	opts.LookPath = exec.LookPath
+	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
+		return err
+	}
 	// A repository's own `local>` presets are read from the instance when
 	// there is one to read from; without a token they stay unknown and the
 	// resolution says so.
@@ -145,6 +151,14 @@ type whatifOptions struct {
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
 	Advisories *osv.Client
+	// LookPath tells whether a task's toolchain is on this machine; nil
+	// means the plan lists tasks without judging them, which is what a
+	// plan produced away from the runner should do.
+	LookPath func(string) (string, error)
+	// AllowedCommands are the anchored patterns a postUpgradeTasks command
+	// must match; a self-hosted setting, never a repository's. nil means
+	// the configuration file's own allowedCommands, if any.
+	AllowedCommands []string
 	// RunnerDefault is the runner's default.json, what the estate's
 	// repositories extend as local>devops/renovate-runner. Empty means
 	// ConfigPath is that file. It differs for the fast lane, whose
@@ -285,6 +299,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		contents[m.Path] = b
 	}
 
+	// locks remembers the lock files the run read, by manager and
+	// directory: a manifest edit there needs a lock refresh task.
+	locks := map[string]bool{}
 	for _, match := range found.Matches {
 		body, ok := contents[match.Path]
 		if !ok {
@@ -307,6 +324,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		locked := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), res.Deps, plan)
+		if locked != nil {
+			locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = true
+		}
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
 			// A lock keys by whatever the lock file calls the package:
@@ -400,15 +420,19 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
 	// lockFileMaintenance: one refresh per lock file the run read, planned
 	// as its own update so the branch Renovate opens for it exists here
-	// too - and held, because refreshing a lock needs the package manager
-	// in a container, which no plugin provides yet.
+	// too; the branch's task is the toolchain run, and a machine without
+	// the toolchain holds it.
 	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps)...)
 
 	var named []planner.Named
+	postUpgrade := map[string]plugin.PostUpgrade{}
 	for _, u := range planned.Updates {
 		decided, cfg, err := applyUpdateRules(engine, resolved.Raw, u, now)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
+		}
+		if pu, ok := postUpgradeOf(cfg); ok {
+			postUpgrade[u.DepKey] = pu
 		}
 		plan.Updates = append(plan.Updates, decided)
 		n, err := planner.Name(decided, cfg, wire.Versionings())
@@ -426,6 +450,10 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// bytes it extracted from. A conflict - two managers claiming the same
 	// bytes - is reported on the plan and the branch carries no edits, so
 	// nothing downstream can write half of it.
+	allowed := o.AllowedCommands
+	if allowed == nil {
+		allowed = stringList(resolved.Raw["allowedCommands"])
+	}
 	for i := range branches {
 		if branches[i].SuppressedBy != "" {
 			continue
@@ -433,6 +461,16 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		edits, warnings := editsFor(ctx, branches[i], plan.Updates, contents, decoded, managers)
 		plan.Warnings = append(plan.Warnings, warnings...)
 		branches[i].Edits = edits
+		// The commands the branch needs beyond its edits: a lock refresh
+		// where a manifest with a lock changed, and the configuration's
+		// postUpgradeTasks. A command the allowlist refuses or a toolchain
+		// this machine lacks holds the branch by name; the edits are then
+		// dropped, since half a branch is worse than none.
+		tasks, hold := tasksFor(branches[i], plan.Updates, postUpgrade, locks, allowed, o.LookPath)
+		branches[i].Tasks = tasks
+		if hold != nil {
+			holdBranch(&branches[i], plan.Updates, *hold)
+		}
 	}
 	plan.Branches = branches
 
@@ -498,13 +536,17 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		}
 		edits = append(edits, e)
 	}
+	// Two managers reading the same line and proposing the same bytes -
+	// the estate's custom manager and gitlabci on a component include -
+	// are one edit; only what remains distinct can conflict.
+	edits = apply.Dedupe(edits)
 	if conflicts := apply.Check(edits); len(conflicts) > 0 {
 		for _, c := range conflicts {
 			warnings = append(warnings, model.Warning{Stage: "apply", File: c.A.File, Msg: b.Name + ": " + c.Error()})
 		}
 		return nil, warnings
 	}
-	return apply.Dedupe(edits), warnings
+	return edits, warnings
 }
 
 // applyDepRules is the pre-lookup pass: a rule may disable the dependency
@@ -604,6 +646,7 @@ func checkAdvisories(ctx context.Context, client *osv.Client, cfg map[string]any
 	}
 	var queries []osv.Query
 	var index []int
+	schemes := wire.Versionings()
 	for i, d := range deps {
 		if d.SkipReason != "" || d.CurrentValue == "" || osv.Ecosystem(d.Datasource) == "" {
 			continue
@@ -616,13 +659,18 @@ func checkAdvisories(ctx context.Context, client *osv.Client, cfg map[string]any
 		if scheme == "" {
 			scheme = defaultVersioning(d.Datasource)
 		}
+		// A range (^1.2.5) has no one version to ask about; Renovate skips
+		// it too, and a skip is not worth a warning on every run.
+		if v, err := schemes.Get(scheme); err != nil || !v.IsVersion(d.CurrentValue) {
+			continue
+		}
 		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: d.CurrentValue, Versioning: scheme})
 		index = append(index, i)
 	}
 	if len(queries) == 0 {
 		return nil
 	}
-	findings, err := client.Check(ctx, wire.Versionings(), queries)
+	findings, err := client.Check(ctx, schemes, queries)
 	if err != nil {
 		return []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; updates are planned without vulnerability alerts", err)}}
 	}
@@ -706,10 +754,142 @@ func lockedVersions(root, manifest, manager string, deps []model.Dependency, pla
 	return nil
 }
 
+// postUpgradeOf reads an update's resolved postUpgradeTasks object.
+func postUpgradeOf(cfg map[string]any) (plugin.PostUpgrade, bool) {
+	obj, ok := cfg["postUpgradeTasks"].(map[string]any)
+	if !ok {
+		return plugin.PostUpgrade{}, false
+	}
+	pu := plugin.PostUpgrade{
+		Commands:      stringList(obj["commands"]),
+		ExecutionMode: model.ExecutionMode(stringOf(obj["executionMode"])),
+		FileFilters:   stringList(obj["fileFilters"]),
+		Origin:        model.Origin{Source: "config", Rule: model.NoRule},
+	}
+	return pu, len(pu.Commands) > 0
+}
+
+func stringOf(v any) string {
+	s, _ := v.(string)
+	return s
+}
+
+func stringList(v any) []string {
+	items, ok := v.([]any)
+	if !ok {
+		return nil
+	}
+	var out []string
+	for _, it := range items {
+		if s, ok := it.(string); ok {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// tasksFor composes a branch's tasks: one lock refresh per (manager,
+// directory) whose lock the run read and whose manifest the branch edits,
+// then the postUpgradeTasks of its updates, deduplicated by command. The
+// hold, when set, names the first thing that stops the branch: a refused
+// command or a missing toolchain.
+func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plugin.PostUpgrade, locks map[string]bool, allowed []string, lookPath func(string) (string, error)) ([]model.Task, *model.Block) {
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	var mine []model.Update
+	for _, u := range updates {
+		if keys[u.DepKey] && !u.Blocked() {
+			mine = append(mine, u)
+		}
+	}
+	var tasks []model.Task
+	// Lock refreshes, one per manager and directory, in a stable order.
+	type lockKey struct{ manager, dir string }
+	names := map[lockKey][]string{}
+	maintenance := map[lockKey]bool{}
+	var order []lockKey
+	for _, u := range mine {
+		dir := filepath.Dir(u.Dep.File)
+		if dir == "." {
+			dir = ""
+		}
+		k := lockKey{u.Dep.Manager, dir}
+		if u.Type == model.UpdateLockFileMaintenance {
+			if !maintenance[k] {
+				maintenance[k] = true
+				order = append(order, k)
+			}
+			continue
+		}
+		if !locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)] {
+			continue
+		}
+		if _, seen := names[k]; !seen {
+			order = append(order, k)
+		}
+		names[k] = append(names[k], u.Dep.DepName)
+	}
+	for _, k := range order {
+		if t, ok := plugin.LockRefresh(k.manager, k.dir, names[k], maintenance[k]); ok {
+			tasks = append(tasks, t)
+		}
+	}
+	// postUpgradeTasks: grouped by the rule object that set them, so a
+	// branch-mode command carries every update the same object applies to.
+	type puKey struct{ commands, mode, filters string }
+	groups := map[puKey][]model.Update{}
+	confs := map[puKey]plugin.PostUpgrade{}
+	var puOrder []puKey
+	for _, u := range mine {
+		pu, ok := postUpgrade[u.DepKey]
+		if !ok {
+			continue
+		}
+		k := puKey{strings.Join(pu.Commands, "\x00"), string(pu.ExecutionMode), strings.Join(pu.FileFilters, "\x00")}
+		if _, seen := groups[k]; !seen {
+			puOrder = append(puOrder, k)
+			confs[k] = pu
+		}
+		groups[k] = append(groups[k], u)
+	}
+	for _, k := range puOrder {
+		compiled, err := plugin.Compile(confs[k], groups[k], allowed)
+		if err != nil {
+			return tasks, &model.Block{Reason: model.BlockTaskRefused, Org: confs[k].Origin, Note: err.Error()}
+		}
+		tasks = append(tasks, compiled...)
+	}
+	if lookPath != nil && len(tasks) > 0 {
+		r := &plugin.Runner{LookPath: lookPath}
+		if err := r.Available(tasks); err != nil {
+			return tasks, &model.Block{Reason: model.BlockPluginRequired, Org: model.Origin{Source: "pinup", Rule: model.NoRule}, Note: err.Error()}
+		}
+	}
+	return tasks, nil
+}
+
+// holdBranch marks a branch held for one reason: every update on it gets
+// the block, the branch records it and carries no edits.
+func holdBranch(b *model.Branch, updates []model.Update, block model.Block) {
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	for i := range updates {
+		if keys[updates[i].DepKey] && !updates[i].Blocked() {
+			updates[i].Blocks = append(updates[i].Blocks, block)
+			updates[i].SuppressedBy = block.Reason
+		}
+	}
+	b.SuppressedBy = block.Reason
+	b.Edits = nil
+}
+
 // lockMaintenance plans the lock-file refreshes lockFileMaintenance asks
 // for: one per (manager, lock file) among the dependencies that carry a
-// locked version, each an update of type lockFileMaintenance, held as
-// pluginRequired.
+// locked version, each an update of type lockFileMaintenance.
 func lockMaintenance(cfg map[string]any, deps []model.Dependency) []model.Update {
 	lfm, ok := cfg["lockFileMaintenance"].(map[string]any)
 	if !ok {
@@ -737,11 +917,6 @@ func lockMaintenance(cfg map[string]any, deps []model.Dependency) []model.Update
 				Locus: model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest},
 			},
 			Type: model.UpdateLockFileMaintenance, TimeSource: model.TimeUnknown,
-			Blocks: []model.Block{{
-				Reason: model.BlockPluginRequired, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
-				Note: "refreshing " + lock + " needs the " + d.Manager + " toolchain in a container; no plugin provides it yet",
-			}},
-			SuppressedBy: model.BlockPluginRequired,
 		})
 	}
 	return out

@@ -222,6 +222,38 @@ func (r *Repo) Recreate(ctx context.Context, branch, start string) error {
 	return err
 }
 
+// Discard drops every uncommitted change in the work tree, tracked and
+// untracked alike: what a task left behind when its result was refused.
+func (r *Repo) Discard(ctx context.Context) error {
+	if _, err := r.run(ctx, "checkout", "--quiet", "--", "."); err != nil {
+		return err
+	}
+	_, err := r.run(ctx, "clean", "--quiet", "-fd")
+	return err
+}
+
+// Changed lists the paths the work tree differs in from HEAD, tracked and
+// untracked, relative to the repository root.
+func (r *Repo) Changed(ctx context.Context) ([]string, error) {
+	out, err := r.run(ctx, "status", "--porcelain", "--untracked-files=all")
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for _, line := range strings.Split(out, "\n") {
+		if len(line) < 4 {
+			continue
+		}
+		path := line[3:]
+		// A rename is written "old -> new"; the new path is what changed.
+		if i := strings.LastIndex(path, " -> "); i >= 0 {
+			path = path[i+4:]
+		}
+		paths = append(paths, strings.Trim(path, "\""))
+	}
+	return paths, nil
+}
+
 // ForeignAuthors lists the author emails of commits on branch that are not
 // on base and were not made by who. A branch a person has committed to is
 // theirs now; the runner leaves it alone and says so.

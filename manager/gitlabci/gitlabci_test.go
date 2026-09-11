@@ -6,6 +6,7 @@ package gitlabci
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 
 	"git.ole-hartwig.eu/pinup/pinup/extract"
@@ -160,6 +161,24 @@ func TestEditRefusesAChangedFile(t *testing.T) {
 	changed := extract.File{Path: ".gitlab-ci.yml", Content: []byte("job:\n  image: alpine:9.99\n")}
 	if _, err := New().Edit(context.Background(), changed, up); err == nil {
 		t.Error("a changed file was accepted")
+	}
+}
+
+// Live, a component include once came out as "1.63.3@9b49...": the
+// gitlab-tags release carries its commit id as a digest, and the digest
+// path appended it. A release's digest never pins an unpinned reference;
+// only a pinDigest update does that.
+func TestAReleaseDigestDoesNotPinAComponentInclude(t *testing.T) {
+	src := "include:\n  - component: git.example/devops/ci-cd-components/lint-tools/lint-ci-yaml@1.22.3\n"
+	f := extract.File{Path: ".gitlab-ci.yml", Content: []byte(src)}
+	res, _ := run(t, src), 0
+	up := model.Update{Dep: res.Deps[0], NewValue: "1.63.3", NewVersion: "1.63.3", NewDigest: "9b49336126056907f46fcc0f954acb62639c1fbe", Type: model.UpdateMinor}
+	e, err := New().Edit(context.Background(), f, up)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out := src[:e.Start] + e.New + src[e.End:]; out != strings.Replace(src, "1.22.3", "1.63.3", 1) {
+		t.Errorf("applied edit = %q", out)
 	}
 }
 

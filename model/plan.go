@@ -49,16 +49,32 @@ const (
 // Task is a post-upgrade command, already expanded and already matched against
 // the allowlist. It is never handed to a shell.
 type Task struct {
+	// Kind is "lock-refresh" for the toolchain run pinup itself asks for
+	// when a manifest with a lock file changes, or "post-upgrade" for a
+	// command the configuration's postUpgradeTasks names.
+	Kind string `json:"kind"`
+	// Manager is the manager whose files the task works on.
+	Manager string `json:"manager,omitempty"`
+	// Dir is the directory the command runs in, relative to the checkout.
+	Dir string `json:"dir,omitempty"`
 	// Command is the argv, split. There is no shell, so no quoting rules and
 	// no injection surface.
 	Command       []string      `json:"command"`
 	ExecutionMode ExecutionMode `json:"executionMode"`
 	FileFilters   []string      `json:"fileFilters,omitempty"`
 	// AllowedBy is the index of the allowlist pattern that admitted this
-	// command. A command that ran because the allowlist was too loose is then
-	// visibly different from one that matched the intended entry.
-	AllowedBy int `json:"allowedBy"`
+	// command, or -1 for a lock refresh pinup composed itself. A command
+	// that ran because the allowlist was too loose is then visibly
+	// different from one that matched the intended entry.
+	AllowedBy int    `json:"allowedBy"`
+	Origin    Origin `json:"origin"`
 }
+
+// Task kinds.
+const (
+	TaskLockRefresh = "lock-refresh"
+	TaskPostUpgrade = "post-upgrade"
+)
 
 // Window is a resolved schedule window, rendered into the plan so a reader can
 // see when a held branch thaws.

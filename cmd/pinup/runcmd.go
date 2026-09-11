@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -321,6 +323,10 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 	if o.cache != nil {
 		opts.Advisories.Store = advisoryStore{cache: o.cache, now: o.now}
 	}
+	opts.LookPath = exec.LookPath
+	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
+		return err
+	}
 	plan, err := whatif(ctx, opts)
 	if err != nil {
 		return err
@@ -343,6 +349,7 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 			HourlyLimit:     plan.Limits.PRHourlyLimit,
 			ConcurrentLimit: plan.Limits.PRConcurrentLimit,
 			Prefix:          "renovate/", Now: o.now,
+			Tasks: plugin.TaskRunner{Runner: taskRunner(os.Getenv)},
 		})
 		if err != nil {
 			return err
