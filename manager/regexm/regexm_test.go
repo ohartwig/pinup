@@ -364,3 +364,51 @@ func TestDockerfileVersionsPresetStopsAtWhitespace(t *testing.T) {
 		t.Errorf("the offsets point at %q, not at the value", got)
 	}
 }
+
+// D.11: the estate's annotations say "# renovate:"; pinup reads "# pinup:"
+// as the same marker without the configuration changing. The two spellings
+// must extract byte-identical dependencies, offsets shifted by the length
+// difference only. A pattern without the marker is left alone.
+func TestPinupPrefixReadsLikeRenovatePrefix(t *testing.T) {
+	cm := &model.CustomManager{
+		Index: 1,
+		MatchStrings: []string{
+			`# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\S+)\s+ARG \w+=(?<currentValue>\S+)`,
+		},
+	}
+	extractFrom := func(src string) []model.Dependency {
+		t.Helper()
+		res, err := New().Extract(context.Background(),
+			extract.File{Path: "Dockerfile", Content: []byte(src)},
+			extract.ManagerConfig{Custom: cm})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return res.Deps
+	}
+	legacy := extractFrom("# renovate: datasource=docker depName=alpine\nARG ALPINE=3.20\n")
+	native := extractFrom("# pinup: datasource=docker depName=alpine\nARG ALPINE=3.20\n")
+	if len(legacy) != 1 || len(native) != 1 {
+		t.Fatalf("legacy %d deps, native %d deps, want 1 and 1", len(legacy), len(native))
+	}
+	l, n := legacy[0], native[0]
+	if l.DepName != n.DepName || l.Datasource != n.Datasource || l.CurrentValue != n.CurrentValue {
+		t.Errorf("prefixes extract differently:\n renovate %+v\n pinup    %+v", l, n)
+	}
+	const shift = len("renovate") - len("pinup")
+	if n.Locus.ValueStart != l.Locus.ValueStart-shift || n.Locus.ValueEnd != l.Locus.ValueEnd-shift {
+		t.Errorf("offsets: renovate [%d,%d), pinup [%d,%d), want a shift of %d",
+			l.Locus.ValueStart, l.Locus.ValueEnd, n.Locus.ValueStart, n.Locus.ValueEnd, shift)
+	}
+
+	for _, tc := range []struct{ in, want string }{
+		{`# renovate: datasource=(?<d>\S+)`, `# (?:renovate|pinup): datasource=(?<d>\S+)`},
+		{`renovate:\s*datasource=custom\.x`, `(?:renovate|pinup):\s*datasource=custom\.x`},
+		{`FROM (?<depName>\S+):(?<currentValue>\S+)`, `FROM (?<depName>\S+):(?<currentValue>\S+)`},
+		{`renovate/renovate:(?<v>\S+)`, `renovate/(?:renovate|pinup):(?<v>\S+)`},
+	} {
+		if got := WidenPrefix(tc.in); got != tc.want {
+			t.Errorf("WidenPrefix(%q)\n got %q\nwant %q", tc.in, got, tc.want)
+		}
+	}
+}

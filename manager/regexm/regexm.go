@@ -99,6 +99,25 @@ func (m *Manager) Extract(ctx context.Context, f extract.File, cfg extract.Manag
 	return res, nil
 }
 
+// Annotation prefixes. Every custom manager in the estate keys on a literal
+// "renovate:" comment marker. The cutover plan keeps those lines untouched -
+// a mass rename would separate annotations from the line they describe, and
+// a separated annotation reports no dependency at all rather than a wrong
+// one - and lets pinup read its own marker next to the old one. Widening the
+// literal in the compiled pattern is what "reads both prefixes" means; the
+// user's configuration is not rewritten.
+const (
+	legacyPrefix = "renovate:"
+	widenedGroup = "(?:renovate|pinup):"
+)
+
+// WidenPrefix returns the pattern with every literal "renovate:" accepting
+// "pinup:" as well. A pattern that does not mention the marker comes back
+// unchanged, so a manager that never keyed on an annotation is not affected.
+func WidenPrefix(pattern string) string {
+	return strings.ReplaceAll(pattern, legacyPrefix, widenedGroup)
+}
+
 // span is a match plus the offset it sits at in the whole file, since a
 // recursive inner match reports offsets relative to the region it searched.
 type span struct {
@@ -126,7 +145,7 @@ func findMatches(src string, patterns []string, strategy, file string, index int
 
 		var out []span
 		for i, p := range patterns {
-			re, err := re2x.Compile(p)
+			re, err := re2x.Compile(WidenPrefix(p))
 			if err != nil {
 				warns = append(warns, model.Warning{
 					Stage: "extract", File: file,
@@ -158,7 +177,7 @@ func findMatches(src string, patterns []string, strategy, file string, index int
 	default: // StrategyAny
 		var out []span
 		for i, p := range patterns {
-			re, err := re2x.Compile(p)
+			re, err := re2x.Compile(WidenPrefix(p))
 			if err != nil {
 				warns = append(warns, model.Warning{
 					Stage: "extract", File: file,
