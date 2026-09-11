@@ -154,7 +154,7 @@
       "slug": "lint-tools-1.x",
       "title": "chore(deps): update devops/ci-cd-components/lint-tools to 1.33.64",
       "updateKeys": [
-        ".gitlab-ci.yml|devops/ci-cd-components/lint-tools|1.33.59"
+        ".gitlab-ci.yml|devops/ci-cd-components/lint-tools|1.33.59>1.33.64"
       ],
       "edits": [
         {

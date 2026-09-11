@@ -20,6 +20,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/osv"
+	"git.ole-hartwig.eu/pinup/pinup/report"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
@@ -257,6 +258,15 @@ func TestGoldenRepositories(t *testing.T) {
 			if got.String() != string(want) {
 				t.Errorf("plan differs from the golden plan.json; a behaviour change is a new golden directory, not a rewrite\n%s", firstDiff(got.String(), string(want)))
 			}
+			// The rendering is golden too: the merge-request body and
+			// the job summary are what a person reads.
+			md, err := os.ReadFile(filepath.Join(dir, "plan.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if rendered := report.Markdown(plan); rendered != string(md) {
+				t.Errorf("rendering differs from the golden plan.md\n%s", firstDiff(rendered, string(md)))
+			}
 			checkCovers(t, meta, plan)
 			seen++
 		})
@@ -340,6 +350,9 @@ func recordGolden(t *testing.T, dir string, meta goldenMeta, now time.Time) {
 	}
 	defer f.Close()
 	if err := model.WritePlan(f, plan); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "plan.md"), []byte(report.Markdown(plan)), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	t.Logf("recorded %s: %d lookups, %d digests, %d deps, %d branches", dir, len(answers.Releases), len(answers.Digests), len(plan.Deps), len(plan.Branches))

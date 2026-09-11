@@ -315,7 +315,7 @@ func Compose(named []Named) ([]model.Branch, error) {
 			byName[n.Branch] = m
 			order = append(order, n.Branch)
 		}
-		m.branch.UpdateKeys = append(m.branch.UpdateKeys, n.Update.DepKey)
+		m.branch.UpdateKeys = append(m.branch.UpdateKeys, n.Update.Key())
 		// A group merges automatically only if every member may.
 		m.branch.Automerge = m.branch.Automerge && n.Automerge
 		m.members = append(m.members, n)

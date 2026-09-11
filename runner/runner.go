@@ -371,7 +371,7 @@ func hold(plan *model.Plan, b *model.Branch, block model.Block) {
 		keys[k] = true
 	}
 	for i := range plan.Updates {
-		if keys[plan.Updates[i].DepKey] {
+		if keys[plan.Updates[i].Key()] {
 			plan.Updates[i].Blocks = append(plan.Updates[i].Blocks, block)
 			if plan.Updates[i].SuppressedBy == "" {
 				plan.Updates[i].SuppressedBy = block.Reason

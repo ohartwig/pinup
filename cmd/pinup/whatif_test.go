@@ -14,8 +14,10 @@ import (
 
 	"git.ole-hartwig.eu/pinup/pinup/apply"
 	"git.ole-hartwig.eu/pinup/pinup/cache"
+	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
 
 // cannedDS answers lookups from a table and refuses everything else. The
@@ -576,5 +578,35 @@ func TestReleasedDebounce(t *testing.T) {
 	markSeen(path, "c/d@1", at.Add(48*time.Hour))
 	if seenRecently(path, "a/b@1", at.Add(48*time.Hour+time.Minute)) {
 		t.Error("entries older than a day are pruned")
+	}
+}
+
+// A dependency with a minor and a major proposed has two updates on two
+// branches. Branches refer to updates by update key, not by dependency:
+// before that, the minor's branch carried the major's edit as well, the two
+// overlapped, and the branch went out with no edits at all. Found by the
+// golden rendering of the estate repository, where vpc-5.x listed both.
+func TestEachBranchCarriesOnlyItsOwnUpdate(t *testing.T) {
+	src := "FROM alpine:3.20\n"
+	dep := model.Dependency{Manager: "dockerfile", File: "Containerfile", DepName: "alpine", CurrentValue: "3.20",
+		Datasource: "docker", CustomManager: model.NoCustomManager,
+		Locus: model.Locus{ValueStart: 12, ValueEnd: 16, DigestStart: model.NoDigest, DigestEnd: model.NoDigest}}
+	minor := model.Update{DepKey: dep.Key(), Dep: dep, NewValue: "3.21", NewVersion: "3.21", Type: model.UpdateMinor}
+	major := model.Update{DepKey: dep.Key(), Dep: dep, NewValue: "4.0", NewVersion: "4.0", Type: model.UpdateMajor}
+	if minor.Key() == major.Key() {
+		t.Fatal("two updates of one dependency must have distinct keys")
+	}
+	updates := []model.Update{minor, major}
+	contents := map[string][]byte{"Containerfile": []byte(src)}
+	for _, tc := range []struct {
+		branch string
+		key    string
+		want   string
+	}{{"renovate/alpine-3.x", minor.Key(), "3.21"}, {"renovate/alpine-4.x", major.Key(), "4.0"}} {
+		b := model.Branch{Name: tc.branch, UpdateKeys: []string{tc.key}}
+		edits, warns := editsFor(context.Background(), b, updates, contents, config.Decoded{}, wire.Managers())
+		if len(warns) != 0 || len(edits) != 1 || edits[0].New != tc.want {
+			t.Errorf("%s: edits %+v warnings %+v", tc.branch, edits, warns)
+		}
 	}
 }

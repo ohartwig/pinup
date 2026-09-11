@@ -123,7 +123,7 @@ func TestValidateRejects(t *testing.T) {
 			Deps:          []Dependency{d},
 			Updates:       []Update{{DepKey: d.Key(), Dep: d, NewValue: "2", Type: UpdateMinor}},
 			Branches: []Branch{{
-				Name: "renovate/d", UpdateKeys: []string{d.Key()},
+				Name: "renovate/d", UpdateKeys: []string{d.Key() + ">2"},
 			}},
 		}
 	}

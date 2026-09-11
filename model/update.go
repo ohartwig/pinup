@@ -243,6 +243,20 @@ type Update struct {
 }
 
 // Blocked reports whether this update is held.
+// Key identifies one update within a plan: the dependency and the value
+// it moves to. A dependency with a minor and a major proposed has two
+// updates on two branches, and a branch refers to exactly one of them.
+func (u Update) Key() string {
+	k := u.DepKey + ">" + u.NewValue
+	if u.NewDigest != "" {
+		k += "@" + u.NewDigest
+	}
+	if u.Type == UpdateLockFileMaintenance {
+		k += "#" + u.Type.String()
+	}
+	return k
+}
+
 func (u Update) Blocked() bool { return len(u.Blocks) > 0 }
 
 // AutomergeRisk is the risk an automerge decision must be taken against:

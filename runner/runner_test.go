@@ -71,12 +71,16 @@ func edit(old, new string) model.Edit {
 
 func plan(branches ...model.Branch) *model.Plan {
 	p := &model.Plan{SchemaVersion: model.SchemaVersion, Branches: branches}
-	for _, b := range branches {
-		for _, k := range b.UpdateKeys {
+	for i := range branches {
+		for j, k := range branches[i].UpdateKeys {
+			// A branch names an update by its key: the dependency and
+			// the value it moves to.
 			p.Updates = append(p.Updates, model.Update{DepKey: k, NewValue: "x"})
 			p.Deps = append(p.Deps, model.Dependency{DepName: k, CustomManager: model.NoCustomManager})
+			branches[i].UpdateKeys[j] = k + ">x"
 		}
 	}
+	p.Branches = branches
 	return p
 }
 

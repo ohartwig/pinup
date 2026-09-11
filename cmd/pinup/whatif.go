@@ -434,7 +434,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
 		}
 		if pu, ok := postUpgradeOf(cfg); ok {
-			postUpgrade[u.DepKey] = pu
+			postUpgrade[u.Key()] = pu
 		}
 		plan.Updates = append(plan.Updates, decided)
 		n, err := planner.Name(decided, cfg, wire.Versionings())
@@ -515,7 +515,7 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		keys[k] = true
 	}
 	for _, u := range updates {
-		if !keys[u.DepKey] || u.Blocked() {
+		if !keys[u.Key()] || u.Blocked() {
 			continue
 		}
 		body, ok := contents[u.Dep.File]
@@ -808,7 +808,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 	}
 	var mine []model.Update
 	for _, u := range updates {
-		if keys[u.DepKey] && !u.Blocked() {
+		if keys[u.Key()] && !u.Blocked() {
 			mine = append(mine, u)
 		}
 	}
@@ -851,7 +851,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 	confs := map[puKey]plugin.PostUpgrade{}
 	var puOrder []puKey
 	for _, u := range mine {
-		pu, ok := postUpgrade[u.DepKey]
+		pu, ok := postUpgrade[u.Key()]
 		if !ok {
 			continue
 		}
@@ -886,7 +886,7 @@ func holdBranch(b *model.Branch, updates []model.Update, block model.Block) {
 		keys[k] = true
 	}
 	for i := range updates {
-		if keys[updates[i].DepKey] && !updates[i].Blocked() {
+		if keys[updates[i].Key()] && !updates[i].Blocked() {
 			updates[i].Blocks = append(updates[i].Blocks, block)
 			updates[i].SuppressedBy = block.Reason
 		}

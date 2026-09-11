@@ -190,7 +190,7 @@ func (p *Plan) Sort() {
 		return cmp.Compare(a.DepName, b.DepName)
 	})
 	slices.SortStableFunc(p.Updates, func(a, b Update) int {
-		return cmp.Compare(a.DepKey, b.DepKey)
+		return cmp.Compare(a.Key(), b.Key())
 	})
 	slices.SortStableFunc(p.Branches, func(a, b Branch) int {
 		return cmp.Compare(a.Name, b.Name)
@@ -222,11 +222,13 @@ func (p *Plan) Validate() error {
 		return fmt.Errorf("schemaVersion %d, want %d", p.SchemaVersion, SchemaVersion)
 	}
 	updated := make(map[string]bool, len(p.Updates))
+	known := make(map[string]bool, len(p.Updates))
 	for _, u := range p.Updates {
 		if u.DepKey == "" {
 			return fmt.Errorf("update for %q has no depKey", u.Dep.DepName)
 		}
 		updated[u.DepKey] = true
+		known[u.Key()] = true
 		if u.Blocked() && u.SuppressedBy == "" {
 			return fmt.Errorf("update %s is blocked but names no suppressedBy", u.DepKey)
 		}
@@ -235,10 +237,6 @@ func (p *Plan) Validate() error {
 		if !updated[d.Key()] && d.SkipReason == "" {
 			return fmt.Errorf("dependency %s produced neither an update nor a skipReason", d.Key())
 		}
-	}
-	known := make(map[string]bool, len(p.Updates))
-	for k := range updated {
-		known[k] = true
 	}
 	for _, b := range p.Branches {
 		if len(b.UpdateKeys) == 0 {
