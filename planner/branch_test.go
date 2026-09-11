@@ -181,12 +181,19 @@ func TestGroupTitles(t *testing.T) {
 		t.Errorf("hocuspocus major group: %+v", branches)
 	}
 
-	// Held updates make no branch.
+	// A held update makes a branch marked with its reason and no edits -
+	// the comparator sees what would have been pushed; the runner skips it.
 	held := a
 	held.Update.Blocks = []model.Block{{Reason: model.BlockSchedule}}
 	branches, _ = Compose([]Named{held})
-	if len(branches) != 0 {
-		t.Errorf("a held update must not produce a branch, got %+v", branches)
+	if len(branches) != 1 || branches[0].SuppressedBy != model.BlockSchedule || len(branches[0].Edits) != 0 {
+		t.Errorf("a held update must produce a suppressed branch, got %+v", branches)
+	}
+	// Held and actionable on one branch: the branch is actionable and
+	// carries the actionable update only.
+	branches, _ = Compose([]Named{held, b})
+	if len(branches) != 1 || branches[0].SuppressedBy != "" || len(branches[0].UpdateKeys) != 1 {
+		t.Errorf("mixed branch: %+v", branches)
 	}
 }
 

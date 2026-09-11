@@ -387,6 +387,12 @@ func TestWhatifEditsApplyByteExact(t *testing.T) {
 	var all []model.Edit
 	names := map[string]bool{}
 	for _, b := range plan.Branches {
+		if b.SuppressedBy != "" {
+			if len(b.Edits) != 0 {
+				t.Errorf("held branch %s carries edits", b.Name)
+			}
+			continue
+		}
 		if len(b.Edits) == 0 {
 			t.Errorf("branch %s carries no edits", b.Name)
 		}
@@ -484,7 +490,7 @@ func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
 	if disabled == 0 {
 		t.Errorf("no dependency names the repository's rule; skip reasons: %v", skipReasons(plan))
 	}
-	if plan.Stats.LookupsIssued != 0 || len(plan.Branches) != 0 {
+	if plan.Stats.LookupsIssued != 0 || plan.Stats.BranchesPlanned != 0 {
 		t.Errorf("a repository that disables everything looks nothing up and plans no branch: %+v", plan.Stats)
 	}
 }

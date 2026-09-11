@@ -214,10 +214,12 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 }
 
 // Compose turns named updates into branches: one per branch name, with the
-// updates that share it. Held updates get no branch - the plan says why
-// under each of them - so a branch is something the run would push. A
-// branch of one is titled as its update; a group is titled as the group,
-// with the extra its members agree on.
+// updates that share it. A branch all of whose updates are held is kept,
+// marked SuppressedBy and without edits - the shadow comparator needs to
+// see what pinup would have pushed and why it did not - while a branch
+// with at least one actionable update carries only those. A branch of one
+// is titled as its update; a group is titled as the group, with the extra
+// its members agree on.
 func Compose(named []Named) ([]model.Branch, error) {
 	type member struct {
 		branch  *model.Branch
@@ -225,15 +227,27 @@ func Compose(named []Named) ([]model.Branch, error) {
 	}
 	byName := map[string]*member{}
 	var order []string
-	for _, n := range named {
-		if n.Update.Blocked() {
-			continue
-		}
+	// Actionable updates first, so a branch with any of them is built from
+	// those; held ones only add a branch when nothing actionable shares it.
+	ordered := append([]Named(nil), named...)
+	sort.SliceStable(ordered, func(i, j int) bool { return !ordered[i].Update.Blocked() && ordered[j].Update.Blocked() })
+	for _, n := range ordered {
 		m, ok := byName[n.Branch]
+		if ok && n.Update.Blocked() {
+			if m.branch.SuppressedBy == "" {
+				continue // an actionable branch; the held update stays off it
+			}
+		}
 		if !ok {
 			b := &model.Branch{
 				Name: n.Branch, Slug: strings.TrimPrefix(n.Branch, "renovate/"),
 				GroupName: n.GroupName, Automerge: n.Automerge, Labels: n.Labels,
+			}
+			if n.Update.Blocked() {
+				b.SuppressedBy = n.Update.SuppressedBy
+				if b.SuppressedBy == "" {
+					b.SuppressedBy = n.Update.Blocks[0].Reason
+				}
 			}
 			if len(n.Schedule) > 0 {
 				s, err := sched.Parse(n.Schedule, n.Timezone)

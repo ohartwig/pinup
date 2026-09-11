@@ -376,6 +376,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// bytes - is reported on the plan and the branch carries no edits, so
 	// nothing downstream can write half of it.
 	for i := range branches {
+		if branches[i].SuppressedBy != "" {
+			continue
+		}
 		edits, warnings := editsFor(ctx, branches[i], plan.Updates, contents, decoded, managers)
 		plan.Warnings = append(plan.Warnings, warnings...)
 		branches[i].Edits = edits
@@ -388,6 +391,12 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			blocked++
 		}
 	}
+	actionable := 0
+	for _, b := range plan.Branches {
+		if b.SuppressedBy == "" {
+			actionable++
+		}
+	}
 	plan.Stats = model.Stats{
 		FilesDiscovered:  found.Stats.FilesMatched,
 		DepsExtracted:    len(plan.Deps),
@@ -395,7 +404,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		LookupsFromCache: fromCache,
 		UpdatesFound:     len(plan.Updates),
 		UpdatesBlocked:   blocked,
-		BranchesPlanned:  len(plan.Branches),
+		BranchesPlanned:  actionable,
 	}
 	plan.Sort()
 	if err := plan.Validate(); err != nil {

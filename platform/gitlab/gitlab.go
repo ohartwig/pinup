@@ -293,6 +293,23 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 	return resp.body, nil
 }
 
+// OpenMergeRequests lists the open merge requests whose source branch
+// starts with prefix.
+func (p *Platform) OpenMergeRequests(ctx context.Context, proj publish.Project, prefix string) ([]publish.MergeRequest, error) {
+	q := url.Values{"state": {"opened"}}
+	items, err := p.listMergeRequests(ctx, proj.Path, q)
+	if err != nil {
+		return nil, err
+	}
+	var out []publish.MergeRequest
+	for _, m := range items {
+		if strings.HasPrefix(m.SourceBranch, prefix) {
+			out = append(out, toPublish(m))
+		}
+	}
+	return out, nil
+}
+
 // ListProjects walks /projects?membership=true&archived=false, following
 // X-Next-Page, and returns the paths sorted.
 func (p *Platform) ListProjects(ctx context.Context) ([]string, error) {

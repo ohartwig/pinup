@@ -74,7 +74,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 	created := 0
 	for i := range plan.Branches {
 		b := &plan.Branches[i]
-		if len(b.Edits) == 0 {
+		if b.SuppressedBy != "" || len(b.Edits) == 0 {
 			continue
 		}
 		mr, hasMR, err := o.Platform.FindMergeRequest(ctx, o.Project, b.Name)

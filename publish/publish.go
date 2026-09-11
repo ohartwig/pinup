@@ -93,4 +93,9 @@ type Platform interface {
 	// ListProjects returns the paths of every project the token can see
 	// that is not archived, sorted. Autodiscovery filters this list.
 	ListProjects(ctx context.Context) ([]string, error)
+
+	// OpenMergeRequests lists every open merge request of a project whose
+	// source branch starts with prefix - the other tool's side of the
+	// shadow comparison.
+	OpenMergeRequests(ctx context.Context, p Project, prefix string) ([]MergeRequest, error)
 }

@@ -96,6 +96,12 @@ type Branch struct {
 	AutomergeType string   `json:"automergeType,omitempty"`
 	Labels        []string `json:"labels,omitempty"`
 
+	// SuppressedBy is set on a branch the run will not push: every update
+	// on it is held, and this is the first reason. The shadow comparator
+	// buckets on it, since Renovate's merge requests contain nothing that
+	// is held. A branch with it set carries no edits.
+	SuppressedBy BlockReason `json:"suppressedBy,omitempty"`
+
 	Schedule Window          `json:"schedule"`
 	Existing *ExistingBranch `json:"existing,omitempty"`
 

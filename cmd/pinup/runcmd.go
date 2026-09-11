@@ -73,8 +73,10 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	if env.Host == "" {
 		return fmt.Errorf("run: the GitLab instance is not known; set PINUP_GITLAB_URL or CI_SERVER_URL")
 	}
+	// A dry run commits nothing, so it needs no author and no key; the
+	// shadow phase runs that way with none provisioned.
 	identity, signing, err := gitIdentityFromEnv(os.Getenv)
-	if err != nil {
+	if err != nil && !*dryRun {
 		return err
 	}
 	ctx := context.Background()

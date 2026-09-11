@@ -9,6 +9,7 @@ package platformfake
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"git.ole-hartwig.eu/pinup/pinup/publish"
@@ -142,4 +143,17 @@ func (p *Platform) ReadFile(_ context.Context, project, path, ref string) ([]byt
 func (p *Platform) ListProjects(context.Context) ([]string, error) {
 	p.record("ListProjects")
 	return append([]string(nil), p.Projects...), nil
+}
+
+func (p *Platform) OpenMergeRequests(_ context.Context, _ publish.Project, prefix string) ([]publish.MergeRequest, error) {
+	p.record("Open " + prefix)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	var out []publish.MergeRequest
+	for _, m := range p.MRs {
+		if m.State == "opened" && strings.HasPrefix(m.SourceBranch, prefix) {
+			out = append(out, m)
+		}
+	}
+	return out, nil
 }
