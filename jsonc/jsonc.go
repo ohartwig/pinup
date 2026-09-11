@@ -10,9 +10,10 @@
 // reported at the wrong place in any file containing a comment - which is
 // every file this package exists for.
 //
-// JSON5 is deliberately not supported. There is not one .json5 file in the
-// estate, and unquoted keys and single-quoted strings would be a second
-// grammar to keep true.
+// JSON5 is supported to the extent the estate writes it - one file,
+// deploy/moselwal-websites-deploy/renovate.json5, with unquoted keys and
+// single-quoted strings - through FromJSON5, which rewrites those two forms
+// and then strips like any JSONC. Offsets are preserved for JSONC only.
 package jsonc
 
 import "bytes"

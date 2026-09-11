@@ -54,7 +54,13 @@ func Parse(src []byte, name string) (Layer, error) {
 		if err := yamlx.Unmarshal(src, &raw); err != nil {
 			return Layer{}, err
 		}
-	case ".json", ".jsonc", ".json5", "":
+	case ".json5":
+		// Unquoted keys and single-quoted strings, as the one such file in
+		// the estate writes them, then the same stripping as JSONC.
+		if err := json.Unmarshal(jsonc.FromJSON5(src), &raw); err != nil {
+			return Layer{}, err
+		}
+	case ".json", ".jsonc", "":
 		// Comments are stripped unconditionally. A plain .json file is
 		// unaffected - stripping is a no-op when there is nothing to strip -
 		// and a .json file that does contain comments is far more likely to be

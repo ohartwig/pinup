@@ -26,11 +26,14 @@ func (f *fakeReader) ReadFile(_ context.Context, project, path, ref string) ([]b
 
 func TestParseLocal(t *testing.T) {
 	for in, want := range map[string][3]string{
-		"devops/renovate-runner":                     {"devops/renovate-runner", "default.json", ""},
-		"devops/renovate-runner:default.json":        {"devops/renovate-runner", "default.json", ""},
-		"devops/renovate-runner:release-fast":        {"devops/renovate-runner", "release-fast.json", ""},
-		"moselwal/dev//config/renovate/default":      {"moselwal/dev", "config/renovate/default/default.json", ""},
-		"moselwal/dev//config/renovate:default#main": {"moselwal/dev", "config/renovate/default.json", "main"},
+		"devops/renovate-runner":                {"devops/renovate-runner", "default.json", ""},
+		"devops/renovate-runner:default.json":   {"devops/renovate-runner", "default.json", ""},
+		"devops/renovate-runner:release-fast":   {"devops/renovate-runner", "release-fast.json", ""},
+		"moselwal/dev//config/renovate/default": {"moselwal/dev", "config/renovate/default.json", ""},
+		"a/b//sub/dir":                          {"a/b", "sub/dir.json", ""},
+		"a/b//x/y#main":                         {"a/b", "x/y.json", "main"},
+		"a/b//top":                              {"a/b", "top.json", ""},
+		"a/b:c/d":                               {"a/b", "c/d.json", ""},
 	} {
 		p, path, ref, err := ParseLocal(in)
 		if err != nil || p != want[0] || path != want[1] || ref != want[2] {
@@ -39,6 +42,10 @@ func TestParseLocal(t *testing.T) {
 	}
 	if _, _, _, err := ParseLocal("noslash"); err == nil {
 		t.Error("a name without a project path must be refused")
+	}
+	// Measured: Renovate refuses "prohibited sub-preset".
+	if _, _, _, err := ParseLocal("a/b//sub/dir:name"); err == nil {
+		t.Error("a //path combined with a :name must be refused")
 	}
 }
 
@@ -53,7 +60,7 @@ func TestChainAliasRemoteBuiltin(t *testing.T) {
 		Remote{Reader: reader},
 		Builtin(),
 	}
-	got, err := Resolve(map[string]any{"extends": []any{"local>moselwal/dev//config/renovate:default"}, "schedule": []any{"x"}}, src)
+	got, err := Resolve(map[string]any{"extends": []any{"local>moselwal/dev//config/renovate/default"}, "schedule": []any{"x"}}, src)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +70,7 @@ func TestChainAliasRemoteBuiltin(t *testing.T) {
 	if labels, _ := got.Config["labels"].([]any); len(labels) != 1 {
 		t.Errorf("the alias must contribute the runner file's keys: %v", got.Config)
 	}
-	if strings.Join(got.Visited, ",") != "local>moselwal/dev//config/renovate:default,local>devops/renovate-runner,:dependencyDashboard" {
+	if strings.Join(got.Visited, ",") != "local>moselwal/dev//config/renovate/default,local>devops/renovate-runner,:dependencyDashboard" {
 		t.Errorf("visited %v", got.Visited)
 	}
 	if len(reader.calls) != 1 {

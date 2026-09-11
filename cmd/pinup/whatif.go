@@ -73,6 +73,12 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		CacheTTL:    *cacheTTL,
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
+	// A repository's own `local>` presets are read from the instance when
+	// there is one to read from; without a token they stay unknown and the
+	// resolution says so.
+	if env.Host != "" {
+		opts.Presets = preset.Remote{Reader: wire.Platform(env.URL, env.Token, env.Header), Ctx: context.Background()}
+	}
 	if *cachePath != "" {
 		store, err := cache.Open(*cachePath)
 		if err != nil {

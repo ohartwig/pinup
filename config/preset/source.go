@@ -54,8 +54,10 @@ type FileReader interface {
 //
 //	local>group/project              -> default.json in that project
 //	local>group/project:name         -> name.json
-//	local>group/project//sub/dir     -> sub/dir/default.json
-//	local>group/project//sub/dir:name
+//	local>group/project//sub/name    -> sub/name.json (measured: the last
+//	                                    segment after // is the preset name,
+//	                                    not a directory holding default.json)
+//	local>group/project//sub/dir:name   is refused, as Renovate refuses it
 //	...#ref                          -> at that branch or tag
 //
 // The document is parsed as JSON with comments. Anything that cannot be
@@ -98,13 +100,23 @@ func ParseLocal(s string) (project, path, ref string, err error) {
 		s = s[:i]
 	}
 	name := "default"
-	if i := strings.LastIndexByte(s, ':'); i >= 0 {
-		name = s[i+1:]
-		s = s[:i]
-	}
 	dir := ""
 	if i := strings.Index(s, "//"); i >= 0 {
-		dir = strings.Trim(s[i+2:], "/")
+		// Measured (parsePreset in the pinned container):
+		// "local>a/b//sub/dir" is presetPath "sub", presetName "dir";
+		// "local>a/b//sub/dir:name" is "prohibited sub-preset".
+		sub := strings.Trim(s[i+2:], "/")
+		if strings.Contains(sub, ":") {
+			return "", "", "", fmt.Errorf("preset %q: a //path and a :name cannot be combined", "local>"+s)
+		}
+		s = s[:i]
+		if j := strings.LastIndexByte(sub, '/'); j >= 0 {
+			dir, name = sub[:j], sub[j+1:]
+		} else {
+			name = sub
+		}
+	} else if i := strings.LastIndexByte(s, ':'); i >= 0 {
+		name = s[i+1:]
 		s = s[:i]
 	}
 	project = strings.Trim(s, "/")
