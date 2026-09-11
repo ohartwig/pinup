@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"git.ole-hartwig.eu/pinup/pinup/apply"
 	"git.ole-hartwig.eu/pinup/pinup/cache"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
@@ -36,7 +37,10 @@ func (c cannedDS) Releases(_ context.Context, ref lookup.Ref) (*model.ReleaseSet
 	}
 	rs := &model.ReleaseSet{PackageName: ref.PackageName, Datasource: c.name}
 	for _, v := range vs {
-		rs.Releases = append(rs.Releases, model.Release{Version: v})
+		// Released a month before any plan time these tests use, so
+		// minimumReleaseAge holds nothing and the policy under test is
+		// the rules', not the clock's.
+		rs.Releases = append(rs.Releases, model.Release{Version: v, Timestamp: time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)})
 	}
 	return rs, nil
 }
@@ -51,9 +55,19 @@ func canned() lookup.Registry {
 		"devops/ci-cd-components/container-scanning":  {"3.0.0", "3.1.0"},
 		"devops/ci-cd-components/supply-chain-verify": {"2.0.0", "2.4.1"},
 	}
+	// github-releases for the Containerfile's annotated tools: hadolint has
+	// a patch to take, the rest are current.
+	github := map[string][]string{
+		"hadolint/hadolint":                         {"v2.15.1", "v2.15.2"},
+		"openvex/vexctl":                            {"v0.4.4"},
+		"fabpot/local-php-security-checker":         {"v2.1.3"},
+		"editorconfig-checker/editorconfig-checker": {"v3.11.1"},
+		"trufflesecurity/trufflehog":                {"v3.97.0"},
+	}
 	return lookup.Registry{
 		"gitlab-tags":     cannedDS{name: "gitlab-tags", scheme: "semver", releases: releases},
 		"gitlab-releases": cannedDS{name: "gitlab-releases", scheme: "semver", releases: releases},
+		"github-releases": cannedDS{name: "github-releases", scheme: "semver", releases: github},
 	}
 }
 
@@ -353,4 +367,80 @@ func newEmptyCache(t *testing.T) lookup.Cache {
 	}
 	t.Cleanup(func() { store.Close() })
 	return store
+}
+
+// The edits a plan carries apply to a copy of the repository and change
+// exactly the bytes of the values - nothing else in either file.
+func TestWhatifEditsApplyByteExact(t *testing.T) {
+	if _, err := os.Stat(ciToolsRepo); err != nil {
+		t.Skipf("the ci-tools checkout is not present: %v", err)
+	}
+	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC) // window open, holds thawed
+	plan, err := whatif(context.Background(), ciToolsOptions(at))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Branches) == 0 {
+		t.Fatal("no branches planned at an open window")
+	}
+	root := t.TempDir()
+	var all []model.Edit
+	names := map[string]bool{}
+	for _, b := range plan.Branches {
+		if len(b.Edits) == 0 {
+			t.Errorf("branch %s carries no edits", b.Name)
+		}
+		all = append(all, b.Edits...)
+		names[b.Name] = true
+	}
+	// hadolint 2.15.1 -> 2.15.2 via the annotated ARG: the branch is
+	// named as Renovate names it, the edit is the version's bytes in the
+	// Containerfile, and the v the tag carries is stripped by extractVersion.
+	if !names["renovate/hadolint-hadolint-2.x"] {
+		t.Errorf("expected renovate/hadolint-hadolint-2.x among %v", names)
+	}
+	for _, e := range all {
+		if e.Old == "2.15.1" && (e.File != "Containerfile" || e.New != "2.15.2") {
+			t.Errorf("hadolint edit %+v", e)
+		}
+	}
+	files := map[string][]byte{}
+	for _, e := range all {
+		if _, ok := files[e.File]; ok {
+			continue
+		}
+		body, err := os.ReadFile(ciToolsRepo + "/" + e.File)
+		if err != nil {
+			t.Fatal(err)
+		}
+		files[e.File] = body
+		if err := os.WriteFile(root+"/"+e.File, body, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// All branches' edits at once: they must not overlap each other either.
+	if cs := apply.Check(all); len(cs) != 0 {
+		t.Fatalf("edits across branches overlap: %v", cs)
+	}
+	results, err := apply.WriteFiles(root, all)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(results) != len(files) {
+		t.Errorf("%d files written, %d expected", len(results), len(files))
+	}
+	for name, before := range files {
+		after, _ := os.ReadFile(root + "/" + name)
+		// Undo every edit by hand and expect the original back: the only
+		// bytes that changed are the ones the plan named.
+		restored := string(after)
+		for _, e := range all {
+			if e.File == name {
+				restored = strings.Replace(restored, e.New, e.Old, 1)
+			}
+		}
+		if restored != string(before) {
+			t.Errorf("%s: bytes outside the edited values changed", name)
+		}
+	}
 }

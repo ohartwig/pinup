@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"git.ole-hartwig.eu/pinup/pinup/apply"
 	"git.ole-hartwig.eu/pinup/pinup/cache"
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
@@ -260,6 +261,16 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	if err != nil {
 		return nil, fmt.Errorf("branches: %w", err)
 	}
+	// Every branch carries the byte-range edits that realise its updates,
+	// produced by the manager that extracted each dependency against the
+	// bytes it extracted from. A conflict - two managers claiming the same
+	// bytes - is reported on the plan and the branch carries no edits, so
+	// nothing downstream can write half of it.
+	for i := range branches {
+		edits, warnings := editsFor(ctx, branches[i], plan.Updates, contents, decoded, managers)
+		plan.Warnings = append(plan.Warnings, warnings...)
+		branches[i].Edits = edits
+	}
 	plan.Branches = branches
 
 	blocked := 0
@@ -282,6 +293,49 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		return nil, fmt.Errorf("the plan this run produced is not valid: %w", err)
 	}
 	return plan, nil
+}
+
+// editsFor asks each update's manager for its edit and checks the set for
+// overlaps. The warnings name what could not be edited and why.
+func editsFor(ctx context.Context, b model.Branch, updates []model.Update, contents map[string][]byte,
+	decoded config.Decoded, managers extract.Registry) ([]model.Edit, []model.Warning) {
+	var edits []model.Edit
+	var warnings []model.Warning
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	for _, u := range updates {
+		if !keys[u.DepKey] || u.Blocked() {
+			continue
+		}
+		body, ok := contents[u.Dep.File]
+		if !ok {
+			continue
+		}
+		key := u.Dep.Manager
+		if u.Dep.CustomManager != model.NoCustomManager {
+			key = config.CustomManagerName(u.Dep.CustomManager)
+		}
+		p, err := wire.Resolve(key, decoded, managers)
+		if err != nil {
+			warnings = append(warnings, model.Warning{Stage: "apply", File: u.Dep.File, Msg: err.Error()})
+			continue
+		}
+		e, err := p.Manager.Edit(ctx, extract.File{Path: u.Dep.File, Content: body}, u)
+		if err != nil {
+			warnings = append(warnings, model.Warning{Stage: "apply", File: u.Dep.File, Msg: err.Error()})
+			continue
+		}
+		edits = append(edits, e)
+	}
+	if conflicts := apply.Check(edits); len(conflicts) > 0 {
+		for _, c := range conflicts {
+			warnings = append(warnings, model.Warning{Stage: "apply", File: c.A.File, Msg: b.Name + ": " + c.Error()})
+		}
+		return nil, warnings
+	}
+	return edits, warnings
 }
 
 // applyDepRules is the pre-lookup pass: a rule may disable the dependency
