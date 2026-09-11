@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"git.ole-hartwig.eu/pinup/pinup/cache"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 )
@@ -293,4 +294,63 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 	if plan.Stats.UpdatesBlocked == 0 {
 		t.Error("stats must count the blocked updates")
 	}
+}
+
+// Every held update in the plan names its reason, its origin, and - for a
+// time-based hold - when it thaws. A nearly empty cache is warned about.
+func TestWhatifHoldsExplainThemselves(t *testing.T) {
+	if _, err := os.Stat(ciToolsRepo); err != nil {
+		t.Skipf("the ci-tools checkout is not present: %v", err)
+	}
+	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC) // 14:00 in Berlin: the cron window is closed
+	opts := ciToolsOptions(at)
+	opts.Cache = newEmptyCache(t)
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	warned := false
+	for _, w := range plan.Warnings {
+		if w.Stage == "cache" && strings.Contains(w.Msg, "first-seen") {
+			warned = true
+		}
+	}
+	if !warned {
+		t.Error("an empty first-seen record must be warned about")
+	}
+	for _, u := range plan.Updates {
+		if !u.Blocked() {
+			continue
+		}
+		for _, b := range u.Blocks {
+			switch b.Reason {
+			case model.BlockDisabled, model.BlockDashboardApproval:
+				if b.Org.Rule == model.NoRule {
+					t.Errorf("%s: %s names no rule", u.DepKey, b.Reason)
+				}
+			case model.BlockMinimumReleaseAge:
+				if u.TimeSource != model.TimeUnknown && b.Until.IsZero() {
+					t.Errorf("%s: a hold on a known age must say when it thaws", u.DepKey)
+				}
+			case model.BlockSchedule:
+				if b.Until.IsZero() || !strings.Contains(b.Note, "Europe/Berlin") {
+					t.Errorf("%s: schedule hold %+v must name the thaw time and timezone", u.DepKey, b)
+				}
+			}
+		}
+		if u.SuppressedBy != u.Blocks[0].Reason {
+			t.Errorf("%s: suppressedBy %q, first block %q", u.DepKey, u.SuppressedBy, u.Blocks[0].Reason)
+		}
+	}
+}
+
+// newEmptyCache is a fresh bbolt store in a temporary directory.
+func newEmptyCache(t *testing.T) lookup.Cache {
+	t.Helper()
+	store, err := cache.Open(t.TempDir() + "/cache.db")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { store.Close() })
+	return store
 }

@@ -82,6 +82,11 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	return nil
 }
 
+// nearlyEmptyFirstSeen is the first-seen entry count below which a cache is
+// warned about. The estate's smallest repository observes a few hundred
+// versions on one run; a record below this has not seen a run at all.
+const nearlyEmptyFirstSeen = 100
+
 // whatifOptions is everything a plan run needs. Datasources is injected so a
 // test can hand in a fake registry and prove the run touched no network.
 type whatifOptions struct {
@@ -185,6 +190,20 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 	}
 
+	// A nearly empty first-seen record makes every release look brand new,
+	// and minimumReleaseAge then holds everything for the full duration.
+	// That is the safe direction, but it is also a whole estate's worth of
+	// updates arriving a day late without anyone knowing why - so say so.
+	if counter, ok := o.Cache.(interface{ FirstSeenCount() (int, error) }); ok {
+		if n, err := counter.FirstSeenCount(); err == nil && n < nearlyEmptyFirstSeen {
+			plan.Warnings = append(plan.Warnings, model.Warning{
+				Stage: "cache",
+				Msg: fmt.Sprintf("the first-seen record holds only %d versions: releases without a published timestamp will look newly seen and be held for the full minimumReleaseAge; seed the cache from a previous run's export before trusting the hold times",
+					n),
+			})
+		}
+	}
+
 	// Every unique (datasource, package, registry) once, however many
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
@@ -216,7 +235,11 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	plan.Deps = planned.Deps
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
 	for _, u := range planned.Updates {
-		plan.Updates = append(plan.Updates, applyUpdateRules(engine, resolved.Raw, u))
+		decided, err := applyUpdateRules(engine, resolved.Raw, u, now)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
+		}
+		plan.Updates = append(plan.Updates, decided)
 	}
 
 	blocked := 0
@@ -266,28 +289,17 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	return d
 }
 
-// applyUpdateRules is the per-update pass. A rule that disables the update
-// type, or demands dashboard approval, holds the update rather than
-// deleting it: the plan still says what would have happened and why not.
-func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update) model.Update {
+// applyUpdateRules is the per-update pass: the rules see the update type,
+// and the policy they select decides whether the update is acted on now.
+// Held, not deleted: the plan still says what would have happened and why
+// not, with the thaw time and the rule that held it.
+func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, error) {
 	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.String()))
+	policy := planner.PolicyOf(res.Config, func(key string) model.Origin { return origin(res, key) })
 	if res.SkipReason != "" {
-		u.Blocks = append(u.Blocks, model.Block{
-			Reason: model.BlockDisabled,
-			Org:    origin(res, "enabled"),
-			Note:   "enabled: false for this update type",
-		})
+		policy.Enabled = false
 	}
-	if approval, ok := res.Config["dependencyDashboardApproval"].(bool); ok && approval {
-		u.Blocks = append(u.Blocks, model.Block{
-			Reason: model.BlockDashboardApproval,
-			Org:    origin(res, "dependencyDashboardApproval"),
-		})
-	}
-	if len(u.Blocks) > 0 {
-		u.SuppressedBy = u.Blocks[0].Reason
-	}
-	return u
+	return planner.Decide(u, policy, now)
 }
 
 func lastWriter(res rules.Resolution, key string) string {
