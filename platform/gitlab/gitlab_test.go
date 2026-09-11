@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -124,6 +125,32 @@ func (s *gitlabServer) lastRequestBody(method, uriContains string) []byte {
 }
 
 func (s *gitlabServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/api/v4/projects" && r.Method == http.MethodGet {
+		// Two per page, X-Next-Page until the last.
+		q := r.URL.Query()
+		page, _ := strconv.Atoi(q.Get("page"))
+		if page < 1 {
+			page = 1
+		}
+		s.mu.Lock()
+		var all []map[string]any
+		for _, p := range s.projects {
+			all = append(all, map[string]any{"path_with_namespace": p.pathWithNamespace})
+		}
+		s.mu.Unlock()
+		sort.Slice(all, func(i, j int) bool {
+			return all[i]["path_with_namespace"].(string) < all[j]["path_with_namespace"].(string)
+		})
+		start, end := (page-1)*2, min(page*2, len(all))
+		if start > len(all) {
+			start = len(all)
+		}
+		if end < len(all) {
+			w.Header().Set("X-Next-Page", strconv.Itoa(page+1))
+		}
+		writeJSON(w, http.StatusOK, all[start:end])
+		return
+	}
 	// A GET built by http.NewRequestWithContext with a nil body leaves
 	// r.Body nil, unlike a request read off the wire - guard against that
 	// rather than assume every handler only ever sees POST/PUT.
@@ -672,5 +699,22 @@ func TestReadFileThroughTheRawEndpoint(t *testing.T) {
 	}
 	if n := rt.Count("git.example.org"); n != 3 {
 		t.Errorf("%d requests, want 3", n)
+	}
+}
+
+func TestListProjectsPaginates(t *testing.T) {
+	pf, srv, rt := newFixture(t, "")
+	for _, p := range []string{"devops/images/b", "devops/images/a", "pinup/pinup"} {
+		srv.addProject(p, "main")
+	}
+	got, err := pf.ListProjects(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(got, ",") != "devops/images/a,devops/images/b,pinup/pinup" {
+		t.Errorf("got %v", got)
+	}
+	if n := rt.Count("git.example.org"); n != 2 {
+		t.Errorf("three projects at two per page are two requests, got %d", n)
 	}
 }

@@ -293,6 +293,35 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 	return resp.body, nil
 }
 
+// ListProjects walks /projects?membership=true&archived=false, following
+// X-Next-Page, and returns the paths sorted.
+func (p *Platform) ListProjects(ctx context.Context) ([]string, error) {
+	var out []string
+	page := "1"
+	for page != "" {
+		u := fmt.Sprintf("%s/api/v4/projects?membership=true&archived=false&simple=true&per_page=100&page=%s", p.base, page)
+		resp, err := p.do(ctx, http.MethodGet, u, nil)
+		if err != nil {
+			return nil, err
+		}
+		if err := classify(resp, "(listing)"); err != nil {
+			return nil, err
+		}
+		var items []struct {
+			Path string `json:"path_with_namespace"`
+		}
+		if err := json.Unmarshal(resp.body, &items); err != nil {
+			return nil, fmt.Errorf("gitlab: decode project list: %w", err)
+		}
+		for _, it := range items {
+			out = append(out, it.Path)
+		}
+		page = resp.header.Get("X-Next-Page")
+	}
+	slices.Sort(out)
+	return out, nil
+}
+
 // trySetAutomerge asks GitLab to merge sourceBranch's request when its
 // pipeline succeeds. A 405 (pipeline has not started) or 406 (not currently
 // mergeable) is reported as ok=false with no error: the caller keeps

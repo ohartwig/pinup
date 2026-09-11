@@ -89,4 +89,8 @@ type Platform interface {
 	// ReadFile returns a file from a project at ref (empty means the
 	// default branch) - how local> presets are fetched.
 	ReadFile(ctx context.Context, project, path, ref string) ([]byte, error)
+
+	// ListProjects returns the paths of every project the token can see
+	// that is not archived, sorted. Autodiscovery filters this list.
+	ListProjects(ctx context.Context) ([]string, error)
 }

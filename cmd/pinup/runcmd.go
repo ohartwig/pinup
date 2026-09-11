@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -16,7 +17,10 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/cache"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/git"
+	"git.ole-hartwig.eu/pinup/pinup/glob"
+	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/publish"
 	"git.ole-hartwig.eu/pinup/pinup/runner"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
@@ -35,6 +39,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	fs.SetOutput(errw)
 	repoDir := fs.String("repo", "", "path to an existing checkout with an origin remote")
 	project := fs.String("project", "", "project path to clone and run against, e.g. devops/images/ci-tools")
+	autodiscover := fs.String("autodiscover", "", `run against every project the token can see that matches these patterns, a JSON list of globs with ! negations, e.g. '["devops/images/**", "!devops/images/pinup"]'`)
 	cfgPath := fs.String("config", "", "configuration file to resolve (required)")
 	report := fs.String("report", "", "write the plan as JSON to this path")
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt)")
@@ -46,8 +51,14 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	if *cfgPath == "" {
 		return fmt.Errorf("run: --config is required")
 	}
-	if (*repoDir == "") == (*project == "") {
-		return fmt.Errorf("run: exactly one of --repo and --project is required")
+	chosen := 0
+	for _, v := range []string{*repoDir, *project, *autodiscover} {
+		if v != "" {
+			chosen++
+		}
+	}
+	if chosen != 1 {
+		return fmt.Errorf("run: exactly one of --repo, --project and --autodiscover is required")
 	}
 	env, err := platformFromEnv(os.Getenv)
 	if err != nil {
@@ -65,38 +76,6 @@ func cmdRun(args []string, out, errw io.Writer) error {
 
 	platform := wire.Platform(env.URL, env.Token, env.Header)
 
-	// The checkout.
-	var repo *git.Repo
-	var repoName string
-	if *project != "" {
-		repoName = *project
-		dir, err := os.MkdirTemp("", "pinup-run-")
-		if err != nil {
-			return err
-		}
-		defer os.RemoveAll(dir)
-		self, err := os.Executable()
-		if err != nil {
-			return err
-		}
-		repo, err = git.Clone(ctx, env.URL+"/"+*project+".git", filepath.Join(dir, "repo"), 0,
-			[]string{"GIT_ASKPASS=" + self, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_PARAMETERS='credential.helper='"})
-		if err != nil {
-			return err
-		}
-		repo.Env = []string{"GIT_ASKPASS=" + self, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_PARAMETERS='credential.helper='"}
-	} else {
-		repo, err = git.Open(*repoDir)
-		if err != nil {
-			return err
-		}
-		repoName = strings.TrimSuffix(filepath.Base(*repoDir), ".git")
-	}
-	proj, err := platform.Project(ctx, repoName)
-	if err != nil {
-		return fmt.Errorf("run: %w", err)
-	}
-
 	// --config may name the runner's file on the platform rather than a
 	// path: "local>devops/renovate-runner". The job that runs pinup against
 	// its own repository has no checkout of the runner project, and a copy
@@ -110,19 +89,112 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		*cfgPath = local
 	}
 
-	opts := whatifOptions{
-		Root: repo.Dir, ConfigPath: *cfgPath, RepoName: proj.Path, Now: now,
-		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
-		CacheTTL:    *cacheTTL,
-		Presets:     preset.Remote{Reader: platform, Ctx: ctx},
-	}
+	var store lookup.Cache
 	if *cachePath != "" {
-		store, err := cache.Open(*cachePath)
+		s, err := cache.Open(*cachePath)
 		if err != nil {
 			return fmt.Errorf("cache: %w", err)
 		}
-		defer store.Close()
-		opts.Cache = store
+		defer s.Close()
+		store = s
+	}
+	one := runOptions{
+		cfgPath: *cfgPath, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
+		identity: identity, signing: signing, platform: platform, now: now,
+	}
+
+	if *autodiscover != "" {
+		var patterns []string
+		if err := json.Unmarshal([]byte(*autodiscover), &patterns); err != nil {
+			return fmt.Errorf("--autodiscover: %w", err)
+		}
+		all, err := platform.ListProjects(ctx)
+		if err != nil {
+			return fmt.Errorf("run: listing projects: %w", err)
+		}
+		filter := glob.NewSet(patterns)
+		var selected []string
+		for _, p := range all {
+			if filter.Match(p) {
+				selected = append(selected, p)
+			}
+		}
+		fmt.Fprintf(errw, "autodiscover: %d of %d projects match\n", len(selected), len(all))
+		if len(selected) == 0 {
+			return fmt.Errorf("run: --autodiscover matched no project; a partition that scans nothing is a broken partition")
+		}
+		failed := 0
+		for _, p := range selected {
+			if err := runProject(ctx, one, p, "", *report, out, errw); err != nil {
+				failed++
+				fmt.Fprintf(errw, "%s: %v\n", p, err)
+			}
+		}
+		if failed > 0 {
+			return fmt.Errorf("run: %d of %d projects failed", failed, len(selected))
+		}
+		return nil
+	}
+	return runProject(ctx, one, *project, *repoDir, *report, out, errw)
+}
+
+// runOptions is what every project in one invocation shares.
+type runOptions struct {
+	cfgPath  string
+	cache    lookup.Cache
+	cacheTTL time.Duration
+	dryRun   bool
+	env      platformEnv
+	identity git.Identity
+	signing  git.Signing
+	platform publish.Platform
+	now      time.Time
+}
+
+// runProject plans and executes one project, given as a path to clone or
+// as an existing checkout.
+func runProject(ctx context.Context, o runOptions, project, repoDir, report string, out, errw io.Writer) error {
+	env, platform := o.env, o.platform
+
+	// The checkout.
+	var repo *git.Repo
+	var repoName string
+	var err error
+	if project != "" {
+		repoName = project
+		dir, err := os.MkdirTemp("", "pinup-run-")
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(dir)
+		self, err := os.Executable()
+		if err != nil {
+			return err
+		}
+		repo, err = git.Clone(ctx, env.URL+"/"+project+".git", filepath.Join(dir, "repo"), 0,
+			[]string{"GIT_ASKPASS=" + self, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_PARAMETERS='credential.helper='"})
+		if err != nil {
+			return err
+		}
+		repo.Env = []string{"GIT_ASKPASS=" + self, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_PARAMETERS='credential.helper='"}
+	} else {
+		repo, err = git.Open(repoDir)
+		if err != nil {
+			return err
+		}
+		repoName = strings.TrimSuffix(filepath.Base(repoDir), ".git")
+	}
+	proj, err := platform.Project(ctx, repoName)
+	if err != nil {
+		return fmt.Errorf("run: %w", err)
+	}
+
+	opts := whatifOptions{
+		Root: repo.Dir, ConfigPath: o.cfgPath, RepoName: proj.Path, Now: o.now,
+		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
+		Cache:       o.cache,
+		CacheTTL:    o.cacheTTL,
+		Presets:     preset.Remote{Reader: platform, Ctx: ctx},
 	}
 	plan, err := whatif(ctx, opts)
 	if err != nil {
@@ -130,20 +202,26 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	}
 
 	var outcomes []runner.Outcome
-	if !*dryRun {
+	if !o.dryRun {
 		outcomes, err = runner.Execute(ctx, plan, runner.Options{
-			Repo: repo, Remote: "origin", Base: proj.DefaultBranch, Identity: identity, Signing: signing,
+			Repo: repo, Remote: "origin", Base: proj.DefaultBranch, Identity: o.identity, Signing: o.signing,
 			Platform: platform, Project: proj, Labels: []string{"renovate"},
 			Footer:      "This merge request was generated by pinup.",
-			HourlyLimit: 20, Now: now,
+			HourlyLimit: 20, Now: o.now,
 		})
 		if err != nil {
 			return err
 		}
 	}
 
-	if *report != "" {
-		f, err := os.Create(*report)
+	if report != "" {
+		// Several projects write several reports: the path gains the
+		// project's path with slashes folded when it is not one project.
+		path := report
+		if project != "" && strings.Contains(report, "%s") {
+			path = fmt.Sprintf(report, strings.ReplaceAll(project, "/", "-"))
+		}
+		f, err := os.Create(path)
 		if err != nil {
 			return err
 		}

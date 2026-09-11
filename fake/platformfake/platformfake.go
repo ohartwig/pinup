@@ -27,8 +27,10 @@ type Platform struct {
 	// Verification is what CommitVerification answers.
 	Verification string
 	// Files answers ReadFile, keyed "project|path|ref".
-	Files   map[string]string
-	nextIID int
+	Files map[string]string
+	// Projects answers ListProjects.
+	Projects []string
+	nextIID  int
 }
 
 var _ publish.Platform = (*Platform)(nil)
@@ -135,4 +137,9 @@ func (p *Platform) ReadFile(_ context.Context, project, path, ref string) ([]byt
 		return []byte(s), nil
 	}
 	return nil, fmt.Errorf("fake: %s has no file %s at %q", project, path, ref)
+}
+
+func (p *Platform) ListProjects(context.Context) ([]string, error) {
+	p.record("ListProjects")
+	return append([]string(nil), p.Projects...), nil
 }
