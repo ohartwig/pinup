@@ -527,7 +527,9 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		keys[k] = true
 	}
 	for _, u := range updates {
-		if !keys[u.Key()] || u.Blocked() {
+		if !keys[u.Key()] || u.Blocked() || u.LockOnly {
+			// A lock-only update writes no manifest byte; its lock
+			// refresh is the branch's task.
 			continue
 		}
 		body, ok := contents[u.Dep.File]
@@ -581,6 +583,12 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	if av, ok := res.Config["allowedVersions"].(string); ok && av != "" {
 		d.AllowedVersions = av
 	}
+	if rs, ok := res.Config["rangeStrategy"].(string); ok && rs != "" {
+		d.RangeStrategy = rs
+	}
+	if pin, ok := res.Config["pinDigests"].(bool); ok {
+		d.PinDigests = pin
+	}
 	if urls, ok := res.Config["registryUrls"].([]any); ok && len(res.Wrote["registryUrls"]) > 0 {
 		d.RegistryURLs = d.RegistryURLs[:0:0]
 		for _, u := range urls {
@@ -609,6 +617,10 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		// age, no schedule, no dashboard approval - forced over whatever
 		// the rules said. The branch is named from the same view.
 		cfg = planner.OverlayKey(cfg, "vulnerabilityAlerts")
+		// Measured on the estate: a composer security fix is titled "to
+		// ^11.5.50" - the manager's bump, not the object's update-lockfile
+		// - so the strategy the pre-lookup rules gave the dependency
+		// stands; the planner already used it to pick the fix.
 	}
 	policy := planner.PolicyOf(cfg, func(key string) model.Origin { return origin(res, key) })
 	if res.SkipReason != "" {
@@ -679,12 +691,19 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		if scheme == "" {
 			scheme = defaultVersioning(d.Datasource)
 		}
-		// A range (^1.2.5) has no one version to ask about; Renovate skips
+		// The version actually in use: the lock's when there is one -
+		// a range like ^4.0.0 says nothing about what is installed, and
+		// Renovate opened vitest's security fix from the lock. A range
+		// without a lock has no one version to ask about; Renovate skips
 		// it too, and a skip is not worth a warning on every run.
-		if v, err := schemes.Get(scheme); err != nil || !v.IsVersion(d.CurrentValue) {
+		version := d.CurrentValue
+		if d.LockedVersion != "" {
+			version = d.LockedVersion
+		}
+		if v, err := schemes.Get(scheme); err != nil || !v.IsVersion(version) {
 			continue
 		}
-		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: d.CurrentValue, Versioning: scheme})
+		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme})
 		index = append(index, i)
 	}
 	if len(queries) == 0 {

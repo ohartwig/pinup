@@ -31,6 +31,7 @@ func cmdShadow(args []string, out, errw io.Writer) error {
 	controls := fs.String("controls", "pinup/shadow-fixture", "comma-separated projects that must yield exactly one only-pinup entry")
 	reportPath := fs.String("report", "", "write the comparison as JSON to this path")
 	prefix := fs.String("prefix", "renovate/", "branch prefix of the other tool's merge requests")
+	statePath := fs.String("state", "", "file carrying the previous comparison's differences; a difference fails only when it persists from one run to the next")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -93,7 +94,16 @@ func cmdShadow(args []string, out, errw io.Writer) error {
 			controlList = append(controlList, c)
 		}
 	}
-	res := report.Compare(plans, open, sup, controlList, version, time.Now())
+	prev, err := report.LoadState(*statePath)
+	if err != nil {
+		return fmt.Errorf("shadow: state: %w", err)
+	}
+	res, next := report.Compare(plans, open, sup, controlList, version, time.Now(), prev)
+	if *statePath != "" {
+		if err := next.Save(*statePath); err != nil {
+			return fmt.Errorf("shadow: state: %w", err)
+		}
+	}
 
 	fmt.Fprint(out, res.String())
 	fmt.Fprintln(out, res.Summary())

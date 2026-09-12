@@ -152,6 +152,12 @@ func dependency(file, depType string, mem jsonMember, src []byte, urls []string)
 		// github-token-required, which the first capture recorded).
 		dep.Datasource = "github-tags"
 		dep.PackageName = "containerbase/php-prebuild"
+		// The manager's scheme, not the datasource's: "^8.5" is a
+		// composer range, and github-tags would read it as semver and
+		// refuse it (measured live: "current value ^8.5 is not a valid
+		// semver version" against Renovate's "update dependency php to
+		// ^8.5.10").
+		dep.Versioning = "composer"
 	case strings.HasPrefix(depName, "ext-"), strings.HasPrefix(depName, "lib-"):
 		// A platform requirement: a PHP extension or system library the
 		// runtime image provides, not a package any datasource can look up.

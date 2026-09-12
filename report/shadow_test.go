@@ -18,6 +18,20 @@ func plan(repo, version string, branches ...model.Branch) *model.Plan {
 	return p
 }
 
+// compare runs the comparison twice with the state carried over, so a
+// difference counts as persisting - what the failure assertions are about.
+// compareOnce is a first run, where every difference is pending.
+func compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *Suppressions, controls []string, version string, now time.Time) Result {
+	_, st := Compare(plans, open, sup, controls, version, now, nil)
+	r, _ := Compare(plans, open, sup, controls, version, now, st)
+	return r
+}
+
+func compareOnce(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *Suppressions, controls []string, version string, now time.Time) Result {
+	r, _ := Compare(plans, open, sup, controls, version, now, nil)
+	return r
+}
+
 func mr(branch string, iid int) publish.MergeRequest {
 	return publish.MergeRequest{IID: iid, State: "opened", SourceBranch: branch, Title: branch}
 }
@@ -35,7 +49,7 @@ func TestCompareFailsOnEachDeadGateAndPassesOnAgreement(t *testing.T) {
 		"devops/images/a":      {mr("renovate/x-1.x", 3)},
 		"pinup/shadow-fixture": {},
 	}
-	r := Compare(plans, open, sup, []string{"pinup/shadow-fixture"}, "0.1.0", now)
+	r := compare(plans, open, sup, []string{"pinup/shadow-fixture"}, "0.1.0", now)
 	if !r.Passed() {
 		t.Fatalf("agreement must pass: %v", r.Failures)
 	}
@@ -44,40 +58,40 @@ func TestCompareFailsOnEachDeadGateAndPassesOnAgreement(t *testing.T) {
 	}
 
 	// A wrong version is refused.
-	if r := Compare([]*model.Plan{plan("a/b", "0.0.9")}, open, sup, nil, "0.1.0", now); !failsWith(r, "stale artefact") {
+	if r := compare([]*model.Plan{plan("a/b", "0.0.9")}, open, sup, nil, "0.1.0", now); !failsWith(r, "stale artefact") {
 		t.Errorf("version: %v", r.Failures)
 	}
 	// Zero plans, zero deps.
-	if r := Compare(nil, open, sup, nil, "0.1.0", now); !failsWith(r, "zero plans") {
+	if r := compare(nil, open, sup, nil, "0.1.0", now); !failsWith(r, "zero plans") {
 		t.Errorf("zero plans: %v", r.Failures)
 	}
 	empty := plan("a/b", "0.1.0")
 	empty.Deps = nil
-	if r := Compare([]*model.Plan{empty}, map[string][]publish.MergeRequest{"a/b": {}}, sup, nil, "0.1.0", now); !failsWith(r, "zero dependencies") {
+	if r := compare([]*model.Plan{empty}, map[string][]publish.MergeRequest{"a/b": {}}, sup, nil, "0.1.0", now); !failsWith(r, "zero dependencies") {
 		t.Errorf("zero deps: %v", r.Failures)
 	}
 	// Renovate's side unreadable is not empty.
-	if r := Compare([]*model.Plan{plan("a/b", "0.1.0")}, map[string][]publish.MergeRequest{}, sup, nil, "0.1.0", now); !failsWith(r, "unreadable Renovate") {
+	if r := compare([]*model.Plan{plan("a/b", "0.1.0")}, map[string][]publish.MergeRequest{}, sup, nil, "0.1.0", now); !failsWith(r, "unreadable Renovate") {
 		t.Errorf("unreadable: %v", r.Failures)
 	}
 	// A miss on Renovate's side.
-	if r := Compare([]*model.Plan{plan("a/b", "0.1.0")}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/z-1.x", 9)}}, sup, nil, "0.1.0", now); !failsWith(r, "Renovate has open that pinup does not plan") {
+	if r := compare([]*model.Plan{plan("a/b", "0.1.0")}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/z-1.x", 9)}}, sup, nil, "0.1.0", now); !failsWith(r, "Renovate has open that pinup does not plan") {
 		t.Errorf("only_renovate: %v", r.Failures)
 	}
 	// Renovate has open what pinup holds: a difference with its reason.
 	heldOpen := plan("a/b", "0.1.0", model.Branch{Name: "renovate/x-1.x", SuppressedBy: model.BlockDisabled})
-	if r := Compare([]*model.Plan{heldOpen}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/x-1.x", 4)}}, sup, nil, "0.1.0", now); !failsWith(r, "pinup holds") || r.HeldOpen != 1 {
+	if r := compare([]*model.Plan{heldOpen}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/x-1.x", 4)}}, sup, nil, "0.1.0", now); !failsWith(r, "pinup holds") || r.HeldOpen != 1 {
 		t.Errorf("held_open: %v %+v", r.Failures, r)
 	}
 	// Renovate has open a major a human approved for a `@N` pin; pinup
 	// holds it as a rolling major by design - pre-declared, not a failure,
 	// and counted apart from the held_open that would be one.
 	rolling := plan("a/b", "0.1.0", model.Branch{Name: "renovate/x-2.x", SuppressedBy: model.BlockRollingMajor})
-	if r := Compare([]*model.Plan{rolling}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/x-2.x", 5)}}, sup, nil, "0.1.0", now); !r.Passed() || r.RollingMajor != 1 || r.HeldOpen != 0 || !strings.Contains(r.Summary(), "matched 1/1") {
+	if r := compare([]*model.Plan{rolling}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/x-2.x", 5)}}, sup, nil, "0.1.0", now); !r.Passed() || r.RollingMajor != 1 || r.HeldOpen != 0 || !strings.Contains(r.Summary(), "matched 1/1") {
 		t.Errorf("rolling major: %v %+v %s", r.Failures, r, r.Summary())
 	}
 	// The control yields nothing: the run is broken.
-	if r := Compare([]*model.Plan{plan("pinup/shadow-fixture", "0.1.0")}, map[string][]publish.MergeRequest{"pinup/shadow-fixture": {}}, sup, []string{"pinup/shadow-fixture"}, "0.1.0", now); !failsWith(r, "control pinup/shadow-fixture yielded 0") {
+	if r := compare([]*model.Plan{plan("pinup/shadow-fixture", "0.1.0")}, map[string][]publish.MergeRequest{"pinup/shadow-fixture": {}}, sup, []string{"pinup/shadow-fixture"}, "0.1.0", now); !failsWith(r, "control pinup/shadow-fixture yielded 0") {
 		t.Errorf("control: %v", r.Failures)
 	}
 }
@@ -86,19 +100,19 @@ func TestSuppressionsExpireMustMatchAndMayNotBeBare(t *testing.T) {
 	p := plan("a/b", "0.1.0", model.Branch{Name: "renovate/x-1.x"})
 	open := map[string][]publish.MergeRequest{"a/b": {}}
 	good := &Suppressions{Entries: []Suppression{{Project: "a/b", Branch: "renovate/x-1.x", Kind: "pre-declared-improvement", Reason: "r", Owner: "o", Expires: now.Add(24 * time.Hour)}}}
-	if r := Compare([]*model.Plan{p}, open, good, nil, "0.1.0", now); !r.Passed() || r.Suppressed != 1 {
+	if r := compare([]*model.Plan{p}, open, good, nil, "0.1.0", now); !r.Passed() || r.Suppressed != 1 {
 		t.Errorf("a triaged only-pinup entry passes: %v", r.Failures)
 	}
 	expired := &Suppressions{Entries: []Suppression{{Project: "a/b", Branch: "renovate/x-1.x", Reason: "r", Owner: "o", Expires: now.Add(-time.Hour)}}}
-	if r := Compare([]*model.Plan{p}, open, expired, nil, "0.1.0", now); !failsWith(r, "expired") {
+	if r := compare([]*model.Plan{p}, open, expired, nil, "0.1.0", now); !failsWith(r, "expired") {
 		t.Errorf("expired: %v", r.Failures)
 	}
 	dead := &Suppressions{Entries: []Suppression{{Project: "a/b", Branch: "renovate/nothing", Kind: "defect", Reason: "r", Owner: "o", Expires: now.Add(time.Hour)}}}
-	if r := Compare([]*model.Plan{p}, open, dead, nil, "0.1.0", now); !failsWith(r, "matched nothing") {
+	if r := compare([]*model.Plan{p}, open, dead, nil, "0.1.0", now); !failsWith(r, "matched nothing") {
 		t.Errorf("dead: %v", r.Failures)
 	}
 	bare := &Suppressions{Entries: []Suppression{{Branch: "renovate/x-1.x", Reason: "r", Owner: "o", Expires: now.Add(time.Hour)}}}
-	if r := Compare([]*model.Plan{p}, open, bare, nil, "0.1.0", now); !failsWith(r, "never a bare branch") {
+	if r := compare([]*model.Plan{p}, open, bare, nil, "0.1.0", now); !failsWith(r, "never a bare branch") {
 		t.Errorf("bare: %v", r.Failures)
 	}
 }
@@ -110,4 +124,45 @@ func failsWith(r Result, s string) bool {
 		}
 	}
 	return false
+}
+
+// Timing is not behaviour: the two tools run half an hour apart, so a
+// difference seen once is pending and fails only when the next comparison
+// sees it again. A hold Renovate does not re-decide once its request
+// exists - a window, a release age, a dashboard approval - is a
+// pre-declared agreement, not a held_open failure.
+func TestDifferencesMustPersistAndPersistingHoldsAgree(t *testing.T) {
+	sup := &Suppressions{}
+	plans := []*model.Plan{plan("a/b", "0.1.0", model.Branch{Name: "renovate/x-1.x"})}
+	open := map[string][]publish.MergeRequest{"a/b": {mr("renovate/z-1.x", 9)}}
+	first, st := Compare(plans, open, sup, nil, "0.1.0", now, nil)
+	if !first.Passed() || first.Pending != 2 || first.OnlyPinup != 0 || first.OnlyRenovate != 0 {
+		t.Errorf("first run: %v %+v", first.Failures, first)
+	}
+	if len(st.Seen) != 2 {
+		t.Errorf("state carries %v", st.Seen)
+	}
+	second, _ := Compare(plans, open, sup, nil, "0.1.0", now, st)
+	if second.Passed() || second.OnlyPinup != 1 || second.OnlyRenovate != 1 || second.Pending != 0 {
+		t.Errorf("second run: %v %+v", second.Failures, second)
+	}
+	// Gone next run: the state forgets it, and a later reappearance is
+	// pending again.
+	third, st3 := Compare(plans, map[string][]publish.MergeRequest{"a/b": {}}, sup, nil, "0.1.0", now, st)
+	if len(st3.Seen) != 1 || third.OnlyRenovate != 0 {
+		t.Errorf("third run: %+v %v", third, st3.Seen)
+	}
+
+	for _, reason := range []model.BlockReason{model.BlockSchedule, model.BlockMinimumReleaseAge, model.BlockDashboardApproval} {
+		held := plan("a/b", "0.1.0", model.Branch{Name: "renovate/y-1.x", SuppressedBy: reason})
+		r := compare([]*model.Plan{held}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/y-1.x", 4)}}, sup, nil, "0.1.0", now)
+		if !r.Passed() || r.Persisting != 1 || r.HeldOpen != 0 {
+			t.Errorf("%s: %v %+v", reason, r.Failures, r)
+		}
+	}
+	// A hold Renovate would not have: still a failure.
+	held := plan("a/b", "0.1.0", model.Branch{Name: "renovate/y-1.x", SuppressedBy: model.BlockPluginRequired})
+	if r := compare([]*model.Plan{held}, map[string][]publish.MergeRequest{"a/b": {mr("renovate/y-1.x", 4)}}, sup, nil, "0.1.0", now); r.Passed() || r.HeldOpen != 1 {
+		t.Errorf("pluginRequired: %+v", r)
+	}
 }

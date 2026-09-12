@@ -38,9 +38,12 @@ func split(s string) (semverx.Version, string, bool) {
 	return v, suffix, ok
 }
 
-func (t testScheme) IsValid(s string) bool { _, _, ok := split(s); return ok }
+func (t testScheme) IsValid(s string) bool {
+	_, _, ok := split(strings.TrimPrefix(s, "^"))
+	return ok
+}
 func (t testScheme) IsVersion(s string) bool {
-	return t.IsValid(s) && !(t.partial && !strings.Contains(s, "."))
+	return !strings.HasPrefix(s, "^") && t.IsValid(s) && !(t.partial && !strings.Contains(s, "."))
 }
 func (t testScheme) IsStable(s string) bool {
 	_, suffix, ok := split(s)
@@ -71,6 +74,14 @@ func (t testScheme) Compare(a, b string) int {
 }
 func (t testScheme) Equal(a, b string) bool { return t.Compare(a, b) == 0 }
 func (t testScheme) Satisfies(v, rng string) bool {
+	// A caret range, enough for the strategy tests: same major, at or
+	// above the floor.
+	if strings.HasPrefix(rng, "^") {
+		floor := strings.TrimPrefix(rng, "^")
+		fm, _ := t.Major(floor)
+		vm, _ := t.Major(v)
+		return fm == vm && t.Compare(v, floor) >= 0
+	}
 	if t.partial && !strings.Contains(rng, ".") {
 		maj, _ := t.Major(v)
 		want, _ := t.Major(rng)
@@ -78,7 +89,20 @@ func (t testScheme) Satisfies(v, rng string) bool {
 	}
 	return t.Equal(v, rng)
 }
-func (t testScheme) NewValue(current, target string, _ versioning.RangeStrategy) (string, error) {
+func (t testScheme) NewValue(current, target string, strategy versioning.RangeStrategy) (string, error) {
+	if strings.HasPrefix(current, "^") {
+		switch strategy {
+		case versioning.StrategyPin:
+			return target, nil
+		case versioning.StrategyBump:
+			return "^" + target, nil
+		default:
+			// replace keeps the shape: ^major.minor of the target.
+			maj, _ := t.Major(target)
+			min, _ := t.Minor(target)
+			return fmt.Sprintf("^%d.%d", maj, min), nil
+		}
+	}
 	if t.partial && !strings.Contains(current, ".") {
 		maj, _ := t.Major(target)
 		return fmt.Sprint(maj), nil
@@ -512,5 +536,106 @@ func TestVulnerabilityBoundPlansTheLowestFixOnly(t *testing.T) {
 	plain := plan(t, dep("lodash", "4.17.20", "semver"), rs)
 	if len(plain.Updates) != 2 {
 		t.Errorf("without a bound: %+v", plain.Updates)
+	}
+}
+
+// Range strategies, measured against the estate's composer rules: bump
+// raises the floor even for a version the range admits and compares
+// against the lock; update-lockfile moves only the lock for an admitted
+// version; pin writes the resolved version exactly; replace (the default)
+// offers only what the range does not admit.
+func TestRangeStrategiesDecideWhatMovesForARange(t *testing.T) {
+	rs := releases("2.52.0", "2.52.5", "2.53.0", "3.0.0")
+	base := dep("ergebnis/composer-normalize", "^2.52", "semver")
+	base.LockedVersion = "2.52.5"
+
+	replace := plan(t, base, rs)
+	if len(replace.Updates) != 1 || replace.Updates[0].NewVersion != "3.0.0" {
+		t.Errorf("replace: %+v", replace.Updates)
+	}
+
+	bump := base
+	bump.RangeStrategy = "bump"
+	res := plan(t, bump, rs)
+	got := map[string]model.Update{}
+	for _, u := range res.Updates {
+		got[u.NewVersion] = u
+	}
+	if u, ok := got["2.53.0"]; !ok || u.NewValue != "^2.53.0" || u.Type != model.UpdateMinor || u.LockOnly {
+		t.Errorf("bump in range: %+v", got)
+	}
+	if u, ok := got["3.0.0"]; !ok || u.NewValue != "^3.0.0" || u.Type != model.UpdateMajor {
+		t.Errorf("bump major: %+v", got)
+	}
+
+	lock := base
+	lock.RangeStrategy = "update-lockfile"
+	res = plan(t, lock, rs)
+	got = map[string]model.Update{}
+	for _, u := range res.Updates {
+		got[u.NewVersion] = u
+	}
+	if u, ok := got["2.53.0"]; !ok || !u.LockOnly || u.NewValue != "^2.52" {
+		t.Errorf("update-lockfile in range: %+v", got)
+	}
+	if u, ok := got["3.0.0"]; !ok || u.LockOnly || u.NewValue != "^3.0" {
+		t.Errorf("update-lockfile out of range: %+v", got)
+	}
+
+	pin := base
+	pin.RangeStrategy = "pin"
+	res = plan(t, pin, rs)
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdatePin || res.Updates[0].NewValue != "2.52.5" {
+		t.Errorf("pin: %+v", res.Updates)
+	}
+	// Without a lock the range resolves to the highest it admits.
+	unlocked := pin
+	unlocked.LockedVersion = ""
+	res = plan(t, unlocked, rs)
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "2.53.0" {
+		t.Errorf("pin without lock: %+v", res.Updates)
+	}
+	// An exact current value has nothing to bump; the strategies agree.
+	exact := dep("x", "2.52.5", "semver")
+	exact.RangeStrategy = "bump"
+	res = plan(t, exact, rs)
+	if len(res.Updates) != 2 || res.Updates[0].NewValue != "2.53.0" {
+		t.Errorf("bump on a pin: %+v", res.Updates)
+	}
+}
+
+// pinDigests (rule 760 of the estate: every docker dependency): a
+// reference with a tag and no digest gets the digest pinned onto it as a
+// pinDigest update, before any version moves; a reference that already
+// carries a digest is unaffected.
+func TestPinDigestsPinsAnUnpinnedTag(t *testing.T) {
+	digests := map[string]string{"3.13": "sha256:c6ead21ffff", "3.14": "sha256:eeee"}
+	req := func(d model.Dependency, rs *model.ReleaseSet) Request {
+		return Request{
+			Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return rs }, Versionings: registry(), Now: now,
+			Digest: func(_ model.Dependency, v string) (string, error) {
+				if d, ok := digests[v]; ok {
+					return d, nil
+				}
+				return "", fmt.Errorf("no manifest for %s", v)
+			},
+		}
+	}
+	d := dep("docker.io/library/python", "3.13", "semver")
+	d.PinDigests = true
+	res := Plan(req(d, releases("3.13", "3.14")))
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdatePinDigest || res.Updates[0].NewValue != "3.13" || res.Updates[0].NewDigest != "sha256:c6ead21ffff" {
+		t.Errorf("pinDigest: %+v", res.Updates)
+	}
+	pinned := d
+	pinned.CurrentDigest = "sha256:c6ead21ffff"
+	res = Plan(req(pinned, releases("3.13", "3.14")))
+	if len(res.Updates) != 1 || res.Updates[0].Type == model.UpdatePinDigest {
+		t.Errorf("already pinned: %+v", res.Updates)
+	}
+	d.PinDigests = false
+	res = Plan(req(d, releases("3.13", "3.14")))
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdateMinor {
+		t.Errorf("without pinDigests: %+v", res.Updates)
 	}
 }

@@ -95,6 +95,16 @@ type Dependency struct {
 	// AllowedVersions, when set by a rule, restricts the candidates: a range
 	// in the dependency's scheme, or /regex/, or !/regex/.
 	AllowedVersions string `json:"allowedVersions,omitempty"`
+	// RangeStrategy is how a range current value moves: replace (a newer
+	// version outside the range replaces it), bump (the range's floor is
+	// raised even for a version it admits), update-lockfile (a version the
+	// range admits moves only the lock), pin (the range becomes the one
+	// version it resolves to). Empty means replace.
+	RangeStrategy string `json:"rangeStrategy,omitempty"`
+	// PinDigests asks for a reference without a digest to be pinned to
+	// the digest its value resolves to (a pinDigest update). Rule 760 of
+	// the estate's configuration sets it for every docker dependency.
+	PinDigests bool `json:"pinDigests,omitempty"`
 
 	// ExtractVersion is a regex with a named group "version", applied to a
 	// release before comparison.

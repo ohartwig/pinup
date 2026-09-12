@@ -135,6 +135,9 @@ func (c cannedRegistry) Releases(_ context.Context, ref lookup.Ref) (*model.Rele
 	return &cp, nil
 }
 func (c cannedRegistry) Digest(_ context.Context, ref lookup.Ref, version string) (string, error) {
+	if f, ok := c.answers.Failures["digest\x00"+ref.Key()+"\x00"+version]; ok {
+		return "", errors.New(f.Msg)
+	}
 	d, ok := c.answers.Digests[ref.Key()+"\x00"+version]
 	if !ok {
 		return "", fmt.Errorf("golden: no recorded digest for %s %s %s", ref.Datasource, ref.PackageName, version)
@@ -171,11 +174,13 @@ func (r recordingDS) Digest(ctx context.Context, ref lookup.Ref, version string)
 		return "", fmt.Errorf("%s offers no digests", ref.Datasource)
 	}
 	d, err := src.Digest(ctx, ref, version)
+	r.mu.Lock()
 	if err == nil {
-		r.mu.Lock()
 		r.answers.Digests[ref.Key()+"\x00"+version] = d
-		r.mu.Unlock()
+	} else {
+		r.answers.Failures["digest\x00"+ref.Key()+"\x00"+version] = cannedFailure{Msg: err.Error()}
 	}
+	r.mu.Unlock()
 	return d, err
 }
 

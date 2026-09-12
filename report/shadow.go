@@ -5,6 +5,7 @@ package report
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -95,21 +96,88 @@ type Result struct {
 	// major: Renovate, once a human approved it on the dashboard, writes
 	// the new major into a `@N` pin; pinup reports it and never will. The
 	// difference is by design and pre-declared, so it is not a failure.
-	RollingMajor int     `json:"rollingMajor"`
-	Suppressed   int     `json:"suppressed"`
-	Controls     int     `json:"controls"`
-	Entries      []Entry `json:"entries"`
+	RollingMajor int `json:"rollingMajor"`
+	// Persisting counts the held_open entries whose hold is one Renovate
+	// does not re-decide once its merge request exists: a schedule window
+	// (Renovate opened it inside the window, pinup re-decides every hour),
+	// a release age (pinup's first-seen rule is stricter by design), or a
+	// dashboard approval (given once, on Renovate's dashboard). Each is
+	// pre-declared; the runner's live mode adopts such a request rather
+	// than closing it.
+	Persisting int `json:"persisting"`
+	// Pending counts the only_pinup and only_renovate entries seen for the
+	// first time: the two tools run half an hour apart, and a difference
+	// that one run later is gone was timing, not behaviour. A difference
+	// fails only when the previous run saw it too.
+	Pending    int     `json:"pending"`
+	Suppressed int     `json:"suppressed"`
+	Controls   int     `json:"controls"`
+	Entries    []Entry `json:"entries"`
 	// Failures are the reasons the comparison does not pass; empty means
 	// agreement within the rules.
 	Failures []string `json:"failures"`
 }
 
+// State is what one comparison leaves for the next: the differences it
+// saw, so the next run can tell a persisting one from a timing one.
+type State struct {
+	// Seen holds "side|project|branch" of every only_pinup and
+	// only_renovate entry of the last comparison.
+	Seen []string `json:"seen"`
+}
+
+// LoadState reads the previous comparison's state; a missing file is an
+// empty state, which makes every difference pending on the first run.
+func LoadState(path string) (*State, error) {
+	if path == "" {
+		return &State{}, nil
+	}
+	raw, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return &State{}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var st State
+	if err := json.Unmarshal(raw, &st); err != nil {
+		return nil, err
+	}
+	return &st, nil
+}
+
+// Save writes the state for the next run.
+func (st *State) Save(path string) error {
+	raw, err := json.MarshalIndent(st, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, append(raw, '\n'), 0o644)
+}
+
+// persistingHold is a hold Renovate does not re-decide once its merge
+// request exists; see Result.Persisting.
+func persistingHold(reason model.BlockReason) bool {
+	switch reason {
+	case model.BlockSchedule, model.BlockMinimumReleaseAge, model.BlockDashboardApproval:
+		return true
+	}
+	return false
+}
+
 // Compare joins plans with the open merge requests per project. controls
 // names the projects that must yield exactly one only-pinup entry each.
 // version is the pinup version the comparing job runs; a plan from another
-// is refused.
-func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *Suppressions, controls []string, version string, now time.Time) Result {
+// is refused. prev is the previous comparison's state; nil means none.
+func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *Suppressions, controls []string, version string, now time.Time, prev *State) (Result, *State) {
 	var r Result
+	seenBefore := map[string]bool{}
+	if prev != nil {
+		for _, k := range prev.Seen {
+			seenBefore[k] = true
+		}
+	}
+	next := &State{}
 	r.Plans = len(plans)
 	if len(plans) == 0 {
 		r.Failures = append(r.Failures, "zero plans: nothing was compared")
@@ -154,6 +222,9 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 			if m, ok := theirs[name]; ok && b.SuppressedBy == model.BlockRollingMajor {
 				e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "rolling-major"
 				r.RollingMajor++
+			} else if ok && persistingHold(b.SuppressedBy) {
+				e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "persisting"
+				r.Persisting++
 			} else if ok && b.SuppressedBy != "" {
 				e.Side, e.MRIID = "held_open", m.IID
 				r.HeldOpen++
@@ -176,7 +247,14 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 					e.Suppressed = "control"
 					r.Controls++
 				default:
-					r.OnlyPinup++
+					k := "only_pinup|" + p.Repo.Path + "|" + name
+					next.Seen = append(next.Seen, k)
+					if seenBefore[k] {
+						r.OnlyPinup++
+					} else {
+						e.Suppressed = "pending"
+						r.Pending++
+					}
 				}
 				onlyPinupByProject[p.Repo.Path]++
 			}
@@ -186,8 +264,16 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 			if _, ok := mine[name]; ok {
 				continue
 			}
-			r.Entries = append(r.Entries, Entry{Project: p.Repo.Path, Branch: name, Side: "only_renovate", Title: m.Title, MRIID: m.IID})
-			r.OnlyRenovate++
+			e := Entry{Project: p.Repo.Path, Branch: name, Side: "only_renovate", Title: m.Title, MRIID: m.IID}
+			k := "only_renovate|" + p.Repo.Path + "|" + name
+			next.Seen = append(next.Seen, k)
+			if seenBefore[k] {
+				r.OnlyRenovate++
+			} else {
+				e.Suppressed = "pending"
+				r.Pending++
+			}
+			r.Entries = append(r.Entries, e)
 		}
 	}
 	sort.Slice(r.Entries, func(i, j int) bool {
@@ -210,15 +296,16 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 		}
 	}
 	if r.OnlyRenovate > 0 {
-		r.Failures = append(r.Failures, fmt.Sprintf("%d branches Renovate has open that pinup does not plan: a miss is an update that does not happen", r.OnlyRenovate))
+		r.Failures = append(r.Failures, fmt.Sprintf("%d branches Renovate has open that pinup does not plan, for the second run running: a miss is an update that does not happen", r.OnlyRenovate))
 	}
 	if r.HeldOpen > 0 {
 		r.Failures = append(r.Failures, fmt.Sprintf("%d branches Renovate has open that pinup holds; the reasons are on the entries", r.HeldOpen))
 	}
 	if r.OnlyPinup > 0 {
-		r.Failures = append(r.Failures, fmt.Sprintf("%d branches pinup plans without a merge request and without a triaged suppression", r.OnlyPinup))
+		r.Failures = append(r.Failures, fmt.Sprintf("%d branches pinup plans without a merge request, for the second run running, and without a triaged suppression", r.OnlyPinup))
 	}
-	return r
+	sort.Strings(next.Seen)
+	return r, next
 }
 
 func suppressionFor(sup *Suppressions, project, branch string, now time.Time) string {
@@ -233,9 +320,9 @@ func suppressionFor(sup *Suppressions, project, branch string, now time.Time) st
 // Summary is the one line a job log needs: matched over total, and the
 // buckets.
 func (r Result) Summary() string {
-	total := r.Both + r.Held + r.HeldOpen + r.RollingMajor + r.OnlyPinup + r.OnlyRenovate + r.Suppressed + r.Controls
-	return fmt.Sprintf("shadow: %d plans, %d deps, matched %d/%d (held %d, suppressed %d, controls %d, rolling_major %d, held_open %d, only_pinup %d, only_renovate %d)",
-		r.Plans, r.Deps, r.Both+r.Held+r.Suppressed+r.Controls+r.RollingMajor, total, r.Held, r.Suppressed, r.Controls, r.RollingMajor, r.HeldOpen, r.OnlyPinup, r.OnlyRenovate)
+	total := r.Both + r.Held + r.HeldOpen + r.RollingMajor + r.Persisting + r.Pending + r.OnlyPinup + r.OnlyRenovate + r.Suppressed + r.Controls
+	return fmt.Sprintf("shadow: %d plans, %d deps, matched %d/%d (held %d, suppressed %d, controls %d, rolling_major %d, persisting %d, pending %d, held_open %d, only_pinup %d, only_renovate %d)",
+		r.Plans, r.Deps, r.Both+r.Held+r.Suppressed+r.Controls+r.RollingMajor+r.Persisting, total, r.Held, r.Suppressed, r.Controls, r.RollingMajor, r.Persisting, r.Pending, r.HeldOpen, r.OnlyPinup, r.OnlyRenovate)
 }
 
 // Passed reports whether the comparison has no failure.
@@ -253,7 +340,7 @@ func (r Result) String() string {
 			fmt.Fprintf(&b, " (held: %s)", e.SuppressedBy)
 		}
 		if e.Suppressed != "" {
-			fmt.Fprintf(&b, " (suppressed)")
+			fmt.Fprintf(&b, " (%s)", e.Suppressed)
 		}
 		b.WriteString("\n")
 	}

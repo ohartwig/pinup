@@ -139,6 +139,13 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 
 	cur := d.CurrentValue
+	if d.PinDigests && d.CurrentDigest == "" && cur != "" {
+		// pinDigests: the reference names a tag and no digest; the digest
+		// the tag resolves to is pinned onto it, as its own update type,
+		// before any version moves. Measured: "renovate/pin-dependencies",
+		// "pin docker.io/library/python docker tag to c6ead21".
+		return pinDigest(req, d, cur)
+	}
 	if cur == "" && d.CurrentDigest != "" {
 		// A reference by digest alone - `image@sha256:…` - has no version
 		// to compare; what can move is the digest behind the tag it
@@ -168,6 +175,7 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	isRange := !v.IsVersion(cur)
 	base := cur
 	seen := 0
+	strategy := rangeStrategy(d.RangeStrategy)
 	if isRange {
 		var admitted []string
 		for _, r := range rs.Releases {
@@ -187,6 +195,14 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 			return nil, fmt.Sprintf("no release satisfies %q", cur), nil
 		}
 		base = best
+		// With a lock file the current version is what the lock pins,
+		// not the highest the range admits: under bump and
+		// update-lockfile every release above the lock is an update,
+		// inside the range or not. Renovate reads the current version
+		// the same way (lockedVersion first).
+		if strategy != versioning.StrategyReplace && d.LockedVersion != "" && v.IsVersion(d.LockedVersion) {
+			base = d.LockedVersion
+		}
 	}
 	baseStable := v.IsStable(base)
 
@@ -205,10 +221,11 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		if v.Compare(c, base) <= 0 {
 			continue
 		}
-		if isRange && v.Satisfies(c, cur) {
-			// Already admitted by the range: writing it back would change
-			// nothing in the file, and an update that changes nothing is
-			// not an update.
+		if isRange && v.Satisfies(c, cur) && strategy == versioning.StrategyReplace {
+			// Already admitted by the range: under replace, writing it
+			// back would change nothing in the file, and an update that
+			// changes nothing is not an update. Bump raises the floor
+			// anyway; update-lockfile moves the lock.
 			continue
 		}
 		if !versioning.IsCompatible(v, c, base) {
@@ -250,6 +267,13 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		return nil, fmt.Sprintf("none of the %d releases is a valid %s version", len(rs.Releases), scheme), nil
 	}
 
+	if isRange && strategy == versioning.StrategyPin && d.VulnerabilityBound == "" {
+		// The range becomes the one version it resolves to; nothing else
+		// is offered on this run. Renovate types it "pin" and groups it
+		// under pin-dependencies. A security fix takes precedence and
+		// pins to the fix instead.
+		return pinRange(d, cur, base, byVersionOf(rs, v))
+	}
 	if d.VulnerabilityBound != "" {
 		// The fast path. Measured: with advisories against the current
 		// version, Renovate's one update is the LOWEST released,
@@ -431,12 +455,23 @@ const unchangedPrefix = "unchanged:"
 // buildUpdate turns one chosen target release into an update, or names why
 // it cannot: the scheme refuses to write it, or writing it changes nothing.
 func buildUpdate(v versioning.Versioning, d *model.Dependency, cur, base, target string, rel model.Release, scheme string) (model.Update, string) {
-	newValue, err := v.NewValue(cur, target, versioning.StrategyAuto)
-	if err != nil {
-		return model.Update{}, fmt.Sprintf("cannot write %s as a %s value: %v", target, scheme, err)
+	strategy := rangeStrategy(d.RangeStrategy)
+	lockOnly := false
+	if strategy == versioning.StrategyUpdateLockfile && !v.IsVersion(cur) && v.Satisfies(target, cur) {
+		// The range admits the target: the manifest keeps its range and
+		// the lock moves. Renovate titles it like a version update.
+		lockOnly = true
 	}
-	if newValue == cur {
-		return model.Update{}, unchangedPrefix + target
+	newValue := cur
+	if !lockOnly {
+		var err error
+		newValue, err = v.NewValue(cur, target, strategy)
+		if err != nil {
+			return model.Update{}, fmt.Sprintf("cannot write %s as a %s value: %v", target, scheme, err)
+		}
+		if newValue == cur {
+			return model.Update{}, unchangedPrefix + target
+		}
 	}
 	t := versioning.UpdateType(v, base, target)
 	if t == model.UpdateMajor && isRollingMajor(cur) {
@@ -456,6 +491,7 @@ func buildUpdate(v versioning.Versioning, d *model.Dependency, cur, base, target
 		Type:       t,
 		Declared:   declaredRisk(t),
 		TimeSource: model.TimeUnknown,
+		LockOnly:   lockOnly,
 	}
 	switch {
 	case !rel.Timestamp.IsZero():
@@ -468,6 +504,48 @@ func buildUpdate(v versioning.Versioning, d *model.Dependency, cur, base, target
 	return u, ""
 }
 
+// rangeStrategy maps the configuration's word onto the scheme strategy.
+// Renovate's "auto" and "widen" are read as replace: auto is what every
+// manager here resolves to without a lock, and widen (`^1 || ^2`) is a
+// form no configuration in the estate asks for.
+func rangeStrategy(s string) versioning.RangeStrategy {
+	switch s {
+	case "bump":
+		return versioning.StrategyBump
+	case "update-lockfile":
+		return versioning.StrategyUpdateLockfile
+	case "pin":
+		return versioning.StrategyPin
+	}
+	return versioning.StrategyReplace
+}
+
+// byVersionOf indexes the valid releases by version.
+func byVersionOf(rs *model.ReleaseSet, v versioning.Versioning) map[string]model.Release {
+	out := map[string]model.Release{}
+	for _, r := range rs.Releases {
+		if v.IsVersion(r.Version) {
+			out[r.Version] = r
+		}
+	}
+	return out
+}
+
+// pinRange plans the one update a range gets under the pin strategy: the
+// version it resolves to - the lock's, else the highest it admits -
+// written exactly.
+func pinRange(d *model.Dependency, cur, resolved string, byVersion map[string]model.Release) ([]model.Update, string, *model.Warning) {
+	if resolved == cur {
+		return nil, "", nil
+	}
+	rel := byVersion[resolved]
+	u := model.Update{
+		DepKey: d.Key(), Dep: *d, NewValue: resolved, NewVersion: resolved, NewDigest: rel.Digest,
+		Type: model.UpdatePin, Declared: model.RiskUnknown, TimeSource: model.TimeUnknown,
+	}
+	return []model.Update{u}, "", nil
+}
+
 // lookupDigest asks the request for a digest, naming the gap when it has
 // no way to answer.
 func lookupDigest(req Request, d model.Dependency, version string) (string, error) {
@@ -475,6 +553,27 @@ func lookupDigest(req Request, d model.Dependency, version string) (string, erro
 		return "", fmt.Errorf("no digest source for %s", d.Datasource)
 	}
 	return req.Digest(d, version)
+}
+
+// pinDigest plans the pinDigest update for a reference that names a tag
+// and no digest.
+func pinDigest(req Request, d *model.Dependency, tag string) ([]model.Update, string, *model.Warning) {
+	digest, err := lookupDigest(req, *d, tag)
+	if err != nil {
+		return nil, fmt.Sprintf("digest of %s unknown: %v", tag, err), &model.Warning{
+			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: digest of %s: %v", d.DepName, tag, err),
+		}
+	}
+	return []model.Update{{
+		DepKey:     d.Key(),
+		Dep:        *d,
+		NewValue:   tag,
+		NewVersion: tag,
+		NewDigest:  digest,
+		Type:       model.UpdatePinDigest,
+		Declared:   model.RiskUnknown,
+		TimeSource: model.TimeUnknown,
+	}}, "", nil
 }
 
 // digestRefresh plans the one update a digest-pinned reference has when its

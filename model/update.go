@@ -227,6 +227,12 @@ type Update struct {
 	ReleaseTime time.Time  `json:"releaseTime,omitzero"`
 	TimeSource  TimeSource `json:"timeSource"`
 
+	// LockOnly marks an update that changes no manifest byte: the range
+	// already admits the new version, and the strategy is update-lockfile,
+	// so the lock file is what moves - through the manager's lock-refresh
+	// task, naming this dependency.
+	LockOnly bool `json:"lockOnly,omitempty"`
+
 	// SecurityFix marks an update planned to clear the dependency's
 	// advisories: the lowest release at or above its vulnerability bound.
 	// The vulnerabilityAlerts configuration overlays such an update - its
