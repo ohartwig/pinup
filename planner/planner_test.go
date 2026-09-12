@@ -639,3 +639,31 @@ func TestPinDigestsPinsAnUnpinnedTag(t *testing.T) {
 		t.Errorf("without pinDigests: %+v", res.Updates)
 	}
 }
+
+// A Go pseudo-version pins a commit inside the value. Commit to commit is
+// a digest move carrying the new commit; commit to a tagged release is an
+// ordinary version update that needs no digest lookup, and the pin's own
+// commit is not what the digest source is asked about.
+func TestGoPseudoVersionsMoveAsDigestsAndLeaveForTags(t *testing.T) {
+	d := dep("golang.org/x/mobile", "v0.0.0-20260821190718-4776eadac327", "semver")
+	d.Manager, d.Datasource = "gomod", "go"
+	d.CurrentDigest = "4776eadac327"
+	rs := &model.ReleaseSet{PackageName: "golang.org/x/mobile", Datasource: "go", Releases: []model.Release{
+		{Version: "v0.0.0-20260908204917-8b95e45f8d3e", Digest: "8b95e45f8d3e"},
+	}}
+	res := Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return rs }, Versionings: registry(), Now: now})
+	if len(res.Updates) != 1 {
+		t.Fatalf("updates = %+v, want the one commit move", res.Updates)
+	}
+	u := res.Updates[0]
+	if u.Type != model.UpdateDigest || u.NewValue != "v0.0.0-20260908204917-8b95e45f8d3e" || u.NewDigest != "8b95e45f8d3e" {
+		t.Errorf("update = type %s value %s digest %s, want a digest move to the new pseudo-version", u.Type, u.NewValue, u.NewDigest)
+	}
+
+	rs.Releases = []model.Release{{Version: "v0.1.0"}}
+	res = Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return rs }, Versionings: registry(),
+		Digest: func(model.Dependency, string) (string, error) { return "", fmt.Errorf("go has no digest source") }, Now: now})
+	if len(res.Updates) != 1 || res.Updates[0].Type == model.UpdateDigest || res.Updates[0].NewValue != "v0.1.0" || res.Updates[0].NewDigest != "" {
+		t.Fatalf("updates = %+v, warnings %+v; want a plain version update to v0.1.0", res.Updates, res.Warnings)
+	}
+}

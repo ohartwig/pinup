@@ -176,7 +176,6 @@
     "pipenv": {"managerFilePatterns":["/(^|/)Pipfile$/"]},
     "pixi": {"managerFilePatterns":["/(^|/)pyproject\\.toml$/","/(^|/)pixi\\.toml$/"]},
     "poetry": {"managerFilePatterns":["/(^|/)pyproject\\.toml$/"]},
-    "postUpdateOptions": [],
     "postUpgradeTasks": {"commands":[],"executionMode":"update","fileFilters":[],"installTools":{}},
     "prBodyColumns": ["Package","Type","Update","Change","Pending"],
     "prBodyDefinitions": {"Adoption":"{{#if newVersion}}![adoption](https://developer.mend.io/api/mc/badges/adoption/{{datasource}}/{{replace '/' '%2f' packageName}}/{{{newVersion}}}?slim=true){{/if}}","Age":"{{#if newVersion}}![age](https://developer.mend.io/api/mc/badges/age/{{datasource}}/{{replace '/' '%2f' packageName}}/{{{newVersion}}}?slim=true){{/if}}","Change":"`{{{displayFrom}}}` → `{{{displayTo}}}`","Confidence":"{{#if newVersion}}![confidence](https://developer.mend.io/api/mc/badges/confidence/{{datasource}}/{{replace '/' '%2f' packageName}}/{{{currentVersion}}}/{{{newVersion}}}?slim=true){{/if}}","Current value":"{{{currentValue}}}","New value":"{{{newValue}}}","Package":"{{{depNameLinked}}}{{#if newName}}{{#unless (equals depName newName)}} → {{{newNameLinked}}}{{/unless}}{{/if}}","Package file":"{{{packageFile}}}","Passing":"{{#if newVersion}}![passing](https://developer.mend.io/api/mc/badges/compatibility/{{datasource}}/{{replace '/' '%2f' packageName}}/{{{currentVersion}}}/{{{newVersion}}}?slim=true){{/if}}","Pending":"{{{displayPending}}}","References":"{{{references}}}","Type":"{{{depType}}}","Update":"{{{updateType}}}"},

@@ -136,7 +136,13 @@ func Decide(u model.Update, p Policy, now time.Time) (model.Update, error) {
 		return u, fmt.Errorf("minimumReleaseAge: %w", err)
 	}
 	// A lock refresh has no release to be old; the age applies to versions.
-	if age > 0 && u.Type != model.UpdateLockFileMaintenance {
+	// Neither has a digest move: the tag stays where it is and the digest
+	// behind it carries no publication time. Measured: with a top-level
+	// minimumReleaseAge of 24 hours Renovate opens "update
+	// https://github.com/crowdsecurity/hub digest to ff63bc3"
+	// (devops/wolfi-packages!364) for a git-refs branch pin, and the
+	// "pin dependencies" branch waits on its schedule, not on an age.
+	if age > 0 && u.Type != model.UpdateLockFileMaintenance && u.Type != model.UpdateDigest && u.Type != model.UpdatePinDigest {
 		switch {
 		case u.TimeSource == model.TimeUnknown && !p.TimestampOptional:
 			u.Blocks = append(u.Blocks, model.Block{

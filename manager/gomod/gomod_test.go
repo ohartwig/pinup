@@ -117,8 +117,8 @@ func TestSyntheticGoMod(t *testing.T) {
 	assertLocus(t, f, yaml)
 
 	sys := depNamed(t, deps, "golang.org/x/sys", "indirect")
-	if sys.CurrentValue != "v0.45.0" || sys.SkipReason != "indirect dependency" || sys.Datasource != "go" {
-		t.Errorf("sys indirect require = %+v, want the measured skip", sys)
+	if sys.CurrentValue != "v0.45.0" || sys.Disabled != "indirect dependency" || sys.SkipReason != "" || sys.Datasource != "go" {
+		t.Errorf("sys indirect require = %+v, want it disabled, not skipped", sys)
 	}
 	assertLocus(t, f, sys)
 
@@ -334,7 +334,9 @@ func TestAgreesWithTheCorpus(t *testing.T) {
 			k := depKey{
 				packageFile: pf.PackageFile, depName: d.DepName, depType: d.DepType,
 				datasource: d.Datasource, currentValue: d.CurrentValue, versioning: d.Versioning,
-				skipped: d.SkipReason != "",
+				// Renovate's enabled:false is pinup's Disabled: recorded,
+				// still asked about advisories, not updated on its own.
+				skipped: d.Disabled != "",
 			}
 			got[k.String()]++
 		}
@@ -368,5 +370,35 @@ func TestAgreesWithTheCorpus(t *testing.T) {
 	t.Logf("agreed with the corpus on %d of %d dependencies", agreed, total)
 	if agreed != total {
 		t.Errorf("agreed on %d of %d, want all %d", agreed, total, total)
+	}
+}
+
+// A pseudo-version's commit is the dependency's digest, the locus stays on
+// the whole value, and every module requirement names go.sum as its lock.
+func TestPseudoVersionsCarryTheirCommitAndModulesNameGoSum(t *testing.T) {
+	src := "module m\n\ngo 1.27.0\n\nrequire golang.org/x/mobile v0.0.0-20260821190718-4776eadac327\n"
+	res, err := (&Manager{}).Extract(context.Background(), extract.File{Path: "go.mod", Content: []byte(src)}, extract.ManagerConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.LockFiles) != 1 || res.LockFiles[0] != "go.sum" {
+		t.Errorf("result lock files = %v, want go.sum", res.LockFiles)
+	}
+	mobile := depNamed(t, res.Deps, "golang.org/x/mobile", "require")
+	if mobile.CurrentDigest != "4776eadac327" {
+		t.Errorf("currentDigest = %q, want the pseudo-version's commit", mobile.CurrentDigest)
+	}
+	if mobile.Locus.DigestStart != model.NoDigest || string(src[mobile.Locus.ValueStart:mobile.Locus.ValueEnd]) != mobile.CurrentValue {
+		t.Errorf("locus = %+v, want the whole value and no digest span", mobile.Locus)
+	}
+	if len(mobile.LockFiles) != 1 || mobile.LockFiles[0] != "go.sum" {
+		t.Errorf("lock files = %v, want go.sum", mobile.LockFiles)
+	}
+	goDirective := depNamed(t, res.Deps, "go", "golang")
+	if len(goDirective.LockFiles) != 0 {
+		t.Errorf("the go directive names lock files %v, want none", goDirective.LockFiles)
+	}
+	if locked, err := LockedVersions([]byte("a/b v1.0.0 h1:x=\n")); err != nil || locked == nil || len(locked) != 0 {
+		t.Errorf("LockedVersions = %v, %v; want an empty, non-nil map", locked, err)
 	}
 }

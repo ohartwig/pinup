@@ -149,6 +149,7 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"golang-version":     gods.New(gods.Toolchain, client, "https://go.dev"),
 		"helm":               helmds.New(client),
 		"git-tags":           gittagsds.New(),
+		"git-refs":           gittagsds.NewKind(gittagsds.Refs),
 	}
 	for name, view := range ApkViews {
 		r[name] = apkds.New(name, client, view)
@@ -198,6 +199,8 @@ func LockedVersions(manager string, lock []byte) (map[string]string, error) {
 		return npmman.LockedVersions(lock)
 	case "terraform":
 		return terraform.LockedVersions(lock)
+	case "gomod":
+		return gomod.LockedVersions(lock)
 	}
 	return nil, nil
 }

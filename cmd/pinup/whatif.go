@@ -337,7 +337,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			continue
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
-		locked := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), res.Deps, plan)
+		locked := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
 		if locked != nil {
 			locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = true
 		}
@@ -398,10 +398,19 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	if o.Released != "" {
 		fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}
-	results := fetcher.Fetch(ctx, plan.Deps)
+	// Advisories first: a disabled dependency is looked up only when it is
+	// vulnerable, and whether it is comes from the advisory database, not
+	// the registry.
 	if o.Advisories != nil {
 		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, resolved.Raw, plan.Deps, wire.DefaultVersioning(datasources))...)
 	}
+	for i := range plan.Deps {
+		d := &plan.Deps[i]
+		if d.Disabled != "" && d.SkipReason == "" && d.VulnerabilityBound == "" {
+			d.SkipReason = d.Disabled
+		}
+	}
+	results := fetcher.Fetch(ctx, plan.Deps)
 	fromCache := 0
 	for _, r := range results {
 		if r.Warning != nil {
@@ -574,7 +583,9 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	}
 	res := engine.Apply(base, rules.SubjectOf(d, ""))
 	if res.SkipReason != "" {
-		d.SkipReason = fmt.Sprintf("disabled by %s", lastWriter(res, "enabled"))
+		// Disabled, not skipped: the advisory check still sees it, and a
+		// security fix travels under vulnerabilityAlerts' own enabled.
+		d.Disabled = fmt.Sprintf("disabled by %s", lastWriter(res, "enabled"))
 		return d
 	}
 	if v, ok := res.Config["versioning"].(string); ok && v != "" && len(res.Wrote["versioning"]) > 0 {
@@ -772,12 +783,27 @@ func intOf(v any) int {
 // only; the lock is the run's to read. A missing lock is nothing pinned; an
 // unreadable one is a warning, since "no locked version" is a different
 // fact from "the lock could not be read".
-func lockedVersions(root, manifest, manager string, deps []model.Dependency, plan *model.Plan) map[string]string {
-	if len(deps) == 0 || len(deps[0].LockFiles) == 0 {
+// lockFilesOf is the lock files an extraction names: on the result, or on
+// any of its dependencies - sorted first is not necessarily one that has a
+// lock (go.mod's go directive has none, its modules do).
+func lockFilesOf(res extract.Result) []string {
+	if len(res.LockFiles) > 0 {
+		return res.LockFiles
+	}
+	for _, d := range res.Deps {
+		if len(d.LockFiles) > 0 {
+			return d.LockFiles
+		}
+	}
+	return nil
+}
+
+func lockedVersions(root, manifest, manager string, lockFiles []string, plan *model.Plan) map[string]string {
+	if len(lockFiles) == 0 {
 		return nil
 	}
 	dir := filepath.Dir(manifest)
-	for _, name := range deps[0].LockFiles {
+	for _, name := range lockFiles {
 		path := filepath.Join(dir, name)
 		raw, err := os.ReadFile(filepath.Join(root, path))
 		if err != nil {

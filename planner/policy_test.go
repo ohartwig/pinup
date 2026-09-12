@@ -156,3 +156,19 @@ func TestLockFileMaintenanceKeepsItsBlockAndIsNotAged(t *testing.T) {
 		t.Errorf("blocks %+v", got.Blocks)
 	}
 }
+
+// A digest move has no release to be old: the tag stays, only the digest
+// behind it changes. Measured: devops/wolfi-packages!364 opened under a
+// 24-hour minimumReleaseAge for a git-refs branch pin with no timestamp.
+func TestDigestMovesAreNotAged(t *testing.T) {
+	for _, typ := range []model.UpdateType{model.UpdateDigest, model.UpdatePinDigest} {
+		u := model.Update{DepKey: "img", Type: typ, TimeSource: model.TimeUnknown}
+		got, err := Decide(u, PolicyOf(map[string]any{"minimumReleaseAge": "24 hours"}, origins), now)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(got.Blocks) != 0 {
+			t.Errorf("%s: blocks %+v, want none", typ, got.Blocks)
+		}
+	}
+}

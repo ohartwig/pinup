@@ -135,6 +135,14 @@ type Dependency struct {
 	// assert against it.
 	SkipReason string `json:"skipReason,omitempty"`
 
+	// Disabled is why this dependency is not updated on its own - an
+	// indirect Go module, a rule that says enabled: false. Unlike a skip it
+	// is still asked about advisories: a security fix reaches a disabled
+	// dependency (measured: Renovate opens "update module golang.org/x/mod
+	// to v0.40.0 [security]" for a `// indirect` requirement). Without one
+	// the reason becomes the skip.
+	Disabled string `json:"disabled,omitempty"`
+
 	LockFiles []string `json:"lockFiles,omitempty"`
 }
 

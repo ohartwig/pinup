@@ -385,12 +385,51 @@ func (e *Engine) Apply(base map[string]any, s Subject) Resolution {
 				}
 				cfg[k] = v
 			default:
+				// Most objects a rule sets replace the one there, measured:
+				// a rule's postUpgradeTasks arrives without the base's
+				// empty installTools. prBodyDefinitions is the exception
+				// - a rule adding .Package for golang.org/x/ leaves the
+				// other twelve columns in place - and it merges key by
+				// key into a copy, so the base is never written through.
+				if add, ok := v.(map[string]any); ok && mergedObjectKeys[k] {
+					if existing, ok := cfg[k].(map[string]any); ok {
+						cfg[k] = mergeObjects(existing, add)
+						res.Wrote[k] = append(res.Wrote[k], r.Index)
+						continue
+					}
+				}
 				cfg[k] = v
 			}
 			res.Wrote[k] = append(res.Wrote[k], r.Index)
 		}
 	}
 	return res
+}
+
+// mergedObjectKeys are the object-valued keys a rule merges into rather
+// than replaces. Measured over the rule vectors (3366, rules/parity_test):
+// only prBodyDefinitions behaves this way among the keys the estate's
+// rules set; a key not exercised there replaces, the behaviour every
+// other measured object shows.
+var mergedObjectKeys = map[string]bool{"prBodyDefinitions": true}
+
+// mergeObjects returns a new object holding base's keys overlaid with add's,
+// nested objects merged the same way, arrays and scalars replaced.
+func mergeObjects(base, add map[string]any) map[string]any {
+	out := make(map[string]any, len(base)+len(add))
+	for k, v := range base {
+		out[k] = v
+	}
+	for k, v := range add {
+		if addMap, ok := v.(map[string]any); ok {
+			if baseMap, ok := out[k].(map[string]any); ok {
+				out[k] = mergeObjects(baseMap, addMap)
+				continue
+			}
+		}
+		out[k] = v
+	}
+	return out
 }
 
 func (e *Engine) matches(r Rule, s Subject) bool {

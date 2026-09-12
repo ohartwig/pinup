@@ -216,11 +216,11 @@ func TestEveryPatternInTheRealConfigCompiles(t *testing.T) {
 
 	// Denominators. These are the measured values; a change means the config
 	// moved, and the parity snapshots need to move with it.
-	if total != 105 {
-		t.Errorf("found %d pattern entries, expected 105 - the config changed", total)
+	if total != 107 {
+		t.Errorf("found %d pattern entries, expected 107 - the config changed", total)
 	}
-	if exact != 53 || globs != 51 || regexes != 1 {
-		t.Errorf("classification drifted: %d exact, %d glob, %d regex; expected 53/51/1", exact, globs, regexes)
+	if exact != 54 || globs != 52 || regexes != 1 {
+		t.Errorf("classification drifted: %d exact, %d glob, %d regex; expected 54/52/1", exact, globs, regexes)
 	}
 	if negated != 12 {
 		t.Errorf("found %d negated entries, expected 12", negated)

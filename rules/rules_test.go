@@ -192,3 +192,34 @@ func TestApplyDoesNotTouchTheBase(t *testing.T) {
 		t.Error("the resolved config must not carry packageRules")
 	}
 }
+
+// prBodyDefinitions merges into the base's columns; postUpgradeTasks, like
+// every other object, replaces - both measured on the rule vectors - and
+// neither writes through into the base.
+func TestObjectsReplaceExceptTheMeasuredMergedOnes(t *testing.T) {
+	base := map[string]any{
+		"prBodyDefinitions": map[string]any{"Age": "a", "Package": "p"},
+		"postUpgradeTasks":  map[string]any{"commands": []any{}, "installTools": map[string]any{}},
+		"packageRules":      []any{},
+	}
+	e := rulesOf(t, map[string]any{
+		"matchPackageNames": []any{"*"},
+		"prBodyDefinitions": map[string]any{"Package": "linked"},
+		"postUpgradeTasks":  map[string]any{"commands": []any{"composer update"}},
+	})
+	res := e.Apply(base, Subject{PackageName: "a"})
+	defs := res.Config["prBodyDefinitions"].(map[string]any)
+	if defs["Age"] != "a" || defs["Package"] != "linked" {
+		t.Errorf("prBodyDefinitions = %v, want Age kept and Package overridden", defs)
+	}
+	tasks := res.Config["postUpgradeTasks"].(map[string]any)
+	if _, ok := tasks["installTools"]; ok {
+		t.Errorf("postUpgradeTasks = %v, want the rule's object alone", tasks)
+	}
+	if base["prBodyDefinitions"].(map[string]any)["Package"] != "p" {
+		t.Error("the base's prBodyDefinitions was written through")
+	}
+	if len(res.Wrote["prBodyDefinitions"]) != 1 {
+		t.Errorf("Wrote[prBodyDefinitions] = %v, want the one rule", res.Wrote["prBodyDefinitions"])
+	}
+}

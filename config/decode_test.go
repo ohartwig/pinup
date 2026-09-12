@@ -24,8 +24,8 @@ func TestDecodeTheRealConfig(t *testing.T) {
 	if len(warnings) != 2 {
 		t.Errorf("want the two inert mergeConfidence warnings, got %v", warnings)
 	}
-	if rules, _ := r.Raw["packageRules"].([]any); len(rules) != 770 {
-		t.Errorf("resolved %d rules, want 770", len(rules))
+	if rules, _ := r.Raw["packageRules"].([]any); len(rules) != 771 {
+		t.Errorf("resolved %d rules, want 771", len(rules))
 	}
 	if len(d.CustomManagers) != 29 {
 		t.Errorf("decoded %d custom managers, expected 29", len(d.CustomManagers))
@@ -53,8 +53,8 @@ func TestDecodeTheRealConfig(t *testing.T) {
 	if _, _, _, err := DecodeFile("../testdata/parity/config/default.json", nil); err == nil {
 		t.Error("a file with extends and no preset source must fail, not resolve to less")
 	}
-	if len(d.EnabledManagers) != 9 {
-		t.Errorf("decoded %d enabled managers, expected 9", len(d.EnabledManagers))
+	if len(d.EnabledManagers) != 10 {
+		t.Errorf("decoded %d enabled managers, expected 10", len(d.EnabledManagers))
 	}
 	if d.Timezone != "Europe/Berlin" {
 		t.Errorf("timezone = %q", d.Timezone)

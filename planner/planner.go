@@ -337,10 +337,12 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		}
 		ups = append(ups, u)
 	}
-	if d.CurrentDigest != "" {
+	if d.CurrentDigest != "" && versioning.GoPseudoCommit(d.CurrentValue) == "" {
 		// A digest-pinned reference moves value and digest together, or
 		// not at all: a runtime pulls by digest and ignores the tag, so
-		// `newtag@olddigest` would claim a version it does not run.
+		// `newtag@olddigest` would claim a version it does not run. A Go
+		// pseudo-version is the exception: its commit is spelled inside
+		// the value, and a move to a tagged release leaves it behind.
 		kept := ups[:0]
 		var warn *model.Warning
 		for _, u := range ups {
@@ -474,6 +476,13 @@ func buildUpdate(v versioning.Versioning, d *model.Dependency, cur, base, target
 		}
 	}
 	t := versioning.UpdateType(v, base, target)
+	if versioning.GoPseudoCommit(cur) != "" && versioning.GoPseudoCommit(target) != "" {
+		// Commit to commit: a Go pseudo-version names no release, and
+		// the move between two is a digest move. Measured: "update
+		// golang.org/x/mobile digest to 8b95e45" on the branch
+		// golang.org-x-mobile-digest (development/s3mail/ios!20).
+		t = model.UpdateDigest
+	}
 	if t == model.UpdateMajor && isRollingMajor(cur) {
 		// `@1`-style pins float within their major by design (measured
 		// across 44 image repositories: 55 % of all commits on main were

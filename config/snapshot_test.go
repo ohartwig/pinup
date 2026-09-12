@@ -95,11 +95,11 @@ func TestPresetExpansionScope(t *testing.T) {
 	written, _ := rawCfg["packageRules"].([]any)
 	t.Logf("packageRules: %d written, %d after preset expansion", len(written), len(rules))
 
-	if len(written) != 48 {
-		t.Errorf("the config writes %d rules, expected 48", len(written))
+	if len(written) != 49 {
+		t.Errorf("the config writes %d rules, expected 49", len(written))
 	}
-	if len(rules) != 770 {
-		t.Errorf("resolution yields %d rules, expected 770 - the preset content moved", len(rules))
+	if len(rules) != 771 {
+		t.Errorf("resolution yields %d rules, expected 771 - the preset content moved", len(rules))
 	}
 	if len(full) != 337 {
 		t.Errorf("resolved config has %d top-level keys, expected 337", len(full))

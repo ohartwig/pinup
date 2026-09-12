@@ -504,10 +504,10 @@ func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
 		t.Fatal("nothing extracted: the alias did not resolve the runner's managers")
 	}
 	// A dependency disabled before lookup is skipped, not looked up: the
-	// repository's own rule is the 771st, after the runner's 770.
+	// repository's own rule is the 772nd, after the runner's 771.
 	disabled := 0
 	for _, d := range plan.Deps {
-		if strings.Contains(d.SkipReason, "packageRules[770]") {
+		if strings.Contains(d.SkipReason, "packageRules[771]") {
 			disabled++
 		}
 	}

@@ -200,8 +200,8 @@ func TestEveryLeafOfTheRealConfigHasProvenance(t *testing.T) {
 
 	// Every packageRule must be locatable by its index.
 	rules, _ := r.Raw["packageRules"].([]any)
-	if len(rules) != 48 {
-		t.Errorf("found %d packageRules, expected 48 - the captured config changed", len(rules))
+	if len(rules) != 49 {
+		t.Errorf("found %d packageRules, expected 49 - the captured config changed", len(rules))
 	}
 	for i := range rules {
 		if _, ok := r.Winner("/packageRules/" + itoa(i)); !ok {

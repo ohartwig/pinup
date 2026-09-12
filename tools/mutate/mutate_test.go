@@ -77,7 +77,7 @@ var mutators = []mutator{
 	{14, "planner", "deprecated releases offered", "planner/planner.go",
 		"\t\tif r.Deprecated {", "\t\tif r.Deprecated && false {", []string{"./planner/"}, false},
 	{15, "planner", "release age never holds", "planner/policy.go",
-		"\tif age > 0 && u.Type != model.UpdateLockFileMaintenance {", "\tif age > 0 && false {", []string{"./planner/"}, false},
+		"\tif age > 0 && u.Type != model.UpdateLockFileMaintenance && u.Type != model.UpdateDigest && u.Type != model.UpdatePinDigest {", "\tif age > 0 && false {", []string{"./planner/"}, false},
 	{16, "planner", "titles keep their case", "planner/branch.go",
 		"\tlower := true\n", "\tlower := false\n", []string{"./planner/"}, false},
 	{17, "planner", "an unchanged value is still an update", "planner/planner.go",

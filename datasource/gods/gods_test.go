@@ -553,3 +553,46 @@ func TestDefaultRegistryIsGoDevWhenUnset(t *testing.T) {
 		t.Errorf("default registry = %q, want https://go.dev", got)
 	}
 }
+
+// TestAnUntaggedModuleFallsBackToLatest: an empty "@v/list" is not "no
+// releases" - the proxy's "@latest" names the pseudo-version of the newest
+// commit, and that pseudo-version's commit is the release's digest.
+func TestAnUntaggedModuleFallsBackToLatest(t *testing.T) {
+	f := newFixture(t)
+	f.proxy.lists["/golang.org/x/mobile/@v/list"] = ""
+	f.proxy.infos["/golang.org/x/mobile/@latest"] = `{"Version":"v0.0.0-20260908204917-8b95e45f8d3e","Time":"2026-09-08T20:49:17Z"}`
+	f.proxy.status["/golang.org/x/mobile/v2/@v/list"] = http.StatusNotFound
+
+	ds := New(Module, f.client, "https://proxy.example")
+	rs, err := ds.Releases(t.Context(), lookup.Ref{
+		Datasource: "go", PackageName: "golang.org/x/mobile",
+		RegistryURLs: []string{"https://proxy.example"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rs.Releases) != 1 {
+		t.Fatalf("releases = %+v, want the one @latest names", rs.Releases)
+	}
+	r := rs.Releases[0]
+	if r.Version != "v0.0.0-20260908204917-8b95e45f8d3e" || r.Digest != "8b95e45f8d3e" || r.Timestamp.IsZero() {
+		t.Errorf("release = %+v, want the pseudo-version with its commit and time", r)
+	}
+	if n := f.proxy.requestCount("/@latest"); n != 1 {
+		t.Errorf("@latest was requested %d times, want once", n)
+	}
+}
+
+// A module that lists versions never asks "@latest": the list is the answer.
+func TestATaggedModuleDoesNotAskLatest(t *testing.T) {
+	f := newFixture(t)
+	f.proxy.lists["/a/b/@v/list"] = "v1.0.0\n"
+	f.proxy.status["/a/b/v2/@v/list"] = http.StatusNotFound
+	ds := New(Module, f.client, "https://proxy.example")
+	if _, err := ds.Releases(t.Context(), lookup.Ref{Datasource: "go", PackageName: "a/b", RegistryURLs: []string{"https://proxy.example"}}); err != nil {
+		t.Fatal(err)
+	}
+	if n := f.proxy.requestCount("/@latest"); n != 0 {
+		t.Errorf("@latest was requested %d times, want never", n)
+	}
+}

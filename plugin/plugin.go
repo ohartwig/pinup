@@ -80,6 +80,16 @@ func LockRefresh(manager, dir string, depNames []string, maintenance bool) (mode
 			ExecutionMode: model.ExecBranch, FileFilters: []string{"package-lock.json", "npm-shrinkwrap.json"},
 			AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
 		}, true
+	case "gomod":
+		// go.sum has no per-package refresh: tidy recomputes it from the
+		// go.mod the edit produced, and may move a requirement between
+		// the direct and indirect blocks while it is at it - which is
+		// why go.mod is in the scope too.
+		return model.Task{
+			Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: []string{"go", "mod", "tidy"},
+			ExecutionMode: model.ExecBranch, FileFilters: []string{"go.mod", "go.sum"},
+			AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
+		}, true
 	}
 	return model.Task{}, false
 }

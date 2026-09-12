@@ -93,7 +93,7 @@ func TestResolvesEveryCapturedPresetAsRenovateDid(t *testing.T) {
 }
 
 // The acceptance case: default.json's extends resolve to what the container
-// resolved them to - 770 rules and all.
+// resolved them to - 771 rules and all.
 func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
 	raw, err := os.ReadFile(defaultConfigPath)
 	if err != nil {
@@ -126,8 +126,8 @@ func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
 			t.Errorf("key %s is set here and not by Renovate", k)
 		}
 	}
-	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 770 {
-		t.Errorf("resolved %d rules, want 770 - the numbering must stay Renovate's", len(rules))
+	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 771 {
+		t.Errorf("resolved %d rules, want 771 - the numbering must stay Renovate's", len(rules))
 	}
 	// The two mergeConfidence presets - all-badges from default.json itself,
 	// age-confidence-badges through config:recommended - resolve but have
@@ -305,8 +305,8 @@ func TestOriginsNameThePresetThatWroteEachKey(t *testing.T) {
 			t.Fatalf("packageRules[%d] from %s follows the config's own rules", i, chain[0])
 		}
 	}
-	if own != 48 {
-		t.Errorf("%d rules attributed to the config itself, want 48 (what default.json writes)", own)
+	if own != 49 {
+		t.Errorf("%d rules attributed to the config itself, want 49 (what default.json writes)", own)
 	}
 	if chain := got.Origins["/packageRules/0"]; chain[0] != ":semanticPrefixFixDepsChoreOthers" {
 		t.Errorf("rule 0 comes from %v, want :semanticPrefixFixDepsChoreOthers via config:recommended", chain)

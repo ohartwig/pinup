@@ -136,7 +136,7 @@ func TestSourceURLStripsDotGitForHTTPS(t *testing.T) {
 	// The real network call is refused by never happening: lsRemote is
 	// stubbed so this test exercises only the URL bookkeeping, not a live
 	// https remote.
-	ds := &Datasource{lsRemote: func(context.Context, string, time.Duration, string) (string, error) {
+	ds := &Datasource{lsRemote: func(context.Context, string, time.Duration, string, bool) (string, error) {
 		return "", nil
 	}}
 	rs, err := ds.Releases(context.Background(), lookup.Ref{
@@ -152,7 +152,7 @@ func TestSourceURLStripsDotGitForHTTPS(t *testing.T) {
 
 func TestSourceURLIsEmptyForNonHTTPSSchemes(t *testing.T) {
 	dir := t.TempDir()
-	ds := &Datasource{lsRemote: func(context.Context, string, time.Duration, string) (string, error) {
+	ds := &Datasource{lsRemote: func(context.Context, string, time.Duration, string, bool) (string, error) {
 		return "", nil
 	}}
 	rs, err := ds.Releases(context.Background(), lookup.Ref{
@@ -182,8 +182,8 @@ func TestANonexistentPathIsAnError(t *testing.T) {
 
 // countingRunner lets a test assert that git was never invoked, which is
 // the whole point of declining before running anything.
-func countingRunner(calls *int) func(context.Context, string, time.Duration, string) (string, error) {
-	return func(context.Context, string, time.Duration, string) (string, error) {
+func countingRunner(calls *int) func(context.Context, string, time.Duration, string, bool) (string, error) {
+	return func(context.Context, string, time.Duration, string, bool) (string, error) {
 		*calls++
 		return "", nil
 	}
@@ -242,5 +242,59 @@ func TestDefaultVersioningIsSemver(t *testing.T) {
 	}
 	if ds.Name() != "git-tags" {
 		t.Errorf("Name() = %q, want git-tags", ds.Name())
+	}
+}
+
+func TestGitRefsListsBranchesAndTagsAndAnswersDigests(t *testing.T) {
+	needGit(t)
+	dir := fixtureRepo(t)
+	mustRun(t, dir, "branch", "release")
+	head := strings.TrimSpace(mustRun(t, dir, "rev-parse", "HEAD"))
+
+	ds := NewKind(Refs)
+	if ds.Name() != "git-refs" {
+		t.Fatalf("name = %q", ds.Name())
+	}
+	ref := lookup.Ref{Datasource: "git-refs", PackageName: "file://" + dir}
+	rs, err := ds.Releases(context.Background(), ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for _, r := range rs.Releases {
+		got[r.Version] = r.Digest
+	}
+	for _, want := range []string{"main", "release", "v1.0.0", "v1.1.0", "v1.2.0"} {
+		if _, ok := got[want]; !ok {
+			t.Errorf("git-refs is missing %q; got %v", want, rs.Releases)
+		}
+	}
+	if got["main"] != head {
+		t.Errorf("main's digest = %q, want HEAD %q", got["main"], head)
+	}
+
+	digest, err := ds.Digest(context.Background(), ref, "release")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if digest != head {
+		t.Errorf("Digest(release) = %q, want %q", digest, head)
+	}
+	if _, err := ds.Digest(context.Background(), ref, "no-such-branch"); err == nil {
+		t.Error("an unknown ref resolved to a digest")
+	}
+}
+
+func TestGitTagsStillIgnoresBranches(t *testing.T) {
+	needGit(t)
+	dir := fixtureRepo(t)
+	rs, err := New().Releases(context.Background(), lookup.Ref{Datasource: "git-tags", PackageName: "file://" + dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range rs.Releases {
+		if r.Version == "main" {
+			t.Fatal("git-tags listed the branch main")
+		}
 	}
 }

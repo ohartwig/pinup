@@ -29,9 +29,9 @@
 //
 //	require x v1.0.0 // indirect            depType indirect, and - because
 //	                                        Renovate marks it enabled:false -
-//	                                        SkipReason "indirect dependency":
-//	                                        extraction records it, nothing
-//	                                        downstream looks it up.
+//	                                        Disabled "indirect dependency":
+//	                                        extraction records it, and only
+//	                                        a security fix moves it.
 //
 //	replace old => new vX                  one dependency: depName and
 //	                                        packageName are the RIGHT-hand
@@ -69,6 +69,7 @@ import (
 
 	"git.ole-hartwig.eu/pinup/pinup/extract"
 	"git.ole-hartwig.eu/pinup/pinup/model"
+	"git.ole-hartwig.eu/pinup/pinup/versioning"
 )
 
 // name is both the registry key (extract.Registry) and model.Dependency.Manager.
@@ -158,7 +159,26 @@ func (m *Manager) Extract(_ context.Context, f extract.File, _ extract.ManagerCo
 	}
 
 	extract.SortDeps(deps)
-	return extract.Result{Deps: deps}, nil
+	// go.sum is the lock: every module update needs its hashes refreshed,
+	// which is `go mod tidy` on the branch, and the planner learns from
+	// LockFiles that the go toolchain will be needed for this file. The
+	// go directive and toolchain carry no lock entry and stay without.
+	for i := range deps {
+		if deps[i].Datasource == "go" {
+			deps[i].LockFiles = []string{"go.sum"}
+		}
+	}
+	return extract.Result{Deps: deps, LockFiles: []string{"go.sum"}}, nil
+}
+
+// LockedVersions is what go.sum says about versions in use: nothing. go.sum
+// is a lock in the sense that it must be refreshed when go.mod moves, not
+// in the sense that it names the version in use - go.mod does that itself,
+// and go.sum may carry hashes for versions no longer required until the
+// next tidy. An empty, non-nil answer marks the lock as present without
+// overriding a single current value.
+func LockedVersions(_ []byte) (map[string]string, error) {
+	return map[string]string{}, nil
 }
 
 // goDirectiveDep builds the dependency for the module's `go` directive.
@@ -203,8 +223,8 @@ func toolchainDep(file string, ln line, v tok) model.Dependency {
 //
 // A trailing "// indirect" comment - checked loosely, by substring, since an
 // indirect comment in the wild sometimes carries extra text after a
-// semicolon - marks the dependency depType "indirect" and gives it a
-// SkipReason: Renovate records it as enabled:false, and extraction records
+// semicolon - marks the dependency depType "indirect" and marks it
+// Disabled: Renovate records it as enabled:false, and extraction records
 // that fact rather than acting on it.
 func requireDep(file string, ln line, toks []tok, comment string) (model.Dependency, bool) {
 	if len(toks) < 2 {
@@ -213,10 +233,10 @@ func requireDep(file string, ln line, toks []tok, comment string) (model.Depende
 	path, version := toks[0], toks[1]
 
 	depType := "require"
-	skipReason := ""
+	disabled := ""
 	if strings.Contains(comment, "indirect") {
 		depType = "indirect"
-		skipReason = "indirect dependency"
+		disabled = "indirect dependency"
 	}
 
 	return model.Dependency{
@@ -228,7 +248,12 @@ func requireDep(file string, ln line, toks []tok, comment string) (model.Depende
 		DepType:       depType,
 		Datasource:    "go",
 		CurrentValue:  version.text,
-		SkipReason:    skipReason,
+		// A pseudo-version pins a commit; the commit is the digest and
+		// the version around it is how go.mod spells it. The locus stays
+		// on the whole value: a move rewrites the pseudo-version, there
+		// is no separate digest field to edit.
+		CurrentDigest: versioning.GoPseudoCommit(version.text),
+		Disabled:      disabled,
 		Locus:         valueLocus(ln, version.start, version.end),
 	}, true
 }
@@ -288,10 +313,11 @@ func valueLocus(ln line, start, end int) model.Locus {
 	}
 }
 
-// Edit implements extract.Manager. go.mod values carry no digest, so this is
-// exactly extract.EditRef's plain value-replacement case: it refuses when the
-// bytes it recorded at extraction time no longer match what is on disk now,
-// rather than guessing.
+// Edit implements extract.Manager. go.mod values carry no digest field - a
+// pseudo-version's commit is part of the value - so this is exactly
+// extract.EditRef's plain value-replacement case: it refuses when the bytes
+// it recorded at extraction time no longer match what is on disk now, rather
+// than guessing.
 func (m *Manager) Edit(_ context.Context, f extract.File, up model.Update) (model.Edit, error) {
 	return extract.EditRef(name, f, up)
 }

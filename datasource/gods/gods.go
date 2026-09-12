@@ -81,6 +81,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/semverx"
+	"git.ole-hartwig.eu/pinup/pinup/versioning"
 )
 
 // Kind selects which of the two datasources an instance serves.
@@ -178,6 +179,19 @@ func (d *Datasource) moduleReleases(ctx context.Context, ref lookup.Ref, origin 
 		return nil, wrapModuleNotFound(base, origin, err)
 	}
 	entries = append(entries, d.probeMajors(ctx, origin, base)...)
+	if len(entries) == 0 {
+		// A module with no tags lists nothing; "@latest" then names the
+		// pseudo-version of its newest commit, and that is the one
+		// release it has. Measured: golang.org/x/mobile, whose only
+		// update Renovate offers is the digest move to @latest.
+		latest, err := d.fetchLatest(ctx, origin, base)
+		if err != nil {
+			return nil, wrapModuleNotFound(base, origin, err)
+		}
+		if latest.Version != "" {
+			entries = append(entries, verEntry{modulePath: base, rel: latest})
+		}
+	}
 
 	releases, targets := dedupeAndPickNewestPerMajor(entries)
 	for _, t := range targets {
@@ -210,6 +224,24 @@ func (d *Datasource) fetchListEntries(ctx context.Context, origin, modulePath st
 		entries = append(entries, verEntry{modulePath: modulePath, rel: model.Release{Version: line}})
 	}
 	return entries, nil
+}
+
+// fetchLatest gets "{origin}/{case-encoded modulePath}/@latest", the
+// proxy's answer for the newest version it knows - for an untagged module
+// a pseudo-version, whose commit becomes the release's digest.
+func (d *Datasource) fetchLatest(ctx context.Context, origin, modulePath string) (model.Release, error) {
+	resp, err := d.client.Get(ctx, origin+"/"+encodeModulePath(modulePath)+"/@latest", httpx.ReqOptions{Accept: "application/json"})
+	if err != nil {
+		return model.Release{}, err
+	}
+	var doc struct {
+		Version string    `json:"Version"`
+		Time    time.Time `json:"Time"`
+	}
+	if err := json.Unmarshal(resp.Body, &doc); err != nil {
+		return model.Release{}, fmt.Errorf("@latest: %w", err)
+	}
+	return model.Release{Version: doc.Version, Timestamp: doc.Time, Digest: versioning.GoPseudoCommit(doc.Version)}, nil
 }
 
 // majorSuffixRE matches a module path's major-version suffix: "/vN" (the
