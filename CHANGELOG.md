@@ -1,3 +1,14 @@
+## [0.6.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.1...v0.6.2) (2026-09-12)
+
+### :bug: Fixes
+
+* **advisories:** an OR of ranges is not asked; composer grows one by a major line ([c345098](https://git.ole-hartwig.eu/pinup/pinup/commit/c3450989c37c986c6d1dc17fe049d4c21f1381c6))
+
+### :memo: Documentation
+
+* **tasks:** P1e.9 measurement and the prepared toolchain image ([aad16d7](https://git.ole-hartwig.eu/pinup/pinup/commit/aad16d7a10ca281d589d3ee0b930e2dd77a6bda2))
+* **tasks:** the rotation rehearsal found the role gap ([00e30c5](https://git.ole-hartwig.eu/pinup/pinup/commit/00e30c55b77edb3c6b3e670cae72022a05645265))
+
 ## [0.6.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.0...v0.6.1) (2026-09-12)
 
 ### :fast_forward: Performance
