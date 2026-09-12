@@ -6,9 +6,12 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestRunDispatches(t *testing.T) {
@@ -151,4 +154,51 @@ func contains(ss []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// Every project runs once, failures are counted and named, and no more
+// than the requested number run at the same time.
+func TestForEachBoundsConcurrencyAndCountsFailures(t *testing.T) {
+	var mu sync.Mutex
+	running, peak := 0, 0
+	seen := map[string]int{}
+	var errw strings.Builder
+	projects := []string{"a", "b", "c", "d", "e", "f", "g"}
+	failed := forEach(projects, 3, func(p string) error {
+		mu.Lock()
+		running++
+		if running > peak {
+			peak = running
+		}
+		seen[p]++
+		mu.Unlock()
+		time.Sleep(5 * time.Millisecond)
+		mu.Lock()
+		running--
+		mu.Unlock()
+		if p == "c" || p == "f" {
+			return errors.New("boom")
+		}
+		return nil
+	}, &errw)
+	if failed != 2 {
+		t.Errorf("failed = %d, want 2", failed)
+	}
+	if peak > 3 || peak < 2 {
+		t.Errorf("peak concurrency = %d, want between 2 and 3", peak)
+	}
+	for _, p := range projects {
+		if seen[p] != 1 {
+			t.Errorf("%s ran %d times", p, seen[p])
+		}
+	}
+	if !strings.Contains(errw.String(), "c: boom") || !strings.Contains(errw.String(), "f: boom") {
+		t.Errorf("failures not named: %q", errw.String())
+	}
+	if got := repositoryConcurrency(func(string) string { return "" }); got != 4 {
+		t.Errorf("default concurrency = %d, want 4", got)
+	}
+	if got := repositoryConcurrency(func(k string) string { return map[string]string{"PINUP_REPOSITORY_CONCURRENCY": "8"}[k] }); got != 8 {
+		t.Errorf("configured concurrency = %d, want 8", got)
+	}
 }

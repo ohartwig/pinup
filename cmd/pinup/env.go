@@ -151,3 +151,16 @@ func allowedCommands(getenv func(string) string) ([]string, error) {
 	}
 	return out, nil
 }
+
+// repositoryConcurrency is how many repositories a partition works on at
+// once: PINUP_REPOSITORY_CONCURRENCY, default 4. The Renovate runner ran
+// eight; four keeps a two-core job image from thrashing on clones while
+// still hiding most of the network wait.
+func repositoryConcurrency(getenv func(string) string) int {
+	if v := getenv("PINUP_REPOSITORY_CONCURRENCY"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil && n > 0 {
+			return n
+		}
+	}
+	return 4
+}

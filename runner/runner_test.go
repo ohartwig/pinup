@@ -56,7 +56,7 @@ func fixture(t *testing.T) (remote string, repo *git.Repo) {
 	mustGit(t, seed, "add", "Containerfile")
 	mustGit(t, seed, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "init")
 	mustGit(t, seed, "push", "--quiet", remote, "main")
-	r, err := git.Clone(context.Background(), remote, filepath.Join(root, "work"), 0, testEnv)
+	r, err := git.Clone(context.Background(), remote, filepath.Join(root, "work"), git.CloneOptions{}, testEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,7 +122,7 @@ func TestCreatesThenUpdatesTheSameMergeRequest(t *testing.T) {
 
 	// Second run, same plan, fresh clone: no second merge request, no
 	// new commit, the request is unchanged.
-	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), 0, testEnv)
+	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), git.CloneOptions{}, testEnv)
 	repo2.Env = testEnv
 	p2 := plan(p.Branches[0])
 	p2.Branches[0].Existing = nil
@@ -135,7 +135,7 @@ func TestCreatesThenUpdatesTheSameMergeRequest(t *testing.T) {
 	}
 
 	// A third run with a new title updates the request in place.
-	repo3, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work3"), 0, testEnv)
+	repo3, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work3"), git.CloneOptions{}, testEnv)
 	repo3.Env = testEnv
 	p3 := plan(p.Branches[0])
 	p3.Branches[0].Title = "chore(deps): update alpine docker tag to v3.21 (retitled)"
@@ -211,7 +211,7 @@ func TestABranchWithForeignCommitsIsLeftAlone(t *testing.T) {
 	mustGit(t, person, "push", "--quiet", "origin", "renovate/alpine-3.x")
 	theirs := headOf(t, person)
 
-	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), 0, testEnv)
+	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), git.CloneOptions{}, testEnv)
 	repo2.Env = testEnv
 	p2 := plan(p.Branches[0])
 	outs, _ := Execute(ctx, p2, options(repo2, pf))
@@ -331,7 +331,7 @@ func TestATaskCommitsItsLockWithTheEditOrNothing(t *testing.T) {
 	}
 
 	// Out of scope: vendor/ is not composer.lock.
-	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), 0, testEnv)
+	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), git.CloneOptions{}, testEnv)
 	repo2.Env = testEnv
 	bad := &fakeTasks{writes: map[string]string{"composer.lock": "x", "vendor.php": "<?php"}}
 	o2 := options(repo2, pf)
@@ -351,7 +351,7 @@ func TestATaskCommitsItsLockWithTheEditOrNothing(t *testing.T) {
 	}
 
 	// No toolchain: nothing runs, the branch fails naming the tool.
-	repo3, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work3"), 0, testEnv)
+	repo3, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work3"), git.CloneOptions{}, testEnv)
 	repo3.Env = testEnv
 	none := &fakeTasks{missing: "composer"}
 	o3 := options(repo3, pf)

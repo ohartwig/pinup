@@ -79,14 +79,31 @@ func Open(dir string) (*Repo, error) {
 	return &Repo{Dir: dir}, nil
 }
 
-// Clone clones url into dir. depth 0 means a full clone.
-func Clone(ctx context.Context, url, dir string, depth int, env []string) (*Repo, error) {
+// CloneOptions shape a clone. Depth 0 is the whole history. Blobless asks
+// for a partial clone (--filter=blob:none): every commit and tree, file
+// contents fetched when a checkout or a rebase touches them. The history
+// stays whole - the rebase of an adopted branch onto its base and the
+// author check over base..branch need the merge base, which a shallow
+// clone would not hold - while the transfer shrinks to what the working
+// tree needs. Measured on the estate: a partition's 67 clones took 393 s
+// of a 746 s run, 42 s of it one image repository whose history is bigger
+// than its tree.
+type CloneOptions struct {
+	Depth    int
+	Blobless bool
+}
+
+// Clone clones url into dir.
+func Clone(ctx context.Context, url, dir string, opts CloneOptions, env []string) (*Repo, error) {
 	if err := Available(); err != nil {
 		return nil, err
 	}
 	args := []string{"clone", "--quiet"}
-	if depth > 0 {
-		args = append(args, "--depth", fmt.Sprint(depth), "--no-single-branch")
+	if opts.Depth > 0 {
+		args = append(args, "--depth", fmt.Sprint(opts.Depth), "--no-single-branch")
+	}
+	if opts.Blobless {
+		args = append(args, "--filter=blob:none")
 	}
 	args = append(args, "--", url, dir)
 	r := &Repo{Dir: filepath.Dir(dir), Env: env}

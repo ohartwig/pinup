@@ -45,7 +45,7 @@ func fixture(t *testing.T) (remote string, clone *Repo) {
 	mustRun(t, seed, "add", "Containerfile")
 	mustRun(t, seed, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "init")
 	mustRun(t, seed, "push", "--quiet", remote, "main")
-	c, err := Clone(ctx, remote, filepath.Join(root, "pinup"), 0, testEnv)
+	c, err := Clone(ctx, remote, filepath.Join(root, "pinup"), CloneOptions{}, testEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func TestAdoptRebasesAndForceWithLeaseRefusesAMovedRemote(t *testing.T) {
 
 	// The next run, in a fresh clone: adopt the existing branch, rebased
 	// onto the new main, and add a commit.
-	next, err := Clone(ctx, remote, filepath.Join(filepath.Dir(r.Dir), "next"), 0, testEnv)
+	next, err := Clone(ctx, remote, filepath.Join(filepath.Dir(r.Dir), "next"), CloneOptions{}, testEnv)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -150,7 +150,7 @@ func TestAdoptRebasesAndForceWithLeaseRefusesAMovedRemote(t *testing.T) {
 
 	// A third run plans against the branch, but somebody pushes to it in
 	// between: the lease is stale and the push must be refused.
-	third, _ := Clone(ctx, remote, filepath.Join(filepath.Dir(r.Dir), "third"), 0, testEnv)
+	third, _ := Clone(ctx, remote, filepath.Join(filepath.Dir(r.Dir), "third"), CloneOptions{}, testEnv)
 	third.Env = testEnv
 	if _, err := third.Adopt(ctx, "origin", "renovate/alpine-3.x", "origin/main"); err != nil {
 		t.Fatal(err)
@@ -237,5 +237,57 @@ func TestRedact(t *testing.T) {
 		if got := redact(in); got != want {
 			t.Errorf("redact(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+// A blobless clone keeps the whole history - an adopted branch still
+// rebases onto its base, and the author check still walks base..branch -
+// while the working tree reads the same as a full clone's.
+func TestBloblessCloneKeepsHistoryAndAdopts(t *testing.T) {
+	needGit(t)
+	ctx := context.Background()
+	remote, full := fixture(t)
+	// A second commit on main and a branch behind it, so the rebase has
+	// work to do.
+	seed := filepath.Join(filepath.Dir(remote), "seed")
+	mustRun(t, seed, "checkout", "--quiet", "-b", "renovate/alpine-3.x")
+	if err := os.WriteFile(filepath.Join(seed, "Containerfile"), []byte("FROM alpine:3.21\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, seed, "-c", "commit.gpgsign=false", "commit", "--quiet", "-am", "bump")
+	mustRun(t, seed, "push", "--quiet", remote, "renovate/alpine-3.x")
+	mustRun(t, seed, "checkout", "--quiet", "main")
+	if err := os.WriteFile(filepath.Join(seed, "README"), []byte("hi\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	mustRun(t, seed, "add", "README")
+	mustRun(t, seed, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "readme")
+	mustRun(t, seed, "push", "--quiet", remote, "main")
+
+	partial, err := Clone(ctx, remote, filepath.Join(filepath.Dir(full.Dir), "partial"), CloneOptions{Blobless: true}, testEnv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	partial.Env = testEnv
+	if out, _ := partial.run(ctx, "config", "remote.origin.partialclonefilter"); strings.TrimSpace(out) != "blob:none" {
+		t.Fatalf("partialclonefilter = %q, want blob:none", out)
+	}
+	if out, _ := partial.run(ctx, "rev-list", "--count", "origin/main"); strings.TrimSpace(out) != "2" {
+		t.Errorf("history has %s commits, want the whole 2", strings.TrimSpace(out))
+	}
+	existed, err := partial.Adopt(ctx, "origin", "renovate/alpine-3.x", "origin/main")
+	if err != nil || !existed {
+		t.Fatalf("adopt: existed=%v err=%v", existed, err)
+	}
+	got, err := os.ReadFile(filepath.Join(partial.Dir, "Containerfile"))
+	if err != nil || string(got) != "FROM alpine:3.21\n" {
+		t.Errorf("after the rebase Containerfile = %q, %v", got, err)
+	}
+	if _, err := os.Stat(filepath.Join(partial.Dir, "README")); err != nil {
+		t.Errorf("the rebase did not bring main's README along: %v", err)
+	}
+	foreign, err := partial.ForeignAuthors(ctx, "origin/main", "renovate/alpine-3.x", Identity{Email: "nobody@example.invalid"})
+	if err != nil || len(foreign) != 1 {
+		t.Errorf("foreign authors = %v, %v; want the seed's one author", foreign, err)
 	}
 }
