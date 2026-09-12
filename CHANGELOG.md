@@ -1,3 +1,9 @@
+## [0.6.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.5.0...v0.6.0) (2026-09-12)
+
+### :sparkles: Features
+
+* **planner:** regex matches stay unpinned, bump raises ranges, advisories for ranges, node versioning ([cf76ffc](https://git.ole-hartwig.eu/pinup/pinup/commit/cf76ffc2049156ebdb5b54b5750e1b7d9c751548))
+
 ## [0.5.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.4.0...v0.5.0) (2026-09-12)
 
 ### :sparkles: Features
