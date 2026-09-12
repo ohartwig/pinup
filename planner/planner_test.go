@@ -749,18 +749,32 @@ func TestUpdateLockfileWithoutALockIsUpToDate(t *testing.T) {
 	}
 }
 
-// Under the node versioning Renovate pins nothing - measured: node:24 and
-// node:24-alpine stay unpinned while python:3.14 under docker is pinned.
-func TestPinDigestsSkipsTheNodeVersioning(t *testing.T) {
+// A valid range no release satisfies is skipped, pin and all - measured:
+// registry.ole-hartwig.eu/devops/images/node:24 with 2.x releases only is
+// an invalid value to Renovate - while an invalid value (24-alpine, latest)
+// and a satisfied range are pinned.
+func TestPinDigestsSkipsARangeNothingSatisfies(t *testing.T) {
 	digest := func(model.Dependency, string) (string, error) { return "sha256:abc", nil }
-	d := dep("registry.example/node", "24-alpine", "node")
-	d.Datasource, d.PinDigests = "docker", true
-	vs := registry()
-	vs["node"] = testScheme{}
-	res := Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return releases("24.8.0") }, Versionings: vs, Digest: digest, Now: now})
-	for _, u := range res.Updates {
-		if u.Type == model.UpdatePinDigest {
-			t.Fatalf("a node image was pinned: %+v", u)
+	plan := func(cur string, rs *model.ReleaseSet) []model.Update {
+		d := dep("registry.example/node", cur, "semver-partial")
+		d.Datasource, d.PinDigests = "docker", true
+		return Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return rs }, Versionings: registry(), Digest: digest, Now: now}).Updates
+	}
+	pinned := func(ups []model.Update) bool {
+		for _, u := range ups {
+			if u.Type == model.UpdatePinDigest {
+				return true
+			}
 		}
+		return false
+	}
+	if pinned(plan("24", releases("2.1.6", "2.3.10"))) {
+		t.Error("a range nothing satisfies was pinned")
+	}
+	if !pinned(plan("24", releases("24.8.0"))) {
+		t.Error("a satisfied range was not pinned")
+	}
+	if !pinned(plan("24-alpine", releases("24.8.0"))) {
+		t.Error("an invalid value was not pinned")
 	}
 }

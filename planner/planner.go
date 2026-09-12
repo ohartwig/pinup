@@ -139,11 +139,16 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 
 	cur := d.CurrentValue
-	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" && scheme != "node" {
-		// Under the node versioning nothing is pinned: measured in the
-		// pinned container over one job file, node:24 is skipped as an
-		// invalid value and node:24-alpine gets no update at all, while
-		// python:3.14 under docker gets its pinDigest in the same run.
+	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" && !unsatisfiedRange(v, cur, rs) {
+		// A valid range no release satisfies is skipped as an invalid
+		// value, pin and all. Measured in the pinned container over one
+		// job file: registry.ole-hartwig.eu/devops/images/node:24 - "24"
+		// a range under the node versioning, the image's releases all
+		// 2.x - is "invalid-value" with no update, while node:24 and
+		// node:24-alpine from the hub, node:2.1.6 from the estate and
+		// python:3.14 under docker all get their pinDigest. An invalid
+		// value (latest, 24-alpine) is pinned; a range nothing satisfies
+		// is not.
 		// A custom regex match is not pinned. Measured across the estate's
 		// open "pin dependencies" branches: Renovate pins the FROM lines
 		// and the job images the dockerfile and gitlabci managers read,
@@ -652,6 +657,20 @@ func digestRefresh(req Request, d *model.Dependency, tag string) ([]model.Update
 		Declared:   declaredRisk(model.UpdateDigest),
 		TimeSource: model.TimeUnknown,
 	}}, "", nil
+}
+
+// unsatisfiedRange is whether cur is a valid range under v that none of
+// the releases satisfies.
+func unsatisfiedRange(v versioning.Versioning, cur string, rs *model.ReleaseSet) bool {
+	if !v.IsValid(cur) || v.IsVersion(cur) {
+		return false
+	}
+	for _, r := range rs.Releases {
+		if v.IsVersion(r.Version) && v.Satisfies(r.Version, cur) {
+			return false
+		}
+	}
+	return true
 }
 
 // isRollingMajor is whether a current value is a bare major: digits and
