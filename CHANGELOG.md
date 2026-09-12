@@ -1,3 +1,9 @@
+## [0.6.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.0...v0.6.1) (2026-09-12)
+
+### :fast_forward: Performance
+
+* **run:** blobless clones and four repositories at a time ([b97fe97](https://git.ole-hartwig.eu/pinup/pinup/commit/b97fe9772462898f41c4571af1216fd2124bcd75))
+
 ## [0.6.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.5.0...v0.6.0) (2026-09-12)
 
 ### :sparkles: Features
