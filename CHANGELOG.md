@@ -1,3 +1,9 @@
+## [0.6.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.2...v0.6.3) (2026-09-12)
+
+### :bug: Fixes
+
+* **planner:** update-lockfile without a lock moves nothing; config-less repositories ignore node_modules ([71825ba](https://git.ole-hartwig.eu/pinup/pinup/commit/71825ba5008586425fbd6f6e64b2dbebcdcfd169))
+
 ## [0.6.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.1...v0.6.2) (2026-09-12)
 
 ### :bug: Fixes
