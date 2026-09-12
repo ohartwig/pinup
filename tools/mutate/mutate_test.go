@@ -18,6 +18,7 @@
 package mutate
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -166,7 +167,7 @@ func TestEveryMutatorIsDetected(t *testing.T) {
 		if err := os.WriteFile(path, []byte(strings.Replace(string(orig), m.Old, m.New, 1)), 0o644); err != nil {
 			t.Fatal(err)
 		}
-		args := append([]string{"test", "-count=1"}, m.Tests...)
+		args := append([]string{"test", "-count=1", "-v"}, m.Tests...)
 		cmd := exec.Command("go", args...)
 		cmd.Dir = work
 		out, runErr := cmd.CombinedOutput()
@@ -174,6 +175,11 @@ func TestEveryMutatorIsDetected(t *testing.T) {
 			t.Fatal(err)
 		}
 		red := runErr != nil
+		// Tests that skipped are tests that did not look: a package whose
+		// every test skipped (no git on this machine, say) cannot have
+		// seen the mutation, and saying "green" would be the lie this
+		// suite exists to catch.
+		blind := !red && !bytes.Contains(out, []byte("--- PASS")) && bytes.Contains(out, []byte("--- SKIP"))
 		switch {
 		case m.Sentinel && red:
 			t.Errorf("sentinel %d (%s) was detected; the suite cannot tell red from green:\n%s", m.ID, m.Name, tail(out))
@@ -181,6 +187,9 @@ func TestEveryMutatorIsDetected(t *testing.T) {
 			t.Logf("sentinel %d (%s): not detected, as it must be", m.ID, m.Name)
 		case red:
 			detected = append(detected, m.Name)
+		case blind:
+			missed = append(missed, m.Name)
+			t.Errorf("mutator %d (%s, %s): the tests in %v all skipped on this machine, so nothing looked; the gate is untested here, not passed", m.ID, m.Name, m.Layer, m.Tests)
 		default:
 			missed = append(missed, m.Name)
 			t.Errorf("mutator %d (%s, %s) was NOT detected by %v", m.ID, m.Name, m.Layer, m.Tests)
