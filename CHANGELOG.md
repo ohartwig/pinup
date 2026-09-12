@@ -1,3 +1,9 @@
+## [0.5.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.4.0...v0.5.0) (2026-09-12)
+
+### :sparkles: Features
+
+* **token:** pinup token rotate renews the bot's token before it expires ([3ec45cf](https://git.ole-hartwig.eu/pinup/pinup/commit/3ec45cf8670c01cb0dbc86307c9a48dca23fd4c3))
+
 ## [0.4.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.3.0...v0.4.0) (2026-09-12)
 
 ### :sparkles: Features
