@@ -1,3 +1,13 @@
+## [0.1.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.1.0...v0.1.1) (2026-09-12)
+
+### :bug: Fixes
+
+* **cli:** embed the zone database - a job image without tzdata broke every schedule ([514fbb1](https://git.ole-hartwig.eu/pinup/pinup/commit/514fbb1d8482b8cb985fd35e99b739e62fc30b6b))
+
+### :memo: Documentation
+
+* **tasks:** D.15 - the toolchain image for the composer/npm partitions ([f22ebcf](https://git.ole-hartwig.eu/pinup/pinup/commit/f22ebcf53561ee4d0bf388622fa65c5d9171bd9e))
+
 ## [0.1.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.0.0...v0.1.0) (2026-09-12)
 
 ### :sparkles: Features
