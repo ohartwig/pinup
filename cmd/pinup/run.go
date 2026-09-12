@@ -36,6 +36,7 @@ func commands() []command {
 		{"shadow", "compare plan reports with the merge requests Renovate has open", cmdShadow},
 		{"notify", "keep the estate-wide rolling-major notice in one issue (notify rolling-major)", cmdNotify},
 		{"migrate", "convert a renovate config and report what is supported", cmdMigrate},
+		{"token", "renew the bot's own token before it expires and store it (token rotate)", cmdToken},
 		{"version", "print the version", cmdVersion},
 		// askpass is git's credential prompt, answered from the environment.
 		// Listed so `pinup askpass` is discoverable, though nobody types it.
