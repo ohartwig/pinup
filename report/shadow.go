@@ -51,7 +51,7 @@ type Entry struct {
 type Suppression struct {
 	Project string    `json:"project"`
 	Branch  string    `json:"branch"`
-	Kind    string    `json:"kind"` // "fixture-control", "pre-declared-improvement", "defect"
+	Kind    string    `json:"kind"` // "fixture-control", "pre-declared-improvement", "defect", "stale-renovate"
 	Reason  string    `json:"reason"`
 	Owner   string    `json:"owner"`
 	Expires time.Time `json:"expires"`
@@ -267,9 +267,19 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 			e := Entry{Project: p.Repo.Path, Branch: name, Side: "only_renovate", Title: m.Title, MRIID: m.IID}
 			k := "only_renovate|" + p.Repo.Path + "|" + name
 			next.Seen = append(next.Seen, k)
-			if seenBefore[k] {
+			switch key := suppressionFor(sup, p.Repo.Path, name, now); {
+			case key != "":
+				// A merge request Renovate left behind - its change
+				// already on main, the branch never closed - is
+				// Renovate's difference, triaged like pinup's own, with
+				// the same expiry. Measured: devops/images/c2patool!92
+				// pins container-scanning 8.6.34, main pins 8.6.35.
+				e.Suppressed = key
+				used[key] = true
+				r.Suppressed++
+			case seenBefore[k]:
 				r.OnlyRenovate++
-			} else {
+			default:
 				e.Suppressed = "pending"
 				r.Pending++
 			}

@@ -166,3 +166,21 @@ func TestDifferencesMustPersistAndPersistingHoldsAgree(t *testing.T) {
 		t.Errorf("pluginRequired: %+v", r)
 	}
 }
+
+// A merge request Renovate left behind - already on main, never closed -
+// is triaged the way an only-pinup entry is, expiry and all.
+func TestAStaleRenovateBranchCanBeTriaged(t *testing.T) {
+	plans := []*model.Plan{plan("a/b", "0.1.0")}
+	open := map[string][]publish.MergeRequest{"a/b": {mr("renovate/pin-dependencies", 92)}}
+	sup := &Suppressions{Entries: []Suppression{{Project: "a/b", Branch: "renovate/pin-dependencies", Kind: "stale-renovate", Reason: "pins 8.6.34; main pins 8.6.35", Owner: "o", Expires: now.Add(24 * time.Hour)}}}
+	_, st := Compare(plans, open, sup, nil, "0.1.0", now, nil)
+	r, _ := Compare(plans, open, sup, nil, "0.1.0", now, st)
+	if !r.Passed() || r.Suppressed != 1 || r.OnlyRenovate != 0 {
+		t.Errorf("triaged stale branch: %v %+v", r.Failures, r)
+	}
+	none := &Suppressions{}
+	_, st = Compare(plans, open, none, nil, "0.1.0", now, nil)
+	if r, _ := Compare(plans, open, none, nil, "0.1.0", now, st); r.Passed() || r.OnlyRenovate != 1 {
+		t.Errorf("untriaged stale branch must fail on the second run: %v", r.Failures)
+	}
+}
