@@ -279,6 +279,14 @@ func markSeen(path, spec string, now time.Time) {
 // as an existing checkout.
 func runProject(ctx context.Context, o runOptions, project, repoDir, report string, out, errw io.Writer) error {
 	env, platform := o.env, o.platform
+	// Phase timings on the summary line: where a slow run spends its
+	// minutes is the first thing anyone reading a job log wants to know.
+	phase := time.Now()
+	var took []string
+	lap := func(name string) {
+		took = append(took, fmt.Sprintf("%s %s", name, time.Since(phase).Round(100*time.Millisecond)))
+		phase = time.Now()
+	}
 
 	// The checkout.
 	var repo *git.Repo
@@ -316,6 +324,7 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 		}
 		repoName = strings.TrimSuffix(filepath.Base(repoDir), ".git")
 	}
+	lap("clone")
 	proj, err := platform.Project(ctx, repoName)
 	if err != nil {
 		return fmt.Errorf("run: %w", err)
@@ -323,6 +332,7 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 	if o.base != "" {
 		proj.DefaultBranch = o.base
 	}
+	lap("project")
 
 	opts := whatifOptions{
 		Root: repo.Dir, ConfigPath: o.cfgPath, RepoName: proj.Path, Now: o.now,
@@ -347,6 +357,7 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 	if err != nil {
 		return err
 	}
+	lap("plan")
 	// The index is fed by every full plan; a fast-lane plan sees one
 	// dependency and must not overwrite what the repository has.
 	if o.index != nil && o.released == "" {
@@ -392,8 +403,9 @@ func runProject(ctx context.Context, o runOptions, project, repoDir, report stri
 			return err
 		}
 	}
-	fmt.Fprintf(out, "%s: %d dependencies, %d updates (%d held), %d branches\n",
-		proj.Path, plan.Stats.DepsExtracted, plan.Stats.UpdatesFound, plan.Stats.UpdatesBlocked, plan.Stats.BranchesPlanned)
+	lap("publish")
+	fmt.Fprintf(out, "%s: %d dependencies, %d updates (%d held), %d branches [%s]\n",
+		proj.Path, plan.Stats.DepsExtracted, plan.Stats.UpdatesFound, plan.Stats.UpdatesBlocked, plan.Stats.BranchesPlanned, strings.Join(took, ", "))
 	for _, o := range outcomes {
 		line := fmt.Sprintf("  %-9s %s", o.Action, o.Branch)
 		if o.MRIID != 0 {
