@@ -1,3 +1,9 @@
+## [0.7.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.7.0...v0.7.1) (2026-09-12)
+
+### :bug: Fixes
+
+* **planner:** no pins under the node versioning; a member's window holds its group ([2818412](https://git.ole-hartwig.eu/pinup/pinup/commit/281841221a7239ea745c27c05df301f7cc1e473b))
+
 ## [0.7.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.3...v0.7.0) (2026-09-12)
 
 ### :sparkles: Features
