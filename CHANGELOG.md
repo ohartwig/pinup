@@ -1,3 +1,20 @@
+## [0.7.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.3...v0.7.0) (2026-09-12)
+
+### :sparkles: Features
+
+* **shadow:** a stale Renovate merge request can be triaged ([8724d24](https://git.ole-hartwig.eu/pinup/pinup/commit/8724d24ffec266daf14233ed0198cf77f73b33a9))
+
+### :memo: Documentation
+
+* **tasks:** D.13 rehearsed green, D.15 delivered ([bc0fb6e](https://git.ole-hartwig.eu/pinup/pinup/commit/bc0fb6e5ae3858c69491d92c66f6b3428ec92c34))
+* **tasks:** raise-epoch was already allowed upstream ([02876f6](https://git.ole-hartwig.eu/pinup/pinup/commit/02876f61e9713bba631b955cd00b25b9e9ecd14b))
+* **tasks:** the first green shadow verdict ([7f1e92f](https://git.ole-hartwig.eu/pinup/pinup/commit/7f1e92fa7517e40699e54a96173a69bc6db796b5))
+* **tasks:** the golang image carries git; nothing skips in CI ([e483c2e](https://git.ole-hartwig.eu/pinup/pinup/commit/e483c2e8006ed7449b91c54e92573563978616c9))
+
+### :repeat: Continuous Integrations
+
+* update:pinup runs on the toolchain image with the built binary ([6548842](https://git.ole-hartwig.eu/pinup/pinup/commit/654884280e4f3eb89a8e5a779804299fd7b2c1fb))
+
 ## [0.6.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.6.2...v0.6.3) (2026-09-12)
 
 ### :bug: Fixes
