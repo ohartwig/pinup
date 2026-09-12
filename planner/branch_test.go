@@ -5,6 +5,7 @@ package planner
 
 import (
 	"testing"
+	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
@@ -213,9 +214,12 @@ func TestGroupTitles(t *testing.T) {
 	if len(branches) != 1 || branches[0].SuppressedBy != model.BlockSchedule || len(branches[0].Edits) != 0 {
 		t.Errorf("a held update must produce a suppressed branch, got %+v", branches)
 	}
-	// Held and actionable on one branch: the branch is actionable and
-	// carries the actionable update only.
-	branches, _ = Compose([]Named{held, b})
+	// Held by its own age and actionable on one branch: the branch is
+	// actionable and carries the actionable update only. (A schedule
+	// would be the branch's own - TestABranchLevelHoldOnOneMemberHoldsTheGroup.)
+	aged := a
+	aged.Update.Blocks = []model.Block{{Reason: model.BlockMinimumReleaseAge}}
+	branches, _ = Compose([]Named{aged, b})
 	if len(branches) != 1 || branches[0].SuppressedBy != "" || len(branches[0].UpdateKeys) != 1 {
 		t.Errorf("mixed branch: %+v", branches)
 	}
@@ -298,5 +302,35 @@ func TestGroupOfOneDependencyReadTwiceIsTitledAsOne(t *testing.T) {
 	branches, _ := Compose([]Named{a, b})
 	if len(branches) != 1 || branches[0].Title != "chore(deps): update dependency devops/ci-cd-components/deploy-tools to v1.3.0" {
 		t.Errorf("got %+v", branches)
+	}
+}
+
+// A schedule or a dashboard approval is the branch's, not the member's:
+// a group with one member behind a window is held whole (measured: a "pin
+// dependencies" group of four images awaiting the throttle two of them
+// carry). A release age is the member's own; that member stays off an
+// actionable group.
+func TestABranchLevelHoldOnOneMemberHoldsTheGroup(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}}
+	ci := with(base, map[string]any{"groupName": "CI components", "groupSlug": "ci-components"})
+	a, _ := Name(upd("gitlabci", "gitlab-tags", "devops/ci-cd-components/lint-tools", "1", "1.34.0", "1.34.0", model.UpdateMinor), ci, vs)
+	b, _ := Name(upd("gitlabci", "gitlab-tags", "devops/ci-cd-components/release-tools", "1", "1.21.0", "1.21.0", model.UpdateMinor), ci, vs)
+	b.Update.Blocks = []model.Block{{Reason: model.BlockSchedule, Until: now.Add(time.Hour)}}
+	b.Update.SuppressedBy = model.BlockSchedule
+	branches, err := Compose([]Named{a, b})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(branches) != 1 || branches[0].SuppressedBy != model.BlockSchedule || branches[0].HeldWith.Reason != model.BlockSchedule || len(branches[0].UpdateKeys) != 2 {
+		t.Errorf("a scheduled member must hold the whole group: %+v", branches)
+	}
+
+	c := b
+	c.Update.Blocks = []model.Block{{Reason: model.BlockMinimumReleaseAge}}
+	c.Update.SuppressedBy = model.BlockMinimumReleaseAge
+	branches, _ = Compose([]Named{a, c})
+	if len(branches) != 1 || branches[0].SuppressedBy != "" || len(branches[0].UpdateKeys) != 1 {
+		t.Errorf("an aged member stays off an actionable group: %+v", branches)
 	}
 }

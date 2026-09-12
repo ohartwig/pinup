@@ -117,6 +117,11 @@ type Branch struct {
 	// buckets on it, since Renovate's merge requests contain nothing that
 	// is held. A branch with it set carries no edits.
 	SuppressedBy BlockReason `json:"suppressedBy,omitempty"`
+	// HeldWith is the block a member brought onto the whole branch - a
+	// schedule window or a dashboard approval is the branch's, not the
+	// member's - and the members that were actionable on their own carry
+	// it too, with this note.
+	HeldWith Block `json:"heldWith,omitzero"`
 
 	Schedule Window          `json:"schedule"`
 	Existing *ExistingBranch `json:"existing,omitempty"`

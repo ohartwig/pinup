@@ -748,3 +748,19 @@ func TestUpdateLockfileWithoutALockIsUpToDate(t *testing.T) {
 		t.Fatalf("with a lock: updates %+v; want one lock-only security fix", res.Updates)
 	}
 }
+
+// Under the node versioning Renovate pins nothing - measured: node:24 and
+// node:24-alpine stay unpinned while python:3.14 under docker is pinned.
+func TestPinDigestsSkipsTheNodeVersioning(t *testing.T) {
+	digest := func(model.Dependency, string) (string, error) { return "sha256:abc", nil }
+	d := dep("registry.example/node", "24-alpine", "node")
+	d.Datasource, d.PinDigests = "docker", true
+	vs := registry()
+	vs["node"] = testScheme{}
+	res := Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return releases("24.8.0") }, Versionings: vs, Digest: digest, Now: now})
+	for _, u := range res.Updates {
+		if u.Type == model.UpdatePinDigest {
+			t.Fatalf("a node image was pinned: %+v", u)
+		}
+	}
+}

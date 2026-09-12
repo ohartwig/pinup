@@ -515,6 +515,16 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	}
 	for i := range branches {
 		if branches[i].SuppressedBy != "" {
+			if branches[i].HeldWith.Reason != "" {
+				// The branch-level hold reaches the members that were
+				// actionable on their own; the plan says which member
+				// brought it.
+				blk := branches[i].HeldWith
+				if blk.Note == "" {
+					blk.Note = "held with the branch: a member's " + string(blk.Reason) + " is the branch's"
+				}
+				holdBranch(&branches[i], plan.Updates, blk)
+			}
 			continue
 		}
 		edits, warnings := editsFor(ctx, branches[i], plan.Updates, contents, decoded, managers)

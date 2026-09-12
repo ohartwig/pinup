@@ -139,7 +139,11 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 
 	cur := d.CurrentValue
-	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" {
+	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" && scheme != "node" {
+		// Under the node versioning nothing is pinned: measured in the
+		// pinned container over one job file, node:24 is skipped as an
+		// invalid value and node:24-alpine gets no update at all, while
+		// python:3.14 under docker gets its pinDigest in the same run.
 		// A custom regex match is not pinned. Measured across the estate's
 		// open "pin dependencies" branches: Renovate pins the FROM lines
 		// and the job images the dockerfile and gitlabci managers read,

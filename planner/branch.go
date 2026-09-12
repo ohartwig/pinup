@@ -268,6 +268,17 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 // with at least one actionable update carries only those. A branch of one
 // is titled as its update; a group is titled as the group, with the extra
 // its members agree on.
+// branchLevelBlock returns the block that holds a whole branch, when the
+// update carries one: a schedule window or a dashboard approval.
+func branchLevelBlock(u model.Update) (model.Block, bool) {
+	for _, b := range u.Blocks {
+		if b.Reason == model.BlockSchedule || b.Reason == model.BlockDashboardApproval {
+			return b, true
+		}
+	}
+	return model.Block{}, false
+}
+
 func Compose(named []Named) ([]model.Branch, error) {
 	type member struct {
 		branch  *model.Branch
@@ -283,7 +294,27 @@ func Compose(named []Named) ([]model.Branch, error) {
 		m, ok := byName[n.Branch]
 		if ok && n.Update.Blocked() {
 			if m.branch.SuppressedBy == "" {
-				continue // an actionable branch; the held update stays off it
+				if blk, level := branchLevelBlock(n.Update); level {
+					// A schedule or a dashboard approval is decided for
+					// the branch, not the member: Renovate holds a whole
+					// pin group behind the window one of its images falls
+					// under (measured on devops/ci-cd-components/
+					// composed-default-pipelines, "pin dependencies" of
+					// four images awaiting the throttle two of them
+					// carry). The members already on the branch are held
+					// with it; a release age or a missing toolchain, by
+					// contrast, is the member's own, and that member stays
+					// off an actionable branch.
+					m.branch.SuppressedBy = blk.Reason
+					m.branch.HeldWith = blk
+					if len(n.Schedule) > 0 && blk.Reason == model.BlockSchedule {
+						if s, err := sched.Parse(n.Schedule, n.Timezone); err == nil {
+							m.branch.Schedule = model.Window{Expr: s.String(), Kind: sched.Kind(n.Schedule[0]), Timezone: s.Timezone(), Active: false, NextOpen: blk.Until}
+						}
+					}
+				} else {
+					continue // an actionable branch; the held update stays off it
+				}
 			}
 		}
 		if !ok {
