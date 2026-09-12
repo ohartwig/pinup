@@ -22,7 +22,9 @@ const perScheme = {
   docker: ['22-alpine3.21', '22-alpine3.20', '22-bookworm', '3.21', '24.04',
            'v0.74.0', '1.27', 'latest', 'v0.32.2-rootless', '8.5.10-r0'],
   composer: ['^8.5', '~0.9', '^5.0', '1.0.*', 'dev-main', '1.0.0-RC1',
-             '1.0.0-beta2', '>=1.0 <2.0', '13.4.*', '^13.4'],
+             '1.0.0-beta2', '>=1.0 <2.0', '13.4.*', '^13.4',
+             // The OR-ranges the estate's libraries carry.
+             '^6.4 || ^7.4', '^7.4 || ^8.0'],
   apk: ['1.2.3-r4', '1.2.3-r5', '1.27.0-r1', '8.5.10-r0', '1.2.3'],
   npm: ['^1.2.3', '~1.2.3', '1.x', '>=1.0.0 <2.0.0', '1.2.3 || 2.0.0'],
   go: ['v1.27.0', 'v0.0.0-20260101000000-abcdef123456', 'v2.0.0+incompatible'],
@@ -62,6 +64,14 @@ const strategies = ['replace', 'bump', 'pin', 'widen', 'update-lockfile', 'auto'
 // nothing: the go directive keeps or drops the patch depending on how the
 // current value was written.
 const perSchemeNewValue = {
+  // An OR-range with a realistic pair: the security fix inside the first
+  // alternative, a minor inside the second, and a version beyond both.
+  composer: [
+    { currentValue: '^6.4 || ^7.4', currentVersion: '6.4.0', newVersion: '6.4.41' },
+    { currentValue: '^6.4 || ^7.4', currentVersion: '7.4.0', newVersion: '7.4.18' },
+    { currentValue: '^6.4 || ^7.4', currentVersion: '7.4.0', newVersion: '8.1.6' },
+    { currentValue: '^7.4 || ^8.0', currentVersion: '7.4.0', newVersion: '8.1.6' },
+  ],
   'go-mod-directive': [
     { currentValue: '1.27', currentVersion: '1.27', newVersion: '1.28.1' },
     { currentValue: '1.27.0', currentVersion: '1.27.0', newVersion: '1.28.1' },

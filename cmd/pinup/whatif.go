@@ -771,9 +771,13 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 }
 
 // lowestAdmitted is the lowest release a range admits, "" when none is
-// known: what a range without a lock is taken to be running.
+// known: what a range without a lock is taken to be running. An OR of
+// ranges is not asked at all - measured in the pinned container: "^2.0",
+// ">=7.0 <7.5" and "3.0.*" resolve to their lowest release, "^6.4 || ^7.4"
+// is skipped as an unsupported version, and the estate's symfony packages
+// carry exactly that shape without a security branch.
 func lowestAdmitted(v versioning.Versioning, rng string, rs *model.ReleaseSet) string {
-	if rs == nil {
+	if rs == nil || strings.Contains(rng, "||") {
 		return ""
 	}
 	var admitted []string

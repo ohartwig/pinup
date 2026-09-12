@@ -15,7 +15,7 @@ func TestConformsToCapturedBehaviour(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	res := vertest.Run(t, New(), tbl, nil)
+	res := vertest.Run(t, New(), tbl, orRangeGaps())
 	if res.Compared < 300 {
 		t.Errorf("only %d rows compared; the table was barely read", res.Compared)
 	}
@@ -127,6 +127,48 @@ func TestRealEstateConstraints(t *testing.T) {
 	} {
 		if got := s.Satisfies(c.version, c.rng); got != c.want {
 			t.Errorf("Satisfies(%q, %q) = %v, want %v", c.version, c.rng, got, c.want)
+		}
+	}
+}
+
+// An OR-range asked to admit a version one of its alternatives already
+// admits: Renovate appends the alternative again ("^6.4 || ^7.4 || ^6.4")
+// under bump, pin and auto, and collapses to the one alternative under
+// replace. Neither ever reaches a branch - measured on the estate's
+// libraries, whose "^6.4 || ^7.4" symfony constraints have no in-range
+// bump open - so the constraint is read as unchanged here. The same keys
+// carry the beyond-every-alternative rows, which agree.
+func orRangeGaps() []vertest.Divergence {
+	const why = "a duplicate alternative Renovate writes and never branches; unchanged here"
+	var out []vertest.Divergence
+	for _, inputs := range []string{
+		"^6.4 || ^7.4|replace", "^6.4 || ^7.4|bump", "^6.4 || ^7.4|pin", "^6.4 || ^7.4|auto",
+		"^7.4 || ^8.0|replace", "^7.4 || ^8.0|bump", "^7.4 || ^8.0|pin", "^7.4 || ^8.0|auto",
+	} {
+		out = append(out, vertest.Divergence{Op: "getNewValue", Inputs: inputs, Why: why})
+	}
+	return out
+}
+
+// Beyond every alternative, the target's major line joins the OR under
+// bump and widen and replaces it under replace and update-lockfile.
+func TestOrRangesGrowByAMajorLine(t *testing.T) {
+	s := New()
+	for _, c := range []struct {
+		current, target string
+		strategy        versioning.RangeStrategy
+		want            string
+	}{
+		{"^6.4 || ^7.4", "8.1.6", versioning.StrategyBump, "^6.4 || ^7.4 || ^8.0"},
+		{"^6.4 || ^7.4", "8.1.6", versioning.StrategyWiden, "^6.4 || ^7.4 || ^8.0"},
+		{"^6.4 || ^7.4", "8.1.6", versioning.StrategyReplace, "^8.0"},
+		{"^6.4 || ^7.4", "8.1.6", versioning.StrategyUpdateLockfile, "^8.0"},
+		{"^6.4 || ^7.4", "6.4.41", versioning.StrategyBump, "^6.4 || ^7.4"},
+		{"^6.4 || ^7.4", "7.4.18", versioning.StrategyReplace, "^6.4 || ^7.4"},
+	} {
+		got, err := s.NewValue(c.current, c.target, c.strategy)
+		if err != nil || got != c.want {
+			t.Errorf("NewValue(%q, %q, %s) = %q, %v; want %q", c.current, c.target, c.strategy, got, err, c.want)
 		}
 	}
 }

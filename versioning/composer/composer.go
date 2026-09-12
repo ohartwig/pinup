@@ -450,6 +450,9 @@ func (s *Scheme) NewValue(current, target string, strategy versioning.RangeStrat
 	if !ok || len(groups) == 0 || len(groups[0]) == 0 {
 		return target, nil
 	}
+	if strings.Contains(current, "||") {
+		return s.newValueOfOr(current, target, t, strategy)
+	}
 	c := groups[0][0]
 
 	write := func(parts int) string {
@@ -484,5 +487,30 @@ func (s *Scheme) NewValue(current, target string, strategy versioning.RangeStrat
 		return current + " || " + write(max(c.stated, 1)), nil
 	default:
 		return write(max(c.stated, 1)), nil
+	}
+}
+
+// newValueOfOr rewrites an OR of ranges - "^6.4 || ^7.4", the shape the
+// estate's libraries carry. Measured (composer.json, getNewValue): a
+// target one alternative already admits leaves the constraint as it is
+// under widen and update-lockfile, and under bump Renovate appends a
+// duplicate alternative ("^6.4 || ^7.4 || ^6.4") that never reaches a
+// branch - so it is read as no change here. A target beyond every
+// alternative is appended as one more caret alternative - the target's
+// major line, minor zero - under bump, widen and pin ("^6.4 || ^7.4 ||
+// ^8.0"), and replaces the whole constraint with that caret under replace
+// and update-lockfile ("^8.0").
+func (s *Scheme) newValueOfOr(current, target string, t version, strategy versioning.RangeStrategy) (string, error) {
+	if s.Satisfies(target, current) {
+		return current, nil
+	}
+	// The new alternative is the target's major line, minor zero:
+	// measured, 8.1.6 joins "^7.4 || ^8.0" as "^8.0", not "^8.1".
+	caret := "^" + strconv.Itoa(t.at(0)) + ".0"
+	switch strategy {
+	case versioning.StrategyReplace, versioning.StrategyUpdateLockfile:
+		return caret, nil
+	default:
+		return current + " || " + caret, nil
 	}
 }
