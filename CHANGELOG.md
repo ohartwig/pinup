@@ -1,3 +1,13 @@
+## [0.2.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.1.1...v0.2.0) (2026-09-12)
+
+### :sparkles: Features
+
+* **run:** phase timings on the summary line ([a165aae](https://git.ole-hartwig.eu/pinup/pinup/commit/a165aae7f9126ae5c807a11009fa676c41a02f34))
+
+### :memo: Documentation
+
+* **tasks:** delivery live - credentials, releases, image, schedules, first-run findings ([68d20b5](https://git.ole-hartwig.eu/pinup/pinup/commit/68d20b5233facc69758fb1a31ef25881b78d816e))
+
 ## [0.1.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.1.0...v0.1.1) (2026-09-12)
 
 ### :bug: Fixes
