@@ -139,7 +139,13 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 
 	cur := d.CurrentValue
-	if d.PinDigests && d.CurrentDigest == "" && cur != "" {
+	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" {
+		// A custom regex match is not pinned. Measured across the estate's
+		// open "pin dependencies" branches: Renovate pins the FROM lines
+		// and the job images the dockerfile and gitlabci managers read,
+		// never a value a regex manager matched - with or without an
+		// optional currentDigest group in the pattern (build-tools'
+		// bash v5.3 has one and sits unpinned beside a pinned FROM).
 		// pinDigests: the reference names a tag and no digest; the digest
 		// the tag resolves to is pinned onto it, as its own update type,
 		// before any version moves. Measured: "renovate/pin-dependencies",
@@ -176,6 +182,9 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	base := cur
 	seen := 0
 	strategy := rangeStrategy(d.RangeStrategy)
+	// floor is the lowest release a range admits - what a bump of the
+	// range itself is measured from.
+	floor := ""
 	if isRange {
 		var admitted []string
 		for _, r := range rs.Releases {
@@ -195,6 +204,7 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 			return nil, fmt.Sprintf("no release satisfies %q", cur), nil
 		}
 		base = best
+		floor = versioning.Sort(v, admitted)[0]
 		// With a lock file the current version is what the lock pins,
 		// not the highest the range admits: under bump and
 		// update-lockfile every release above the lock is an update,
@@ -286,15 +296,21 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: advisory fix version %q is not a %s version", d.DepName, d.VulnerabilityBound, scheme),
 			}
 		}
+		// The fix is searched among every release, not only those above
+		// the base: a range without a lock is taken to run its lowest
+		// admitted release, and the fix may sit inside the range (minimist
+		// ^1.2.5 is vulnerable at 1.2.5 and fixed at 1.2.6).
+		all := byVersionOf(rs, v)
 		fix, ok := "", false
-		for c := range byVersion {
-			if v.Compare(c, d.VulnerabilityBound) < 0 {
+		for c, r := range all {
+			if v.Compare(c, d.VulnerabilityBound) < 0 || r.Deprecated || (baseStable && !v.IsStable(c)) {
 				continue
 			}
 			if !ok || v.Compare(c, fix) < 0 {
 				fix, ok = c, true
 			}
 		}
+		byVersion = all
 		if !ok {
 			ids := make([]string, 0, len(d.Advisories))
 			for _, a := range d.Advisories {
@@ -304,7 +320,13 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s %s is affected by %s and no release at or above %s exists", d.DepName, cur, strings.Join(ids, ", "), d.VulnerabilityBound),
 			}
 		}
-		u, skip := buildUpdate(v, d, cur, base, fix, byVersion[fix], scheme)
+		// Typed from the version in use: the lock's, or a range's lowest
+		// admitted release - the one the advisory was asked about.
+		from := base
+		if isRange && floor != "" && (d.LockedVersion == "" || !v.IsVersion(d.LockedVersion)) {
+			from = floor
+		}
+		u, skip := buildUpdate(v, d, cur, from, fix, byVersion[fix], scheme)
 		if strings.HasPrefix(skip, unchangedPrefix) {
 			return nil, fmt.Sprintf("up to date: %q written as a %s value already admits the fix %s", cur, scheme, fix), nil
 		}
@@ -317,6 +339,18 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 
 	var ups []model.Update
 	unchanged := ""
+	if isRange && strategy == versioning.StrategyBump && base != d.LockedVersion && floor != "" {
+		// Bump raises the range to the highest release it admits even
+		// when nothing newer exists: "^8.5" becomes "^8.5.10". Measured:
+		// "update dependency php to ^8.5.10" on renovate/php-8.x, typed
+		// from the range's floor. A lock makes the lock the base instead
+		// and the ordinary buckets cover it.
+		if u, skip := buildUpdate(v, d, cur, floor, base, byVersionOf(rs, v)[base], scheme); skip == "" {
+			ups = append(ups, u)
+		} else if !strings.HasPrefix(skip, unchangedPrefix) {
+			return nil, skip, nil
+		}
+	}
 	for _, bucket := range [][]string{others, majors} {
 		target, ok := versioning.Latest(v, bucket)
 		if !ok {

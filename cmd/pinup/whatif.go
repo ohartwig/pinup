@@ -398,19 +398,38 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	if o.Released != "" {
 		fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}
-	// Advisories first: a disabled dependency is looked up only when it is
-	// vulnerable, and whether it is comes from the advisory database, not
-	// the registry.
-	if o.Advisories != nil {
-		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, resolved.Raw, plan.Deps, wire.DefaultVersioning(datasources))...)
-	}
+	// A disabled dependency is not looked up - unless the advisory
+	// database says it is vulnerable, which is checked after the first
+	// round of lookups (a range without a lock is asked about the lowest
+	// release it admits, and that takes the registry's answer) and
+	// followed by a second round for the vulnerable ones.
 	for i := range plan.Deps {
 		d := &plan.Deps[i]
-		if d.Disabled != "" && d.SkipReason == "" && d.VulnerabilityBound == "" {
+		if d.Disabled != "" && d.SkipReason == "" {
 			d.SkipReason = d.Disabled
 		}
 	}
 	results := fetcher.Fetch(ctx, plan.Deps)
+	if o.Advisories != nil {
+		releasesOf := func(d model.Dependency) *model.ReleaseSet {
+			if r, ok := results[lookup.RefOf(d).Key()]; ok {
+				return r.Releases
+			}
+			return nil
+		}
+		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, resolved.Raw, plan.Deps, wire.DefaultVersioning(datasources), releasesOf)...)
+		var vulnerable []model.Dependency
+		for i := range plan.Deps {
+			d := &plan.Deps[i]
+			if d.Disabled != "" && d.SkipReason == d.Disabled && d.VulnerabilityBound != "" {
+				d.SkipReason = ""
+				vulnerable = append(vulnerable, *d)
+			}
+		}
+		for k, r := range fetcher.Fetch(ctx, vulnerable) {
+			results[k] = r
+		}
+	}
 	fromCache := 0
 	for _, r := range results {
 		if r.Warning != nil {
@@ -678,7 +697,7 @@ type advisoryChecker interface {
 // that cannot be reached is a warning, never a failed run - the ordinary
 // updates still happen. Measured: Renovate queries npm and Packagist
 // dependencies this way and skips a range like ^1.2.5.
-func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string) []model.Warning {
+func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string, releasesOf func(model.Dependency) *model.ReleaseSet) []model.Warning {
 	if on, _ := cfg["osvVulnerabilityAlerts"].(bool); !on {
 		return nil
 	}
@@ -691,7 +710,7 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 	var index []int
 	schemes := wire.Versionings()
 	for i, d := range deps {
-		if d.SkipReason != "" || d.CurrentValue == "" || osv.Ecosystem(d.Datasource) == "" {
+		if (d.SkipReason != "" && d.SkipReason != d.Disabled) || d.CurrentValue == "" || osv.Ecosystem(d.Datasource) == "" {
 			continue
 		}
 		name := d.PackageName
@@ -705,14 +724,22 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		// The version actually in use: the lock's when there is one -
 		// a range like ^4.0.0 says nothing about what is installed, and
 		// Renovate opened vitest's security fix from the lock. A range
-		// without a lock has no one version to ask about; Renovate skips
-		// it too, and a skip is not worth a warning on every run.
+		// without a lock is asked about the lowest release it admits.
+		// Measured: sylius/sylius "^2.0" and no composer.lock gets
+		// "update dependency sylius/sylius to ^2.0.18 [security]".
 		version := d.CurrentValue
 		if d.LockedVersion != "" {
 			version = d.LockedVersion
 		}
-		if v, err := schemes.Get(scheme); err != nil || !v.IsVersion(version) {
+		v, err := schemes.Get(scheme)
+		if err != nil {
 			continue
+		}
+		if !v.IsVersion(version) {
+			version = lowestAdmitted(v, version, releasesOf(d))
+			if version == "" {
+				continue
+			}
 		}
 		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme})
 		index = append(index, i)
@@ -741,6 +768,24 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		d.VulnerabilityBound = f.Bound
 	}
 	return warns
+}
+
+// lowestAdmitted is the lowest release a range admits, "" when none is
+// known: what a range without a lock is taken to be running.
+func lowestAdmitted(v versioning.Versioning, rng string, rs *model.ReleaseSet) string {
+	if rs == nil {
+		return ""
+	}
+	var admitted []string
+	for _, r := range rs.Releases {
+		if v.IsVersion(r.Version) && v.Satisfies(r.Version, rng) {
+			admitted = append(admitted, r.Version)
+		}
+	}
+	if len(admitted) == 0 {
+		return ""
+	}
+	return versioning.Sort(v, admitted)[0]
 }
 
 // advisoryStore adapts the lookup cache to the advisory client: a record

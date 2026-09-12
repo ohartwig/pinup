@@ -667,3 +667,64 @@ func TestGoPseudoVersionsMoveAsDigestsAndLeaveForTags(t *testing.T) {
 		t.Fatalf("updates = %+v, warnings %+v; want a plain version update to v0.1.0", res.Updates, res.Warnings)
 	}
 }
+
+// pinDigests leaves a custom regex match alone: Renovate pins what the
+// dockerfile and gitlabci managers read, never a regex-matched value.
+func TestPinDigestsSkipsCustomRegexMatches(t *testing.T) {
+	digest := func(model.Dependency, string) (string, error) { return "sha256:abc", nil }
+	d := dep("registry.example/bash", "v5.3", "semver")
+	d.Manager, d.Datasource, d.PinDigests = "custom.regex", "docker", true
+	res := Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return releases("v5.3") }, Versionings: registry(), Digest: digest, Now: now})
+	for _, u := range res.Updates {
+		if u.Type == model.UpdatePinDigest {
+			t.Fatalf("a regex match was pinned: %+v", u)
+		}
+	}
+	d.Manager = "gitlabci"
+	res = Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return releases("v5.3") }, Versionings: registry(), Digest: digest, Now: now})
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdatePinDigest {
+		t.Fatalf("the gitlabci reference was not pinned: %+v", res.Updates)
+	}
+}
+
+// Under bump a range is raised to the highest release it admits even when
+// nothing newer exists - "^8.5" becomes "^8.5.10" - typed from the range's
+// floor; under replace the same range is up to date.
+func TestBumpRaisesARangeToItsHighestAdmittedRelease(t *testing.T) {
+	d := dep("php", "^8.5", "semver")
+	d.RangeStrategy = "bump"
+	rs := releases("8.5.0", "8.5.3", "8.5.10")
+	res := plan(t, d, rs)
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "^8.5.10" || res.Updates[0].Type != model.UpdatePatch {
+		t.Fatalf("updates = %+v, want one patch bump to ^8.5.10", res.Updates)
+	}
+	d.RangeStrategy = "replace"
+	res = plan(t, d, rs)
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "up to date") {
+		t.Fatalf("replace: updates %+v, skip %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	// Already at the ceiling: nothing to bump.
+	d.RangeStrategy, d.CurrentValue = "bump", "^8.5.10"
+	res = plan(t, d, rs)
+	if len(res.Updates) != 0 {
+		t.Fatalf("a range at its ceiling was bumped: %+v", res.Updates)
+	}
+}
+
+// A vulnerable range without a lock runs its lowest admitted release; the
+// fix may sit inside the range and is typed from that floor, never as a
+// rollback from the range's ceiling.
+func TestSecurityFixInsideARangeIsTypedFromTheFloor(t *testing.T) {
+	d := dep("minimist", "^1.2.5", "semver")
+	d.RangeStrategy = "bump"
+	d.VulnerabilityBound = "1.2.6"
+	d.Advisories = []model.Advisory{{ID: "GHSA-x"}}
+	res := plan(t, d, releases("1.2.5", "1.2.6", "1.2.8"))
+	if len(res.Updates) != 1 {
+		t.Fatalf("updates = %+v, skip %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	u := res.Updates[0]
+	if !u.SecurityFix || u.NewVersion != "1.2.6" || u.NewValue != "^1.2.6" || u.Type != model.UpdatePatch {
+		t.Errorf("update = %s %s %s security=%v, want a patch security fix to ^1.2.6", u.Type, u.NewVersion, u.NewValue, u.SecurityFix)
+	}
+}

@@ -71,6 +71,7 @@ func Versionings() versioning.Registry {
 		"apk":              apk.New(),
 		"composer":         composer.New(),
 		"npm":              npm.New(),
+		"node":             npm.NewNode(),
 		"go":               golang.New(),
 		"go-mod-directive": godirective.New(),
 		"hashicorp":        hashicorp.New(),

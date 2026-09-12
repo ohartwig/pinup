@@ -374,6 +374,7 @@ func TestVersioningTablesAreUsable(t *testing.T) {
 	for _, m := range []string{
 		"semver", "docker", "composer", "loose", "npm", "go", "apk",
 		"semver-partial", "semver-coerced", "hashicorp", "regex-alpine",
+		"go-mod-directive", "node",
 	} {
 		tbl := verTableFor(t, m)
 		n := len(tbl.IsValid) + len(tbl.IsStable) + len(tbl.IsGreaterThan) + len(tbl.Matches)
@@ -389,7 +390,7 @@ func TestVersioningTablesAreUsable(t *testing.T) {
 	// the files - the tables carry getMajor, equals, sortVersions,
 	// getSatisfyingVersion and getNewValue too, which versioning/* will read
 	// when it exists.
-	t.Logf("%d rows across 11 schemes, in the four operations decoded here", total)
+	t.Logf("%d rows across 13 schemes, in the four operations decoded here", total)
 	if total < 4000 {
 		t.Errorf("only %d rows; the capture is thinner than it should be", total)
 	}

@@ -29,6 +29,9 @@ const perScheme = {
   'semver-partial': ['1', '2', '3', '1.22', '1.10.17', '1.1.2'],
   loose: ['1', '2', '3', '1.33.59', '1.33.64'],
   'go-mod-directive': ['1.27', '1.27.0', '1.26', '1.27.1', '1.28.0', '1.21rc1', 'go1.27', '1.28', '1.27.0-rc1', '1.27.10'],
+  // The node image tags the estate's job images use: Renovate's gitlabci
+  // manager assigns the node scheme to the image named node.
+  node: ['24-alpine', '22-alpine3.21', '24', '22', '24.8.0', '22.19.0', 'lts', 'lts-alpine', '24-slim', '25-alpine', '20-alpine'],
 };
 
 // A parameterised regex scheme needs inputs its own pattern can match, or the
@@ -50,6 +53,7 @@ const ranges = {
   loose: ['1'],
   'semver-partial': ['1'],
   'go-mod-directive': ['1.27', '1.27.0'],
+  node: ['24', '24-alpine', '22'],
 };
 
 const strategies = ['replace', 'bump', 'pin', 'widen', 'update-lockfile', 'auto'];
