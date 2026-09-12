@@ -1,3 +1,13 @@
+## [0.4.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.3.0...v0.4.0) (2026-09-12)
+
+### :sparkles: Features
+
+* git-refs, Go pseudo-versions and go.sum, disabled dependencies the advisory check still sees ([f86d74a](https://git.ole-hartwig.eu/pinup/pinup/commit/f86d74a6631112788e623d7d30fa051cc50733ff))
+
+### :repeat: Continuous Integrations
+
+* keep trivy out of testdata ([8c49dcb](https://git.ole-hartwig.eu/pinup/pinup/commit/8c49dcb0b6862627bc4e920ed5c121baec401644))
+
 ## [0.3.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.2.0...v0.3.0) (2026-09-12)
 
 ### :sparkles: Features
