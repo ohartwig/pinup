@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
+# SPDX-License-Identifier: MIT
+#
+# test:trivy:fs (composed-default-pipelines/go) scans the tree. testdata holds
+# deliberately vulnerable manifests - the golden repositories pin lodash
+# 4.17.20, guzzle 7.4.4 and an indirect golang.org/x/mod 0.39.0 precisely so
+# that the vulnerability fast path has something to find - and the parity
+# corpus mirrors the estate's own outdated pins. None of it is built or run.
+scan:
+  skip-dirs:
+    - testdata
