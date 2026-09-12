@@ -123,7 +123,7 @@ func TestSyntheticTerraformFile(t *testing.T) {
 
 	rv := depNamed(t, deps, "hashicorp/terraform", "required_version")
 	if rv.CurrentValue != ">= 1.6" || rv.Datasource != "github-releases" ||
-		rv.Versioning != "hashicorp" || rv.SkipReason != "github-token-required" ||
+		rv.Versioning != "hashicorp" || rv.SkipReason != "" ||
 		rv.ExtractVersion != `v(?<version>.*)$` {
 		t.Errorf("required_version dependency = %+v, want the measured shape", rv)
 	}

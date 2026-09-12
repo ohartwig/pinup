@@ -97,14 +97,14 @@ components:
 		t.Fatalf("got %d kubernetes-sigs/kustomize deps, want 2 (resources + components)", len(ghDeps))
 	}
 	for _, d := range ghDeps {
-		if d.Datasource != "github-tags" || d.SkipReason != "github-token-required" || d.PackageName != "" {
-			t.Errorf("github form %+v, want datasource github-tags, skip github-token-required, no packageName", d)
+		if d.Datasource != "github-tags" || d.SkipReason != "" || d.PackageName != "" {
+			t.Errorf("github form %+v, want datasource github-tags, no skip, no packageName", d)
 		}
 		assertValueLocus(t, f, d)
 	}
 
 	argo := depNamed(t, deps, "argoproj/argo-cd", "Kustomization")
-	if argo.CurrentValue != "v2.12.3" || argo.Datasource != "github-tags" || argo.SkipReason != "github-token-required" {
+	if argo.CurrentValue != "v2.12.3" || argo.Datasource != "github-tags" || argo.SkipReason != "" {
 		t.Errorf("argo dep = %+v", argo)
 	}
 	assertValueLocus(t, f, argo)

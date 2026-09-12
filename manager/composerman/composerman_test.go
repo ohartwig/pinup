@@ -108,8 +108,8 @@ func TestSyntheticExtraction(t *testing.T) {
 	if php.PackageName != "containerbase/php-prebuild" {
 		t.Errorf("php: packageName = %q, want containerbase/php-prebuild", php.PackageName)
 	}
-	if php.SkipReason != "github-token-required" {
-		t.Errorf("php: skipReason = %q, want github-token-required", php.SkipReason)
+	if php.SkipReason != "" {
+		t.Errorf("php: skipReason = %q, want none - the runner carries a GitHub token", php.SkipReason)
 	}
 	if php.RegistryURLs != nil {
 		t.Errorf("php: registryUrls = %v, want none", php.RegistryURLs)

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -99,6 +100,13 @@ func httpClient(p platformEnv) *httpx.Client {
 		rules = append(rules, httpx.HostRule{
 			MatchHost: p.Host, Token: p.Token, HeaderName: p.Header,
 		})
+	}
+	// GITHUB_COM_TOKEN is the name the Renovate runner uses; the same
+	// variable serves pinup, bound to api.github.com and nothing else.
+	// Without it github lookups run anonymously against the 60-an-hour
+	// limit, which the estate's handful of GitHub dependencies fits.
+	if tok := os.Getenv("GITHUB_COM_TOKEN"); tok != "" {
+		rules = append(rules, httpx.HostRule{MatchHost: "api.github.com", Token: tok})
 	}
 	return httpx.New(httpx.Options{
 		HostRules:  rules,

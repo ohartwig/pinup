@@ -15,6 +15,12 @@
 # CONFIG_NAME picks another file from testdata/parity/config (default.json
 # by default) - gomod.json enables the one manager the runner never does.
 #
+# GITHUB_COM_TOKEN must be set to what the Renovate runner carries: without
+# it Renovate skips every dependency that needs github.com at extraction
+# ("github-token-required" - terraform's required_version,
+# .terraform-version, composer's php), which is not what production does.
+# The first captures ran without it and recorded that skip.
+#
 # NOTE ON MOUNTS: colima shares only $HOME and /Volumes/Samsung_X5. A corpus
 # staged anywhere else mounts EMPTY inside the container, and Renovate then
 # reports "Found 0 package file(s)" - which reads exactly like a repository
@@ -63,6 +69,7 @@ json.dump(d, open(p,'w'), indent=2)" "${dst}/renovate.json"
     -v "${CFG}:/cfg:ro" -v "${dst}:/repo" \
     -e RENOVATE_CONFIG_FILE=/cfg/${CONFIG_NAME:-default.json} -e RENOVATE_PLATFORM=local \
     -e LOG_LEVEL=debug -e LOG_FORMAT=json -e TZ=Europe/Berlin -w /repo \
+    -e GITHUB_COM_TOKEN="${GITHUB_COM_TOKEN:-}" \
     "$IMAGE" --dry-run=extract > "$log" 2>&1
 
   python3 - "$log" "${OUT}/${name}.json" <<'PY'

@@ -21,7 +21,7 @@
 //	                                       depType required_version
 //	                                       depName hashicorp/terraform
 //	                                       datasource github-releases
-//	                                       skipReason github-token-required
+//	                                       (looked up; the runner carries a GitHub token)
 //
 //	provider "aws" { ... }                 depType provider (the pre-1.0 form
 //	                                       with no version pinned in the block
@@ -195,7 +195,6 @@ func requiredVersionDep(file string, src []byte, it node) model.Dependency {
 		Datasource:     "github-releases",
 		Versioning:     "hashicorp",
 		ExtractVersion: requiredVersionExtractVersion,
-		SkipReason:     "github-token-required",
 		Locus:          valueLocus(it.str),
 	}
 }

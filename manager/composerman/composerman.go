@@ -11,12 +11,12 @@
 //	"require-dev": { "vendor/name": "*" }        depType require-dev  packagist
 //	"require": { "php": "^8.5" }                 datasource github-tags,
 //	                                              packageName containerbase/php-prebuild,
-//	                                              skipReason github-token-required
+//	                                              (looked up; the runner carries a GitHub token)
 //
 // "ext-*" and "lib-*" keys name a PHP extension or system library the
 // platform provides rather than a package Packagist can resolve; they carry
 // skipReason "platform package" and no datasource, the same "skip, don't
-// invent a lookup" contract php's github-token-required carries.
+// invent a lookup" contract a platform package carries.
 //
 // composer.json is plain JSON, but offsets into the file as read are the
 // contract here (model.Locus), so this package does not decode it with
@@ -147,13 +147,11 @@ func dependency(file, depType string, mem jsonMember, src []byte, urls []string)
 	switch {
 	case depName == "php":
 		// The runtime itself: not a Packagist package. containerbase's
-		// prebuild tags are the only thing that resolves a PHP version, and
-		// that datasource needs a token this estate does not hand to every
-		// manager, so the dependency is reported and immediately skipped
-		// rather than attempted.
+		// prebuild tags are what resolves a PHP version (measured with the
+		// runner's GitHub token in place; without one Renovate skips it as
+		// github-token-required, which the first capture recorded).
 		dep.Datasource = "github-tags"
 		dep.PackageName = "containerbase/php-prebuild"
-		dep.SkipReason = "github-token-required"
 	case strings.HasPrefix(depName, "ext-"), strings.HasPrefix(depName, "lib-"):
 		// A platform requirement: a PHP extension or system library the
 		// runtime image provides, not a package any datasource can look up.

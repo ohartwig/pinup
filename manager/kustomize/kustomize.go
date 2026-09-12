@@ -12,7 +12,7 @@
 //	components: [ https://github.com/OWNER/REPO/path?ref=V ]
 //	                                       depType Kustomization
 //	                                       datasource github-tags
-//	                                       skipReason github-token-required
+//	                                       (looked up; the runner carries a GitHub token)
 //	                                       (the estate carries no GitHub
 //	                                       token, so Renovate skips these at
 //	                                       extract time already)
@@ -189,7 +189,6 @@ func (w *walker) ref(n *yamlx.Node) {
 	case isGitHubForm(before):
 		dep.DepName = githubRepo(before)
 		dep.Datasource = "github-tags"
-		dep.SkipReason = "github-token-required"
 
 	default:
 		depName, packageName, ok := gitRepoRef(before)

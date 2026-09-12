@@ -6,11 +6,11 @@
 //
 // Measured on testdata/parity/synthetic/tfversion (corpus key
 // "terraform-version"): the value is taken as written - `v1.7.0` keeps its
-// v - the dependency is `hashicorp/terraform` on github-releases, and it is
-// skipped at extraction with `github-token-required` because the estate's
-// runner has no GitHub token (RENOVATE_GITHUB_TOKEN_WARN is switched off
-// there rather than a token supplied). `.opentofu-version` next to it is
-// not read by 43.288.0 and is not read here.
+// v - the dependency is `hashicorp/terraform` on github-releases, looked
+// up (the runner carries a GitHub token; the first capture ran without one
+// and recorded the github-token-required skip Renovate applies then).
+// `.opentofu-version` next to it is not read by 43.288.0 and is not read
+// here.
 package tfversion
 
 import (
@@ -55,7 +55,6 @@ func (m *Manager) Extract(_ context.Context, f extract.File, _ extract.ManagerCo
 		DepName:       "hashicorp/terraform",
 		Datasource:    "github-releases",
 		CurrentValue:  src[start:end],
-		SkipReason:    "github-token-required",
 		Locus:         model.Locus{ValueStart: start, ValueEnd: end, DigestStart: model.NoDigest, DigestEnd: model.NoDigest, Line: line},
 	}}}, nil
 }
