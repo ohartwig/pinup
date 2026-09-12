@@ -610,3 +610,42 @@ func TestEachBranchCarriesOnlyItsOwnUpdate(t *testing.T) {
 		}
 	}
 }
+
+// A repository without a configuration file runs with the recommended
+// ignorePaths - a committed node_modules is not a package file - while a
+// repository with one runs under exactly what it says (the runner's list,
+// which does not ignore node_modules). Measured in the pinned container
+// and on the estate's partner-a-jobs.
+func TestARepositoryWithoutConfigIgnoresNodeModules(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(root+"/node_modules/dropzone", 0o755)
+	os.WriteFile(root+"/package.json", []byte(`{"name":"root","dependencies":{"lodash":"4.17.20"}}`), 0o644)
+	os.WriteFile(root+"/node_modules/dropzone/package.json", []byte(`{"name":"dropzone","version":"6.0.0","devDependencies":{"karma":"^6.1.0"}}`), 0o644)
+	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(at)
+	opts.Root = root
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files := map[string]bool{}
+	for _, d := range plan.Deps {
+		files[d.File] = true
+	}
+	if !files["package.json"] || files["node_modules/dropzone/package.json"] {
+		t.Errorf("files extracted without a repository config: %v; want package.json alone", files)
+	}
+
+	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
+	plan, err = whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	files = map[string]bool{}
+	for _, d := range plan.Deps {
+		files[d.File] = true
+	}
+	if !files["node_modules/dropzone/package.json"] {
+		t.Errorf("files extracted with the runner's own ignorePaths: %v; want the vendored package file too", files)
+	}
+}

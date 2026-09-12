@@ -235,6 +235,23 @@ func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (c
 	if err != nil {
 		return config.Decoded{}, nil, nil, err
 	}
+	if repoCfg == "" {
+		// A repository without a configuration file runs under the
+		// onboarding default on top of the runner's file, and the one
+		// key that changes is ignorePaths: the recommended list, not the
+		// runner's own. Measured twice - print-config against a bare
+		// repository (testdata/parity/.../full-resolved.json) and the
+		// pinned container on a repository with a committed
+		// node_modules: one package file matched, not two - and on the
+		// estate, where partner-a-jobs' vendored node_modules/dropzone/
+		// package.json is not among Renovate's dependencies.
+		if def, _, ok, err := preset.Builtin().Get(":ignoreModulesAndTests"); err == nil && ok {
+			if paths, ok := def["ignorePaths"]; ok {
+				r.Raw["ignorePaths"] = paths
+				r.Prov["/ignorePaths"] = append(r.Prov["/ignorePaths"], model.Origin{Source: "preset::ignoreModulesAndTests", Rule: model.NoRule})
+			}
+		}
+	}
 	d, err := config.Decode(r.Raw)
 	return d, r, warnings, err
 }

@@ -728,3 +728,23 @@ func TestSecurityFixInsideARangeIsTypedFromTheFloor(t *testing.T) {
 		t.Errorf("update = %s %s %s security=%v, want a patch security fix to ^1.2.6", u.Type, u.NewVersion, u.NewValue, u.SecurityFix)
 	}
 }
+
+// update-lockfile with no lock moves nothing: the range admits the target
+// and there is no lock to carry it, so the dependency is up to date - even
+// for a security fix. With a lock the same update is lock-only.
+func TestUpdateLockfileWithoutALockIsUpToDate(t *testing.T) {
+	d := dep("typo3/cms-core", "^14.0", "semver")
+	d.RangeStrategy = "update-lockfile"
+	d.VulnerabilityBound = "14.3.6"
+	d.Advisories = []model.Advisory{{ID: "GHSA-x"}}
+	rs := releases("14.0.0", "14.3.6")
+	res := plan(t, d, rs)
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "up to date") {
+		t.Fatalf("updates %+v, skip %q; want up to date", res.Updates, res.Deps[0].SkipReason)
+	}
+	d.LockedVersion = "14.0.0"
+	res = plan(t, d, rs)
+	if len(res.Updates) != 1 || !res.Updates[0].LockOnly || !res.Updates[0].SecurityFix {
+		t.Fatalf("with a lock: updates %+v; want one lock-only security fix", res.Updates)
+	}
+}

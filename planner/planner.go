@@ -495,7 +495,14 @@ func buildUpdate(v versioning.Versioning, d *model.Dependency, cur, base, target
 	lockOnly := false
 	if strategy == versioning.StrategyUpdateLockfile && !v.IsVersion(cur) && v.Satisfies(target, cur) {
 		// The range admits the target: the manifest keeps its range and
-		// the lock moves. Renovate titles it like a version update.
+		// the lock moves. Renovate titles it like a version update. With
+		// no lock there is nothing to move and nothing happens - measured:
+		// typo3/cms-core "^14.0" in a library without composer.lock gets
+		// neither a security fix nor an update from Renovate, advisories
+		// against 14.0.0 notwithstanding.
+		if d.LockedVersion == "" {
+			return model.Update{}, unchangedPrefix + target
+		}
 		lockOnly = true
 	}
 	newValue := cur
