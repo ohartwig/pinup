@@ -81,7 +81,7 @@ var mutators = []mutator{
 	{16, "planner", "titles keep their case", "planner/branch.go",
 		"\tlower := true\n", "\tlower := false\n", []string{"./planner/"}, false},
 	{17, "planner", "an unchanged value is still an update", "planner/planner.go",
-		"\tif newValue == cur {\n\t\treturn model.Update{}, unchangedPrefix + target\n\t}", "", []string{"./cmd/pinup/"}, false},
+		"\t\tif newValue == cur {\n\t\t\treturn model.Update{}, unchangedPrefix + target\n\t\t}", "", []string{"./cmd/pinup/"}, false},
 	// delivery: apply, tasks, runner, shadow
 	{18, "delivery", "a new tag lands on the old digest", "extract/edit.go",
 		"\tcase hasDigest && valueChanges && !digestChanges:", "\tcase hasDigest && valueChanges && !digestChanges && false:", []string{"./extract/", "./manager/gitlabci/"}, false},
