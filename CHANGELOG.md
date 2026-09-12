@@ -1,3 +1,13 @@
+## [0.3.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.2.0...v0.3.0) (2026-09-12)
+
+### :sparkles: Features
+
+* **planner:** range strategies, pinDigests, security fixes from the lock; the comparator learns time ([03a7197](https://git.ole-hartwig.eu/pinup/pinup/commit/03a71978484e8fc714c9df01c8f430667d4a7648))
+
+### :white_check_mark: Tests
+
+* **mutation:** re-anchor the unchanged-value mutator ([b5ecfe0](https://git.ole-hartwig.eu/pinup/pinup/commit/b5ecfe02a3c821675d573284532e22c6b50e4b33))
+
 ## [0.2.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.1.1...v0.2.0) (2026-09-12)
 
 ### :sparkles: Features
