@@ -91,6 +91,11 @@ workflow:
 variables:
   # renovate: datasource=docker depName=devops/images/golang
   GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27"
+  # update:pinup runs on the toolchain image: gpg for the signature, git,
+  # go for the go.sum refresh. The binary it runs is this tree's own, built
+  # by build:linux-arm64 - the image's pinup is only a bystander.
+  # renovate: datasource=docker depName=devops/images/pinup-toolchain
+  PINUP_TOOLCHAIN_IMAGE: "registry.ole-hartwig.eu/devops/images/pinup-toolchain:0"
   # Do not quietly pull a different Go version: what is in the image is what
   # counts. go.mod says 1.27 and the image is 1.27; with `auto` a future bump
   # to the directive would silently download a toolchain the image does not
@@ -284,11 +289,13 @@ release:
 # --------------------------------------------------------------------------- #
 # Dogfooding - pinup updates this repository from its own HEAD
 #
-# On the schedule, and before the runner and the image exist: the job builds
-# pinup from the tree it runs in and points it at this repository under the
-# estate's runner configuration, fetched from devops/renovate-runner. What it
-# opens is a merge request against this repository, signed with the key the
-# job imports, showing Verified. Release criterion, not milestone.
+# On the schedule: the job takes the pinup that build:linux-arm64 made from
+# the tree it runs in and points it at this repository under the estate's
+# runner configuration, fetched from devops/renovate-runner. What it opens
+# is a merge request against this repository, signed with the key the job
+# imports, showing Verified. Release criterion, not milestone. The job
+# image is the toolchain image, for gpg and go; the golang image has no
+# gpg, which the first live run found (2026-09-12).
 #
 # Variables (group pinup, masked): PINUP_GITLAB_TOKEN with api and
 # write_repository, PINUP_GIT_NAME, PINUP_GIT_EMAIL, PINUP_GPG_PRIVATE_KEY
@@ -297,10 +304,11 @@ release:
 # --------------------------------------------------------------------------- #
 update:pinup:
   stage: update
-  image: ${GO_IMAGE}
+  image: ${PINUP_TOOLCHAIN_IMAGE}
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - when: never
+  needs: [build:linux-arm64]
   cache:
     key:
       files: [go.sum]
@@ -315,9 +323,9 @@ update:pinup:
     - |
       set -eu
       test -n "${PINUP_GITLAB_TOKEN:-}" || { echo "PINUP_GITLAB_TOKEN is not set; a job token cannot push or open a merge request"; exit 1; }
-      command -v git >/dev/null || { echo "no git in ${GO_IMAGE}; devops/images/golang!79 adds it"; exit 1; }
       printf '%s\n' "$PINUP_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
-      go build -o /tmp/pinup ./cmd/pinup
+      install -m 0755 dist/pinup-linux-arm64 /tmp/pinup
+      /tmp/pinup version
       mode="run"
       if [ "${PINUP_MODE:-}" = "whatif" ]; then mode="run --dry-run"; fi
       # shellcheck disable=SC2086
