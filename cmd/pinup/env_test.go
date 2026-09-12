@@ -73,7 +73,10 @@ func TestAskpassAnswersFromTheEnvironment(t *testing.T) {
 	if err := cmdAskpass([]string{"Password for 'https://oauth2@git.example.org':"}, &out, io.Discard); err != nil || strings.TrimSpace(out.String()) != "glpat-x" {
 		t.Errorf("password: %q %v", out.String(), err)
 	}
+	// The group's GITLAB_TOKEN is in every CI job's environment now; the
+	// job-token fallback is only reached without it.
 	t.Setenv("PINUP_GITLAB_TOKEN", "")
+	t.Setenv("GITLAB_TOKEN", "")
 	t.Setenv("CI_JOB_TOKEN", "job")
 	out.Reset()
 	cmdAskpass([]string{"Username for 'https://git.example.org':"}, &out, io.Discard)
