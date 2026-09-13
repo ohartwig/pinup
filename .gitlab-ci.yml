@@ -34,21 +34,24 @@ include:
     inputs:
       stage: quick
 
-  # Releases: semantic-release cuts the tag on a push to main; the tag
-  # pipeline then builds, uploads and links the packages. Tag format with the
-  # v, as the estate's Go tools have it (S3mail), and as the trigger contract
-  # with yasrt accepts.
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/release-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@1.24.0
+  # release-tools/yasrt cuts the release: `version` decides in .pre, `release`
+  # tags in the release stage with the job token -- which starts no pipeline.
+  # Build, scan and signing stay on the TAG pipeline: tag-pipeline has the
+  # release trigger this project on the tag it just cut, so those jobs run
+  # exactly as they did when the tag came from semantic-release's push.
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/yasrt@1
     inputs:
-      stage: release
-      config-preset: '@moselwal/semantic-release-config'
-      config-preset-group-id: "175"
-      config-preset-scope: moselwal
+      stage-version: .pre
+      stage-release: release
+      product: custom
       tag-format: 'v${version}'
-      # The pipeline builds the deliverable, so a pipeline-only change is a
-      # release: the same override yasrt and the golang image carry.
-      non-release-paths: '.pre-commit-config.yaml'
+      non-release-paths: ['.pre-commit-config.yaml']
+      tag-pipeline: 'true'
+      rules-config:
+        - if: $CI_PIPELINE_SOURCE == "schedule"
+          when: never
+        - if: $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG == null && $CI_PIPELINE_SOURCE == "push"
+        - when: never
 
   # Signing the manifest comes from the estate: a detached cosign signature
   # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
@@ -286,7 +289,7 @@ upload:
     - cp "$CI_PROJECT_DIR/SHA256SUMS" "$CI_PROJECT_DIR/SHA256SUMS.sig" dist/
     - cd dist && go run ../tools/upload.go "${PACKAGE_URL}/${CI_COMMIT_TAG}" *.zip *.sha256 pinup-linux-* pinup-darwin-* SHA256SUMS SHA256SUMS.sig
 
-release:
+release:links:
   stage: release
   image: ${GO_IMAGE}
   before_script: []
