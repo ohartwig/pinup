@@ -95,7 +95,7 @@ func TestThreeTagsAnnotatedAndLightweight(t *testing.T) {
 		t.Fatalf("fixture set up %d tags, want 3", len(truth))
 	}
 
-	ds := New()
+	ds := newLocal()
 	rs, err := ds.Releases(context.Background(), lookup.Ref{
 		Datasource: "git-tags", PackageName: "file://" + dir,
 	})
@@ -136,7 +136,7 @@ func TestSourceURLStripsDotGitForHTTPS(t *testing.T) {
 	// The real network call is refused by never happening: lsRemote is
 	// stubbed so this test exercises only the URL bookkeeping, not a live
 	// https remote.
-	ds := &Datasource{lsRemote: func(context.Context, string, time.Duration, string, bool) (string, error) {
+	ds := &Datasource{allowFile: true, lsRemote: func(context.Context, string, time.Duration, string, bool) (string, error) {
 		return "", nil
 	}}
 	rs, err := ds.Releases(context.Background(), lookup.Ref{
@@ -152,7 +152,7 @@ func TestSourceURLStripsDotGitForHTTPS(t *testing.T) {
 
 func TestSourceURLIsEmptyForNonHTTPSSchemes(t *testing.T) {
 	dir := t.TempDir()
-	ds := &Datasource{lsRemote: func(context.Context, string, time.Duration, string, bool) (string, error) {
+	ds := &Datasource{allowFile: true, lsRemote: func(context.Context, string, time.Duration, string, bool) (string, error) {
 		return "", nil
 	}}
 	rs, err := ds.Releases(context.Background(), lookup.Ref{
@@ -168,7 +168,7 @@ func TestSourceURLIsEmptyForNonHTTPSSchemes(t *testing.T) {
 
 func TestANonexistentPathIsAnError(t *testing.T) {
 	needGit(t)
-	ds := New()
+	ds := newLocal()
 	_, err := ds.Releases(context.Background(), lookup.Ref{
 		Datasource: "git-tags", PackageName: "file:///no/such/path/on/this/machine",
 	})
@@ -191,7 +191,7 @@ func countingRunner(calls *int) func(context.Context, string, time.Duration, str
 
 func TestAnSSHURLIsDeclinedWithoutInvokingGit(t *testing.T) {
 	calls := 0
-	ds := &Datasource{lsRemote: countingRunner(&calls)}
+	ds := &Datasource{allowFile: true, lsRemote: countingRunner(&calls)}
 	_, err := ds.Releases(context.Background(), lookup.Ref{
 		Datasource: "git-tags", PackageName: "ssh://git@git.ole-hartwig.eu/devops/gitops/manifests.git",
 	})
@@ -209,7 +209,7 @@ func TestAnSSHURLIsDeclinedWithoutInvokingGit(t *testing.T) {
 
 func TestARedactedURLIsDeclinedWithoutInvokingGit(t *testing.T) {
 	calls := 0
-	ds := &Datasource{lsRemote: countingRunner(&calls)}
+	ds := &Datasource{allowFile: true, lsRemote: countingRunner(&calls)}
 	_, err := ds.Releases(context.Background(), lookup.Ref{
 		Datasource: "git-tags", PackageName: "https://**redacted**@git.ole-hartwig.eu/devops/gitops/manifests.git",
 	})
@@ -236,7 +236,7 @@ func TestRedactURLMasksCredentialsInText(t *testing.T) {
 }
 
 func TestDefaultVersioningIsSemver(t *testing.T) {
-	ds := New()
+	ds := newLocal()
 	if v := ds.DefaultVersioning(); v != "semver" {
 		t.Errorf("DefaultVersioning() = %q, want semver", v)
 	}
@@ -251,7 +251,7 @@ func TestGitRefsListsBranchesAndTagsAndAnswersDigests(t *testing.T) {
 	mustRun(t, dir, "branch", "release")
 	head := strings.TrimSpace(mustRun(t, dir, "rev-parse", "HEAD"))
 
-	ds := NewKind(Refs)
+	ds := newLocalKind(Refs)
 	if ds.Name() != "git-refs" {
 		t.Fatalf("name = %q", ds.Name())
 	}
@@ -288,13 +288,45 @@ func TestGitRefsListsBranchesAndTagsAndAnswersDigests(t *testing.T) {
 func TestGitTagsStillIgnoresBranches(t *testing.T) {
 	needGit(t)
 	dir := fixtureRepo(t)
-	rs, err := New().Releases(context.Background(), lookup.Ref{Datasource: "git-tags", PackageName: "file://" + dir})
+	rs, err := newLocal().Releases(context.Background(), lookup.Ref{Datasource: "git-tags", PackageName: "file://" + dir})
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, r := range rs.Releases {
 		if r.Version == "main" {
 			t.Fatal("git-tags listed the branch main")
+		}
+	}
+}
+
+func newLocalKind(k Kind) *Datasource {
+	d := NewKind(k)
+	d.allowFile = true
+	return d
+}
+
+// newLocal is the datasource over file:// fixtures, which a configuration
+// can never name.
+func newLocal() *Datasource {
+	d := New()
+	d.allowFile = true
+	return d
+}
+
+// A value that is not an http(s) URL never reaches git: a leading dash
+// would be an option, a path a local repository.
+func TestOnlyHTTPURLsReachGit(t *testing.T) {
+	for _, bad := range []string{"--upload-pack=touch /tmp/x", "/etc", "file:///tmp/x", "ext::sh -c id", "git://example.org/x"} {
+		invoked := false
+		d := New()
+		d.lsRemote = func(context.Context, string, time.Duration, string, bool) (string, error) {
+			invoked = true
+			return "", nil
+		}
+		_, err := d.Releases(context.Background(), lookup.Ref{Datasource: "git-tags", PackageName: bad})
+		var declined *lookup.DeclinedError
+		if !errors.As(err, &declined) || invoked {
+			t.Errorf("%q: err=%v invoked=%v", bad, err, invoked)
 		}
 	}
 }

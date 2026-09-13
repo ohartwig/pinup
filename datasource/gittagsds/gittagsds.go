@@ -53,6 +53,10 @@ const (
 
 // Datasource is the git-tags / git-refs datasource.
 type Datasource struct {
+	// allowFile admits file:// repositories - the tests' fixtures; a
+	// configuration never gets one.
+	allowFile bool
+
 	kind Kind
 	// Git is the binary to run; empty means "git" on PATH.
 	Git string
@@ -99,6 +103,15 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	if strings.HasPrefix(repoURL, "ssh://") {
 		return nil, &lookup.DeclinedError{Reason: fmt.Sprintf(
 			"git-tags: %s is an ssh:// URL; only an unauthenticated public repository is supported", redactURL(repoURL))}
+	}
+	// A repository URL is an https:// or http:// URL and nothing else: the
+	// value comes from a repository's configuration, and git reads a
+	// value starting with "-" as an option (--upload-pack=<command>
+	// executes it), a bare path or file:// as a local repository, and
+	// the ext:: transport as a command (review S6, 2026-09-13).
+	if !strings.HasPrefix(repoURL, "https://") && !strings.HasPrefix(repoURL, "http://") && !(d.allowFile && strings.HasPrefix(repoURL, "file://")) {
+		return nil, &lookup.DeclinedError{Reason: fmt.Sprintf(
+			"git-tags: %s is not an http(s):// URL; local paths, other transports and options are not repositories", redactURL(repoURL))}
 	}
 	if strings.Contains(repoURL, "**redacted**") {
 		return nil, &lookup.DeclinedError{Reason: fmt.Sprintf(
@@ -186,12 +199,35 @@ func execLsRemote(ctx context.Context, gitBin string, timeout time.Duration, rep
 	cctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	args := []string{"ls-remote", "--tags", "--refs", repoURL}
+	args := []string{"ls-remote", "--tags", "--refs", "--", repoURL}
 	if all {
-		args = []string{"ls-remote", "--heads", "--tags", "--refs", repoURL}
+		args = []string{"ls-remote", "--heads", "--tags", "--refs", "--", repoURL}
 	}
 	cmd := exec.CommandContext(cctx, bin, args...)
-	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+	// A directory that is not a repository: with one argument git would
+	// otherwise fall back to the current checkout's origin. And an
+	// environment of its own: git needs PATH and a HOME for its config,
+	// not the job's tokens.
+	dir, err := os.MkdirTemp("", "pinup-ls-remote-")
+	if err != nil {
+		return "", err
+	}
+	defer os.RemoveAll(dir)
+	cmd.Dir = dir
+	// GIT_ALLOW_PROTOCOL is an allowlist: http(s) and nothing else, the
+	// ext:: transport and local paths included (file:// only for the
+	// fixtures, which Releases admits for nobody else).
+	protocols := "https:http"
+	if strings.HasPrefix(repoURL, "file://") {
+		protocols += ":file"
+	}
+	cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + dir, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_NOSYSTEM=1", "GIT_ALLOW_PROTOCOL=" + protocols}
+	if v := os.Getenv("SSL_CERT_FILE"); v != "" {
+		cmd.Env = append(cmd.Env, "SSL_CERT_FILE="+v)
+	}
+	if v := os.Getenv("SSL_CERT_DIR"); v != "" {
+		cmd.Env = append(cmd.Env, "SSL_CERT_DIR="+v)
+	}
 	var out, errb bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errb
 	if err := cmd.Run(); err != nil {
