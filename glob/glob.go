@@ -245,9 +245,7 @@ func ExpandBraces(pattern string) []string {
 
 	var out []string
 	for _, p := range parts {
-		for _, expanded := range ExpandBraces(prefix + p + suffix) {
-			out = append(out, expanded)
-		}
+		out = append(out, ExpandBraces(prefix+p+suffix)...)
 	}
 	return out
 }

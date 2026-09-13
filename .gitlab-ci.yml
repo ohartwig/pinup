@@ -136,6 +136,18 @@ lint:ci-resolved:
   script:
     - go run tools/cilint.go
 
+# staticcheck, pinned, fetched by go run: no dependency in go.mod, no tool
+# in the image. The review of 2026-09-13 found eight leftovers this would
+# have named on the day they were written.
+lint:staticcheck:
+  stage: quick
+  image: ${GO_IMAGE}
+  variables:
+    GIT_DEPTH: "1"
+    GOFLAGS: ""
+  script:
+    - go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
+
 # --------------------------------------------------------------------------- #
 # Test
 # --------------------------------------------------------------------------- #

@@ -220,6 +220,24 @@ func TestGitLabNotesUseInstanceTokenAndEncodedPath(t *testing.T) {
 	}
 }
 
+func TestTruncateNeverSplitsARune(t *testing.T) {
+	for _, tc := range []struct {
+		in    string
+		limit int
+		want  string
+	}{
+		{"short", 10, "short"},
+		{"line one\nline two that is long", 14, "line one"},
+		{"ääääää", 5, "ää"},
+		{"abcdef", 3, "abc"},
+		{"a\nbbbbbbbbbbbbbbbbbbbb", 12, "a\nbbbbbbbbbb"},
+	} {
+		if got := truncate(tc.in, tc.limit); got != tc.want {
+			t.Errorf("truncate(%q, %d) = %q, want %q", tc.in, tc.limit, got, tc.want)
+		}
+	}
+}
+
 func TestUnknownSourceYieldsNothingAndTouchesNoHost(t *testing.T) {
 	f, _, _, rt, rec := fixture(t)
 	for _, src := range []string{"", "https://bitbucket.org/x/y", "https://github.com/onlyowner", "not a url"} {

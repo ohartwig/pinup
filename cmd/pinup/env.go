@@ -6,14 +6,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"net/url"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
+	"git.ole-hartwig.eu/pinup/pinup/plugin"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
 
@@ -38,6 +37,12 @@ type platformEnv struct {
 	Token string
 	// Header is the header that carries Token: PRIVATE-TOKEN or JOB-TOKEN.
 	Header string
+	// GitHubToken is GITHUB_COM_TOKEN - the name the Renovate runner uses;
+	// the same variable serves pinup, bound to api.github.com and nothing
+	// else. Without it github lookups run anonymously against the
+	// 60-an-hour limit, which the estate's handful of GitHub dependencies
+	// fits.
+	GitHubToken string
 }
 
 func platformFromEnv(getenv func(string) string) (platformEnv, error) {
@@ -51,6 +56,7 @@ func platformFromEnv(getenv func(string) string) (platformEnv, error) {
 	} else if tok := getenv("CI_JOB_TOKEN"); tok != "" {
 		p.Token, p.Header = tok, "JOB-TOKEN"
 	}
+	p.GitHubToken = getenv("GITHUB_COM_TOKEN")
 	// A token with no host to bind it to would never be sent, and every
 	// private project would answer 404 "does not exist or the token cannot
 	// read it" - true, and useless. Refuse the configuration instead.
@@ -101,12 +107,8 @@ func httpClient(p platformEnv) *httpx.Client {
 			MatchHost: p.Host, Token: p.Token, HeaderName: p.Header,
 		})
 	}
-	// GITHUB_COM_TOKEN is the name the Renovate runner uses; the same
-	// variable serves pinup, bound to api.github.com and nothing else.
-	// Without it github lookups run anonymously against the 60-an-hour
-	// limit, which the estate's handful of GitHub dependencies fits.
-	if tok := os.Getenv("GITHUB_COM_TOKEN"); tok != "" {
-		rules = append(rules, httpx.HostRule{MatchHost: "api.github.com", Token: tok})
+	if p.GitHubToken != "" {
+		rules = append(rules, httpx.HostRule{MatchHost: "api.github.com", Token: p.GitHubToken})
 	}
 	return httpx.New(httpx.Options{
 		HostRules:  rules,

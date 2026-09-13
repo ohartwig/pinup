@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
 	"git.ole-hartwig.eu/pinup/pinup/model"
@@ -81,7 +82,7 @@ func (f *Fetcher) Notes(ctx context.Context, sourceURL string, v versioning.Vers
 			continue
 		}
 		if limit := f.MaxBody; limit > 0 && len(r.Body) > limit {
-			r.Body = r.Body[:limit] + "\n\n… (truncated)"
+			r.Body = truncate(r.Body, limit) + "\n\n… (truncated)"
 		}
 		out = append(out, r)
 	}
@@ -206,6 +207,23 @@ func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL str
 }
 
 const pageSize = 100
+
+// truncate cuts s to at most limit bytes on a line boundary when one lies
+// in the second half of the budget, else on a rune boundary - never inside
+// a UTF-8 sequence, which encoding/json would turn into U+FFFD.
+func truncate(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+	if nl := strings.LastIndexByte(s[:limit], '\n'); nl > limit/2 {
+		return s[:nl]
+	}
+	cut := limit
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+	return s[:cut]
+}
 
 // github reads one page of a repository's releases, newest first.
 func (f *Fetcher) github(ctx context.Context, owner, repo string, page int) ([]model.ReleaseNote, error) {

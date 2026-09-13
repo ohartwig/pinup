@@ -27,11 +27,6 @@ func compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 	return r
 }
 
-func compareOnce(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *Suppressions, controls []string, version string, now time.Time) Result {
-	r, _ := Compare(plans, open, sup, controls, version, now, nil)
-	return r
-}
-
 func mr(branch string, iid int) publish.MergeRequest {
 	return publish.MergeRequest{IID: iid, State: "opened", SourceBranch: branch, Title: branch}
 }

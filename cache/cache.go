@@ -27,6 +27,7 @@ import (
 	"time"
 
 	"go.etcd.io/bbolt"
+	bbolterrors "go.etcd.io/bbolt/errors"
 )
 
 // currentSchemaVersion identifies the on-disk shape of the releases and
@@ -125,7 +126,7 @@ func (s *Store) ensureSchema() error {
 }
 
 func dropBucketIfExists(tx *bbolt.Tx, name []byte) error {
-	if err := tx.DeleteBucket(name); err != nil && !errors.Is(err, bbolt.ErrBucketNotFound) {
+	if err := tx.DeleteBucket(name); err != nil && !errors.Is(err, bbolterrors.ErrBucketNotFound) {
 		return err
 	}
 	return nil

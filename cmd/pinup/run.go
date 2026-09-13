@@ -11,15 +11,6 @@ import (
 	"strings"
 )
 
-// exit codes, per docs/tech-spec.md §15. They are part of the CLI contract:
-// a caller distinguishes "nothing to do" from "a plan was produced" without
-// parsing output.
-const (
-	codeNothingToDo = 0
-	codePlanned     = 0
-	codeFailure     = 1
-)
-
 // command is one subcommand. Every subcommand takes its own flag set so
 // `pinup whatif -h` lists only what whatif accepts.
 type command struct {
@@ -112,8 +103,4 @@ func cmdAskpass(args []string, out, errw io.Writer) error {
 		fmt.Fprintln(out, env.Token)
 	}
 	return nil
-}
-
-func errNotYet(name string) error {
-	return fmt.Errorf("%s is not implemented yet", name)
 }

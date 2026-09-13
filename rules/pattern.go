@@ -165,14 +165,3 @@ func (l *patternList) match(s string) bool {
 	}
 	return false
 }
-
-// matchAny is match over several candidate inputs - for matchPackageNames,
-// which Renovate checks against packageName and falls back to depName.
-func (l *patternList) matchAny(ss ...string) bool {
-	for _, s := range ss {
-		if s != "" && l.match(s) {
-			return true
-		}
-	}
-	return false
-}

@@ -40,6 +40,15 @@ func TestPlatformFromEnv(t *testing.T) {
 	if p, err := platformFromEnv(envOf(nil)); err != nil || p.Token != "" {
 		t.Errorf("no environment at all is fine (anonymous): %+v %v", p, err)
 	}
+
+	// GITHUB_COM_TOKEN needs no instance and binds to api.github.com only.
+	p, err = platformFromEnv(envOf(map[string]string{"GITHUB_COM_TOKEN": "ghp_x"}))
+	if err != nil || p.GitHubToken != "ghp_x" {
+		t.Errorf("github token: %+v %v", p, err)
+	}
+	if c := httpClient(p); c == nil {
+		t.Error("no client")
+	}
 }
 
 func TestGitIdentityFromEnv(t *testing.T) {
