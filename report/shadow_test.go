@@ -184,3 +184,25 @@ func TestAStaleRenovateBranchCanBeTriaged(t *testing.T) {
 		t.Errorf("untriaged stale branch must fail on the second run: %v", r.Failures)
 	}
 }
+
+// A branch Renovate opened and had merged inside the look-back window is
+// a match one lifecycle further along - the lock refresh pinup plans every
+// hour of the window while Renovate's merged at 01:2x - and never a miss
+// on Renovate's side either.
+func TestAMergedRenovateBranchMatches(t *testing.T) {
+	plans := []*model.Plan{plan("a/b", "0.1.0", model.Branch{Name: "renovate/lock-file-maintenance"})}
+	done := mr("renovate/lock-file-maintenance", 47)
+	done.State = "merged"
+	open := map[string][]publish.MergeRequest{"a/b": {done, mr("renovate/x-1.x", 48)}}
+	_, st := Compare(plans, open, &Suppressions{}, nil, "0.1.0", now, nil)
+	r, _ := Compare(plans, open, &Suppressions{}, nil, "0.1.0", now, st)
+	if r.Merged != 1 || r.OnlyPinup != 0 {
+		t.Errorf("merged branch: %+v %v", r, r.Failures)
+	}
+	if r.OnlyRenovate != 1 {
+		t.Errorf("the open x-1.x is Renovate's alone and must still count: %+v", r)
+	}
+	if !strings.Contains(r.Summary(), "merged 1") {
+		t.Errorf("summary %q", r.Summary())
+	}
+}

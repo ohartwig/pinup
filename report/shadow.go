@@ -109,10 +109,13 @@ type Result struct {
 	// first time: the two tools run half an hour apart, and a difference
 	// that one run later is gone was timing, not behaviour. A difference
 	// fails only when the previous run saw it too.
-	Pending    int     `json:"pending"`
-	Suppressed int     `json:"suppressed"`
-	Controls   int     `json:"controls"`
-	Entries    []Entry `json:"entries"`
+	Pending    int `json:"pending"`
+	Suppressed int `json:"suppressed"`
+	// Merged counts branches pinup plans that Renovate opened and had
+	// merged inside the look-back window.
+	Merged   int     `json:"merged"`
+	Controls int     `json:"controls"`
+	Entries  []Entry `json:"entries"`
 	// Failures are the reasons the comparison does not pass; empty means
 	// agreement within the rules.
 	Failures []string `json:"failures"`
@@ -210,7 +213,12 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 			continue
 		}
 		theirs := map[string]publish.MergeRequest{}
+		merged := map[string]publish.MergeRequest{}
 		for _, m := range mrs {
+			if m.State == "merged" {
+				merged[m.SourceBranch] = m
+				continue
+			}
 			theirs[m.SourceBranch] = m
 		}
 		mine := map[string]model.Branch{}
@@ -231,6 +239,16 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 			} else if ok {
 				e.Side, e.MRIID = "both", m.IID
 				r.Both++
+			} else if m, done := merged[name]; done && b.SuppressedBy == "" {
+				// Renovate opened it and had it merged since the window
+				// this comparison looks back over; the plan here was made
+				// before, or cannot see the outcome - a lock refresh
+				// leaves no trace a plan reads (measured: Renovate's
+				// lock-file-maintenance merges at 01:2x and pinup plans
+				// it again every hour of the window). The same branch,
+				// one lifecycle further along.
+				e.Side, e.MRIID, e.Suppressed = "both", m.IID, "merged"
+				r.Merged++
 			} else if b.SuppressedBy != "" {
 				e.Side = "both" // held here, absent there: what a hold means
 				r.Held++
@@ -330,9 +348,9 @@ func suppressionFor(sup *Suppressions, project, branch string, now time.Time) st
 // Summary is the one line a job log needs: matched over total, and the
 // buckets.
 func (r Result) Summary() string {
-	total := r.Both + r.Held + r.HeldOpen + r.RollingMajor + r.Persisting + r.Pending + r.OnlyPinup + r.OnlyRenovate + r.Suppressed + r.Controls
-	return fmt.Sprintf("shadow: %d plans, %d deps, matched %d/%d (held %d, suppressed %d, controls %d, rolling_major %d, persisting %d, pending %d, held_open %d, only_pinup %d, only_renovate %d)",
-		r.Plans, r.Deps, r.Both+r.Held+r.Suppressed+r.Controls+r.RollingMajor+r.Persisting, total, r.Held, r.Suppressed, r.Controls, r.RollingMajor, r.Persisting, r.Pending, r.HeldOpen, r.OnlyPinup, r.OnlyRenovate)
+	total := r.Both + r.Merged + r.Held + r.HeldOpen + r.RollingMajor + r.Persisting + r.Pending + r.OnlyPinup + r.OnlyRenovate + r.Suppressed + r.Controls
+	return fmt.Sprintf("shadow: %d plans, %d deps, matched %d/%d (merged %d, held %d, suppressed %d, controls %d, rolling_major %d, persisting %d, pending %d, held_open %d, only_pinup %d, only_renovate %d)",
+		r.Plans, r.Deps, r.Both+r.Merged+r.Held+r.Suppressed+r.Controls+r.RollingMajor+r.Persisting, total, r.Merged, r.Held, r.Suppressed, r.Controls, r.RollingMajor, r.Persisting, r.Pending, r.HeldOpen, r.OnlyPinup, r.OnlyRenovate)
 }
 
 // Passed reports whether the comparison has no failure.

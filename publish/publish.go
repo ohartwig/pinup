@@ -98,6 +98,11 @@ type Platform interface {
 	// source branch starts with prefix - the other tool's side of the
 	// shadow comparison.
 	OpenMergeRequests(ctx context.Context, p Project, prefix string) ([]MergeRequest, error)
+	// MergedMergeRequests lists the merge requests of a project whose source
+	// branch starts with prefix and that were merged at or after since: a
+	// branch the other tool opened and had merged is a match the open list
+	// no longer shows.
+	MergedMergeRequests(ctx context.Context, p Project, prefix string, since time.Time) ([]MergeRequest, error)
 
 	// UpsertIssue finds the open issue of a project with exactly this
 	// title and brings its description and labels in line, or opens it.

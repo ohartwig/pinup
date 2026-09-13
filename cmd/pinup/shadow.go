@@ -81,7 +81,14 @@ func cmdShadow(args []string, out, errw io.Writer) error {
 			fmt.Fprintf(errw, "%s: %v\n", p.Repo.Path, err)
 			continue
 		}
-		open[p.Repo.Path] = mrs
+		// The requests Renovate had merged in the last day too: a branch
+		// one lifecycle further along is a match, not a miss.
+		done, err := platform.MergedMergeRequests(ctx, proj, *prefix, time.Now().Add(-24*time.Hour))
+		if err != nil {
+			fmt.Fprintf(errw, "%s: %v\n", p.Repo.Path, err)
+			continue
+		}
+		open[p.Repo.Path] = append(mrs, done...)
 	}
 
 	sup, err := report.LoadSuppressions(*suppressions)

@@ -40,6 +40,7 @@ type fakeMR struct {
 	automerge            bool
 	canMerge             bool // whether the /merge endpoint currently succeeds
 	createdAt, updatedAt time.Time
+	mergedAt             time.Time
 }
 
 func (m *fakeMR) toJSON() mrJSON {
@@ -47,7 +48,7 @@ func (m *fakeMR) toJSON() mrJSON {
 		IID: m.iid, State: m.state, SourceBranch: m.sourceBranch, TargetBranch: m.targetBranch,
 		Title: m.title, Description: m.description, Labels: append([]string(nil), m.labels...),
 		SHA: m.sha, WebURL: m.webURL, Automerge: m.automerge,
-		CreatedAt: m.createdAt, UpdatedAt: m.updatedAt,
+		CreatedAt: m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
 	}
 }
 
@@ -258,6 +259,11 @@ func (s *gitlabServer) listMergeRequests(w http.ResponseWriter, r *http.Request,
 		}
 		if state != "" && m.state != state {
 			continue
+		}
+		if after := q.Get("updated_after"); after != "" {
+			if t, err := time.Parse(time.RFC3339, after); err == nil && m.updatedAt.Before(t) {
+				continue
+			}
 		}
 		filtered = append(filtered, m)
 	}
@@ -818,5 +824,26 @@ func TestUpsertIssueCreatesThenUpdatesOnlyOnChange(t *testing.T) {
 	}
 	if got := proj.issues[1].desc; got != "body v2" {
 		t.Errorf("description = %q", got)
+	}
+}
+
+// MergedMergeRequests asks GitLab for merged requests updated since the
+// cut-off and keeps those under the prefix whose merge time is inside it.
+func TestMergedMergeRequestsSinceACutoff(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	proj.mrs = []*fakeMR{
+		{iid: 1, state: "merged", sourceBranch: "renovate/old", createdAt: fixedTime(1), updatedAt: fixedTime(1), mergedAt: fixedTime(1)},
+		{iid: 2, state: "merged", sourceBranch: "renovate/lock-file-maintenance", createdAt: fixedTime(3), updatedAt: fixedTime(4), mergedAt: fixedTime(4)},
+		{iid: 3, state: "merged", sourceBranch: "pinup/other", createdAt: fixedTime(4), updatedAt: fixedTime(4), mergedAt: fixedTime(4)},
+		{iid: 4, state: "opened", sourceBranch: "renovate/open", createdAt: fixedTime(4), updatedAt: fixedTime(4)},
+	}
+	proj.nextIID = 4
+	got, err := pf.MergedMergeRequests(context.Background(), publish.Project{Path: "group/proj"}, "renovate/", fixedTime(3))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got) != 1 || got[0].IID != 2 || got[0].State != "merged" {
+		t.Errorf("got %+v, want the one merged renovate/ request since the cut-off", got)
 	}
 }

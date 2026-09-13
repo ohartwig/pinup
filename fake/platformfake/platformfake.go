@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/publish"
 )
@@ -156,6 +157,21 @@ func (p *Platform) OpenMergeRequests(_ context.Context, _ publish.Project, prefi
 	var out []publish.MergeRequest
 	for _, m := range p.MRs {
 		if m.State == "opened" && strings.HasPrefix(m.SourceBranch, prefix) {
+			out = append(out, m)
+		}
+	}
+	return out, nil
+}
+
+// MergedMergeRequests lists the recorded merged requests under prefix
+// updated at or after since.
+func (p *Platform) MergedMergeRequests(_ context.Context, _ publish.Project, prefix string, since time.Time) ([]publish.MergeRequest, error) {
+	p.record("Merged " + prefix)
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	var out []publish.MergeRequest
+	for _, m := range p.MRs {
+		if m.State == "merged" && strings.HasPrefix(m.SourceBranch, prefix) && !m.UpdatedAt.Before(since) {
 			out = append(out, m)
 		}
 	}

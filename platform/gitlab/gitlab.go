@@ -386,6 +386,24 @@ func sameSet(a, b []string) bool {
 
 // OpenMergeRequests lists the open merge requests whose source branch
 // starts with prefix.
+// MergedMergeRequests lists merged requests updated at or after since whose
+// source branch starts with prefix. updated_after is GitLab's filter; the
+// merge time itself is what is compared.
+func (p *Platform) MergedMergeRequests(ctx context.Context, proj publish.Project, prefix string, since time.Time) ([]publish.MergeRequest, error) {
+	q := url.Values{"state": {"merged"}, "updated_after": {since.UTC().Format(time.RFC3339)}}
+	items, err := p.listMergeRequests(ctx, proj.Path, q)
+	if err != nil {
+		return nil, err
+	}
+	var out []publish.MergeRequest
+	for _, m := range items {
+		if strings.HasPrefix(m.SourceBranch, prefix) && (m.MergedAt.IsZero() || !m.MergedAt.Before(since)) {
+			out = append(out, toPublish(m))
+		}
+	}
+	return out, nil
+}
+
 func (p *Platform) OpenMergeRequests(ctx context.Context, proj publish.Project, prefix string) ([]publish.MergeRequest, error) {
 	q := url.Values{"state": {"opened"}}
 	items, err := p.listMergeRequests(ctx, proj.Path, q)
@@ -518,6 +536,7 @@ type mrJSON struct {
 	Automerge    bool      `json:"merge_when_pipeline_succeeds"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
+	MergedAt     time.Time `json:"merged_at"`
 }
 
 func toPublish(m mrJSON) publish.MergeRequest {
