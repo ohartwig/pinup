@@ -1,3 +1,9 @@
+## [0.12.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.5...v0.12.6) (2026-09-13)
+
+### :bug: Fixes
+
+* **runner:** an empty repository has nothing to return to ([842824b](https://git.ole-hartwig.eu/pinup/pinup/commit/842824b6b95c040d8d14fb418582b455874dc9bd))
+
 ## [0.12.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.4...v0.12.5) (2026-09-13)
 
 ### :repeat: Chores
