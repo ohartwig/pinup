@@ -289,13 +289,18 @@ release:
 # --------------------------------------------------------------------------- #
 # Dogfooding - pinup updates this repository from its own HEAD
 #
-# On the schedule: the job takes the pinup that build:linux-arm64 made from
-# the tree it runs in and points it at this repository under the estate's
-# runner configuration, fetched from devops/renovate-runner. What it opens
-# is a merge request against this repository, signed with the key the job
-# imports, showing Verified. Release criterion, not milestone. The job
-# image is the toolchain image, for gpg and go; the golang image has no
-# gpg, which the first live run found (2026-09-12).
+# On the schedule: the job builds pinup from the tree it runs in and points
+# it at this repository under the estate's runner configuration, fetched
+# from devops/renovate-runner. What it opens is a merge request against
+# this repository, signed with the key the job imports, showing Verified.
+# Release criterion, not milestone. The job image is the toolchain image,
+# for gpg and go; the golang image has no gpg, which the first live run
+# found (2026-09-12).
+#
+# It builds its own binary and needs nothing: a push to main while the
+# scheduled pipeline runs cancels the interruptible test and build jobs,
+# and a job that waited on them was skipped with them - the daily run of
+# 2026-09-13 did not happen. HEAD was tested when it was pushed.
 #
 # Variables (group pinup, masked): PINUP_GITLAB_TOKEN with api and
 # write_repository, PINUP_GIT_NAME, PINUP_GIT_EMAIL, PINUP_GPG_PRIVATE_KEY
@@ -308,7 +313,8 @@ update:pinup:
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - when: never
-  needs: [build:linux-arm64]
+  needs: []
+  interruptible: false
   cache:
     key:
       files: [go.sum]
@@ -324,7 +330,7 @@ update:pinup:
       set -eu
       test -n "${PINUP_GITLAB_TOKEN:-}" || { echo "PINUP_GITLAB_TOKEN is not set; a job token cannot push or open a merge request"; exit 1; }
       printf '%s\n' "$PINUP_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
-      install -m 0755 dist/pinup-linux-arm64 /tmp/pinup
+      CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${CI_COMMIT_SHORT_SHA}" -o /tmp/pinup ./cmd/pinup
       /tmp/pinup version
       mode="run"
       if [ "${PINUP_MODE:-}" = "whatif" ]; then mode="run --dry-run"; fi
