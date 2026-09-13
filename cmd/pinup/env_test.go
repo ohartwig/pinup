@@ -92,4 +92,12 @@ func TestAskpassAnswersFromTheEnvironment(t *testing.T) {
 	if strings.TrimSpace(out.String()) != "gitlab-ci-token" {
 		t.Errorf("job token username: %q", out.String())
 	}
+	// A prompt for any other host gets nothing: the token is the
+	// instance's, whatever led git elsewhere.
+	for _, prompt := range []string{"Password for 'https://oauth2@evil.example.net':", "Password for 'https://git.example.org.evil.net':", "Password:"} {
+		out.Reset()
+		if err := cmdAskpass([]string{prompt}, &out, io.Discard); err == nil || out.Len() != 0 {
+			t.Errorf("%q answered: %q %v", prompt, out.String(), err)
+		}
+	}
 }

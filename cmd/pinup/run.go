@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 )
@@ -92,6 +93,12 @@ func cmdAskpass(args []string, out, errw io.Writer) error {
 	if env.Token == "" {
 		return fmt.Errorf("askpass: no token in the environment")
 	}
+	// The prompt names the URL git is talking to ("Password for
+	// 'https://oauth2@git.example.org': "). The token is for one host;
+	// a prompt for any other gets nothing, whatever led git there.
+	if !promptNamesHost(prompt, env.Host) {
+		return fmt.Errorf("askpass: the prompt is not for %s; no credential is given", env.Host)
+	}
 	switch {
 	case strings.HasPrefix(strings.ToLower(prompt), "username"):
 		if env.Header == "JOB-TOKEN" {
@@ -103,4 +110,22 @@ func cmdAskpass(args []string, out, errw io.Writer) error {
 		fmt.Fprintln(out, env.Token)
 	}
 	return nil
+}
+
+// promptNamesHost tells whether git's credential prompt is for host: the
+// quoted URL in it has that host, with or without a user part.
+func promptNamesHost(prompt, host string) bool {
+	if host == "" {
+		return false
+	}
+	i := strings.Index(prompt, "'")
+	j := strings.LastIndex(prompt, "'")
+	if i < 0 || j <= i {
+		return false
+	}
+	u, err := url.Parse(prompt[i+1 : j])
+	if err != nil {
+		return false
+	}
+	return strings.EqualFold(u.Host, host)
 }
