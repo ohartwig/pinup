@@ -4,11 +4,14 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"testing"
 	"time"
 
+	"git.ole-hartwig.eu/pinup/pinup/fake/platformfake"
+	"git.ole-hartwig.eu/pinup/pinup/git"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 )
 
@@ -117,5 +120,25 @@ func TestDescriptionCapsReleaseSections(t *testing.T) {
 	}
 	if n := strings.Count(got, "more releases"); n != 5 {
 		t.Errorf("%d trailers, want 5", n)
+	}
+}
+
+// An empty repository - no commit, no HEAD - is planned as empty and does
+// not fail on the way back to where it started.
+func TestAnEmptyRepositoryDoesNotFailTheRun(t *testing.T) {
+	if err := git.Available(); err != nil {
+		t.Skip(err)
+	}
+	dir := t.TempDir()
+	mustGit(t, dir, "init", "--quiet", "--initial-branch=main", ".")
+	repo, err := git.Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.Env = testEnv
+	pf := &platformfake.Platform{}
+	outcomes, err := Execute(context.Background(), plan(), options(repo, pf))
+	if err != nil || len(outcomes) != 0 {
+		t.Errorf("empty repository: %v %+v", err, outcomes)
 	}
 }

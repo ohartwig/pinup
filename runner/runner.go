@@ -89,11 +89,11 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 	// Every branch is built on the base and left behind; the checkout goes
 	// back to where it was, so a second run over the same directory plans
 	// from the tree it started with, not from the last branch pushed.
-	start, err := o.Repo.Where(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("runner: %w", err)
+	// An empty repository (a project awaiting deletion, measured on the
+	// live partition 2026-09-13) has no HEAD and nothing to return to.
+	if start, err := o.Repo.Where(ctx); err == nil {
+		defer func() { _ = o.Repo.Return(ctx, start) }()
 	}
-	defer func() { _ = o.Repo.Return(ctx, start) }()
 
 	var outcomes []Outcome
 	created := 0
