@@ -298,6 +298,14 @@ release:
     # packages come from this pipeline, so this job adds the links only.
     - go run tools/release.go "${PACKAGE_URL}/${CI_COMMIT_TAG}" pinup-linux-arm64.zip:package pinup-linux-amd64.zip:package pinup-darwin-arm64.zip:package pinup-darwin-amd64.zip:package SHA256SUMS:other SHA256SUMS.sig:other
 
+# The release job pushes the release commit and the tag as a user, with the
+# token semantic-release reads as GITLAB_TOKEN. That was the group's copy of
+# the bot's token until 2026-09-13, when the token moved into this project's
+# variables (security review, credential scope); the job reads it from there.
+release:semver:
+  variables:
+    GITLAB_TOKEN: $PINUP_GITLAB_TOKEN
+
 # --------------------------------------------------------------------------- #
 # Dogfooding - pinup updates this repository from its own HEAD
 #
