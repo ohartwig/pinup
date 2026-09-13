@@ -321,6 +321,17 @@ var coveredBy = map[string]string{
 	"gitlabci-include": "gitlabci",
 }
 
+// Covers reports whether a configured manager name is read by a pinup
+// manager - implemented under that name, or covered by the one that reads
+// the same lines.
+func Covers(name string) bool {
+	if _, ok := Managers()[name]; ok {
+		return true
+	}
+	_, ok := coveredBy[name]
+	return ok
+}
+
 // ManagerNameOf reports the manager name to record on a dependency, collapsing
 // the per-definition discovery keys back to the one the configuration uses.
 func ManagerNameOf(key string) string {

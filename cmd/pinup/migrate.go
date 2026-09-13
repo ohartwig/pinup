@@ -44,15 +44,18 @@ var keySupport = map[string]support{
 	"timezone": supported, "automerge": supported, "dependencyDashboardApproval": supported, "groupName": supported,
 	"groupSlug": supported, "versioning": supported, "registryUrls": supported, "extractVersion": supported,
 	"ignoreUnstable": supported, "prHourlyLimit": supported, "prConcurrentLimit": supported, "labels": supported,
-	"ignoreDeps": supported, "allowedVersions": supported, "rangeStrategy": partial, "separateMajorMinor": supported,
-	"separateMinorPatch": partial, "separateMultipleMajor": partial, "pinDigests": unsupported,
+	"ignoreDeps": supported, "allowedVersions": supported, "rangeStrategy": supported, "separateMajorMinor": supported,
+	"separateMinorPatch": partial, "separateMultipleMajor": partial, "pinDigests": supported,
+	"lockFileMaintenance": supported, "osvVulnerabilityAlerts": supported, "vulnerabilityAlerts": supported,
+	"postUpgradeTasks": supported, "allowedCommands": supported,
+	// postUpdateOptions: gomodTidy is what the gomod lock refresh does anyway; the other options are unread.
+	"postUpdateOptions": partial, "prBodyDefinitions": supported, "prBodyNotes": supported, "addLabels": supported,
+	// Read and ignored by design: no changelog fetching, no third-party badges, no internal-checks filter yet.
+	"fetchChangeLogs": unsupported, "internalChecksFilter": unsupported, "dependencyDashboard": unsupported,
 	// Publishing.
 	"commitBody": partial, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
 	"semanticCommitType": supported, "semanticCommitScope": supported, "commitMessageTopic": supported,
 	"commitMessageExtra": supported, "commitMessageAction": supported, "branchPrefix": supported, "branchTopic": supported,
-	// Not yet.
-	"lockFileMaintenance": unsupported, "postUpgradeTasks": unsupported, "internalChecksFilter": unsupported,
-	"vulnerabilityAlerts": unsupported, "osvVulnerabilityAlerts": unsupported, "dependencyDashboard": unsupported,
 	"executionTimeout": partial, "$schema": supported,
 }
 
@@ -141,10 +144,9 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 	if err != nil {
 		return err
 	}
-	managers := wire.Managers()
 	var missingManagers []string
 	for _, m := range decoded.EnabledManagers {
-		if _, ok := managers[m]; !ok && m != "custom.regex" {
+		if !wire.Covers(m) && m != "custom.regex" {
 			missingManagers = append(missingManagers, m)
 		}
 	}

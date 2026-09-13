@@ -143,11 +143,20 @@ func TestMigrateClassifiesEveryKey(t *testing.T) {
 			t.Errorf("%s not classified", want)
 		}
 	}
-	if !contains(got.Unsupported, "lockFileMaintenance") || !contains(got.Unsupported, "packageRules[].postUpgradeTasks") {
+	// What is built is supported; what is read and ignored by design is
+	// named, not dropped: no dashboard issue, no changelog fetching.
+	for _, want := range []string{"lockFileMaintenance", "packageRules[].postUpgradeTasks", "vulnerabilityAlerts", "osvVulnerabilityAlerts"} {
+		if !contains(got.Supported, want) {
+			t.Errorf("%s is built and must be supported: %v", want, got.Supported)
+		}
+	}
+	if !contains(got.Unsupported, "dependencyDashboard") || !contains(got.Unsupported, "packageRules[].fetchChangeLogs") {
 		t.Errorf("unsupported must name what is not built: %v", got.Unsupported)
 	}
-	if len(got.Managers) == 0 {
-		t.Error("the managers still missing must be named")
+	// gitlabci-include is read by the gitlabci manager: nothing is missing
+	// for the runner's list.
+	if len(got.Managers) != 0 {
+		t.Errorf("managers reported missing: %v", got.Managers)
 	}
 }
 
