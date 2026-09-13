@@ -285,44 +285,79 @@ func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (c
 // they can disable it or change its versioning and registries, and once per
 // update, where the update type is known and a rule can hold it.
 func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
-	root, cfgPath, repoName, now := o.Root, o.ConfigPath, o.RepoName, o.Now
-	decoded, resolved, presetWarnings, err := resolveConfig(root, cfgPath, o.RunnerDefault, o.Presets)
+	r := &whatifRun{ctx: ctx, o: o, now: o.Now}
+	for _, stage := range []func() error{r.configure, r.extractAll, r.lookupAll, r.planUpdates, r.realise} {
+		if err := stage(); err != nil {
+			return nil, err
+		}
+	}
+	return r.finish()
+}
+
+// whatifRun is one run's state as it passes through the stages: the
+// configuration as resolved, the files as read, the lookups as answered,
+// and the plan as it fills.
+type whatifRun struct {
+	ctx context.Context
+	o   whatifOptions
+	now time.Time
+
+	decoded  config.Decoded
+	resolved *config.Resolved
+	engine   *rules.Engine
+	managers extract.Registry
+	found    discover.Result
+	plan     *model.Plan
+	// contents is one read per file, however many managers claim it.
+	contents map[string][]byte
+	// locks maps "manager|dir" to the lock file present there, so the
+	// refresh task and the maintenance branch name the one that exists.
+	locks map[string]string
+
+	datasources   lookup.Registry
+	fetcher       *lookup.Fetcher
+	results       map[string]lookup.Result
+	fromCache     int
+	digestLookups int
+
+	// postUpgrade and changelogOff are per update key: the rule's
+	// postUpgradeTasks and its fetchChangeLogs "off".
+	postUpgrade  map[string]plugin.PostUpgrade
+	changelogOff map[string]bool
+	branches     []model.Branch
+}
+
+// configure resolves the configuration, compiles the rules, discovers the
+// files and opens the plan.
+func (r *whatifRun) configure() error {
+	o := r.o
+	decoded, resolved, presetWarnings, err := resolveConfig(o.Root, o.ConfigPath, o.RunnerDefault, o.Presets)
 	if err != nil {
-		return nil, fmt.Errorf("config: %w", err)
+		return fmt.Errorf("config: %w", err)
 	}
 	packageRules, _ := resolved.Raw["packageRules"].([]any)
 	engine, err := rules.Compile(packageRules, wire.Versionings())
 	if err != nil {
-		return nil, fmt.Errorf("packageRules: %w", err)
+		return fmt.Errorf("packageRules: %w", err)
 	}
-
-	// ignoreDeps names dependencies that are never looked up.
-	ignored := map[string]bool{}
-	if list, ok := resolved.Raw["ignoreDeps"].([]any); ok {
-		for _, e := range list {
-			if name, ok := e.(string); ok {
-				ignored[name] = true
-			}
-		}
-	}
-
-	managers := wire.Managers()
-	req := discover.Request{
-		Root:            root,
+	r.decoded, r.resolved, r.engine = decoded, resolved, engine
+	r.managers = wire.Managers()
+	found, err := discover.Discover(discover.Request{
+		Root:            o.Root,
 		EnabledManagers: wire.EnabledKeys(decoded),
 		IgnorePaths:     decoded.IgnorePaths,
-		Patterns:        wire.DiscoveryPatterns(decoded, managers),
-	}
-	found, err := discover.Discover(req)
+		Patterns:        wire.DiscoveryPatterns(decoded, r.managers),
+	})
 	if err != nil {
-		return nil, fmt.Errorf("discover: %w", err)
+		return fmt.Errorf("discover: %w", err)
 	}
+	r.found = found
 
 	plan := &model.Plan{
 		SchemaVersion: model.SchemaVersion,
 		PinupVersion:  version,
-		GeneratedAt:   now.UTC(),
-		Repo:          model.RepoRef{Path: repoName},
+		GeneratedAt:   r.now.UTC(),
+		Repo:          model.RepoRef{Path: o.RepoName},
 		Warnings:      found.Warnings,
 	}
 	for _, w := range presetWarnings {
@@ -338,43 +373,58 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	for _, w := range engine.Warnings {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "rules", Msg: w})
 	}
+	r.plan = plan
+	return nil
+}
+
+// extractAll reads every discovered file once and runs each claiming
+// manager over it, applying the pre-lookup rules to what comes out.
+func (r *whatifRun) extractAll() error {
+	o, plan, decoded, resolved := r.o, r.plan, r.decoded, r.resolved
+	// ignoreDeps names dependencies that are never looked up.
+	ignored := map[string]bool{}
+	if list, ok := resolved.Raw["ignoreDeps"].([]any); ok {
+		for _, e := range list {
+			if name, ok := e.(string); ok {
+				ignored[name] = true
+			}
+		}
+	}
 
 	// One read per file, however many managers claim it. Reading a file once
 	// per manager would multiply IO by the number of definitions that match
 	// it, and several match every .gitlab-ci.yml in the estate.
-	contents := map[string][]byte{}
-	for _, m := range found.Matches {
-		if _, ok := contents[m.Path]; ok {
+	r.contents = map[string][]byte{}
+	for _, m := range r.found.Matches {
+		if _, ok := r.contents[m.Path]; ok {
 			continue
 		}
-		b, err := os.ReadFile(filepath.Join(root, m.Path))
+		b, err := os.ReadFile(filepath.Join(o.Root, m.Path))
 		if err != nil {
 			plan.Warnings = append(plan.Warnings, model.Warning{
 				Stage: "extract", File: m.Path, Msg: err.Error(),
 			})
 			continue
 		}
-		contents[m.Path] = b
+		r.contents[m.Path] = b
 	}
 
 	// locks remembers the lock files the run read, by manager and
 	// directory: a manifest edit there needs a lock refresh task.
-	// locks maps "manager|dir" to the lock file present there, so the
-	// refresh task and the maintenance branch name the one that exists.
-	locks := map[string]string{}
-	for _, match := range found.Matches {
-		body, ok := contents[match.Path]
+	r.locks = map[string]string{}
+	for _, match := range r.found.Matches {
+		body, ok := r.contents[match.Path]
 		if !ok {
 			continue
 		}
-		p, err := wire.Resolve(match.Manager, decoded, managers)
+		p, err := wire.Resolve(match.Manager, decoded, r.managers)
 		if err != nil {
 			plan.Warnings = append(plan.Warnings, model.Warning{
 				Stage: "extract", File: match.Path, Msg: err.Error(),
 			})
 			continue
 		}
-		res, err := extract.Run(ctx, p.Manager,
+		res, err := extract.Run(r.ctx, p.Manager,
 			extract.File{Path: match.Path, Content: body}, p.Config)
 		if err != nil {
 			plan.Warnings = append(plan.Warnings, model.Warning{
@@ -383,9 +433,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			continue
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
-		locked, lockName := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
+		locked, lockName := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
 		if locked != nil {
-			locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lockName
+			r.locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lockName
 		}
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
@@ -404,7 +454,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			if o.Released != "" && d.SkipReason == "" && !report.RefersTo(report.Key(d), o.Released) {
 				d.SkipReason = "not the released package " + o.Released + "; the scheduled run covers it"
 			}
-			plan.Deps = append(plan.Deps, applyDepRules(engine, resolved.Raw, d))
+			plan.Deps = append(plan.Deps, applyDepRules(r.engine, resolved.Raw, d))
 		}
 	}
 
@@ -421,18 +471,25 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			})
 		}
 	}
+	return nil
+}
 
+// lookupAll asks every unique (datasource, package, registry) once, then
+// the advisory database, then the registries again for the disabled
+// dependencies the database flagged.
+func (r *whatifRun) lookupAll() error {
+	o, plan, ctx := r.o, r.plan, r.ctx
 	// The configuration's own datasources join the registry now that the
 	// configuration is known; a name the registry already serves natively
 	// stays native.
-	datasources := lookup.Registry{}
+	r.datasources = lookup.Registry{}
 	for k, v := range o.Datasources {
-		datasources[k] = v
+		r.datasources[k] = v
 	}
 	if o.CustomDatasources != nil {
-		for k, v := range o.CustomDatasources(decoded.CustomDatasources) {
-			if _, ok := datasources[k]; !ok {
-				datasources[k] = v
+		for k, v := range o.CustomDatasources(r.decoded.CustomDatasources) {
+			if _, ok := r.datasources[k]; !ok {
+				r.datasources[k] = v
 			}
 		}
 	}
@@ -440,9 +497,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// Every unique (datasource, package, registry) once, however many
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
-	fetcher := &lookup.Fetcher{Registry: datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: now}
+	r.fetcher = &lookup.Fetcher{Registry: r.datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: r.now}
 	if o.Released != "" {
-		fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
+		r.fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}
 	// A disabled dependency is not looked up - unless the advisory
 	// database says it is vulnerable, which is checked after the first
@@ -455,15 +512,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			d.SkipReason = d.Disabled
 		}
 	}
-	results := fetcher.Fetch(ctx, plan.Deps)
+	r.results = r.fetcher.Fetch(ctx, plan.Deps)
 	if o.Advisories != nil {
-		releasesOf := func(d model.Dependency) *model.ReleaseSet {
-			if r, ok := results[lookup.RefOf(d).Key()]; ok {
-				return r.Releases
-			}
-			return nil
-		}
-		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, resolved.Raw, plan.Deps, wire.DefaultVersioning(datasources), releasesOf)...)
+		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
 		var vulnerable []model.Dependency
 		for i := range plan.Deps {
 			d := &plan.Deps[i]
@@ -472,37 +523,43 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 				vulnerable = append(vulnerable, *d)
 			}
 		}
-		for k, r := range fetcher.Fetch(ctx, vulnerable) {
-			results[k] = r
+		for k, res := range r.fetcher.Fetch(ctx, vulnerable) {
+			r.results[k] = res
 		}
 	}
-	fromCache := 0
-	for _, r := range results {
-		if r.Warning != nil {
-			plan.Warnings = append(plan.Warnings, *r.Warning)
+	for _, res := range r.results {
+		if res.Warning != nil {
+			plan.Warnings = append(plan.Warnings, *res.Warning)
 		}
-		if r.Releases != nil && r.Releases.FromCache {
-			fromCache++
+		if res.Releases != nil && res.Releases.FromCache {
+			r.fromCache++
 		}
 	}
+	return nil
+}
 
-	digestLookups := 0
+// releasesOf answers a dependency's lookup result, nil when none was made.
+func (r *whatifRun) releasesOf(d model.Dependency) *model.ReleaseSet {
+	if res, ok := r.results[lookup.RefOf(d).Key()]; ok {
+		return res.Releases
+	}
+	return nil
+}
+
+// planUpdates decides every dependency, applies the per-update rules and
+// composes the branches.
+func (r *whatifRun) planUpdates() error {
+	o, plan, resolved := r.o, r.plan, r.resolved
 	planned := planner.Plan(planner.Request{
-		Deps: plan.Deps,
-		Releases: func(d model.Dependency) *model.ReleaseSet {
-			r, ok := results[lookup.RefOf(d).Key()]
-			if !ok {
-				return nil
-			}
-			return r.Releases
-		},
+		Deps:              plan.Deps,
+		Releases:          r.releasesOf,
 		Versionings:       wire.Versionings(),
-		DefaultVersioning: wire.DefaultVersioning(datasources),
+		DefaultVersioning: wire.DefaultVersioning(r.datasources),
 		Digest: func(d model.Dependency, version string) (string, error) {
-			digestLookups++
-			return fetcher.Digest(ctx, d, version)
+			r.digestLookups++
+			return r.fetcher.Digest(r.ctx, d, version)
 		},
-		Now: now,
+		Now: r.now,
 	})
 	plan.Deps = planned.Deps
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
@@ -510,32 +567,32 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// as its own update so the branch Renovate opens for it exists here
 	// too; the branch's task is the toolchain run, and a machine without
 	// the toolchain holds it.
-	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, locks)...)
+	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, r.locks)...)
 
 	var named []planner.Named
-	postUpgrade := map[string]plugin.PostUpgrade{}
-	changelogOff := map[string]bool{}
+	r.postUpgrade = map[string]plugin.PostUpgrade{}
+	r.changelogOff = map[string]bool{}
 	for _, u := range planned.Updates {
-		decided, cfg, err := applyUpdateRules(engine, resolved.Raw, u, now)
+		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now)
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
+			return fmt.Errorf("%s: %w", u.DepKey, err)
 		}
 		if pu, ok := postUpgradeOf(cfg); ok {
-			postUpgrade[u.Key()] = pu
+			r.postUpgrade[u.Key()] = pu
 		}
 		if off, _ := cfg["fetchChangeLogs"].(string); off == "off" {
-			changelogOff[u.Key()] = true
+			r.changelogOff[u.Key()] = true
 		}
 		plan.Updates = append(plan.Updates, decided)
 		n, err := planner.Name(decided, cfg, wire.Versionings())
 		if err != nil {
-			return nil, fmt.Errorf("%s: %w", u.DepKey, err)
+			return fmt.Errorf("%s: %w", u.DepKey, err)
 		}
 		named = append(named, n)
 	}
 	branches, err := planner.Compose(named)
 	if err != nil {
-		return nil, fmt.Errorf("branches: %w", err)
+		return fmt.Errorf("branches: %w", err)
 	}
 	// The dashboard's ticked boxes lift the holds they name: an approval,
 	// a schedule, a release age. The plan records the lift on the branch,
@@ -543,6 +600,14 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	for i := range branches {
 		liftByDashboard(&branches[i], plan.Updates, o.Checks)
 	}
+	r.branches = branches
+	return nil
+}
+
+// realise gives every actionable branch its edits and tasks, and every
+// held one the block a member brought onto it.
+func (r *whatifRun) realise() error {
+	o, plan, branches := r.o, r.plan, r.branches
 	// Every branch carries the byte-range edits that realise its updates,
 	// produced by the manager that extracted each dependency against the
 	// bytes it extracted from. A conflict - two managers claiming the same
@@ -550,7 +615,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// nothing downstream can write half of it.
 	allowed := o.AllowedCommands
 	if allowed == nil {
-		allowed = stringList(resolved.Raw["allowedCommands"])
+		allowed = stringList(r.resolved.Raw["allowedCommands"])
 	}
 	for i := range branches {
 		if branches[i].SuppressedBy != "" {
@@ -566,7 +631,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			}
 			continue
 		}
-		edits, warnings := editsFor(ctx, branches[i], plan.Updates, contents, decoded, managers)
+		edits, warnings := editsFor(r.ctx, branches[i], plan.Updates, r.contents, r.decoded, r.managers)
 		plan.Warnings = append(plan.Warnings, warnings...)
 		branches[i].Edits = edits
 		// The commands the branch needs beyond its edits: a lock refresh
@@ -574,7 +639,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		// postUpgradeTasks. A command the allowlist refuses or a toolchain
 		// this machine lacks holds the branch by name; the edits are then
 		// dropped, since half a branch is worse than none.
-		tasks, hold := tasksFor(branches[i], plan.Updates, postUpgrade, locks, allowed, o.LookPath)
+		tasks, hold := tasksFor(branches[i], plan.Updates, r.postUpgrade, r.locks, allowed, o.LookPath)
 		branches[i].Tasks = tasks
 		if hold != nil {
 			holdBranch(&branches[i], plan.Updates, *hold)
@@ -582,9 +647,15 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	}
 	plan.Branches = branches
 	if o.Changelog != nil {
-		plan.Warnings = append(plan.Warnings, fillNotes(ctx, o.Changelog, plan, changelogOff, wire.Versionings(), wire.DefaultVersioning(datasources))...)
+		plan.Warnings = append(plan.Warnings, fillNotes(r.ctx, o.Changelog, plan, r.changelogOff, wire.Versionings(), wire.DefaultVersioning(r.datasources))...)
 	}
+	return nil
+}
 
+// finish counts, sorts and validates: a plan that is not valid is not
+// returned.
+func (r *whatifRun) finish() (*model.Plan, error) {
+	plan := r.plan
 	blocked := 0
 	for _, u := range plan.Updates {
 		if u.Blocked() {
@@ -597,14 +668,14 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			actionable++
 		}
 	}
-	for _, msg := range fetcher.Problems() {
+	for _, msg := range r.fetcher.Problems() {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "lookup", Msg: msg})
 	}
 	plan.Stats = model.Stats{
-		FilesDiscovered:  found.Stats.FilesMatched,
+		FilesDiscovered:  r.found.Stats.FilesMatched,
 		DepsExtracted:    len(plan.Deps),
-		LookupsIssued:    len(results) + digestLookups,
-		LookupsFromCache: fromCache,
+		LookupsIssued:    len(r.results) + r.digestLookups,
+		LookupsFromCache: r.fromCache,
 		UpdatesFound:     len(plan.Updates),
 		UpdatesBlocked:   blocked,
 		BranchesPlanned:  actionable,
