@@ -1,3 +1,14 @@
+## [0.12.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.1...v0.12.2) (2026-09-13)
+
+### :bug: Fixes
+
+* **changelog:** read pages until the span is covered; one row per dependency ([bf2aed3](https://git.ole-hartwig.eu/pinup/pinup/commit/bf2aed3f505e61aace0f7737a14b39d9b7780114))
+* **report:** the dashboard lists each update value once per dependency ([43f8311](https://git.ole-hartwig.eu/pinup/pinup/commit/43f83110fd26bed91d7bca469ce6674c0484aa43)), closes [pinup/pinup#1](https://git.ole-hartwig.eu/pinup/pinup/issues/1)
+
+### :repeat: Continuous Integrations
+
+* allow the bot's GPG key for commit-signing verification ([3bb893b](https://git.ole-hartwig.eu/pinup/pinup/commit/3bb893b2de3277325a006c3be48c5904a424bd1f))
+
 ## [0.12.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.0...v0.12.1) (2026-09-13)
 
 ### :bug: Fixes
