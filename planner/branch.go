@@ -133,8 +133,11 @@ type Named struct {
 	GroupSlug string
 	Automerge bool
 	Labels    []string
-	Schedule  []string
-	Timezone  string
+	// Notes are the rendered prBodyNotes: what a person wrote next to the
+	// rule for whoever reads the merge request.
+	Notes    []string
+	Schedule []string
+	Timezone string
 }
 
 // Name renders the branch name and commit message for one update from the
@@ -256,6 +259,15 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 	}
 	n.Automerge, _ = cfg["automerge"].(bool)
 	n.Labels = append(stringsOf(cfg["labels"]), stringsOf(cfg["addLabels"])...)
+	for _, note := range stringsOf(cfg["prBodyNotes"]) {
+		out, _, err := hbs.RenderString(note, env)
+		if err != nil {
+			return Named{}, fmt.Errorf("prBodyNotes: %w", err)
+		}
+		if out = strings.TrimSpace(out); out != "" {
+			n.Notes = append(n.Notes, out)
+		}
+	}
 	n.Schedule = stringsOf(cfg["schedule"])
 	n.Timezone, _ = cfg["timezone"].(string)
 	return n, nil
@@ -349,6 +361,15 @@ func Compose(named []Named) ([]model.Branch, error) {
 		m.branch.UpdateKeys = append(m.branch.UpdateKeys, n.Update.Key())
 		// A group merges automatically only if every member may.
 		m.branch.Automerge = m.branch.Automerge && n.Automerge
+		// A note is said once, whichever members carry it.
+		for _, note := range n.Notes {
+			if !strings.Contains(m.branch.Body, note) {
+				if m.branch.Body != "" {
+					m.branch.Body += "\n\n"
+				}
+				m.branch.Body += note
+			}
+		}
 		m.members = append(m.members, n)
 	}
 	out := make([]model.Branch, 0, len(order))

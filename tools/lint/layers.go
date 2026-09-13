@@ -29,7 +29,7 @@ var layerOf = map[string]int{
 
 	// L2 - stages. Each declares the interface its implementations satisfy.
 	"discover": 2, "extract": 2, "lookup": 2, "rules": 2, "classify": 2,
-	"planner": 2, "apply": 2, "publish": 2, "osv": 2,
+	"planner": 2, "apply": 2, "publish": 2, "osv": 2, "changelog": 2,
 
 	// L3 - implementations.
 	"manager": 3, "datasource": 3, "versioning/": 3, "platform": 3,

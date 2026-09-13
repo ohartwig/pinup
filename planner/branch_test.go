@@ -334,3 +334,32 @@ func TestABranchLevelHoldOnOneMemberHoldsTheGroup(t *testing.T) {
 		t.Errorf("an aged member stays off an actionable group: %+v", branches)
 	}
 }
+
+// prBodyNotes are what a person wrote next to the rule for whoever reads
+// the merge request: rendered as templates, and said once on a group,
+// whichever members carry them. Measured in koh-infra's renovate.json.
+func TestPrBodyNotesRenderOnceOntoTheBranch(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}}
+	notes := []any{"**Raise `{{depName}}` in the same window.**", "Rollback is the previous pin."}
+	cfg := with(base, map[string]any{"groupName": "k3s", "groupSlug": "k3s", "prBodyNotes": notes})
+	a, err := Name(upd("regex", "github-releases", "k3s-io/k3s", "1.30.0", "1.31.0", "1.31.0", model.UpdateMinor), cfg, vs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := Name(upd("regex", "github-releases", "k3s-io/k3s", "1.30.0", "1.31.0", "1.31.0", model.UpdateMinor), with(cfg, map[string]any{"prBodyNotes": []any{"Rollback is the previous pin."}}), vs)
+	if len(a.Notes) != 2 || a.Notes[0] != "**Raise `k3s-io/k3s` in the same window.**" {
+		t.Fatalf("notes = %q", a.Notes)
+	}
+	branches, err := Compose([]Named{a, b})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := "**Raise `k3s-io/k3s` in the same window.**\n\nRollback is the previous pin."
+	if len(branches) != 1 || branches[0].Body != want {
+		t.Errorf("body = %q, want %q", branches[0].Body, want)
+	}
+	if _, err := Name(a.Update, with(cfg, map[string]any{"prBodyNotes": []any{"{{#if}}"}}), vs); err == nil {
+		t.Error("a note that does not render must fail the naming, not vanish")
+	}
+}

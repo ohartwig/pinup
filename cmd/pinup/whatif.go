@@ -16,6 +16,7 @@ import (
 
 	"git.ole-hartwig.eu/pinup/pinup/apply"
 	"git.ole-hartwig.eu/pinup/pinup/cache"
+	"git.ole-hartwig.eu/pinup/pinup/changelog"
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/discover"
@@ -80,6 +81,8 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts.CustomDatasources = customDatasourcesHook(env)
 	advisories := &osv.Client{}
 	opts.Advisories = advisories
+	notes := &changelog.Fetcher{Client: httpClient(env), GitLabURL: env.URL, TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
+	opts.Changelog = notes
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
 		return err
@@ -98,6 +101,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		defer store.Close()
 		opts.Cache = store
 		advisories.Store = advisoryStore{cache: store, now: now}
+		notes.Cache = store
 	}
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -141,6 +145,13 @@ func writeMarkdown(jsonPath string, plan *model.Plan) error {
 // versions on one run; a record below this has not seen a run at all.
 const nearlyEmptyFirstSeen = 100
 
+// changelogTTL is how long a source's release list serves from the cache;
+// noteBodyLimit caps one note's body in the plan and the description.
+const (
+	changelogTTL  = 6 * time.Hour
+	noteBodyLimit = 4000
+)
+
 // whatifOptions is everything a plan run needs. Datasources is injected so a
 // test can hand in a fake registry and prove the run touched no network.
 type whatifOptions struct {
@@ -169,6 +180,10 @@ type whatifOptions struct {
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
 	Advisories advisoryChecker
+	// Changelog reads the release notes between the current and the new
+	// version for every update the run will act on, unless a rule sets
+	// fetchChangeLogs "off" for it; nil means no update carries notes.
+	Changelog noteFetcher
 	// LookPath tells whether a task's toolchain is on this machine; nil
 	// means the plan lists tasks without judging them, which is what a
 	// plan produced away from the runner should do.
@@ -497,6 +512,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 
 	var named []planner.Named
 	postUpgrade := map[string]plugin.PostUpgrade{}
+	changelogOff := map[string]bool{}
 	for _, u := range planned.Updates {
 		decided, cfg, err := applyUpdateRules(engine, resolved.Raw, u, now)
 		if err != nil {
@@ -504,6 +520,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 		if pu, ok := postUpgradeOf(cfg); ok {
 			postUpgrade[u.Key()] = pu
+		}
+		if off, _ := cfg["fetchChangeLogs"].(string); off == "off" {
+			changelogOff[u.Key()] = true
 		}
 		plan.Updates = append(plan.Updates, decided)
 		n, err := planner.Name(decided, cfg, wire.Versionings())
@@ -560,6 +579,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		}
 	}
 	plan.Branches = branches
+	if o.Changelog != nil {
+		plan.Warnings = append(plan.Warnings, fillNotes(ctx, o.Changelog, plan, changelogOff, wire.Versionings(), wire.DefaultVersioning(datasources))...)
+	}
 
 	blocked := 0
 	for _, u := range plan.Updates {
@@ -1042,6 +1064,68 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		}
 	}
 	return tasks, nil
+}
+
+// noteFetcher is what the run asks for release notes; changelog.Fetcher
+// is the one implementation, and a test hands in a fake.
+type noteFetcher interface {
+	Notes(ctx context.Context, sourceURL string, v versioning.Versioning, current, target string) ([]model.ReleaseNote, string, error)
+}
+
+// fillNotes gives every update on a branch the run will push the release
+// notes between its current and its new version, and the forge's compare
+// link. Held updates get none: their merge request does not exist yet,
+// and the notes are fetched the run it does. A digest move has no
+// versions to span; a lock-file maintenance names no dependency. A fetch
+// that fails leaves the update without notes and says so in a warning -
+// the update itself is fine, only the description is poorer.
+func fillNotes(ctx context.Context, f noteFetcher, plan *model.Plan, off map[string]bool, schemes versioning.Registry, defaultVersioning func(string) string) []model.Warning {
+	index := map[string]int{}
+	for i, u := range plan.Updates {
+		index[u.Key()] = i
+	}
+	var warnings []model.Warning
+	fetched := map[string]bool{}
+	for _, b := range plan.Branches {
+		if b.SuppressedBy != "" {
+			continue
+		}
+		for _, k := range b.UpdateKeys {
+			i, ok := index[k]
+			if !ok || fetched[k] || off[k] {
+				continue
+			}
+			fetched[k] = true
+			u := &plan.Updates[i]
+			current, target := u.Dep.CurrentValue, u.NewVersion
+			if target == "" {
+				target = u.NewValue
+			}
+			if u.Dep.LockedVersion != "" {
+				current = u.Dep.LockedVersion
+			}
+			switch {
+			case u.Dep.SourceURL == "", current == "", target == "", current == target:
+				continue
+			case u.Type == model.UpdateDigest, u.Type == model.UpdatePinDigest, u.Type == model.UpdateLockFileMaintenance:
+				continue
+			}
+			scheme := u.Dep.Versioning
+			if scheme == "" {
+				scheme = defaultVersioning(u.Dep.Datasource)
+			}
+			v, err := schemes.Get(scheme)
+			if err != nil {
+				continue
+			}
+			notes, compare, err := f.Notes(ctx, u.Dep.SourceURL, v, current, target)
+			u.Notes, u.CompareURL = notes, compare
+			if err != nil {
+				warnings = append(warnings, model.Warning{Stage: "changelog", Msg: fmt.Sprintf("%s: %v", u.DepKey, err)})
+			}
+		}
+	}
+	return warnings
 }
 
 // liftByDashboard clears a branch's hold when the dashboard ticked the box

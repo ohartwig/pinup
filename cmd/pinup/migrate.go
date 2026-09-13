@@ -50,8 +50,9 @@ var keySupport = map[string]support{
 	"postUpgradeTasks": supported, "allowedCommands": supported,
 	// postUpdateOptions: gomodTidy is what the gomod lock refresh does anyway; the other options are unread.
 	"postUpdateOptions": partial, "prBodyDefinitions": supported, "prBodyNotes": supported, "addLabels": supported,
-	// Read and ignored by design: no changelog fetching, no third-party badges, no internal-checks filter yet.
-	"fetchChangeLogs": unsupported, "internalChecksFilter": unsupported, "dependencyDashboard": unsupported,
+	// Release notes come from the forge, never a third-party service; "off" per rule is honoured.
+	"fetchChangeLogs": supported, "internalChecksFilter": supported, "dependencyDashboard": supported,
+	"dependencyDashboardTitle": supported,
 	// Publishing.
 	"commitBody": partial, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
 	"semanticCommitType": supported, "semanticCommitScope": supported, "commitMessageTopic": supported,

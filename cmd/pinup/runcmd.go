@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/cache"
+	"git.ole-hartwig.eu/pinup/pinup/changelog"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/git"
 	"git.ole-hartwig.eu/pinup/pinup/glob"
@@ -452,6 +453,11 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 		advisories.Store = advisoryStore{cache: o.cache, now: o.now}
 	}
 	opts.Advisories = advisories
+	notes := &changelog.Fetcher{Client: httpClient(env), GitLabURL: env.URL, TTL: changelogTTL, Now: o.now, MaxBody: noteBodyLimit}
+	if o.cache != nil {
+		notes.Cache = o.cache
+	}
+	opts.Changelog = notes
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
 		return err

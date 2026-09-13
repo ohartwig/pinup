@@ -244,6 +244,13 @@ type Update struct {
 	// own branch, labels, no release age, no schedule.
 	SecurityFix bool `json:"securityFix,omitempty"`
 
+	// Notes are the source repository's release notes between the current
+	// and the new version, newest first, filled for an update that will be
+	// acted on when the source is a forge pinup reads. CompareURL is the
+	// forge's diff page between the two versions, "" for an unknown source.
+	Notes      []ReleaseNote `json:"notes,omitempty"`
+	CompareURL string        `json:"compareUrl,omitempty"`
+
 	// Blocks is empty for an update that will be acted on.
 	Blocks []Block `json:"blocks,omitempty"`
 
@@ -253,7 +260,17 @@ type Update struct {
 	SuppressedBy BlockReason `json:"suppressedBy,omitempty"`
 }
 
-// Blocked reports whether this update is held.
+// ReleaseNote is one release of a dependency's source repository as the
+// forge publishes it: the tag, the title, the body as written, and where
+// it lives.
+type ReleaseNote struct {
+	Version   string    `json:"version"`
+	Title     string    `json:"title,omitempty"`
+	Body      string    `json:"body,omitempty"`
+	URL       string    `json:"url,omitempty"`
+	Published time.Time `json:"published,omitzero"`
+}
+
 // Key identifies one update within a plan: the dependency and the value
 // it moves to. A dependency with a minor and a major proposed has two
 // updates on two branches, and a branch refers to exactly one of them.

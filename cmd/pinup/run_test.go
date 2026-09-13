@@ -145,19 +145,46 @@ func TestMigrateClassifiesEveryKey(t *testing.T) {
 		}
 	}
 	// What is built is supported; what is read and ignored by design is
-	// named, not dropped: no dashboard issue, no changelog fetching.
-	for _, want := range []string{"lockFileMaintenance", "packageRules[].postUpgradeTasks", "vulnerabilityAlerts", "osvVulnerabilityAlerts"} {
+	// named, not dropped.
+	for _, want := range []string{"lockFileMaintenance", "packageRules[].postUpgradeTasks", "vulnerabilityAlerts", "osvVulnerabilityAlerts", "dependencyDashboard", "packageRules[].fetchChangeLogs"} {
 		if !contains(got.Supported, want) {
 			t.Errorf("%s is built and must be supported: %v", want, got.Supported)
 		}
 	}
-	if !contains(got.Unsupported, "dependencyDashboard") || !contains(got.Unsupported, "packageRules[].fetchChangeLogs") {
-		t.Errorf("unsupported must name what is not built: %v", got.Unsupported)
+	// The runner's file uses nothing pinup does not read - every key it
+	// carries is built. TestMigrateNamesWhatIsNotBuilt proves the class
+	// can still be reached.
+	if len(got.Unsupported) != 0 {
+		t.Errorf("the runner configuration uses keys pinup does not read: %v", got.Unsupported)
 	}
 	// gitlabci-include is read by the gitlabci manager: nothing is missing
 	// for the runner's list.
 	if len(got.Managers) != 0 {
 		t.Errorf("managers reported missing: %v", got.Managers)
+	}
+}
+
+// A key nothing reads is named, not dropped: at the top level and inside
+// a rule.
+func TestMigrateNamesWhatIsNotBuilt(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "renovate.json")
+	if err := os.WriteFile(path, []byte(`{"extends":["config:recommended"],"fooBar":true,"packageRules":[{"matchCategories":["go"],"enabled":false}]}`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	var out strings.Builder
+	if err := run([]string{"migrate", "--config", path, "--json"}, &out, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	var got struct {
+		Unsupported []string `json:"x-unsupported"`
+	}
+	if err := json.Unmarshal([]byte(out.String()), &got); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"fooBar", "packageRules[].matchCategories"} {
+		if !contains(got.Unsupported, want) {
+			t.Errorf("%s not named as unsupported: %v", want, got.Unsupported)
+		}
 	}
 }
 

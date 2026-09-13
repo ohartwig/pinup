@@ -143,7 +143,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		}
 		req := publish.Request{
 			SourceBranch: b.Name, TargetBranch: o.Base, Title: b.Title,
-			Description: description(b, o.Footer), Labels: union(o.Labels, b.Labels),
+			Description: description(b, plan.Updates, o.Footer), Labels: union(o.Labels, b.Labels),
 			Automerge: b.Automerge, RemoveSourceBranch: true,
 		}
 		var out Outcome
@@ -346,20 +346,140 @@ func updateTypesOf(b *model.Branch) string {
 
 // description is the merge-request body: what changes, why anything is
 // held, and the footer.
-func description(b *model.Branch, footer string) string {
-	s := "| File | Change |\n|---|---|\n"
+// maxNotesShown caps the release sections in one description: a group of
+// thirty members with a dozen releases each is a compare link, not a
+// scroll.
+const maxNotesShown = 40
+
+// description is the merge request's body: what moves, from where to
+// where and with what notes; the bytes that change; the tasks that ran;
+// what the configuration's author wrote for the reader (prBodyNotes);
+// then the release notes the forge publishes for the span, each collapsed,
+// and the footer. updates are the plan's; only the branch's own are read.
+func description(b *model.Branch, updates []model.Update, footer string) string {
+	var s strings.Builder
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	var members []model.Update
+	for _, u := range updates {
+		if keys[u.Key()] {
+			members = append(members, u)
+		}
+	}
+	if len(members) > 0 {
+		s.WriteString("| Dependency | Update | Change | Notes |\n|---|---|---|---|\n")
+		for _, u := range members {
+			fmt.Fprintf(&s, "| `%s` | %s | %s | %s |\n", u.Dep.DepName, u.Type.Renovate(), change(u), noteLinks(u))
+		}
+		s.WriteString("\n")
+	}
+	s.WriteString("| File | Change |\n|---|---|\n")
 	for _, e := range b.Edits {
-		s += fmt.Sprintf("| `%s` | `%s` → `%s` |\n", e.File, e.Old, e.New)
+		fmt.Fprintf(&s, "| `%s` | `%s` → `%s` |\n", e.File, e.Old, e.New)
 	}
 	for _, t := range b.Tasks {
 		// A reader sees what ran on the branch beyond the edits - the
 		// lock refresh behind a manifest change - and can rerun it.
-		s += fmt.Sprintf("| `%s` | `%s` |\n", strings.Join(t.FileFilters, "`, `"), strings.Join(t.Command, " "))
+		fmt.Fprintf(&s, "| `%s` | `%s` |\n", strings.Join(t.FileFilters, "`, `"), strings.Join(t.Command, " "))
+	}
+	if b.Body != "" {
+		s.WriteString("\n---\n\n" + b.Body + "\n")
+	}
+	type noted struct {
+		dep  string
+		note model.ReleaseNote
+	}
+	var all []noted
+	for _, u := range members {
+		for _, n := range u.Notes {
+			all = append(all, noted{u.Dep.DepName, n})
+		}
+	}
+	for i, n := range all {
+		if i == maxNotesShown {
+			fmt.Fprintf(&s, "\n*… and %d more releases; see the compare links above.*\n", len(all)-i)
+			break
+		}
+		head := n.dep + " " + n.note.Version
+		if t := n.note.Title; t != "" && t != n.note.Version && t != strings.TrimPrefix(n.note.Version, "v") {
+			head += ": " + t
+		}
+		if n.note.URL != "" {
+			head = fmt.Sprintf("<a href=\"%s\">%s</a>", n.note.URL, escapeHTML(head))
+		} else {
+			head = escapeHTML(head)
+		}
+		body := strings.TrimSpace(n.note.Body)
+		if body == "" {
+			body = "*(no notes)*"
+		}
+		fmt.Fprintf(&s, "\n<details>\n<summary>%s</summary>\n\n%s\n\n</details>\n", head, body)
 	}
 	if footer != "" {
-		s += "\n" + footer + "\n"
+		s.WriteString("\n" + footer + "\n")
 	}
-	return s
+	return s.String()
+}
+
+// change is the "from → to" cell of an update.
+func change(u model.Update) string {
+	from, to := u.Dep.CurrentValue, u.NewValue
+	switch {
+	case u.Type == model.UpdateLockFileMaintenance:
+		return "lock file refresh"
+	case u.Type == model.UpdateDigest || u.Type == model.UpdatePinDigest:
+		if u.Dep.CurrentDigest != "" {
+			from = short(u.Dep.CurrentDigest)
+		}
+		to = short(u.NewDigest)
+		if u.Type == model.UpdatePinDigest {
+			from = u.Dep.CurrentValue
+			to = u.NewValue + "@" + to
+		}
+	case u.Dep.LockedVersion != "" && u.Dep.LockedVersion != from:
+		from += " (" + u.Dep.LockedVersion + ")"
+	}
+	if from == "" {
+		return "`" + to + "`"
+	}
+	return "`" + from + "` → `" + to + "`"
+}
+
+// noteLinks is the Notes cell: the forge's compare page and the release
+// count, or the source alone, or nothing.
+func noteLinks(u model.Update) string {
+	var parts []string
+	if u.CompareURL != "" {
+		parts = append(parts, "[compare]("+u.CompareURL+")")
+	} else if u.Dep.SourceURL != "" {
+		parts = append(parts, "[source]("+u.Dep.SourceURL+")")
+	}
+	switch n := len(u.Notes); {
+	case n == 1:
+		parts = append(parts, "1 release")
+	case n > 1:
+		parts = append(parts, fmt.Sprintf("%d releases", n))
+	}
+	if u.SecurityFix {
+		parts = append(parts, "security fix")
+	}
+	return strings.Join(parts, ", ")
+}
+
+func short(digest string) string {
+	if i := strings.Index(digest, ":"); i >= 0 && len(digest) > i+13 {
+		return digest[:i+13]
+	}
+	if len(digest) > 12 {
+		return digest[:12]
+	}
+	return digest
+}
+
+func escapeHTML(s string) string {
+	return strings.NewReplacer("&", "&amp;", "<", "&lt;", ">", "&gt;", "\"", "&quot;").Replace(s)
 }
 
 func fail(plan *model.Plan, b *model.Branch, step string, err error) Outcome {
