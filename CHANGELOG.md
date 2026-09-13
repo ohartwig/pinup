@@ -1,3 +1,13 @@
+## [0.14.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.0...v0.14.1) (2026-09-13)
+
+### :bug: Fixes
+
+* **ci:** the orphaned release:semver override made the pipeline invalid ([73c231b](https://git.ole-hartwig.eu/pinup/pinup/commit/73c231b0e096f59bb763a3881df7b954d0ce4906))
+
+### :repeat: Continuous Integrations
+
+* release with yasrt, the tag pipeline kept ([a8c4ac4](https://git.ole-hartwig.eu/pinup/pinup/commit/a8c4ac4e4efd37312d54f79561db5f5b27b68a33))
+
 ## [0.14.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.13.0...v0.14.0) (2026-09-13)
 
 ### :sparkles: Features
