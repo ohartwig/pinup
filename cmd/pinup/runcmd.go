@@ -43,6 +43,8 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	fs.SetOutput(errw)
 	repoDir := fs.String("repo", "", "path to an existing checkout with an origin remote")
+	// --dir is the spelling yasrt uses for the same thing; one common word.
+	fs.StringVar(repoDir, "dir", "", "alias for --repo")
 	project := fs.String("project", "", "project path to clone and run against, e.g. devops/images/ci-tools")
 	autodiscover := fs.String("autodiscover", "", `run against every project the token can see that matches these patterns, a JSON list of globs with ! negations, e.g. '["devops/images/**", "!devops/images/pinup"]'`)
 	released := fs.String("released", "", "the fast lane: a project path that was just released, optionally @version; runs only its consumers from the index, only for that dependency, with fresh lookups")

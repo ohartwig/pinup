@@ -35,6 +35,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	fs := flag.NewFlagSet("whatif", flag.ContinueOnError)
 	fs.SetOutput(errw)
 	repo := fs.String("repo", ".", "path to the repository checkout")
+	fs.StringVar(repo, "dir", ".", "alias for --repo")
 	cfgPath := fs.String("config", "", "configuration file to resolve (required until preset resolution lands)")
 	report := fs.String("report", "", "write the plan as JSON to this path instead of stdout")
 	name := fs.String("name", "", "repository path to record in the plan, e.g. devops/images/ci-tools")
