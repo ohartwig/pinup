@@ -6,6 +6,7 @@ package report
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -256,7 +257,11 @@ func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.M
 	}
 	newest := map[string][]string{}
 	for _, u := range plan.Updates {
-		newest[u.DepKey] = append(newest[u.DepKey], u.NewValue)
+		// One value once, however many entries share the key (the same
+		// include read three times in one file).
+		if !slices.Contains(newest[u.DepKey], u.NewValue) {
+			newest[u.DepKey] = append(newest[u.DepKey], u.NewValue)
+		}
 	}
 	for _, m := range managers {
 		files := byManager[m]

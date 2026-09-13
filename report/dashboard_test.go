@@ -81,8 +81,10 @@ func TestDashboardSectionsAndBoxes(t *testing.T) {
 	u6, b6 := mk("renovate/tasked", model.UpdateMinor, model.Block{Reason: model.BlockTaskRefused, Note: "command \"x\" is not on the allowedCommands list"})
 	plan := &model.Plan{
 		PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"},
-		Deps:     []model.Dependency{dep},
-		Updates:  []model.Update{u1, u2, u3, u4, u5, u6},
+		Deps: []model.Dependency{dep},
+		// u4 twice: the same include read from two places shares a key
+		// and is listed once (measured: lint-tools in pinup's own file).
+		Updates:  []model.Update{u1, u2, u3, u4, u5, u6, u4},
 		Branches: []model.Branch{b1, b2, b3, b4, b5, b6},
 		Warnings: []model.Warning{{Stage: "lookup", Msg: "x could not be reached"}},
 	}
@@ -100,7 +102,7 @@ func TestDashboardSectionsAndBoxes(t *testing.T) {
 		"## Held", "taskRefused: command \"x\"",
 		"## Errored", "- [ ] <!-- retry-branch=renovate/failed -->", "push: rejected",
 		"## Open", "- [ ] <!-- rebase-branch=renovate/ci-components -->[chore(deps): update renovate/ci-components](!12)",
-		"## Detected dependencies", "<details><summary>composer (1)</summary>", "`symfony/console ^7.4` → [Updates: `^8.1`, `^8.2`",
+		"## Detected dependencies", "<details><summary>composer (1)</summary>", "`symfony/console ^7.4` → [Updates: `^8.1`, `^8.2`, `^8.3`, `^8.4`, `^8.5`, `^8.6`]",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("dashboard lacks %q\n%s", want, body)
