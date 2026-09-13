@@ -4,6 +4,7 @@
 package httpx
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -363,4 +364,41 @@ func hostOf(rawURL string) string {
 		return rawURL
 	}
 	return u.Host
+}
+
+// A body over the limit is an error, not a partition's memory; an attempt
+// that stalls is cut at the timeout and retried like any transient
+// failure.
+func TestBodyLimitAndAttemptTimeout(t *testing.T) {
+	big := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write(bytes.Repeat([]byte("x"), 2048))
+	}))
+	defer big.Close()
+	client := New(Options{MaxBody: 1024, Now: time.Now, Sleep: func(time.Duration) {}})
+	if _, err := client.Get(t.Context(), big.URL, ReqOptions{}); err == nil || !strings.Contains(err.Error(), "exceeds 1024 bytes") {
+		t.Errorf("oversized body: %v", err)
+	}
+
+	release := make(chan struct{})
+	defer close(release)
+	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-release:
+		case <-r.Context().Done():
+		}
+	}))
+	defer slow.Close()
+	var waits int
+	client = New(Options{Timeout: 50 * time.Millisecond, MaxRetries: 1, Now: time.Now, Sleep: func(time.Duration) { waits++ }})
+	start := time.Now()
+	_, err := client.Get(t.Context(), slow.URL, ReqOptions{})
+	if err == nil || !strings.Contains(err.Error(), "request failed") {
+		t.Errorf("stalled attempt: %v", err)
+	}
+	if waits != 1 {
+		t.Errorf("a stalled attempt is transient and retried once: %d waits", waits)
+	}
+	if time.Since(start) > 2*time.Second {
+		t.Error("the timeout did not cut the attempt")
+	}
 }

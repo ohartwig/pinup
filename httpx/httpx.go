@@ -10,6 +10,7 @@
 package httpx
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -75,7 +76,20 @@ type Options struct {
 	// required: httpx never calls time.Sleep itself, so retry tests can
 	// record durations instead of actually waiting.
 	Sleep func(time.Duration)
+
+	// MaxBody bounds a response body; zero means 64 MiB - npm's full
+	// package documents are the largest thing any datasource reads, and
+	// a registry that streams forever must not hold a partition's memory.
+	MaxBody int64
+	// Timeout bounds one attempt, connection and body included; zero
+	// means 60 s. A caller's context deadline still applies on top.
+	Timeout time.Duration
 }
+
+const (
+	defaultMaxBody = 64 << 20
+	defaultTimeout = 60 * time.Second
+)
 
 // ReqOptions controls conditional request headers for a single Get call.
 type ReqOptions struct {
@@ -123,6 +137,8 @@ type Client struct {
 	userAgent  string
 	now        func() time.Time
 	sleep      func(time.Duration)
+	maxBody    int64
+	timeout    time.Duration
 
 	mu   sync.Mutex
 	sems map[string]chan struct{}
@@ -165,6 +181,8 @@ func New(opts Options) *Client {
 		userAgent:  opts.UserAgent,
 		now:        opts.Now,
 		sleep:      opts.Sleep,
+		maxBody:    cmp.Or(opts.MaxBody, int64(defaultMaxBody)),
+		timeout:    cmp.Or(opts.Timeout, defaultTimeout),
 		sems:       make(map[string]chan struct{}),
 	}
 	c.hc = &http.Client{
@@ -314,6 +332,8 @@ func (c *Client) Get(ctx context.Context, rawURL string, opt ReqOptions) (*Respo
 // values — only status codes and generic descriptions — since they surface
 // directly to callers.
 func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rule HostRule, hasRule bool) (*Response, bool, time.Duration, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, false, 0, fmt.Errorf("httpx: build request: %w", err)
@@ -356,9 +376,12 @@ func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rul
 		}, false, 0, nil
 
 	case resp.StatusCode >= 200 && resp.StatusCode < 300:
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(io.LimitReader(resp.Body, c.maxBody+1))
 		if err != nil {
 			return nil, false, 0, fmt.Errorf("httpx: read response body: %w", err)
+		}
+		if int64(len(body)) > c.maxBody {
+			return nil, false, 0, fmt.Errorf("httpx: response from %s exceeds %d bytes", rawURL, c.maxBody)
 		}
 		return &Response{
 			StatusCode:   resp.StatusCode,
