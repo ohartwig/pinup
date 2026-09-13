@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"time"
 
 	"go.etcd.io/bbolt"
@@ -67,6 +68,14 @@ type Stats struct {
 // silently produces wrong answers, while an invalidated store just starts
 // cold.
 func Open(path string) (*Store, error) {
+	// The directory is made, not demanded: a job that names .pinup/cache.db
+	// on a fresh checkout has no .pinup yet (the self-update's first live
+	// run, 2026-09-13).
+	if dir := filepath.Dir(path); dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return nil, fmt.Errorf("cache: open %s: %w", path, err)
+		}
+	}
 	db, err := bbolt.Open(path, 0o600, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cache: open %s: %w", path, err)

@@ -6,6 +6,7 @@ package cache
 import (
 	"bytes"
 	"encoding/binary"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -399,5 +400,17 @@ func TestFirstSeenAllMatchesFirstSeen(t *testing.T) {
 	}
 	if n, _ := s.FirstSeenCount(); n != 2 {
 		t.Errorf("count = %d", n)
+	}
+}
+
+func TestOpenMakesTheDirectory(t *testing.T) {
+	path := filepath.Join(t.TempDir(), ".pinup", "nested", "cache.db")
+	s, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s.Close()
+	if _, err := os.Stat(path); err != nil {
+		t.Fatal(err)
 	}
 }

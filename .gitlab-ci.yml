@@ -316,10 +316,15 @@ update:pinup:
   needs: []
   interruptible: false
   cache:
-    key:
-      files: [go.sum]
-    paths: [.go/pkg/mod]
-    policy: pull
+    - key:
+        files: [go.sum]
+      paths: [.go/pkg/mod]
+      policy: pull
+    # The lookup cache: release lists, first-seen records (release age
+    # counts from them), advisories, release notes. Kept between the
+    # daily runs, as the runner keeps its own.
+    - key: pinup-cache
+      paths: [.pinup/cache.db]
   variables:
     PINUP_GITLAB_URL: $CI_SERVER_URL
     PINUP_SIGNING_FORMAT: openpgp
