@@ -83,6 +83,30 @@ func (p *Platform) RotateSelf(ctx context.Context, expiresAt time.Time) (string,
 	return payload.Token, nil
 }
 
+// RotateByID rotates another token of the same account - the run's own
+// token, with the api scope, does the rotating - and returns the new
+// value, which must reach its variable and never a log.
+func (p *Platform) RotateByID(ctx context.Context, id int, expiresAt time.Time) (string, error) {
+	q := url.Values{"expires_at": {expiresAt.UTC().Format("2006-01-02")}}
+	resp, err := p.do(ctx, http.MethodPost, fmt.Sprintf("%s/api/v4/personal_access_tokens/%d/rotate?%s", p.base, id, q.Encode()), nil)
+	if err != nil {
+		return "", err
+	}
+	if err := classifyToken(resp, fmt.Sprintf("rotate token %d", id)); err != nil {
+		return "", err
+	}
+	var payload struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(resp.body, &payload); err != nil {
+		return "", fmt.Errorf("gitlab: decode rotated token: %w", err)
+	}
+	if payload.Token == "" {
+		return "", fmt.Errorf("gitlab: the rotation answered without a token value")
+	}
+	return payload.Token, nil
+}
+
 // Variable reads one CI/CD variable of a scope - "groups/1210" or
 // "projects/826" - and returns its value.
 func (p *Platform) Variable(ctx context.Context, scope, key string) (string, error) {

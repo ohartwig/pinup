@@ -136,3 +136,24 @@ func TestInstancePathsAdmitTheDatasourcesAndNothingElse(t *testing.T) {
 		}
 	}
 }
+
+// The rotation's targets: bare keys under --scope, keys with a scope of
+// their own, and the shapes that are refused.
+func TestParseTargets(t *testing.T) {
+	got, err := parseTargets("PINUP_GITLAB_TOKEN, projects/826:PINUP_GITLAB_TOKEN,GITLAB_TOKEN", "groups/1210")
+	if err != nil || len(got) != 3 || got[0].Scope != "groups/1210" || got[1].Scope != "projects/826" || got[1].Key != "PINUP_GITLAB_TOKEN" || got[2].Key != "GITLAB_TOKEN" {
+		t.Errorf("got %+v %v", got, err)
+	}
+	for _, bad := range []string{"", "A", "users/1:A"} {
+		if _, err := parseTargets(bad, ""); err == nil {
+			t.Errorf("%q accepted", bad)
+		}
+	}
+	var out, errw strings.Builder
+	t.Setenv("PINUP_GITLAB_URL", "https://git.example.org")
+	t.Setenv("PINUP_GITLAB_TOKEN", "glpat-x")
+	t.Setenv("PINUP_READ_TOKEN", "")
+	if err := cmdToken([]string{"rotate", "--variables", "projects/827:A", "--also", "PINUP_READ_TOKEN=projects/827:B"}, &out, &errw); err == nil || !strings.Contains(err.Error(), "not set in this environment") {
+		t.Errorf("an --also token that is not in the environment: %v", err)
+	}
+}
