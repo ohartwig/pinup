@@ -34,6 +34,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/extract"
@@ -45,8 +46,19 @@ const name = "npm"
 
 // lockFileName is the sibling file every dependency this manager reports
 // names in its LockFiles - the manager itself is handed only package.json,
-// never the lock, so the planner is what pairs them up.
+// never the lock, so the planner is what pairs them up. LockFiles lists the
+// candidates in the order the run tries them: npm's, then yarn's.
 const lockFileName = "package-lock.json"
+
+// yarnLockFileName is yarn's lock, read in both its shapes: the classic
+// "# yarn lockfile v1" and the berry "__metadata" YAML. Measured on the
+// estate: development/external-ext/blog runs yarn classic, and Renovate
+// refreshes its yarn.lock the way it refreshes a package-lock.json.
+const yarnLockFileName = "yarn.lock"
+
+// lockFileNames are the lock files this manager's dependencies may be
+// paired with, in the order tried.
+var lockFileNames = []string{lockFileName, "npm-shrinkwrap.json", yarnLockFileName}
 
 // sectionDepTypes are the four object keys package.json uses for a versioned
 // dependency, and become DepType verbatim.
@@ -94,7 +106,7 @@ func (m *Manager) Extract(_ context.Context, f extract.File, cfg extract.Manager
 
 	res := extract.Result{Deps: sc.deps}
 	if len(sc.deps) > 0 {
-		res.LockFiles = []string{lockFileName}
+		res.LockFiles = lockFileNames
 	}
 	return res, nil
 }
@@ -252,7 +264,7 @@ func (sc *scanner) dependency(depType, depName string, i int) (model.Dependency,
 		DepType:       depType,
 		Datasource:    name,
 		Locus:         model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest, Line: lineAt(sc.src, i)},
-		LockFiles:     []string{lockFileName},
+		LockFiles:     lockFileNames,
 	}
 
 	if i >= len(sc.src) || sc.src[i] != '"' {
@@ -348,9 +360,11 @@ func (m *Manager) Edit(_ context.Context, f extract.File, up model.Update) (mode
 // dependency named bar, so it is excluded rather than silently overwriting
 // the real answer depending on map iteration order.
 //
-// yarn.lock and pnpm-lock.yaml are a different lockfile format entirely and
-// are not read here.
+// A yarn.lock is read too, classic and berry; pnpm-lock.yaml is not.
 func LockedVersions(lock []byte) (map[string]string, error) {
+	if trimmed := bytes.TrimSpace(lock); len(trimmed) > 0 && trimmed[0] != '{' {
+		return yarnLockedVersions(lock)
+	}
 	var doc struct {
 		LockfileVersion int `json:"lockfileVersion"`
 		Packages        map[string]struct {
@@ -385,6 +399,64 @@ func LockedVersions(lock []byte) (map[string]string, error) {
 		out[depName] = pkg.Version
 	}
 	return out, nil
+}
+
+// yarnEntryRE matches an entry header of either yarn lock format:
+//
+//	"@babel/code-frame@^7.0.0", "@babel/code-frame@^7.1.0":   (classic)
+//	"@babel/code-frame@npm:^7.0.0":                            (berry)
+//	lodash@^4.17.20:                                           (classic, unquoted)
+//
+// The dependency's name is everything before the last "@" of one selector,
+// the "npm:" protocol stripped from what follows.
+var yarnEntryRE = regexp.MustCompile(`^"?((?:@[^@"]+/)?[^@"\s,]+)@`)
+
+// yarnLockedVersions reads the versions a yarn.lock resolves each direct
+// selector to. Every selector of an entry maps to the entry's version; a
+// package that appears under several ranges resolves to one version per
+// range, and the last written wins, which for a lock is the same version.
+func yarnLockedVersions(lock []byte) (map[string]string, error) {
+	out := map[string]string{}
+	var names []string
+	for line := range strings.Lines(string(lock)) {
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		if line[0] != ' ' && strings.HasSuffix(line, ":") {
+			// An entry header: one or more comma-separated selectors.
+			names = names[:0]
+			for _, sel := range strings.Split(strings.TrimSuffix(line, ":"), ",") {
+				sel = strings.TrimSpace(sel)
+				if m := yarnEntryRE.FindStringSubmatch(sel); m != nil {
+					names = append(names, m[1])
+				}
+			}
+			continue
+		}
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "version") && len(names) > 0 {
+			v := strings.TrimSpace(strings.TrimPrefix(strings.TrimPrefix(trimmed, "version:"), "version"))
+			v = strings.Trim(v, `"`)
+			for _, n := range names {
+				out[n] = v
+			}
+			names = names[:0]
+		}
+	}
+	if len(out) == 0 && !bytes.Contains(lock, []byte("yarn lockfile")) && !bytes.Contains(lock, []byte("__metadata")) {
+		return nil, fmt.Errorf("npmman: yarn.lock: neither a classic nor a berry lock")
+	}
+	return out, nil
+}
+
+// YarnLockKind reports whether a yarn.lock is the classic v1 format or
+// berry, from its header.
+func YarnLockKind(lock []byte) string {
+	if bytes.Contains(lock, []byte("__metadata")) {
+		return "berry"
+	}
+	return "classic"
 }
 
 // --- a small, string-aware JSON scanner -------------------------------

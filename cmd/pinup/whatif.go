@@ -342,7 +342,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 
 	// locks remembers the lock files the run read, by manager and
 	// directory: a manifest edit there needs a lock refresh task.
-	locks := map[string]bool{}
+	// locks maps "manager|dir" to the lock file present there, so the
+	// refresh task and the maintenance branch name the one that exists.
+	locks := map[string]string{}
 	for _, match := range found.Matches {
 		body, ok := contents[match.Path]
 		if !ok {
@@ -364,9 +366,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			continue
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
-		locked := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
+		locked, lockName := lockedVersions(root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
 		if locked != nil {
-			locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = true
+			locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lockName
 		}
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
@@ -491,7 +493,7 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	// as its own update so the branch Renovate opens for it exists here
 	// too; the branch's task is the toolchain run, and a machine without
 	// the toolchain holds it.
-	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps)...)
+	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, locks)...)
 
 	var named []planner.Named
 	postUpgrade := map[string]plugin.PostUpgrade{}
@@ -890,9 +892,11 @@ func lockFilesOf(res extract.Result) []string {
 	return nil
 }
 
-func lockedVersions(root, manifest, manager string, lockFiles []string, plan *model.Plan) map[string]string {
+// lockedVersions reads the first lock file present of the candidates and
+// returns what it pins and which file it was.
+func lockedVersions(root, manifest, manager string, lockFiles []string, plan *model.Plan) (map[string]string, string) {
 	if len(lockFiles) == 0 {
-		return nil
+		return nil, ""
 	}
 	dir := filepath.Dir(manifest)
 	for _, name := range lockFiles {
@@ -906,9 +910,9 @@ func lockedVersions(root, manifest, manager string, lockFiles []string, plan *mo
 			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "extract", File: path, Msg: err.Error()})
 			continue
 		}
-		return locked
+		return locked, name
 	}
-	return nil
+	return nil, ""
 }
 
 // postUpgradeOf reads an update's resolved postUpgradeTasks object.
@@ -950,7 +954,7 @@ func stringList(v any) []string {
 // then the postUpgradeTasks of its updates, deduplicated by command. The
 // hold, when set, names the first thing that stops the branch: a refused
 // command or a missing toolchain.
-func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plugin.PostUpgrade, locks map[string]bool, allowed []string, lookPath func(string) (string, error)) ([]model.Task, *model.Block) {
+func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plugin.PostUpgrade, locks map[string]string, allowed []string, lookPath func(string) (string, error)) ([]model.Task, *model.Block) {
 	keys := map[string]bool{}
 	for _, k := range b.UpdateKeys {
 		keys[k] = true
@@ -980,7 +984,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 			}
 			continue
 		}
-		if !locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)] {
+		if locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)] == "" {
 			continue
 		}
 		if _, seen := names[k]; !seen {
@@ -989,7 +993,11 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		names[k] = append(names[k], u.Dep.DepName)
 	}
 	for _, k := range order {
-		if t, ok := plugin.LockRefresh(k.manager, k.dir, names[k], maintenance[k]); ok {
+		lockFile := locks[k.manager+"|"+k.dir]
+		if lockFile == "" && k.dir == "" {
+			lockFile = locks[k.manager+"|."]
+		}
+		if t, ok := plugin.LockRefresh(k.manager, k.dir, lockFile, names[k], maintenance[k]); ok {
 			tasks = append(tasks, t)
 		}
 	}
@@ -1089,7 +1097,7 @@ func holdBranch(b *model.Branch, updates []model.Update, block model.Block) {
 // lockMaintenance plans the lock-file refreshes lockFileMaintenance asks
 // for: one per (manager, lock file) among the dependencies that carry a
 // locked version, each an update of type lockFileMaintenance.
-func lockMaintenance(cfg map[string]any, deps []model.Dependency) []model.Update {
+func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[string]string) []model.Update {
 	lfm, ok := cfg["lockFileMaintenance"].(map[string]any)
 	if !ok {
 		return nil
@@ -1103,7 +1111,11 @@ func lockMaintenance(cfg map[string]any, deps []model.Dependency) []model.Update
 		if d.LockedVersion == "" || len(d.LockFiles) == 0 {
 			continue
 		}
-		lock := filepath.Join(filepath.Dir(d.File), d.LockFiles[0])
+		name := locks[d.Manager+"|"+filepath.Dir(d.File)]
+		if name == "" {
+			name = d.LockFiles[0]
+		}
+		lock := filepath.Join(filepath.Dir(d.File), name)
 		key := d.Manager + "|" + lock
 		if seen[key] {
 			continue

@@ -71,7 +71,7 @@ func TestCompileMatchesTheEstateAllowlist(t *testing.T) {
 }
 
 func TestLockRefreshCommands(t *testing.T) {
-	c, ok := LockRefresh("composer", "app", []string{"a/b", "c/d", "a/b"}, false)
+	c, ok := LockRefresh("composer", "app", "composer.lock", []string{"a/b", "c/d", "a/b"}, false)
 	if !ok || strings.Join(c.Command, " ") != "composer update a/b c/d --with-all-dependencies --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs" || c.Dir != "app" || c.AllowedBy != -1 {
 		t.Errorf("composer: %+v", c)
 	}
@@ -83,15 +83,15 @@ func TestLockRefreshCommands(t *testing.T) {
 	if _, err := Allowed(strings.Join(c.Command, " "), []*re2x.Regexp{re}); err != nil {
 		t.Errorf("the estate allowlist refuses pinup's own refresh: %v", err)
 	}
-	m, _ := LockRefresh("composer", "", nil, true)
+	m, _ := LockRefresh("composer", "", "composer.lock", nil, true)
 	if strings.Join(m.Command, " ") != "composer update --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs" {
 		t.Errorf("maintenance: %v", m.Command)
 	}
-	n, ok := LockRefresh("npm", "", []string{"lodash"}, false)
+	n, ok := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, false)
 	if !ok || strings.Join(n.Command, " ") != "npm install --package-lock-only --no-audit --ignore-scripts lodash" {
 		t.Errorf("npm: %+v", n)
 	}
-	if _, ok := LockRefresh("dockerfile", "", nil, false); ok {
+	if _, ok := LockRefresh("dockerfile", "", "", nil, false); ok {
 		t.Error("dockerfile has no lock to refresh")
 	}
 }
@@ -130,5 +130,23 @@ func TestEnvironmentIsAnAllowlistAndTimeoutsAreEnforced(t *testing.T) {
 	var missing *Missing
 	if err := r.Available([]model.Task{{Command: []string{"no-such-tool-xyz"}}}); !errors.As(err, &missing) || missing.Tool != "no-such-tool-xyz" {
 		t.Errorf("missing tool: %v", err)
+	}
+}
+
+// A yarn.lock beside package.json is refreshed by yarn, not npm: install
+// for a changed manifest, upgrade for a maintenance, scripts and checks
+// off, the lock the only file in scope.
+func TestYarnLockIsRefreshedByYarn(t *testing.T) {
+	y, ok := LockRefresh("npm", "", "yarn.lock", []string{"lodash"}, false)
+	if !ok || y.Command[0] != "yarn" || y.Command[1] != "install" || !strings.Contains(strings.Join(y.Command, " "), "--ignore-scripts") || y.FileFilters[0] != "yarn.lock" {
+		t.Errorf("yarn refresh = %+v", y)
+	}
+	m, _ := LockRefresh("npm", "", "yarn.lock", nil, true)
+	if m.Command[1] != "upgrade" {
+		t.Errorf("yarn maintenance = %+v", m)
+	}
+	g, ok := LockRefresh("gomod", "", "go.sum", nil, false)
+	if !ok || g.Command[0] != "go" {
+		t.Errorf("gomod refresh = %+v", g)
 	}
 }

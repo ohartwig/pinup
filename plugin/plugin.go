@@ -54,9 +54,25 @@ type PostUpgrade struct {
 // no plugins, no install, no scripts, no audit, platform requirements
 // ignored - the runner image is not the deployment image); the npm form is
 // what npm documents for refreshing a lock without installing.
-func LockRefresh(manager, dir string, depNames []string, maintenance bool) (model.Task, bool) {
+func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance bool) (model.Task, bool) {
 	names := unique(depNames)
 	var argv []string
+	if manager == "npm" && lockFile == "yarn.lock" {
+		// yarn classic, the one shape the estate carries (development/
+		// external-ext/blog): install rewrites the lock for a changed
+		// manifest, upgrade moves every resolution within its range -
+		// what a lock refresh means there. Scripts, engines and platform
+		// checks off, as for npm: the runner image is not the target.
+		argv = []string{"yarn", "install", "--ignore-scripts", "--ignore-engines", "--ignore-platform", "--non-interactive"}
+		if maintenance {
+			argv = []string{"yarn", "upgrade", "--ignore-scripts", "--ignore-engines", "--ignore-platform", "--non-interactive"}
+		}
+		return model.Task{
+			Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: argv,
+			ExecutionMode: model.ExecBranch, FileFilters: []string{"yarn.lock"},
+			AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
+		}, true
+	}
 	switch manager {
 	case "composer":
 		argv = []string{"composer", "update"}
