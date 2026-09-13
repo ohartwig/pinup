@@ -21,6 +21,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/discover"
 	"git.ole-hartwig.eu/pinup/pinup/extract"
+	"git.ole-hartwig.eu/pinup/pinup/httpx"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/osv"
@@ -73,15 +74,16 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		defer os.Remove(local)
 		*cfgPath = local
 	}
+	client := httpClient(env)
 	opts := whatifOptions{
 		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: now,
-		Datasources: wire.Datasources(httpClient(env), datasourceOptions(env)),
+		Datasources: wire.Datasources(client, datasourceOptions(env)),
 		CacheTTL:    *cacheTTL,
 	}
-	opts.CustomDatasources = customDatasourcesHook(env)
+	opts.CustomDatasources = customDatasourcesHook(client)
 	advisories := &osv.Client{}
 	opts.Advisories = advisories
-	notes := &changelog.Fetcher{Client: httpClient(env), GitLabURL: env.URL, TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
+	notes := &changelog.Fetcher{Client: client, GitLabURL: env.URL, TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
 	opts.Changelog = notes
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
@@ -100,7 +102,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		}
 		defer store.Close()
 		opts.Cache = store
-		advisories.Store = advisoryStore{cache: store, now: now}
+		advisories.Store = advisoryStore{cache: store, now: now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s\n", m) }}
 		notes.Cache = store
 	}
 	plan, err := whatif(context.Background(), opts)
@@ -595,6 +597,9 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			actionable++
 		}
 	}
+	for _, msg := range fetcher.Problems() {
+		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "lookup", Msg: msg})
+	}
 	plan.Stats = model.Stats{
 		FilesDiscovered:  found.Stats.FilesMatched,
 		DepsExtracted:    len(plan.Deps),
@@ -874,6 +879,8 @@ func lowestAdmitted(v versioning.Versioning, rng string, rs *model.ReleaseSet) s
 type advisoryStore struct {
 	cache lookup.Cache
 	now   time.Time
+	// warn receives a cache write failure; nil drops it.
+	warn func(string)
 }
 
 func (s advisoryStore) Get(key string) ([]byte, bool) {
@@ -882,13 +889,14 @@ func (s advisoryStore) Get(key string) ([]byte, bool) {
 }
 
 func (s advisoryStore) Put(key string, payload []byte) {
-	_ = s.cache.PutReleases("advisory\x00"+key, payload, s.now)
+	if err := s.cache.PutReleases("advisory\x00"+key, payload, s.now); err != nil && s.warn != nil {
+		s.warn(fmt.Sprintf("cache: advisory %s: %v", key, err))
+	}
 }
 
 // customDatasourcesHook lets whatif build the datasources a configuration
 // declares, with the same client the fixed ones use.
-func customDatasourcesHook(env platformEnv) func(map[string]model.CustomDatasource) lookup.Registry {
-	client := httpClient(env)
+func customDatasourcesHook(client *httpx.Client) func(map[string]model.CustomDatasource) lookup.Registry {
 	return func(defs map[string]model.CustomDatasource) lookup.Registry {
 		return wire.CustomDatasources(client, defs)
 	}

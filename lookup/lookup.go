@@ -134,6 +134,25 @@ type Fetcher struct {
 	// the release fast lane must see the tag that was pushed a minute ago,
 	// not last hour's list. The fresh answer is still written back.
 	Bypass func(Ref) bool
+
+	mu       sync.Mutex
+	problems []string
+}
+
+// Problems reports what went wrong beside the lookups themselves - a
+// cache that could not be written, so the next run pays for the fetch
+// again. A lookup failure is on its Result; these are on nobody's, and
+// would otherwise be on nobody's plan either.
+func (f *Fetcher) Problems() []string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]string(nil), f.problems...)
+}
+
+func (f *Fetcher) problem(format string, args ...any) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.problems = append(f.problems, fmt.Sprintf(format, args...))
 }
 
 // Fetch looks up every unique ref among the dependencies once.
@@ -204,8 +223,10 @@ func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 		rs.FetchedAt = f.Now
 		if payload, jerr := json.Marshal(rs); jerr == nil {
 			// A cache write failure is not a lookup failure: the answer is
-			// in hand, only the next run pays for it again.
-			_ = f.Cache.PutReleases(key, payload, f.Now)
+			// in hand, only the next run pays for it again - and is told.
+			if cerr := f.Cache.PutReleases(key, payload, f.Now); cerr != nil {
+				f.problem("cache: %s: %v", key, cerr)
+			}
 		}
 		f.recordFirstSeen(key, rs)
 	}
@@ -275,7 +296,9 @@ func (f *Fetcher) Digest(ctx context.Context, d model.Dependency, version string
 		return "", fmt.Errorf("%s answered an empty digest for %s %s", ref.Datasource, ref.PackageName, version)
 	}
 	if f.Cache != nil {
-		_ = f.Cache.PutReleases(key, []byte(digest), f.Now)
+		if cerr := f.Cache.PutReleases(key, []byte(digest), f.Now); cerr != nil {
+			f.problem("cache: %s: %v", key, cerr)
+		}
 	}
 	return digest, nil
 }

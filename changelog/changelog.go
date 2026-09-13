@@ -57,7 +57,7 @@ func (f *Fetcher) Notes(ctx context.Context, sourceURL string, v versioning.Vers
 		return nil, compare, nil
 	}
 	all, err := f.releases(ctx, kind, owner, repo, sourceURL, v, cur)
-	if err != nil {
+	if err != nil && all == nil {
 		return nil, compare, err
 	}
 	// The compare page wants the tags as the forge spells them: a
@@ -89,7 +89,7 @@ func (f *Fetcher) Notes(ctx context.Context, sourceURL string, v versioning.Vers
 	sort.Slice(out, func(i, j int) bool {
 		return v.Compare(strings.TrimPrefix(out[i].Version, "v"), strings.TrimPrefix(out[j].Version, "v")) > 0
 	})
-	return out, compare, nil
+	return out, compare, err
 }
 
 // classify names the forge behind a source URL.
@@ -200,7 +200,11 @@ func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL str
 	}
 	if f.Cache != nil {
 		if payload, err := json.Marshal(st); err == nil {
-			_ = f.Cache.PutReleases(key, payload, f.Now)
+			if cerr := f.Cache.PutReleases(key, payload, f.Now); cerr != nil {
+				// The notes are in hand; the next run fetches them again,
+				// and the plan says why.
+				return st.Releases, fmt.Errorf("changelog: cache: %w", cerr)
+			}
 		}
 	}
 	return st.Releases, nil

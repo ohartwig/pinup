@@ -4,6 +4,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"flag"
@@ -22,6 +23,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/git"
 	"git.ole-hartwig.eu/pinup/pinup/glob"
+	"git.ole-hartwig.eu/pinup/pinup/httpx"
 	"git.ole-hartwig.eu/pinup/pinup/lookup"
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/osv"
@@ -133,7 +135,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	}
 	one := &runOptions{
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
-		identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
+		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: dashboardTitle(os.Getenv),
 	}
 	if *indexPath != "" {
@@ -184,14 +186,17 @@ func cmdRun(args []string, out, errw io.Writer) error {
 // partition of 67 repositories took 746 s one after the other, 393 s of it
 // waiting on clones - time in which the runner's other cores sat idle.
 func runEach(ctx context.Context, o *runOptions, projects []string, parallel int, reportPath string, out, errw io.Writer) int {
-	return forEach(projects, parallel, func(p string) error {
-		return runProject(ctx, o, p, "", reportPath, out, errw)
-	}, errw)
+	return forEach(projects, parallel, func(p string, pout, perr io.Writer) error {
+		return runProject(ctx, o, p, "", reportPath, pout, perr)
+	}, out, errw)
 }
 
 // forEach calls run for every project, up to parallel at a time, reports
-// each failure on errw and returns how many there were.
-func forEach(projects []string, parallel int, run func(string) error, errw io.Writer) int {
+// each failure on errw and returns how many there were. Every project
+// writes to buffers of its own, flushed together when it is done: eight
+// repositories' warnings and summaries interleaved line by line is a log
+// nobody can read.
+func forEach(projects []string, parallel int, run func(string, io.Writer, io.Writer) error, out, errw io.Writer) int {
 	if parallel < 1 {
 		parallel = 1
 	}
@@ -206,8 +211,11 @@ func forEach(projects []string, parallel int, run func(string) error, errw io.Wr
 		go func() {
 			defer wg.Done()
 			for p := range work {
-				err := run(p)
+				var pout, perr bytes.Buffer
+				err := run(p, &pout, &perr)
 				mu.Lock()
+				_, _ = io.Copy(out, &pout)
+				_, _ = io.Copy(errw, &perr)
 				if err != nil {
 					failed++
 					fmt.Fprintf(errw, "%s: %v\n", p, err)
@@ -280,10 +288,14 @@ type runOptions struct {
 	cacheTTL      time.Duration
 	dryRun        bool
 	env           platformEnv
-	identity      git.Identity
-	signing       git.Signing
-	platform      publish.Platform
-	now           time.Time
+	// client is the one HTTP client every project's lookups share: its
+	// per-host concurrency limits and retry state are the job's, not a
+	// repository's.
+	client   *httpx.Client
+	identity git.Identity
+	signing  git.Signing
+	platform publish.Platform
+	now      time.Time
 	// dashboardTitle names the dashboard issue. "pinup Dashboard" until
 	// the cutover, so it lives beside Renovate's; PINUP_DASHBOARD_TITLE
 	// overrides, and the configuration's dependencyDashboardTitle takes
@@ -332,7 +344,11 @@ func runReleased(ctx context.Context, o *runOptions, spec, reportPath string, ou
 	// Only a run that went through counts as done; a failed one may be
 	// retried by the next trigger.
 	if !o.dryRun {
-		markSeen(seenPath, spec, o.now)
+		if err := markSeen(seenPath, spec, o.now); err != nil {
+			// The run is done; only the debounce is lost, and the next
+			// trigger for the same release would run again. Say so.
+			fmt.Fprintf(errw, "warning: debounce record: %v\n", err)
+		}
 	}
 	return nil
 }
@@ -354,7 +370,7 @@ func seenRecently(path, spec string, now time.Time) bool {
 	return ok && now.Sub(t) < time.Hour
 }
 
-func markSeen(path, spec string, now time.Time) {
+func markSeen(path, spec string, now time.Time) error {
 	seen := map[string]time.Time{}
 	if raw, err := os.ReadFile(path); err == nil {
 		_ = json.Unmarshal(raw, &seen)
@@ -365,9 +381,11 @@ func markSeen(path, spec string, now time.Time) {
 		}
 	}
 	seen[spec] = now.UTC()
-	if raw, err := json.MarshalIndent(seen, "", " "); err == nil {
-		_ = os.WriteFile(path, raw, 0o644)
+	raw, err := json.MarshalIndent(seen, "", " ")
+	if err != nil {
+		return err
 	}
+	return os.WriteFile(path, raw, 0o644)
 }
 
 // runProject plans and executes one project, given as a path to clone or
@@ -431,14 +449,14 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 
 	opts := whatifOptions{
 		Root: repo.Dir, ConfigPath: o.cfgPath, RepoName: proj.Path, Now: o.now,
-		Datasources:   wire.Datasources(httpClient(env), datasourceOptions(env)),
+		Datasources:   wire.Datasources(o.client, datasourceOptions(env)),
 		Cache:         o.cache,
 		CacheTTL:      o.cacheTTL,
 		Presets:       preset.Remote{Reader: platform, Ctx: ctx},
 		Released:      o.released,
 		RunnerDefault: o.runnerDefault,
 	}
-	opts.CustomDatasources = customDatasourcesHook(env)
+	opts.CustomDatasources = customDatasourcesHook(o.client)
 	// The dashboard's ticked boxes, read before planning: an approval, a
 	// window or a release age lifted by a person, a rebase asked for.
 	if !o.dryRun {
@@ -450,10 +468,10 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 	}
 	advisories := &osv.Client{}
 	if o.cache != nil {
-		advisories.Store = advisoryStore{cache: o.cache, now: o.now}
+		advisories.Store = advisoryStore{cache: o.cache, now: o.now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
 	}
 	opts.Advisories = advisories
-	notes := &changelog.Fetcher{Client: httpClient(env), GitLabURL: env.URL, TTL: changelogTTL, Now: o.now, MaxBody: noteBodyLimit}
+	notes := &changelog.Fetcher{Client: o.client, GitLabURL: env.URL, TTL: changelogTTL, Now: o.now, MaxBody: noteBodyLimit}
 	if o.cache != nil {
 		notes.Cache = o.cache
 	}

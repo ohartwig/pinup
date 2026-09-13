@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
 	"git.ole-hartwig.eu/pinup/pinup/config/toyaml"
@@ -203,9 +204,9 @@ func TestForEachBoundsConcurrencyAndCountsFailures(t *testing.T) {
 	var mu sync.Mutex
 	running, peak := 0, 0
 	seen := map[string]int{}
-	var errw strings.Builder
+	var out, errw strings.Builder
 	projects := []string{"a", "b", "c", "d", "e", "f", "g"}
-	failed := forEach(projects, 3, func(p string) error {
+	failed := forEach(projects, 3, func(p string, pout, perr io.Writer) error {
 		mu.Lock()
 		running++
 		if running > peak {
@@ -213,7 +214,11 @@ func TestForEachBoundsConcurrencyAndCountsFailures(t *testing.T) {
 		}
 		seen[p]++
 		mu.Unlock()
+		// Two lines per project, written apart in time: they must come
+		// out together, never interleaved with another project's.
+		fmt.Fprintf(pout, "%s: first\n", p)
 		time.Sleep(5 * time.Millisecond)
+		fmt.Fprintf(pout, "%s: second\n", p)
 		mu.Lock()
 		running--
 		mu.Unlock()
@@ -221,7 +226,16 @@ func TestForEachBoundsConcurrencyAndCountsFailures(t *testing.T) {
 			return errors.New("boom")
 		}
 		return nil
-	}, &errw)
+	}, &out, &errw)
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 2*len(projects) {
+		t.Fatalf("%d output lines, want %d", len(lines), 2*len(projects))
+	}
+	for i := 0; i < len(lines); i += 2 {
+		if lines[i][:1] != lines[i+1][:1] || !strings.HasSuffix(lines[i], "first") || !strings.HasSuffix(lines[i+1], "second") {
+			t.Errorf("output interleaved: %q / %q", lines[i], lines[i+1])
+		}
+	}
 	if failed != 2 {
 		t.Errorf("failed = %d, want 2", failed)
 	}

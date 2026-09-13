@@ -569,14 +569,18 @@ func TestReleasedDebounce(t *testing.T) {
 	if seenRecently(path, "a/b@1", at) {
 		t.Fatal("nothing seen yet")
 	}
-	markSeen(path, "a/b@1", at)
+	if err := markSeen(path, "a/b@1", at); err != nil {
+		t.Fatal(err)
+	}
 	if !seenRecently(path, "a/b@1", at.Add(30*time.Minute)) {
 		t.Error("seen half an hour ago must count")
 	}
 	if seenRecently(path, "a/b@1", at.Add(2*time.Hour)) || seenRecently(path, "a/b@2", at) {
 		t.Error("a later version or a later hour is a new run")
 	}
-	markSeen(path, "c/d@1", at.Add(48*time.Hour))
+	if err := markSeen(path, "c/d@1", at.Add(48*time.Hour)); err != nil {
+		t.Fatal(err)
+	}
 	if seenRecently(path, "a/b@1", at.Add(48*time.Hour+time.Minute)) {
 		t.Error("entries older than a day are pruned")
 	}

@@ -49,6 +49,8 @@ type memCache struct {
 		at      time.Time
 	}
 	seen map[string]time.Time
+	// PutErr, when set, is what every write answers.
+	PutErr error
 }
 
 func newMemCache() *memCache {
@@ -67,6 +69,9 @@ func (m *memCache) GetReleases(key string, ttl time.Duration, now time.Time) ([]
 }
 
 func (m *memCache) PutReleases(key string, payload []byte, now time.Time) error {
+	if m.PutErr != nil {
+		return m.PutErr
+	}
 	m.releases[key] = struct {
 		payload []byte
 		at      time.Time
@@ -116,6 +121,22 @@ func TestSkippedAndUnknownDependenciesAreNotLookedUp(t *testing.T) {
 	r := res[RefOf(dep("b", "nonesuch")).Key()]
 	if r.Releases == nil || r.Releases.Err == "" || r.Warning == nil {
 		t.Errorf("an unknown datasource is a lookup failure with a warning, got %+v", r)
+	}
+}
+
+// A cache that cannot be written does not fail the lookup - the answer is
+// in hand - but the fetcher says so, for the plan.
+func TestCacheWriteFailureIsReportedNotSwallowed(t *testing.T) {
+	ds := &countingDS{calls: map[string]int{}, releases: map[string][]string{"a": {"1.0.0"}}}
+	c := newMemCache()
+	c.PutErr = errors.New("disk full")
+	f := &Fetcher{Registry: Registry{"fake": ds}, Cache: c, TTL: time.Hour, Now: now}
+	res := f.Fetch(context.Background(), []model.Dependency{dep("a", "fake")})
+	if r := res[RefOf(dep("a", "fake")).Key()]; r.Warning != nil || len(r.Releases.Releases) != 1 {
+		t.Fatalf("the lookup itself must succeed: %+v", r)
+	}
+	if p := f.Problems(); len(p) != 1 || !strings.Contains(p[0], "disk full") {
+		t.Errorf("problems = %v", p)
 	}
 }
 
