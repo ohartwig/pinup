@@ -1,3 +1,9 @@
+## [0.12.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.2...v0.12.3) (2026-09-13)
+
+### :bug: Fixes
+
+* **gitlab:** a 409 on the merge call after a rebase push is "not yet" ([68fd081](https://git.ole-hartwig.eu/pinup/pinup/commit/68fd0817a7d1f48bdbdb45d03ca4270b808bc1a2))
+
 ## [0.12.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.1...v0.12.2) (2026-09-13)
 
 ### :bug: Fixes
