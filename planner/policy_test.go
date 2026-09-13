@@ -172,3 +172,17 @@ func TestDigestMovesAreNotAged(t *testing.T) {
 		}
 	}
 }
+
+// flexible's fallback waives the age: the policy holds the same update
+// otherwise.
+func TestAWaivedAgeIsNotHeld(t *testing.T) {
+	u := model.Update{DepKey: "x", Type: model.UpdatePatch, TimeSource: model.TimeUnknown, AgeWaived: true}
+	got, err := Decide(u, PolicyOf(map[string]any{"minimumReleaseAge": "3 days"}, origins), now)
+	if err != nil || len(got.Blocks) != 0 {
+		t.Errorf("waived: %+v %v", got.Blocks, err)
+	}
+	u.AgeWaived = false
+	if got, _ := Decide(u, PolicyOf(map[string]any{"minimumReleaseAge": "3 days"}, origins), now); len(got.Blocks) != 1 {
+		t.Errorf("not waived: %+v", got.Blocks)
+	}
+}

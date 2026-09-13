@@ -227,7 +227,22 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 
 	// Bucket candidates by whether they cross a major. Within each bucket
 	// the latest wins; Latest tolerates the docker scheme's partial order.
+	//
+	// internalChecksFilter: under "strict" a release younger than the
+	// minimum age is no candidate, so the newest old-enough one is offered
+	// now rather than the newest held until it ages - a package releasing
+	// daily is updated to its three-day-old state each day instead of
+	// never. "flexible" falls back to the unfiltered choice when nothing
+	// is old enough. "none", the default, offers the newest and lets the
+	// policy hold it.
+	ageFilter := time.Duration(0)
+	if d.InternalChecksFilter == "strict" || d.InternalChecksFilter == "flexible" {
+		if age, err := ParseAge(d.MinimumReleaseAge); err == nil && age > 0 {
+			ageFilter = age
+		}
+	}
 	var majors, others []string
+	var youngMajors, youngOthers []string // filtered out by age, kept for flexible
 	byVersion := map[string]model.Release{}
 	for _, r := range rs.Releases {
 		c := r.Version
@@ -270,17 +285,41 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 				continue
 			}
 		}
+		young := ageFilter > 0 && !oldEnough(r, ageFilter, req.Now, d.TimestampOptional)
 		switch versioning.UpdateType(v, base, c) {
 		case model.UpdateMajor:
-			majors = append(majors, c)
+			if young {
+				youngMajors = append(youngMajors, c)
+			} else {
+				majors = append(majors, c)
+			}
 		case model.UpdateMinor, model.UpdatePatch:
-			others = append(others, c)
+			if young {
+				youngOthers = append(youngOthers, c)
+			} else {
+				others = append(others, c)
+			}
 		default:
 			// Unknown (different family, same version), rollback,
 			// compatibility: not offered by default.
 			continue
 		}
 		byVersion[c] = r
+	}
+	// Nothing old enough in a bucket: strict offers the newest anyway
+	// and the policy holds it as pending (measured on Renovate's
+	// dashboard: "Pending Status Checks" for a docker tag whose age is
+	// unknown); flexible offers it and waives the age.
+	ageWaived := false
+	if ageFilter > 0 {
+		if len(majors) == 0 && len(youngMajors) > 0 {
+			majors = youngMajors
+			ageWaived = d.InternalChecksFilter == "flexible"
+		}
+		if len(others) == 0 && len(youngOthers) > 0 {
+			others = youngOthers
+			ageWaived = ageWaived || d.InternalChecksFilter == "flexible"
+		}
 	}
 	if seen == 0 {
 		return nil, fmt.Sprintf("none of the %d releases is a valid %s version", len(rs.Releases), scheme), nil
@@ -366,6 +405,9 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 			continue
 		}
 		u, skip := buildUpdate(v, d, cur, base, target, byVersion[target], scheme)
+		if ageWaived {
+			u.AgeWaived = true
+		}
 		if skip != "" {
 			if strings.HasPrefix(skip, unchangedPrefix) {
 				// The scheme keeps the value as written - a go directive
@@ -657,6 +699,19 @@ func digestRefresh(req Request, d *model.Dependency, tag string) ([]model.Update
 		Declared:   declaredRisk(model.UpdateDigest),
 		TimeSource: model.TimeUnknown,
 	}}, "", nil
+}
+
+// oldEnough is whether a release has reached the minimum age at now, by
+// its published timestamp or, failing that, by when this cache first saw
+// it; a release with neither is old enough only under timestamp-optional.
+func oldEnough(r model.Release, age time.Duration, now time.Time, timestampOptional bool) bool {
+	switch {
+	case !r.Timestamp.IsZero():
+		return !now.Before(r.Timestamp.Add(age))
+	case !r.FirstSeen.IsZero():
+		return !now.Before(r.FirstSeen.Add(age))
+	}
+	return timestampOptional
 }
 
 // unsatisfiedRange is whether cur is a valid range under v that none of

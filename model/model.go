@@ -105,6 +105,14 @@ type Dependency struct {
 	// the digest its value resolves to (a pinDigest update). Rule 760 of
 	// the estate's configuration sets it for every docker dependency.
 	PinDigests bool `json:"pinDigests,omitempty"`
+	// MinimumReleaseAge and InternalChecksFilter, from the pre-lookup rule
+	// pass, let the planner choose among candidates by age: under
+	// "strict" the newest release that already satisfies the age is the
+	// candidate, under "flexible" the same with the newest as fallback,
+	// under "none" (the default) the newest, held until it is old enough.
+	MinimumReleaseAge    string `json:"minimumReleaseAge,omitempty"`
+	InternalChecksFilter string `json:"internalChecksFilter,omitempty"`
+	TimestampOptional    bool   `json:"timestampOptional,omitempty"`
 
 	// ExtractVersion is a regex with a named group "version", applied to a
 	// release before comparison.

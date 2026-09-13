@@ -233,6 +233,11 @@ type Update struct {
 	// task, naming this dependency.
 	LockOnly bool `json:"lockOnly,omitempty"`
 
+	// AgeWaived marks an update internalChecksFilter "flexible" offered
+	// although no release satisfied the minimum age: the policy does not
+	// hold it for its age.
+	AgeWaived bool `json:"ageWaived,omitempty"`
+
 	// SecurityFix marks an update planned to clear the dependency's
 	// advisories: the lowest release at or above its vulnerability bound.
 	// The vulnerabilityAlerts configuration overlays such an update - its

@@ -664,6 +664,15 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	if pin, ok := res.Config["pinDigests"].(bool); ok {
 		d.PinDigests = pin
 	}
+	if f, ok := res.Config["internalChecksFilter"].(string); ok && f != "" && f != "none" {
+		d.InternalChecksFilter = f
+		if age, ok := res.Config["minimumReleaseAge"].(string); ok {
+			d.MinimumReleaseAge = age
+		}
+		if b, ok := res.Config["minimumReleaseAgeBehaviour"].(string); ok {
+			d.TimestampOptional = b == "timestamp-optional"
+		}
+	}
 	if urls, ok := res.Config["registryUrls"].([]any); ok && len(res.Wrote["registryUrls"]) > 0 {
 		d.RegistryURLs = d.RegistryURLs[:0:0]
 		for _, u := range urls {

@@ -778,3 +778,56 @@ func TestPinDigestsSkipsARangeNothingSatisfies(t *testing.T) {
 		t.Error("an invalid value was not pinned")
 	}
 }
+
+// internalChecksFilter: strict offers the newest release that already
+// satisfies the age, flexible the same with the newest as fallback, none
+// the newest regardless (the policy then holds it).
+func TestInternalChecksFilterChoosesByAge(t *testing.T) {
+	d := dep("left-pad", "1.0.0", "semver")
+	d.MinimumReleaseAge = "3 days"
+	rs := &model.ReleaseSet{PackageName: "p", Datasource: "npm", Releases: []model.Release{
+		{Version: "1.0.0", Timestamp: now.Add(-30 * 24 * time.Hour)},
+		{Version: "1.0.1", Timestamp: now.Add(-5 * 24 * time.Hour)},
+		{Version: "1.0.2", Timestamp: now.Add(-2 * 24 * time.Hour)},
+		{Version: "1.0.3", Timestamp: now.Add(-1 * time.Hour)},
+	}}
+	pick := func(filter string) string {
+		d.InternalChecksFilter = filter
+		res := plan(t, d, rs)
+		if len(res.Updates) != 1 {
+			t.Fatalf("%s: updates %+v skip %q", filter, res.Updates, res.Deps[0].SkipReason)
+		}
+		return res.Updates[0].NewValue
+	}
+	if got := pick("none"); got != "1.0.3" {
+		t.Errorf("none picked %s, want the newest", got)
+	}
+	if got := pick("strict"); got != "1.0.1" {
+		t.Errorf("strict picked %s, want the newest old enough", got)
+	}
+	if got := pick("flexible"); got != "1.0.1" {
+		t.Errorf("flexible picked %s, want the newest old enough", got)
+	}
+	// Nothing old enough: strict offers the newest for the policy to hold
+	// as pending, flexible the newest with the age waived.
+	rs.Releases = rs.Releases[2:]
+	d.InternalChecksFilter = "strict"
+	res := plan(t, d, rs)
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "1.0.3" || res.Updates[0].AgeWaived {
+		t.Errorf("strict with nothing old enough: %+v", res.Updates)
+	}
+	d.InternalChecksFilter = "flexible"
+	res = plan(t, d, rs)
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "1.0.3" || !res.Updates[0].AgeWaived {
+		t.Errorf("flexible fallback: %+v", res.Updates)
+	}
+	// A release without any time counts as young unless timestamp-optional.
+	rs.Releases = []model.Release{{Version: "1.0.0"}, {Version: "1.0.5", Timestamp: now.Add(-10 * 24 * time.Hour)}, {Version: "1.0.9"}}
+	if got := pick("strict"); got != "1.0.5" {
+		t.Errorf("strict passed an undated release over a dated one: %s", got)
+	}
+	d.TimestampOptional = true
+	if got := pick("strict"); got != "1.0.9" {
+		t.Errorf("timestamp-optional strict picked %s", got)
+	}
+}
