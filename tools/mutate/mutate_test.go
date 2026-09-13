@@ -92,7 +92,7 @@ var mutators = []mutator{
 	{21, "delivery", "a task's result is committed whatever it touched", "runner/runner.go",
 		"\tif err := apply.InScope(t, changed); err != nil {\n\t\treturn nil, err\n\t}", "", []string{"./runner/"}, false},
 	{22, "delivery", "a held branch Renovate opened is not a failure", "report/shadow.go",
-		"\t\t\t\tr.HeldOpen++", "\t\t\t\tr.Held++", []string{"./report/"}, false},
+		"\t\tc.r.HeldOpen++", "\t\tc.r.Held++", []string{"./report/"}, false},
 	// the one change no test can see
 	{23, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true},

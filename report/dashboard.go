@@ -99,135 +99,193 @@ type BranchState struct {
 func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.MergeRequest, now time.Time) string {
 	var b strings.Builder
 	b.WriteString("This issue lists pinup updates and detected dependencies. A ticked box is read on the next run and cleared.\n\n")
+	s := sortBranches(plan, states, open)
+	for _, section := range []func(*strings.Builder){
+		s.problems, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable, s.detected,
+	} {
+		section(&b)
+	}
+	fmt.Fprintf(&b, "---\n\n*pinup %s, %s*\n", plan.PinupVersion, now.UTC().Format("2006-01-02 15:04 UTC"))
+	return b.String()
+}
 
-	byMR := map[string]publish.MergeRequest{}
+// heldBranch is a branch the run holds, with the block that names why.
+type heldBranch struct {
+	branch model.Branch
+	block  model.Block
+}
+
+// sections is the plan's branches sorted into the dashboard's sections.
+type sections struct {
+	plan   *model.Plan
+	states map[string]BranchState
+	byMR   map[string]publish.MergeRequest
+
+	pendingApproval, awaitingSchedule, awaitingAge, heldOtherwise []heldBranch
+	failed, open, planned                                         []model.Branch
+}
+
+// sortBranches places every branch in exactly one section: open when its
+// merge request exists, errored when the run failed on it, planned when
+// it is actionable but not open, else the section its hold names.
+func sortBranches(plan *model.Plan, states map[string]BranchState, open []publish.MergeRequest) *sections {
+	s := &sections{plan: plan, states: states, byMR: map[string]publish.MergeRequest{}}
 	for _, m := range open {
-		byMR[m.SourceBranch] = m
+		s.byMR[m.SourceBranch] = m
 	}
 	updates := map[string]model.Update{}
 	for _, u := range plan.Updates {
 		updates[u.Key()] = u
 	}
-	type held struct {
-		branch model.Branch
-		block  model.Block
-	}
-	var pending, scheduled, aged, otherHeld []held
-	var errored, opened, actionable []model.Branch
 	for _, br := range plan.Branches {
 		st, ran := states[br.Name]
-		if m, ok := byMR[br.Name]; ok && br.SuppressedBy == "" {
-			_ = m
-			opened = append(opened, br)
+		if _, ok := s.byMR[br.Name]; ok && br.SuppressedBy == "" {
+			s.open = append(s.open, br)
 			continue
 		}
 		if ran && st.Action == "failed" {
-			errored = append(errored, br)
+			s.failed = append(s.failed, br)
 			continue
 		}
 		if br.SuppressedBy == "" {
-			actionable = append(actionable, br)
+			s.planned = append(s.planned, br)
 			continue
 		}
-		blk := firstBlock(br, updates)
+		h := heldBranch{br, firstBlock(br, updates)}
 		switch br.SuppressedBy {
 		case model.BlockDashboardApproval:
-			pending = append(pending, held{br, blk})
+			s.pendingApproval = append(s.pendingApproval, h)
 		case model.BlockSchedule:
-			scheduled = append(scheduled, held{br, blk})
+			s.awaitingSchedule = append(s.awaitingSchedule, h)
 		case model.BlockMinimumReleaseAge:
-			aged = append(aged, held{br, blk})
+			s.awaitingAge = append(s.awaitingAge, h)
 		default:
-			otherHeld = append(otherHeld, held{br, blk})
+			s.heldOtherwise = append(s.heldOtherwise, h)
 		}
 	}
+	return s
+}
 
-	if len(plan.Warnings) > 0 {
-		b.WriteString("## Repository problems\n\n")
-		n := 0
-		for _, w := range plan.Warnings {
-			if strings.Contains(w.Msg, "has no effect") {
-				continue
-			}
-			n++
-			if n > 20 {
-				fmt.Fprintf(&b, " - … and %d more in the plan\n", len(plan.Warnings)-20)
-				break
-			}
-			fmt.Fprintf(&b, " - ⚠️ %s%s\n", where(w), w.Msg)
-		}
-		b.WriteString("\n")
+func (s *sections) problems(b *strings.Builder) {
+	if len(s.plan.Warnings) == 0 {
+		return
 	}
-	if len(pending) > 0 {
-		b.WriteString("## Pending approval\n\nThese branches wait for approval. Tick a box to create the merge request on the next run.\n\n")
-		for _, h := range pending {
-			fmt.Fprintf(&b, " - [ ] <!-- approve-branch=%s -->%s\n", h.branch.Name, h.branch.Title)
+	b.WriteString("## Repository problems\n\n")
+	n := 0
+	for _, w := range s.plan.Warnings {
+		if strings.Contains(w.Msg, "has no effect") {
+			continue
 		}
-		b.WriteString(" - [ ] <!-- approve-all-pending-prs -->🔐 **Create all pending approval merge requests at once** 🔐\n\n")
-	}
-	if len(scheduled) > 0 {
-		b.WriteString("## Awaiting schedule\n\nThese updates wait for their window. Tick a box to create the merge request on the next run regardless.\n\n")
-		for _, h := range scheduled {
-			until := ""
-			if !h.block.Until.IsZero() {
-				until = fmt.Sprintf(" (opens %s)", h.block.Until.UTC().Format("2006-01-02 15:04 UTC"))
-			}
-			fmt.Fprintf(&b, " - [ ] <!-- unschedule-branch=%s -->%s%s\n", h.branch.Name, h.branch.Title, until)
+		n++
+		if n > 20 {
+			fmt.Fprintf(b, " - … and %d more in the plan\n", len(s.plan.Warnings)-20)
+			break
 		}
-		b.WriteString(" - [ ] <!-- create-all-awaiting-schedule-prs -->🔐 **Create all awaiting-schedule merge requests at once** 🔐\n\n")
+		fmt.Fprintf(b, " - ⚠️ %s%s\n", where(w), w.Msg)
 	}
-	if len(aged) > 0 {
-		b.WriteString("## Awaiting release age\n\nThese releases are younger than the configured minimum age. Tick a box to create the merge request now.\n\n")
-		for _, h := range aged {
-			until := ""
-			if !h.block.Until.IsZero() {
-				until = fmt.Sprintf(" (old enough %s)", h.block.Until.UTC().Format("2006-01-02 15:04 UTC"))
-			}
-			fmt.Fprintf(&b, " - [ ] <!-- approvePr-branch=%s -->%s%s\n", h.branch.Name, h.branch.Title, until)
-		}
-		b.WriteString("\n")
-	}
-	if len(otherHeld) > 0 {
-		b.WriteString("## Held\n\nThese branches are held for a reason no box lifts; the plan names it.\n\n")
-		for _, h := range otherHeld {
-			note := string(h.branch.SuppressedBy)
-			if h.block.Note != "" {
-				note += ": " + h.block.Note
-			}
-			fmt.Fprintf(&b, " - %s — %s\n", h.branch.Title, note)
-		}
-		b.WriteString("\n")
-	}
-	if len(errored) > 0 {
-		b.WriteString("## Errored\n\nThese updates ran into an error and are retried next run. Tick a box to push the branch again from scratch.\n\n")
-		for _, br := range errored {
-			fmt.Fprintf(&b, " - [ ] <!-- retry-branch=%s -->%s — %s\n", br.Name, br.Title, states[br.Name].Message)
-		}
-		b.WriteString("\n")
-	}
-	if len(opened) > 0 {
-		b.WriteString("## Open\n\nThese merge requests exist. Tick a box to rebase one on the next run.\n\n")
-		for _, br := range opened {
-			m := byMR[br.Name]
-			fmt.Fprintf(&b, " - [ ] <!-- rebase-branch=%s -->[%s](!%d)\n", br.Name, br.Title, m.IID)
-		}
-		b.WriteString(" - [ ] <!-- rebase-all-open-prs -->**Rebase all open merge requests at once**\n\n")
-	}
-	if len(actionable) > 0 {
-		b.WriteString("## Planned\n\nBranches this run planned and could not open here (a dry run, or a limit):\n\n")
-		for _, br := range actionable {
-			msg := ""
-			if st, ok := states[br.Name]; ok {
-				msg = " — " + st.Action
-				if st.Message != "" {
-					msg += ": " + st.Message
-				}
-			}
-			fmt.Fprintf(&b, " - %s%s\n", br.Title, msg)
-		}
-		b.WriteString("\n")
-	}
+	b.WriteString("\n")
+}
 
+func (s *sections) pending(b *strings.Builder) {
+	if len(s.pendingApproval) == 0 {
+		return
+	}
+	b.WriteString("## Pending approval\n\nThese branches wait for approval. Tick a box to create the merge request on the next run.\n\n")
+	for _, h := range s.pendingApproval {
+		fmt.Fprintf(b, " - [ ] <!-- approve-branch=%s -->%s\n", h.branch.Name, h.branch.Title)
+	}
+	b.WriteString(" - [ ] <!-- approve-all-pending-prs -->🔐 **Create all pending approval merge requests at once** 🔐\n\n")
+}
+
+func (s *sections) scheduled(b *strings.Builder) {
+	if len(s.awaitingSchedule) == 0 {
+		return
+	}
+	b.WriteString("## Awaiting schedule\n\nThese updates wait for their window. Tick a box to create the merge request on the next run regardless.\n\n")
+	for _, h := range s.awaitingSchedule {
+		until := ""
+		if !h.block.Until.IsZero() {
+			until = fmt.Sprintf(" (opens %s)", h.block.Until.UTC().Format("2006-01-02 15:04 UTC"))
+		}
+		fmt.Fprintf(b, " - [ ] <!-- unschedule-branch=%s -->%s%s\n", h.branch.Name, h.branch.Title, until)
+	}
+	b.WriteString(" - [ ] <!-- create-all-awaiting-schedule-prs -->🔐 **Create all awaiting-schedule merge requests at once** 🔐\n\n")
+}
+
+func (s *sections) aged(b *strings.Builder) {
+	if len(s.awaitingAge) == 0 {
+		return
+	}
+	b.WriteString("## Awaiting release age\n\nThese releases are younger than the configured minimum age. Tick a box to create the merge request now.\n\n")
+	for _, h := range s.awaitingAge {
+		until := ""
+		if !h.block.Until.IsZero() {
+			until = fmt.Sprintf(" (old enough %s)", h.block.Until.UTC().Format("2006-01-02 15:04 UTC"))
+		}
+		fmt.Fprintf(b, " - [ ] <!-- approvePr-branch=%s -->%s%s\n", h.branch.Name, h.branch.Title, until)
+	}
+	b.WriteString("\n")
+}
+
+func (s *sections) otherHeld(b *strings.Builder) {
+	if len(s.heldOtherwise) == 0 {
+		return
+	}
+	b.WriteString("## Held\n\nThese branches are held for a reason no box lifts; the plan names it.\n\n")
+	for _, h := range s.heldOtherwise {
+		note := string(h.branch.SuppressedBy)
+		if h.block.Note != "" {
+			note += ": " + h.block.Note
+		}
+		fmt.Fprintf(b, " - %s — %s\n", h.branch.Title, note)
+	}
+	b.WriteString("\n")
+}
+
+func (s *sections) errored(b *strings.Builder) {
+	if len(s.failed) == 0 {
+		return
+	}
+	b.WriteString("## Errored\n\nThese updates ran into an error and are retried next run. Tick a box to push the branch again from scratch.\n\n")
+	for _, br := range s.failed {
+		fmt.Fprintf(b, " - [ ] <!-- retry-branch=%s -->%s — %s\n", br.Name, br.Title, s.states[br.Name].Message)
+	}
+	b.WriteString("\n")
+}
+
+func (s *sections) opened(b *strings.Builder) {
+	if len(s.open) == 0 {
+		return
+	}
+	b.WriteString("## Open\n\nThese merge requests exist. Tick a box to rebase one on the next run.\n\n")
+	for _, br := range s.open {
+		fmt.Fprintf(b, " - [ ] <!-- rebase-branch=%s -->[%s](!%d)\n", br.Name, br.Title, s.byMR[br.Name].IID)
+	}
+	b.WriteString(" - [ ] <!-- rebase-all-open-prs -->**Rebase all open merge requests at once**\n\n")
+}
+
+func (s *sections) actionable(b *strings.Builder) {
+	if len(s.planned) == 0 {
+		return
+	}
+	b.WriteString("## Planned\n\nBranches this run planned and could not open here (a dry run, or a limit):\n\n")
+	for _, br := range s.planned {
+		msg := ""
+		if st, ok := s.states[br.Name]; ok {
+			msg = " — " + st.Action
+			if st.Message != "" {
+				msg += ": " + st.Message
+			}
+		}
+		fmt.Fprintf(b, " - %s%s\n", br.Title, msg)
+	}
+	b.WriteString("\n")
+}
+
+// detected lists every dependency by manager and file, with the values the
+// plan proposes for it or the reason it proposes none.
+func (s *sections) detected(b *strings.Builder) {
+	plan := s.plan
 	b.WriteString("## Detected dependencies\n\n")
 	type fileDeps struct {
 		manager, file string
@@ -269,9 +327,9 @@ func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.M
 		for _, f := range files {
 			n += len(f.deps)
 		}
-		fmt.Fprintf(&b, "<details><summary>%s (%d)</summary>\n<blockquote>\n\n", m, n)
+		fmt.Fprintf(b, "<details><summary>%s (%d)</summary>\n<blockquote>\n\n", m, n)
 		for _, f := range files {
-			fmt.Fprintf(&b, "<details><summary>%s (%d)</summary>\n\n", f.file, len(f.deps))
+			fmt.Fprintf(b, "<details><summary>%s (%d)</summary>\n\n", f.file, len(f.deps))
 			for _, d := range f.deps {
 				value := d.CurrentValue
 				if d.CurrentDigest != "" && value != "" {
@@ -291,8 +349,6 @@ func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.M
 		}
 		b.WriteString("</blockquote>\n</details>\n\n")
 	}
-	fmt.Fprintf(&b, "---\n\n*pinup %s, %s*\n", plan.PinupVersion, now.UTC().Format("2006-01-02 15:04 UTC"))
-	return b.String()
 }
 
 func firstBlock(br model.Branch, updates map[string]model.Update) model.Block {

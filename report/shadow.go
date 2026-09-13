@@ -173,137 +173,193 @@ func persistingHold(reason model.BlockReason) bool {
 // version is the pinup version the comparing job runs; a plan from another
 // is refused. prev is the previous comparison's state; nil means none.
 func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *Suppressions, controls []string, version string, now time.Time, prev *State) (Result, *State) {
-	var r Result
-	seenBefore := map[string]bool{}
+	c := &comparison{sup: sup, now: now, version: version, next: &State{},
+		seenBefore: map[string]bool{}, used: map[string]bool{}, onlyPinupByProject: map[string]int{}, isControl: map[string]bool{}}
 	if prev != nil {
 		for _, k := range prev.Seen {
-			seenBefore[k] = true
+			c.seenBefore[k] = true
 		}
 	}
-	next := &State{}
-	r.Plans = len(plans)
-	if len(plans) == 0 {
-		r.Failures = append(r.Failures, "zero plans: nothing was compared")
+	for _, ctl := range controls {
+		c.isControl[ctl] = true
 	}
-	for _, s := range sup.Entries {
+	c.r.Plans = len(plans)
+	if len(plans) == 0 {
+		c.fail("zero plans: nothing was compared")
+	}
+	c.checkSuppressions()
+	for _, p := range plans {
+		c.plan(p, open)
+	}
+	c.verdict(controls)
+	sort.Strings(c.next.Seen)
+	return c.r, c.next
+}
+
+// comparison is one run of the comparator: the counters as they fill,
+// what the previous run saw, which suppressions were used.
+type comparison struct {
+	r       Result
+	sup     *Suppressions
+	now     time.Time
+	version string
+	next    *State
+	// seenBefore holds last run's only_* keys: a difference seen twice
+	// running is a failure, once is pending.
+	seenBefore         map[string]bool
+	used               map[string]bool
+	onlyPinupByProject map[string]int
+	isControl          map[string]bool
+}
+
+func (c *comparison) fail(format string, args ...any) {
+	c.r.Failures = append(c.r.Failures, fmt.Sprintf(format, args...))
+}
+
+// checkSuppressions refuses a suppression without reason, owner and
+// expiry, an expired one, and one that names no project and branch.
+func (c *comparison) checkSuppressions() {
+	for _, s := range c.sup.Entries {
 		switch {
 		case s.Reason == "" || s.Owner == "" || s.Expires.IsZero():
-			r.Failures = append(r.Failures, fmt.Sprintf("suppression %s/%s has no reason, owner or expiry", s.Project, s.Branch))
-		case !now.Before(s.Expires):
-			r.Failures = append(r.Failures, fmt.Sprintf("suppression %s/%s expired on %s", s.Project, s.Branch, s.Expires.Format("2006-01-02")))
+			c.fail("suppression %s/%s has no reason, owner or expiry", s.Project, s.Branch)
+		case !c.now.Before(s.Expires):
+			c.fail("suppression %s/%s expired on %s", s.Project, s.Branch, s.Expires.Format("2006-01-02"))
 		case s.Project == "" || s.Branch == "":
-			r.Failures = append(r.Failures, "a suppression must name a project and a branch, never a bare branch pattern")
+			c.fail("a suppression must name a project and a branch, never a bare branch pattern")
 		}
 	}
-	used := map[string]bool{}
-	onlyPinupByProject := map[string]int{}
-	isControl := map[string]bool{}
-	for _, c := range controls {
-		isControl[c] = true
+}
+
+// plan compares one repository's plan with Renovate's merge requests
+// there: every branch of the plan against theirs, then every request of
+// theirs the plan does not name.
+func (c *comparison) plan(p *model.Plan, open map[string][]publish.MergeRequest) {
+	if p.PinupVersion != c.version {
+		c.fail("%s: plan from pinup %s, this job runs %s; a stale artefact is not compared", p.Repo.Path, p.PinupVersion, c.version)
+		return
 	}
-	for _, p := range plans {
-		if p.PinupVersion != version {
-			r.Failures = append(r.Failures, fmt.Sprintf("%s: plan from pinup %s, this job runs %s; a stale artefact is not compared", p.Repo.Path, p.PinupVersion, version))
+	c.r.Deps += len(p.Deps)
+	mrs, ok := open[p.Repo.Path]
+	if !ok {
+		c.fail("%s: Renovate's side could not be read; an unreadable Renovate is not an empty Renovate", p.Repo.Path)
+		return
+	}
+	theirs := map[string]publish.MergeRequest{}
+	merged := map[string]publish.MergeRequest{}
+	for _, m := range mrs {
+		if m.State == "merged" {
+			merged[m.SourceBranch] = m
 			continue
 		}
-		r.Deps += len(p.Deps)
-		mrs, ok := open[p.Repo.Path]
-		if !ok {
-			r.Failures = append(r.Failures, fmt.Sprintf("%s: Renovate's side could not be read; an unreadable Renovate is not an empty Renovate", p.Repo.Path))
+		theirs[m.SourceBranch] = m
+	}
+	mine := map[string]model.Branch{}
+	for _, b := range p.Branches {
+		mine[b.Name] = b
+	}
+	for name, b := range mine {
+		c.r.Entries = append(c.r.Entries, c.branch(p.Repo.Path, name, b, theirs, merged))
+	}
+	for name, m := range theirs {
+		if _, ok := mine[name]; ok {
 			continue
 		}
-		theirs := map[string]publish.MergeRequest{}
-		merged := map[string]publish.MergeRequest{}
-		for _, m := range mrs {
-			if m.State == "merged" {
-				merged[m.SourceBranch] = m
-				continue
-			}
-			theirs[m.SourceBranch] = m
+		c.r.Entries = append(c.r.Entries, c.theirsOnly(p.Repo.Path, name, m))
+	}
+}
+
+// branch classifies one branch of the plan.
+func (c *comparison) branch(project, name string, b model.Branch, theirs, merged map[string]publish.MergeRequest) Entry {
+	e := Entry{Project: project, Branch: name, SuppressedBy: b.SuppressedBy, Title: b.Title}
+	m, ok := theirs[name]
+	switch {
+	case ok && b.SuppressedBy == model.BlockRollingMajor:
+		e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "rolling-major"
+		c.r.RollingMajor++
+	case ok && persistingHold(b.SuppressedBy):
+		e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "persisting"
+		c.r.Persisting++
+	case ok && b.SuppressedBy != "":
+		e.Side, e.MRIID = "held_open", m.IID
+		c.r.HeldOpen++
+	case ok:
+		e.Side, e.MRIID = "both", m.IID
+		c.r.Both++
+	default:
+		if m, done := merged[name]; done && b.SuppressedBy == "" {
+			// Renovate opened it and had it merged since the window
+			// this comparison looks back over; the plan here was made
+			// before, or cannot see the outcome - a lock refresh
+			// leaves no trace a plan reads (measured: Renovate's
+			// lock-file-maintenance merges at 01:2x and pinup plans
+			// it again every hour of the window). The same branch,
+			// one lifecycle further along.
+			e.Side, e.MRIID, e.Suppressed = "both", m.IID, "merged"
+			c.r.Merged++
+			return e
 		}
-		mine := map[string]model.Branch{}
-		for _, b := range p.Branches {
-			mine[b.Name] = b
+		if b.SuppressedBy != "" {
+			e.Side = "both" // held here, absent there: what a hold means
+			c.r.Held++
+			return e
 		}
-		for name, b := range mine {
-			e := Entry{Project: p.Repo.Path, Branch: name, SuppressedBy: b.SuppressedBy, Title: b.Title}
-			if m, ok := theirs[name]; ok && b.SuppressedBy == model.BlockRollingMajor {
-				e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "rolling-major"
-				r.RollingMajor++
-			} else if ok && persistingHold(b.SuppressedBy) {
-				e.Side, e.MRIID, e.Suppressed = "held_open", m.IID, "persisting"
-				r.Persisting++
-			} else if ok && b.SuppressedBy != "" {
-				e.Side, e.MRIID = "held_open", m.IID
-				r.HeldOpen++
-			} else if ok {
-				e.Side, e.MRIID = "both", m.IID
-				r.Both++
-			} else if m, done := merged[name]; done && b.SuppressedBy == "" {
-				// Renovate opened it and had it merged since the window
-				// this comparison looks back over; the plan here was made
-				// before, or cannot see the outcome - a lock refresh
-				// leaves no trace a plan reads (measured: Renovate's
-				// lock-file-maintenance merges at 01:2x and pinup plans
-				// it again every hour of the window). The same branch,
-				// one lifecycle further along.
-				e.Side, e.MRIID, e.Suppressed = "both", m.IID, "merged"
-				r.Merged++
-			} else if b.SuppressedBy != "" {
-				e.Side = "both" // held here, absent there: what a hold means
-				r.Held++
+		e.Side = "only_pinup"
+		switch key := suppressionFor(c.sup, project, name, c.now); {
+		case key != "":
+			e.Suppressed = key
+			c.used[key] = true
+			c.r.Suppressed++
+		case c.isControl[project]:
+			// The control is supposed to differ; its count is
+			// checked in the verdict, exactly one.
+			e.Suppressed = "control"
+			c.r.Controls++
+		default:
+			k := "only_pinup|" + project + "|" + name
+			c.next.Seen = append(c.next.Seen, k)
+			if c.seenBefore[k] {
+				c.r.OnlyPinup++
 			} else {
-				e.Side = "only_pinup"
-				switch key := suppressionFor(sup, p.Repo.Path, name, now); {
-				case key != "":
-					e.Suppressed = key
-					used[key] = true
-					r.Suppressed++
-				case isControl[p.Repo.Path]:
-					// The control is supposed to differ; its count is
-					// checked below, exactly one.
-					e.Suppressed = "control"
-					r.Controls++
-				default:
-					k := "only_pinup|" + p.Repo.Path + "|" + name
-					next.Seen = append(next.Seen, k)
-					if seenBefore[k] {
-						r.OnlyPinup++
-					} else {
-						e.Suppressed = "pending"
-						r.Pending++
-					}
-				}
-				onlyPinupByProject[p.Repo.Path]++
-			}
-			r.Entries = append(r.Entries, e)
-		}
-		for name, m := range theirs {
-			if _, ok := mine[name]; ok {
-				continue
-			}
-			e := Entry{Project: p.Repo.Path, Branch: name, Side: "only_renovate", Title: m.Title, MRIID: m.IID}
-			k := "only_renovate|" + p.Repo.Path + "|" + name
-			next.Seen = append(next.Seen, k)
-			switch key := suppressionFor(sup, p.Repo.Path, name, now); {
-			case key != "":
-				// A merge request Renovate left behind - its change
-				// already on main, the branch never closed - is
-				// Renovate's difference, triaged like pinup's own, with
-				// the same expiry. Measured: devops/images/c2patool!92
-				// pins container-scanning 8.6.34, main pins 8.6.35.
-				e.Suppressed = key
-				used[key] = true
-				r.Suppressed++
-			case seenBefore[k]:
-				r.OnlyRenovate++
-			default:
 				e.Suppressed = "pending"
-				r.Pending++
+				c.r.Pending++
 			}
-			r.Entries = append(r.Entries, e)
 		}
+		c.onlyPinupByProject[project]++
 	}
+	return e
+}
+
+// theirsOnly classifies a merge request Renovate has open that the plan
+// does not name.
+func (c *comparison) theirsOnly(project, name string, m publish.MergeRequest) Entry {
+	e := Entry{Project: project, Branch: name, Side: "only_renovate", Title: m.Title, MRIID: m.IID}
+	k := "only_renovate|" + project + "|" + name
+	c.next.Seen = append(c.next.Seen, k)
+	switch key := suppressionFor(c.sup, project, name, c.now); {
+	case key != "":
+		// A merge request Renovate left behind - its change
+		// already on main, the branch never closed - is
+		// Renovate's difference, triaged like pinup's own, with
+		// the same expiry. Measured: devops/images/c2patool!92
+		// pins container-scanning 8.6.34, main pins 8.6.35.
+		e.Suppressed = key
+		c.used[key] = true
+		c.r.Suppressed++
+	case c.seenBefore[k]:
+		c.r.OnlyRenovate++
+	default:
+		e.Suppressed = "pending"
+		c.r.Pending++
+	}
+	return e
+}
+
+// verdict sorts the entries and turns the counters into failures: dead
+// suppressions, a control that did not differ exactly once, and every
+// difference seen for the second run running.
+func (c *comparison) verdict(controls []string) {
+	r := &c.r
 	sort.Slice(r.Entries, func(i, j int) bool {
 		if r.Entries[i].Project != r.Entries[j].Project {
 			return r.Entries[i].Project < r.Entries[j].Project
@@ -311,29 +367,27 @@ func Compare(plans []*model.Plan, open map[string][]publish.MergeRequest, sup *S
 		return r.Entries[i].Branch < r.Entries[j].Branch
 	})
 	if r.Plans > 0 && r.Deps == 0 {
-		r.Failures = append(r.Failures, "zero dependencies across every plan: the runs extracted nothing")
+		c.fail("zero dependencies across every plan: the runs extracted nothing")
 	}
-	for _, s := range sup.Entries {
-		if !used[s.Project+"/"+s.Branch] && s.Kind != "fixture-control" {
-			r.Failures = append(r.Failures, fmt.Sprintf("suppression %s/%s matched nothing; a dead suppression is removed, not kept", s.Project, s.Branch))
+	for _, s := range c.sup.Entries {
+		if !c.used[s.Project+"/"+s.Branch] && s.Kind != "fixture-control" {
+			c.fail("suppression %s/%s matched nothing; a dead suppression is removed, not kept", s.Project, s.Branch)
 		}
 	}
-	for _, c := range controls {
-		if onlyPinupByProject[c] != 1 {
-			r.Failures = append(r.Failures, fmt.Sprintf("control %s yielded %d only-pinup entries, want exactly 1", c, onlyPinupByProject[c]))
+	for _, ctl := range controls {
+		if c.onlyPinupByProject[ctl] != 1 {
+			c.fail("control %s yielded %d only-pinup entries, want exactly 1", ctl, c.onlyPinupByProject[ctl])
 		}
 	}
 	if r.OnlyRenovate > 0 {
-		r.Failures = append(r.Failures, fmt.Sprintf("%d branches Renovate has open that pinup does not plan, for the second run running: a miss is an update that does not happen", r.OnlyRenovate))
+		c.fail("%d branches Renovate has open that pinup does not plan, for the second run running: a miss is an update that does not happen", r.OnlyRenovate)
 	}
 	if r.HeldOpen > 0 {
-		r.Failures = append(r.Failures, fmt.Sprintf("%d branches Renovate has open that pinup holds; the reasons are on the entries", r.HeldOpen))
+		c.fail("%d branches Renovate has open that pinup holds; the reasons are on the entries", r.HeldOpen)
 	}
 	if r.OnlyPinup > 0 {
-		r.Failures = append(r.Failures, fmt.Sprintf("%d branches pinup plans without a merge request, for the second run running, and without a triaged suppression", r.OnlyPinup))
+		c.fail("%d branches pinup plans without a merge request, for the second run running, and without a triaged suppression", r.OnlyPinup)
 	}
-	sort.Strings(next.Seen)
-	return r, next
 }
 
 func suppressionFor(sup *Suppressions, project, branch string, now time.Time) string {
