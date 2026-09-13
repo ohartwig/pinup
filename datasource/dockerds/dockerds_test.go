@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -305,6 +306,8 @@ type glRegistry struct {
 	mu       sync.Mutex
 	tags     map[string][]string
 	requests []string
+	// challenge, when set, replaces the standard one; %s is the repository.
+	challenge string
 }
 
 func (g *glRegistry) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -321,8 +324,11 @@ func (g *glRegistry) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	want := "Bearer token-for-" + repo
 	if r.Header.Get("Authorization") != want {
-		w.Header().Set("WWW-Authenticate", fmt.Sprintf(
-			`Bearer realm="https://git.ole-hartwig.eu/jwt/auth",service="container_registry",scope="repository:%s:pull"`, repo))
+		challenge := g.challenge
+		if challenge == "" {
+			challenge = `Bearer realm="https://git.ole-hartwig.eu/jwt/auth",service="container_registry",scope="repository:%s:pull"`
+		}
+		w.Header().Set("WWW-Authenticate", fmt.Sprintf(challenge, repo))
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
@@ -377,8 +383,8 @@ func TestGitLabRegistryFlowSendsBasicAuthOnlyToRealm(t *testing.T) {
 		Handle("registry.ole-hartwig.eu", registry).
 		Handle("git.ole-hartwig.eu", realm)
 
-	creds := func(host string) (string, string, bool) {
-		if host == "git.ole-hartwig.eu" {
+	creds := func(registry string, realm *url.URL) (string, string, bool) {
+		if registry == "registry.ole-hartwig.eu" && realm.Host == "git.ole-hartwig.eu" {
 			return "gitlab-ci-token", "glcbt-secret", true
 		}
 		return "", "", false
@@ -435,5 +441,43 @@ func TestGitLabRealmRejectsMissingCredentials(t *testing.T) {
 	}
 	if realm.sawBasic {
 		t.Error("the realm reports having seen valid basic auth despite no credentials being configured")
+	}
+}
+
+// A registry a configuration names can name the instance's realm with a
+// scope of its choosing. The credential is withheld: the registry is not
+// the estate's, the scope is not the lookup's, or the realm is not TLS.
+func TestRealmCredentialsAreBoundToRegistryScopeAndTLS(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		registry  string
+		challenge string
+	}{
+		{"a foreign registry naming our realm", "evil.example.net",
+			`Bearer realm="https://git.ole-hartwig.eu/jwt/auth",service="container_registry",scope="repository:%s:pull"`},
+		{"our registry asking for push", "registry.ole-hartwig.eu",
+			`Bearer realm="https://git.ole-hartwig.eu/jwt/auth",service="container_registry",scope="repository:%s:pull,push"`},
+		{"our registry asking for another repository", "registry.ole-hartwig.eu",
+			`Bearer realm="https://git.ole-hartwig.eu/jwt/auth",service="container_registry",scope="repository:devops/images/secret:pull"`},
+		{"a realm over plain http", "registry.ole-hartwig.eu",
+			`Bearer realm="http://git.ole-hartwig.eu/jwt/auth",service="container_registry",scope="repository:%s:pull"`},
+	} {
+		registry := &glRegistry{tags: map[string][]string{"devops/ci-mirrors/alpine": {"1.0.0"}}, challenge: tc.challenge}
+		realm := &glRealm{wantUser: "gitlab-ci-token", wantPass: "glcbt-secret"}
+		rt := harness.NewRefusingTransport(t).Handle(tc.registry, registry).Handle("git.ole-hartwig.eu", realm)
+		creds := func(reg string, r *url.URL) (string, string, bool) {
+			if reg == "registry.ole-hartwig.eu" && r.Host == "git.ole-hartwig.eu" && r.Scheme == "https" {
+				return "gitlab-ci-token", "glcbt-secret", true
+			}
+			return "", "", false
+		}
+		ds := New(rt, creds)
+		_, err := ds.Releases(context.Background(), lookup.Ref{Datasource: Name, PackageName: "devops/ci-mirrors/alpine", RegistryURLs: []string{"https://" + tc.registry}})
+		if err == nil {
+			t.Errorf("%s: the lookup succeeded, so a token was minted", tc.name)
+		}
+		if realm.sawBasic {
+			t.Errorf("%s: the realm saw the credential", tc.name)
+		}
 	}
 }

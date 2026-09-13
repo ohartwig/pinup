@@ -66,12 +66,17 @@ const manifestAccept = "application/vnd.oci.image.index.v1+json, " +
 // exercise.
 const pageSize = 1000
 
-// Credentials resolves HTTP basic auth for a token realm host. It is called
-// with the realm's hostname only, never with the registry's - a token
-// obtained for one registry must not leak credentials scoped to another. A
-// false ok means "ask anonymously", which is the normal case for Docker Hub
-// and ghcr.io.
-type Credentials func(realmHost string) (user, pass string, ok bool)
+// Credentials resolves HTTP basic auth for a token realm. It is called
+// with the registry that issued the challenge and the realm it named, so
+// the caller can bind the credential to its own registry: a registry a
+// repository configuration names can otherwise name the instance's realm
+// with a scope of its choosing and receive a token for it (review S5,
+// 2026-09-13). A false ok means "ask anonymously", which is the normal
+// case for Docker Hub and ghcr.io.
+type Credentials func(registryHost string, realm *url.URL) (user, pass string, ok bool)
+
+// The registry host is the bare host of the registry URL the lookup used
+// ("registry.example.org"), the realm is the URL the challenge named.
 
 // tokenKey is the cache identity for a bearer token: a token minted for one
 // repository's scope must never be replayed against another, so the cache is
@@ -282,7 +287,7 @@ func (d *Datasource) authenticatedGet(ctx context.Context, registry, repository,
 		return nil, err
 	}
 	if resp.status == http.StatusUnauthorized {
-		token, aerr := d.authenticate(ctx, repository, resp.header)
+		token, aerr := d.authenticate(ctx, registry, repository, resp.header)
 		if aerr != nil {
 			return nil, fmt.Errorf("docker: %s: %w", repository, aerr)
 		}
@@ -367,18 +372,19 @@ func (d *Datasource) doGet(ctx context.Context, rawURL, accept, token string) (*
 // authenticate runs the token dance for one 401: parse the WWW-Authenticate
 // challenge, ask the realm it names for a token scoped to repository, and
 // return it. The token is never logged or wrapped into an error message.
-func (d *Datasource) authenticate(ctx context.Context, repository string, header http.Header) (string, error) {
+func (d *Datasource) authenticate(ctx context.Context, registry, repository string, header http.Header) (string, error) {
 	challenge := header.Get("WWW-Authenticate")
 	realm, service, scope, err := parseChallenge(challenge)
 	if err != nil {
 		return "", err
 	}
-	if scope == "" {
-		// The spec allows a challenge to omit scope when it is implied by
-		// the request; the registry API always means pull access to the
-		// repository being fetched in that case.
-		scope = "repository:" + repository + ":pull"
-	}
+	// The scope is what a lookup needs and nothing the registry asks for:
+	// pull on the repository being fetched. A challenge naming another
+	// repository or push is answered with that scope anyway, and the
+	// credential below is withheld for it.
+	wantScope := "repository:" + repository + ":pull"
+	foreignScope := scope != "" && scope != wantScope
+	scope = wantScope
 
 	u, err := url.Parse(realm)
 	if err != nil {
@@ -396,10 +402,15 @@ func (d *Datasource) authenticate(ctx context.Context, repository string, header
 		return "", fmt.Errorf("build token request: %w", err)
 	}
 	req.Header.Set("Accept", "application/json")
-	if d.credentials != nil {
-		if user, pass, ok := d.credentials(u.Host); ok {
-			// Basic auth on the realm request only - never on the registry,
-			// and never on any host other than the one this challenge named.
+	// Basic auth on the realm request only - never on the registry, only
+	// over TLS, only for the scope a lookup needs, and only when the
+	// caller's binding says this registry and realm are its own.
+	registryHost := registry
+	if ru, err := url.Parse(registry); err == nil && ru.Host != "" {
+		registryHost = ru.Host
+	}
+	if d.credentials != nil && !foreignScope && u.Scheme == "https" {
+		if user, pass, ok := d.credentials(registryHost, u); ok {
 			req.SetBasicAuth(user, pass)
 		}
 	}
@@ -436,6 +447,25 @@ func (d *Datasource) authenticate(ctx context.Context, repository string, header
 	return token, nil
 }
 
+// splitChallenge splits the challenge's parameters on the commas between
+// them, not on a comma inside a quoted value: scope="repository:x:pull,push"
+// is one parameter, and reading it as two would drop the push a caller
+// must see.
+func splitChallenge(s string) []string {
+	var fields []string
+	start, quoted := 0, false
+	for i, r := range s {
+		switch {
+		case r == '"':
+			quoted = !quoted
+		case r == ',' && !quoted:
+			fields = append(fields, s[start:i])
+			start = i + 1
+		}
+	}
+	return append(fields, s[start:])
+}
+
 // parseChallenge reads a "Bearer realm=\"...\",service=\"...\",scope=\"...\""
 // WWW-Authenticate header per RFC 6750 / the distribution token spec.
 // service and scope may be absent; realm may not.
@@ -444,7 +474,7 @@ func parseChallenge(header string) (realm, service, scope string, err error) {
 	if !strings.HasPrefix(header, prefix) {
 		return "", "", "", fmt.Errorf("unsupported WWW-Authenticate challenge: %q", header)
 	}
-	for _, field := range strings.Split(header[len(prefix):], ",") {
+	for _, field := range splitChallenge(header[len(prefix):]) {
 		key, value, ok := strings.Cut(strings.TrimSpace(field), "=")
 		if !ok {
 			continue

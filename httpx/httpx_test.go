@@ -402,3 +402,35 @@ func TestBodyLimitAndAttemptTimeout(t *testing.T) {
 		t.Error("the timeout did not cut the attempt")
 	}
 }
+
+// A rule with a path pattern sends its credential only on matching paths:
+// the platform token reaches the API endpoints pinup calls and not a path
+// a repository configuration names.
+func TestPathPatternBindsTheCredential(t *testing.T) {
+	var got sync.Map
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		got.Store(r.URL.Path, r.Header.Get("PRIVATE-TOKEN"))
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+	client := New(Options{
+		HostRules: []HostRule{{MatchHost: hostOf(srv.URL), Token: "glpat-x", HeaderName: "PRIVATE-TOKEN",
+			PathPattern: `^/api/v4/projects/.+/(releases|packages)(/|$)`}},
+		Now: time.Now, Sleep: func(time.Duration) {},
+	})
+	for _, path := range []string{"/api/v4/projects/devops%2Fx/releases", "/api/v4/projects/1/packages/npm/x", "/api/v4/groups/1/variables", "/api/v4/projects/1/variables"} {
+		if _, err := client.Get(t.Context(), srv.URL+path, ReqOptions{}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	check := func(path, want string) {
+		v, _ := got.Load(path)
+		if v != want {
+			t.Errorf("%s: token %q, want %q", path, v, want)
+		}
+	}
+	check("/api/v4/projects/devops/x/releases", "glpat-x")
+	check("/api/v4/projects/1/packages/npm/x", "glpat-x")
+	check("/api/v4/groups/1/variables", "")
+	check("/api/v4/projects/1/variables", "")
+}

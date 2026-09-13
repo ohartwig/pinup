@@ -5,6 +5,7 @@ package main
 
 import (
 	"io"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -98,6 +99,40 @@ func TestAskpassAnswersFromTheEnvironment(t *testing.T) {
 		out.Reset()
 		if err := cmdAskpass([]string{prompt}, &out, io.Discard); err == nil || out.Len() != 0 {
 			t.Errorf("%q answered: %q %v", prompt, out.String(), err)
+		}
+	}
+}
+
+// The instance rule reaches what the datasources call and nothing a
+// repository configuration could aim it at.
+func TestInstancePathsAdmitTheDatasourcesAndNothingElse(t *testing.T) {
+	re := regexp.MustCompile(instancePaths)
+	for _, p := range []string{
+		"/api/v4/projects/devops/ci-cd-components/lint-tools/releases",
+		"/api/v4/projects/devops/images/pinup/repository/tags",
+		"/api/v4/projects/devops/renovate-runner/repository/files/default.json/raw",
+		"/api/v4/projects/790/packages/npm/@koh/x",
+		"/api/v4/projects/1/packages",
+		"/api/v4/group/1210/-/packages/composer/packages.json",
+		"/api/v4/user",
+		"/api/v4/personal_access_tokens/self",
+	} {
+		if !re.MatchString(p) {
+			t.Errorf("%s must carry the token", p)
+		}
+	}
+	for _, p := range []string{
+		"/api/v4/groups/1210/variables",
+		"/api/v4/projects/826/variables",
+		"/api/v4/projects/826/variables/PINUP_GITLAB_TOKEN",
+		"/api/v4/users",
+		"/api/v4/projects",
+		"/api/v4/projects/826/members",
+		"/api/v4/projects/826/pipelines",
+		"/devops/images/pinup/-/raw/main/Containerfile",
+	} {
+		if re.MatchString(p) {
+			t.Errorf("%s must not carry the token", p)
 		}
 	}
 }

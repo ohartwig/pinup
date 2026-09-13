@@ -18,6 +18,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -46,6 +47,14 @@ type HostRule struct {
 	// MaxConcurrent bounds in-flight requests to this host. 0 means a
 	// sensible default (8).
 	MaxConcurrent int
+
+	// PathPattern, when set, is a regular expression the request path must
+	// match for the credential to be sent; a request to the host on any
+	// other path goes out anonymously. What a request's path is, a
+	// repository configuration decides (registryUrls, a custom datasource);
+	// binding the platform token to the paths pinup itself calls is what
+	// keeps a configuration from reading the instance API with it.
+	PathPattern string
 
 	// ExposeToPlugins is carried through untouched; httpx does not act on
 	// it, but callers that hand HostRule to plugin sandboxes read it back.
@@ -133,6 +142,7 @@ func (e *StatusError) Error() string {
 type Client struct {
 	hc         *http.Client
 	hostRules  map[string]HostRule
+	paths      map[string]*regexp.Regexp
 	maxRetries int
 	userAgent  string
 	now        func() time.Time
@@ -171,12 +181,19 @@ func New(opts Options) *Client {
 	}
 
 	hostRules := make(map[string]HostRule, len(opts.HostRules))
+	paths := make(map[string]*regexp.Regexp, len(opts.HostRules))
 	for _, r := range opts.HostRules {
 		hostRules[strings.ToLower(r.MatchHost)] = r
+		if r.PathPattern != "" {
+			// A pattern that does not compile binds the credential to
+			// nothing: anonymous is the safe direction.
+			paths[strings.ToLower(r.MatchHost)] = regexp.MustCompile(r.PathPattern)
+		}
 	}
 
 	c := &Client{
 		hostRules:  hostRules,
+		paths:      paths,
 		maxRetries: opts.MaxRetries,
 		userAgent:  opts.UserAgent,
 		now:        opts.Now,
@@ -256,6 +273,15 @@ func applyHostRule(req *http.Request, rule HostRule) {
 	case rule.Username != "" || rule.Password != "":
 		req.SetBasicAuth(rule.Username, rule.Password)
 	}
+}
+
+// pathAllowed tells whether the rule's credential may go to path.
+func (c *Client) pathAllowed(rule HostRule, path string) bool {
+	re, ok := c.paths[strings.ToLower(rule.MatchHost)]
+	if !ok {
+		return true
+	}
+	return re.MatchString(path)
 }
 
 // parseRetryAfter interprets a Retry-After header value, which is either a
@@ -351,7 +377,7 @@ func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rul
 	if opt.LastModified != "" {
 		req.Header.Set("If-Modified-Since", opt.LastModified)
 	}
-	if hasRule {
+	if hasRule && c.pathAllowed(rule, req.URL.Path) {
 		applyHostRule(req, rule)
 	}
 

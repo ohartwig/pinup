@@ -43,6 +43,10 @@ type platformEnv struct {
 	// 60-an-hour limit, which the estate's handful of GitHub dependencies
 	// fits.
 	GitHubToken string
+	// RegistryHost is the estate's container registry - PINUP_REGISTRY_HOST,
+	// else CI_REGISTRY - the one registry the platform credential may be
+	// exchanged for a pull token at.
+	RegistryHost string
 }
 
 func platformFromEnv(getenv func(string) string) (platformEnv, error) {
@@ -57,6 +61,12 @@ func platformFromEnv(getenv func(string) string) (platformEnv, error) {
 		p.Token, p.Header = tok, "JOB-TOKEN"
 	}
 	p.GitHubToken = getenv("GITHUB_COM_TOKEN")
+	p.RegistryHost = firstSet(getenv, "PINUP_REGISTRY_HOST", "CI_REGISTRY")
+	if strings.Contains(p.RegistryHost, "://") {
+		if u, err := url.Parse(p.RegistryHost); err == nil {
+			p.RegistryHost = u.Host
+		}
+	}
 	// A token with no host to bind it to would never be sent, and every
 	// private project would answer 404 "does not exist or the token cannot
 	// read it" - true, and useless. Refuse the configuration instead.
@@ -78,24 +88,38 @@ func firstSet(getenv func(string) string, names ...string) string {
 // datasourceOptions binds the environment's GitLab identity to the docker
 // datasource's token realm as well: the estate's registry authenticates at
 // https://<instance>/jwt/auth with the same token, as basic auth. A job
-// token uses the fixed username GitLab documents for it.
+// token uses the fixed username GitLab documents for it. The credential
+// is bound three ways: the registry asking must be the estate's own
+// (PINUP_REGISTRY_HOST, else CI_REGISTRY), the realm must be the instance
+// over TLS, and the scope is the one a lookup needs (the datasource sees
+// to that). Without a registry host no registry credential exists.
 func datasourceOptions(p platformEnv) wire.DatasourceOptions {
 	o := wire.DatasourceOptions{GitLabURL: p.URL}
-	if p.Host == "" || p.Token == "" {
+	if p.Host == "" || p.Token == "" || p.RegistryHost == "" {
 		return o
 	}
 	user := "oauth2"
 	if p.Header == "JOB-TOKEN" {
 		user = "gitlab-ci-token"
 	}
-	o.RegistryCredentials = func(realmHost string) (string, string, bool) {
-		if !strings.EqualFold(realmHost, p.Host) {
+	o.RegistryCredentials = func(registryHost string, realm *url.URL) (string, string, bool) {
+		if !strings.EqualFold(registryHost, p.RegistryHost) || !strings.EqualFold(realm.Host, p.Host) || realm.Scheme != "https" {
 			return "", "", false
 		}
 		return user, p.Token, true
 	}
 	return o
 }
+
+// instancePaths are the API paths the platform token may reach through
+// the datasources' client: a project's releases, tags, files and
+// packages, a group's composer registry, the token's own endpoints. A
+// URL a repository configuration names on the instance - a custom
+// datasource, a registryUrls entry - is requested anonymously unless it
+// is one of these; the bot's api scope reads CI variables, and a
+// Developer on any scanned repository must not be able to make it
+// (decision record dependency-bot-credential-scope, review S4).
+const instancePaths = `^/api/v4/(projects/.+/(releases|repository/tags|repository/files/.+/raw|packages)(/|$)|group/.+/-/packages/composer|user$|personal_access_tokens/self)`
 
 // httpClient builds the one HTTP client every datasource shares. The token
 // is bound to the instance's host and nothing else: httpx sends a host rule's
@@ -106,6 +130,7 @@ func httpClient(p platformEnv) *httpx.Client {
 	if p.Host != "" && p.Token != "" {
 		rules = append(rules, httpx.HostRule{
 			MatchHost: p.Host, Token: p.Token, HeaderName: p.Header,
+			PathPattern: instancePaths,
 		})
 	}
 	if p.GitHubToken != "" {
