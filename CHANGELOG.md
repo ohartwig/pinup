@@ -1,3 +1,13 @@
+## [0.14.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.1...v0.14.2) (2026-09-13)
+
+### :bug: Fixes
+
+* **runner:** a merge request whose branch GitLab cannot see yet is retried for a minute ([36cf3b0](https://git.ole-hartwig.eu/pinup/pinup/commit/36cf3b03698fa60bbf49b583f18640659931070f))
+
+### :memo: Documentation
+
+* **tasks:** D.21 - which fixtures are Renovate's behaviour and which are the estate's ([116bde9](https://git.ole-hartwig.eu/pinup/pinup/commit/116bde934218715326914925b1964358b57d745d))
+
 ## [0.14.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.0...v0.14.1) (2026-09-13)
 
 ### :bug: Fixes
