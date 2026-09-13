@@ -14,7 +14,9 @@ import (
 
 	"github.com/ohartwig/pinup/fake/platformfake"
 	"github.com/ohartwig/pinup/git"
+	"github.com/ohartwig/pinup/glob"
 	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/report"
 )
 
 // cannedDocker answers digests too, as a registry does: the runner's
@@ -134,5 +136,32 @@ func TestRunProjectPushesOpensAndRebasesOnRequest(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "created   renovate/pin-dependencies !1") || !strings.Contains(out.String(), "updated   renovate/pin-dependencies !1") {
 		t.Errorf("summary lines:\n%s", out.String())
+	}
+}
+
+// The fast lane restricted to the live projects: consumers outside the
+// filter are left to the dry run, and a package whose consumers are all
+// outside it is a no-op, not a run.
+func TestReleasedTakesAutodiscoverAsAFilter(t *testing.T) {
+	idx := &report.Index{Consumers: map[string][]string{
+		"gitlab-tags|devops/ci-cd-components/lint-tools": {"development/app", "devops/images/ci-tools", "devops/ci-cd-components/deploy-tools"},
+	}, Repositories: map[string]time.Time{}}
+	dir := t.TempDir()
+	o := &runOptions{index: idx, indexPath: filepath.Join(dir, "consumers.json"), dryRun: true, now: time.Now(), platform: &platformfake.Platform{}}
+	var out, errw strings.Builder
+	// Every consumer is outside the filter: nothing runs, nothing fails.
+	if err := runReleased(context.Background(), o, "devops/ci-cd-components/lint-tools@1.34.0", glob.NewSet([]string{"pinup/**"}), "", &out, &errw); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(errw.String(), "3 consumers, 0 within the filter") || !strings.Contains(out.String(), "no consumer within the filter") {
+		t.Errorf("out=%q errw=%q", out.String(), errw.String())
+	}
+	// The two devops consumers are within the filter; they would be run
+	// (and fail here, having no clone), the development one is not.
+	out.Reset()
+	errw.Reset()
+	_ = runReleased(context.Background(), o, "devops/ci-cd-components/lint-tools@1.34.1", glob.NewSet([]string{"devops/images/**", "devops/ci-cd-components/**"}), "", &out, &errw)
+	if !strings.Contains(errw.String(), "3 consumers, 2 within the filter") || strings.Contains(errw.String(), "development/app") {
+		t.Errorf("errw=%q", errw.String())
 	}
 }

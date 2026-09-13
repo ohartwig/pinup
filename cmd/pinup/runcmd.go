@@ -70,8 +70,15 @@ func cmdRun(args []string, out, errw io.Writer) error {
 			chosen++
 		}
 	}
+	// --released takes --autodiscover as a restriction on its consumers:
+	// the fast lane of a live partition acts on the projects that are
+	// live and leaves the others to the dry run. Elsewhere the four are
+	// exclusive.
+	if *released != "" && *autodiscover != "" {
+		chosen--
+	}
 	if chosen != 1 {
-		return fmt.Errorf("run: exactly one of --repo, --project, --autodiscover and --released is required")
+		return fmt.Errorf("run: exactly one of --repo, --project, --autodiscover and --released is required (--released may add --autodiscover as a filter)")
 	}
 	if *indexPath == "" && *cachePath != "" {
 		*indexPath = filepath.Join(filepath.Dir(*cachePath), "consumers.json")
@@ -148,7 +155,15 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	}
 
 	if *released != "" {
-		return runReleased(ctx, one, *released, *reportPath, out, errw)
+		var only *glob.Set
+		if *autodiscover != "" {
+			var patterns []string
+			if err := json.Unmarshal([]byte(*autodiscover), &patterns); err != nil {
+				return fmt.Errorf("--autodiscover: %w", err)
+			}
+			only = glob.NewSet(patterns)
+		}
+		return runReleased(ctx, one, *released, only, *reportPath, out, errw)
 	}
 
 	if *autodiscover != "" {
@@ -323,7 +338,7 @@ type runOptions struct {
 // that is too broad is what queued the Renovate runner's triggers for a
 // day. A package@version seen within the last hour is not run again; 36
 // triggers for 16 packages are 16 runs.
-func runReleased(ctx context.Context, o *runOptions, spec, reportPath string, out, errw io.Writer) error {
+func runReleased(ctx context.Context, o *runOptions, spec string, only *glob.Set, reportPath string, out, errw io.Writer) error {
 	path, version, _ := strings.Cut(spec, "@")
 	if o.index == nil {
 		return fmt.Errorf("run --released needs the consumer index: pass --cache or --index")
@@ -338,7 +353,22 @@ func runReleased(ctx context.Context, o *runOptions, spec, reportPath string, ou
 		fmt.Fprintf(out, "%s: no known consumer in the index (%d repositories indexed); nothing to do\n", path, len(o.index.Repositories))
 		return nil
 	}
-	fmt.Fprintf(errw, "fast lane: %s%s has %d consumers\n", path, atVersion(version), len(consumers))
+	if only != nil {
+		all := consumers
+		consumers = consumers[:0:0]
+		for _, c := range all {
+			if only.Match(c) {
+				consumers = append(consumers, c)
+			}
+		}
+		fmt.Fprintf(errw, "fast lane: %s%s has %d consumers, %d within the filter\n", path, atVersion(version), len(all), len(consumers))
+		if len(consumers) == 0 {
+			fmt.Fprintf(out, "%s: no consumer within the filter; nothing to do\n", path)
+			return nil
+		}
+	} else {
+		fmt.Fprintf(errw, "fast lane: %s%s has %d consumers\n", path, atVersion(version), len(consumers))
+	}
 	o.released = path
 	failed := 0
 	failed = runEach(ctx, o, consumers, repositoryConcurrency(os.Getenv), reportPath, out, errw)
