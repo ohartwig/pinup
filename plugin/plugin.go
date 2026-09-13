@@ -124,7 +124,11 @@ func Compile(pu PostUpgrade, updates []model.Update, allowed []string) ([]model.
 	}
 	patterns := make([]*re2x.Regexp, 0, len(allowed))
 	for _, a := range allowed {
-		re, err := re2x.Compile(a)
+		// Anchored whatever the author wrote: "composer update" must not
+		// admit "composer update --scripts-hook=…". The estate's patterns
+		// carry ^…$ already; for them this changes nothing. (Renovate
+		// tests unanchored; that is a difference on purpose.)
+		re, err := re2x.Compile("^(?:" + a + ")$")
 		if err != nil {
 			return nil, fmt.Errorf("allowedCommands %q: %w", a, err)
 		}
@@ -172,9 +176,7 @@ func Compile(pu PostUpgrade, updates []model.Update, allowed []string) ([]model.
 }
 
 // Allowed reports which pattern admits a compiled command, or an error
-// naming the command when none does. Patterns are anchored by the
-// configuration that wrote them (^…$); an unanchored pattern is used as
-// written, which is the author's responsibility and visible in the plan.
+// naming the command when none does. Compile anchored every pattern.
 func Allowed(command string, patterns []*re2x.Regexp) (int, error) {
 	for i, re := range patterns {
 		if _, ok := re.Find(command); ok {

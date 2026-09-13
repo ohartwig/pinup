@@ -65,6 +65,15 @@ func TestCompileMatchesTheEstateAllowlist(t *testing.T) {
 			t.Errorf("depName %q was admitted: %v", bad, err)
 		}
 	}
+	// A pattern is anchored whatever its author wrote: "composer update"
+	// admits exactly that, not "composer update --scripts-hook=x".
+	loose := []string{"composer update"}
+	if tasks, err := Compile(PostUpgrade{Commands: []string{"composer update"}}, ups[:1], loose); err != nil || len(tasks) != 1 {
+		t.Errorf("the exact command: %v %+v", err, tasks)
+	}
+	if _, err := Compile(PostUpgrade{Commands: []string{"composer update --scripts-hook=x"}}, ups[:1], loose); err == nil {
+		t.Error("an unanchored pattern admitted a longer command")
+	}
 	// An unlisted command is refused by name, never dropped silently.
 	if _, err := Compile(PostUpgrade{Commands: []string{"make lock"}}, ups[:1], estateAllowed); err == nil || !strings.Contains(err.Error(), `"make lock"`) {
 		t.Errorf("unlisted command: %v", err)
