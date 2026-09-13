@@ -1,3 +1,9 @@
+## [0.9.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.8.1...v0.9.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **dashboard:** one issue per repository with the boxes people know ([c5aaa93](https://git.ole-hartwig.eu/pinup/pinup/commit/c5aaa93b6b7ab329700c690f575bfeae5781da1c))
+
 ## [0.8.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.8.0...v0.8.1) (2026-09-13)
 
 ### :bug: Fixes
