@@ -14,7 +14,7 @@
 
 include:
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/composed-default-pipelines
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@1.62.17
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@1.63.3
     inputs:
       working-directory: '.'
 
@@ -22,15 +22,15 @@ include:
   # and an SPDX header without the job that reads them is decoration, not a
   # gate - so they are included by name.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.33.64
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.34.11
     inputs:
       stage: quick
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.33.64
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.34.11
     inputs:
       stage: quick
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.33.64
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.34.11
     inputs:
       stage: quick
 
@@ -39,7 +39,7 @@ include:
   # v, as the estate's Go tools have it (S3mail), and as the trigger contract
   # with yasrt accepts.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/release-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@1.17.59
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@1.24.0
     inputs:
       stage: release
       config-preset: '@moselwal/semantic-release-config'
@@ -54,7 +54,7 @@ include:
   # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
   # ends. Same component and same reasoning as S3mail.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/build-provenance
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.96
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.133
     inputs:
       stage: release
       artifact-file: SHA256SUMS
