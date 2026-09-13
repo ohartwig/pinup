@@ -1,3 +1,15 @@
+## [0.8.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.7.2...v0.8.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **cli:** --dir as an alias for --repo, the spelling yasrt uses ([4786cf2](https://git.ole-hartwig.eu/pinup/pinup/commit/4786cf244eddb11106866406915d1e1f6b58b70c))
+* **migrate:** --to yaml rewrites a configuration with its descriptions as comments ([d4e15a5](https://git.ole-hartwig.eu/pinup/pinup/commit/d4e15a5d84342320b491550ffcd928ddb706fd2f))
+* **shadow:** a branch Renovate had merged in the last day is a match ([0518df0](https://git.ole-hartwig.eu/pinup/pinup/commit/0518df09b1e7512ad901e54a0dc1832a7cc1b8a0))
+
+### :memo: Documentation
+
+* **tasks:** D.16 - the name in production, after cutover step 10 ([c1ce58a](https://git.ole-hartwig.eu/pinup/pinup/commit/c1ce58a564cb1ba32a9e4f6e6ac8b69004914f25))
+
 ## [0.7.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.7.1...v0.7.2) (2026-09-12)
 
 ### :bug: Fixes
