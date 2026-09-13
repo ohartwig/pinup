@@ -86,6 +86,15 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 	if o.Remote == "" {
 		o.Remote = "origin"
 	}
+	// Every branch is built on the base and left behind; the checkout goes
+	// back to where it was, so a second run over the same directory plans
+	// from the tree it started with, not from the last branch pushed.
+	start, err := o.Repo.Where(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("runner: %w", err)
+	}
+	defer func() { _ = o.Repo.Return(ctx, start) }()
+
 	var outcomes []Outcome
 	created := 0
 	openNow := 0

@@ -138,6 +138,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: dashboardTitle(os.Getenv),
 	}
+	one.datasources = wire.Datasources(one.client, datasourceOptions(env))
 	if *indexPath != "" {
 		idx, err := report.LoadIndex(*indexPath)
 		if err != nil {
@@ -291,11 +292,14 @@ type runOptions struct {
 	// client is the one HTTP client every project's lookups share: its
 	// per-host concurrency limits and retry state are the job's, not a
 	// repository's.
-	client   *httpx.Client
-	identity git.Identity
-	signing  git.Signing
-	platform publish.Platform
-	now      time.Time
+	client *httpx.Client
+	// datasources, when set, replaces the wired registry: a test hands in
+	// a canned one and proves the live path without a network.
+	datasources lookup.Registry
+	identity    git.Identity
+	signing     git.Signing
+	platform    publish.Platform
+	now         time.Time
 	// dashboardTitle names the dashboard issue. "pinup Dashboard" until
 	// the cutover, so it lives beside Renovate's; PINUP_DASHBOARD_TITLE
 	// overrides, and the configuration's dependencyDashboardTitle takes
@@ -449,7 +453,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 
 	opts := whatifOptions{
 		Root: repo.Dir, ConfigPath: o.cfgPath, RepoName: proj.Path, Now: o.now,
-		Datasources:   wire.Datasources(o.client, datasourceOptions(env)),
+		Datasources:   o.datasources,
 		Cache:         o.cache,
 		CacheTTL:      o.cacheTTL,
 		Presets:       preset.Remote{Reader: platform, Ctx: ctx},

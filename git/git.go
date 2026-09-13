@@ -165,6 +165,26 @@ func (r *Repo) CurrentBranch(ctx context.Context) (string, error) {
 	return r.run(ctx, "rev-parse", "--abbrev-ref", "HEAD")
 }
 
+// Return puts the checkout back on ref - a branch name or a commit, as
+// Where reported it - after the run's branches have been built on it.
+func (r *Repo) Return(ctx context.Context, ref string) error {
+	_, err := r.run(ctx, "checkout", "--quiet", ref, "--")
+	return err
+}
+
+// Where reports what is checked out, in the form Return takes: the branch
+// name, or the commit when HEAD is detached (a CI checkout).
+func (r *Repo) Where(ctx context.Context) (string, error) {
+	branch, err := r.CurrentBranch(ctx)
+	if err != nil {
+		return "", err
+	}
+	if branch != "HEAD" {
+		return branch, nil
+	}
+	return r.Head(ctx)
+}
+
 // RemoteBranch returns the commit a remote branch points at, or ok=false
 // when the remote has no such branch. It asks the remote, not the local
 // tracking ref, so the answer is current.
