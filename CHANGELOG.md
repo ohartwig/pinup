@@ -1,3 +1,9 @@
+## [0.12.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.0...v0.12.1) (2026-09-13)
+
+### :bug: Fixes
+
+* **cache:** open makes the cache directory ([ac144f9](https://git.ole-hartwig.eu/pinup/pinup/commit/ac144f94c60385912f90288e84ddc9705eba111f))
+
 ## [0.12.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.11.0...v0.12.0) (2026-09-13)
 
 ### :sparkles: Features
