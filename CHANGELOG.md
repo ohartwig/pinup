@@ -1,3 +1,22 @@
+## [0.14.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.13.0...v0.14.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **run:** --released takes --autodiscover as a filter on its consumers ([61ce819](https://git.ole-hartwig.eu/pinup/pinup/commit/61ce81932d12e32c491d3f11dcce1b502b8ac9f6))
+
+### :bug: Fixes
+
+* **ci:** the release job reads its token from the project's variable ([bbbca9e](https://git.ole-hartwig.eu/pinup/pinup/commit/bbbca9e32da362aadb1c5cf46fe55f9882f9e0fb))
+
+### :memo: Documentation
+
+* **tasks:** D.21 - publication on GitHub, what is done and what remains ([1912fa7](https://git.ole-hartwig.eu/pinup/pinup/commit/1912fa7f68997941aea8dbd84d9eeba290dc1db3))
+* what a public repository carries - README, CONTRIBUTING, SECURITY, code of conduct, REUSE, security.txt, templates ([d487a7c](https://git.ole-hartwig.eu/pinup/pinup/commit/d487a7c4e1133a936c8a0085b0c45d862ddb9d43))
+
+### :zap: Refactor
+
+* module path github.com/ohartwig/pinup ([36ad44a](https://git.ole-hartwig.eu/pinup/pinup/commit/36ad44a5cf9f88b3fc800fa5074d410c01f39f54))
+
 ## [0.13.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.6...v0.13.0) (2026-09-13)
 
 ### :sparkles: Features
