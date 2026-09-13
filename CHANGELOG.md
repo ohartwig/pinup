@@ -1,3 +1,9 @@
+## [0.12.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.4...v0.12.5) (2026-09-13)
+
+### :repeat: Chores
+
+* **deps:** update ci components ([0d94de3](https://git.ole-hartwig.eu/pinup/pinup/commit/0d94de38919dbbf87aff7cee868d5040cf123ed4))
+
 ## [0.12.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.3...v0.12.4) (2026-09-13)
 
 ### :bug: Fixes
