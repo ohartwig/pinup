@@ -257,8 +257,8 @@ func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.M
 	}
 	newest := map[string][]string{}
 	for _, u := range plan.Updates {
-		// One value once, however many entries share the key (the same
-		// include read three times in one file).
+		// One value once: a minor and a major proposed for one dependency
+		// are two entries, the same include read from two managers is one.
 		if !slices.Contains(newest[u.DepKey], u.NewValue) {
 			newest[u.DepKey] = append(newest[u.DepKey], u.NewValue)
 		}

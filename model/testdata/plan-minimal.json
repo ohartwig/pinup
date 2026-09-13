@@ -72,7 +72,7 @@
   ],
   "updates": [
     {
-      "depKey": ".gitlab-ci.yml|devops/ci-cd-components/lint-tools|1.33.59",
+      "depKey": ".gitlab-ci.yml|custom.regex#13|devops/ci-cd-components/lint-tools|1.33.59|412",
       "dep": {
         "manager": "custom.regex",
         "file": ".gitlab-ci.yml",
@@ -108,7 +108,7 @@
       "timeSource": "datasource"
     },
     {
-      "depKey": "Containerfile|registry.ole-hartwig.eu/devops/images/golang|1.27",
+      "depKey": "Containerfile|dockerfile|registry.ole-hartwig.eu/devops/images/golang|1.27|40",
       "dep": {
         "manager": "dockerfile",
         "file": "Containerfile",
@@ -154,7 +154,7 @@
       "slug": "lint-tools-1.x",
       "title": "chore(deps): update devops/ci-cd-components/lint-tools to 1.33.64",
       "updateKeys": [
-        ".gitlab-ci.yml|devops/ci-cd-components/lint-tools|1.33.59>1.33.64"
+        ".gitlab-ci.yml|custom.regex#13|devops/ci-cd-components/lint-tools|1.33.59|412>1.33.64"
       ],
       "edits": [
         {

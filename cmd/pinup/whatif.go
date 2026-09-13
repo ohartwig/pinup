@@ -1080,13 +1080,9 @@ type noteFetcher interface {
 // that fails leaves the update without notes and says so in a warning -
 // the update itself is fine, only the description is poorer.
 func fillNotes(ctx context.Context, f noteFetcher, plan *model.Plan, off map[string]bool, schemes versioning.Registry, defaultVersioning func(string) string) []model.Warning {
-	// One key may name several updates: the same include read three
-	// times in one file is one update for the branch and three entries
-	// in the plan (measured: lint-tools in this repository's own
-	// .gitlab-ci.yml). Every one of them gets the notes.
-	index := map[string][]int{}
+	index := map[string]int{}
 	for i, u := range plan.Updates {
-		index[u.Key()] = append(index[u.Key()], i)
+		index[u.Key()] = i
 	}
 	var warnings []model.Warning
 	fetched := map[string]bool{}
@@ -1095,43 +1091,37 @@ func fillNotes(ctx context.Context, f noteFetcher, plan *model.Plan, off map[str
 			continue
 		}
 		for _, k := range b.UpdateKeys {
-			if fetched[k] || off[k] {
+			i, ok := index[k]
+			if !ok || fetched[k] || off[k] {
 				continue
 			}
 			fetched[k] = true
-			var notes []model.ReleaseNote
-			compare, asked := "", false
-			for _, i := range index[k] {
-				u := &plan.Updates[i]
-				current, target := u.Dep.CurrentValue, u.NewVersion
-				if target == "" {
-					target = u.NewValue
-				}
-				if u.Dep.LockedVersion != "" {
-					current = u.Dep.LockedVersion
-				}
-				switch {
-				case u.Dep.SourceURL == "", current == "", target == "", current == target:
-					continue
-				case u.Type == model.UpdateDigest, u.Type == model.UpdatePinDigest, u.Type == model.UpdateLockFileMaintenance:
-					continue
-				}
-				scheme := u.Dep.Versioning
-				if scheme == "" {
-					scheme = defaultVersioning(u.Dep.Datasource)
-				}
-				v, err := schemes.Get(scheme)
-				if err != nil {
-					continue
-				}
-				if !asked {
-					asked = true
-					notes, compare, err = f.Notes(ctx, u.Dep.SourceURL, v, current, target)
-					if err != nil {
-						warnings = append(warnings, model.Warning{Stage: "changelog", Msg: fmt.Sprintf("%s: %v", u.DepKey, err)})
-					}
-				}
-				u.Notes, u.CompareURL = notes, compare
+			u := &plan.Updates[i]
+			current, target := u.Dep.CurrentValue, u.NewVersion
+			if target == "" {
+				target = u.NewValue
+			}
+			if u.Dep.LockedVersion != "" {
+				current = u.Dep.LockedVersion
+			}
+			switch {
+			case u.Dep.SourceURL == "", current == "", target == "", current == target:
+				continue
+			case u.Type == model.UpdateDigest, u.Type == model.UpdatePinDigest, u.Type == model.UpdateLockFileMaintenance:
+				continue
+			}
+			scheme := u.Dep.Versioning
+			if scheme == "" {
+				scheme = defaultVersioning(u.Dep.Datasource)
+			}
+			v, err := schemes.Get(scheme)
+			if err != nil {
+				continue
+			}
+			notes, compare, err := f.Notes(ctx, u.Dep.SourceURL, v, current, target)
+			u.Notes, u.CompareURL = notes, compare
+			if err != nil {
+				warnings = append(warnings, model.Warning{Stage: "changelog", Msg: fmt.Sprintf("%s: %v", u.DepKey, err)})
 			}
 		}
 	}

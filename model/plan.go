@@ -243,6 +243,9 @@ func (p *Plan) Validate() error {
 			return fmt.Errorf("update for %q has no depKey", u.Dep.DepName)
 		}
 		updated[u.DepKey] = true
+		if known[u.Key()] {
+			return fmt.Errorf("update %s appears twice in the plan", u.Key())
+		}
 		known[u.Key()] = true
 		if u.Blocked() && u.SuppressedBy == "" {
 			return fmt.Errorf("update %s is blocked but names no suppressedBy", u.DepKey)

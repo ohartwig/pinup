@@ -16,7 +16,10 @@
 //     preservation stops being a rule someone has to follow.
 package model
 
-import "time"
+import (
+	"strconv"
+	"time"
+)
 
 // SchemaVersion is the version of the plan.json contract. Bump it when a
 // change would make an older reader wrong, not merely incomplete.
@@ -170,9 +173,20 @@ type Advisory struct {
 const NoCustomManager = -1
 
 // Key identifies a dependency within a plan, for cross-referencing from
-// branches without repeating the whole record.
+// branches without repeating the whole record. The locus is part of it:
+// the same include named three times in one file is three dependencies
+// with three edits, and a key that did not tell them apart made every
+// consumer of the plan dedupe by hand (measured: lint-tools in pinup's
+// own .gitlab-ci.yml, 2026-09-13).
+// The manager is part of it too: the estate's gitlabci manager and a
+// custom regex manager read the same include on the same line and decide
+// differently about it (one under semver-partial, one under semver).
 func (d Dependency) Key() string {
-	return d.File + "|" + d.DepName + "|" + d.CurrentValue
+	manager := d.Manager
+	if d.CustomManager != NoCustomManager {
+		manager += "#" + strconv.Itoa(d.CustomManager)
+	}
+	return d.File + "|" + manager + "|" + d.DepName + "|" + d.CurrentValue + "|" + strconv.Itoa(d.Locus.ValueStart)
 }
 
 // Release is one version a datasource offers.
