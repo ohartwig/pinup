@@ -18,7 +18,8 @@
 // Usage: go run tools/cilint.go [.gitlab/expected-jobs.txt]
 //
 // Reads CI_API_V4_URL, CI_PROJECT_ID, CI_PIPELINE_ID and CI_JOB_TOKEN, and
-// CI_COMMIT_TAG to decide whether "@tag" entries apply.
+// CI_COMMIT_TAG to decide whether "@tag" entries apply, CI_PIPELINE_SOURCE
+// and CI_COMMIT_BRANCH for "@schedule" and "@main".
 package main
 
 import (
@@ -106,6 +107,14 @@ func run() error {
 		}
 		if name, ok := strings.CutSuffix(want, " @schedule"); ok {
 			if os.Getenv("CI_PIPELINE_SOURCE") != "schedule" {
+				continue
+			}
+			want = name
+		}
+		// "name @main": a push to the default branch only - the release
+		// jobs yasrt runs there, which a tag or a schedule does not carry.
+		if name, ok := strings.CutSuffix(want, " @main"); ok {
+			if onTag || os.Getenv("CI_PIPELINE_SOURCE") != "push" || os.Getenv("CI_COMMIT_BRANCH") != os.Getenv("CI_DEFAULT_BRANCH") {
 				continue
 			}
 			want = name
