@@ -24,8 +24,11 @@ type Platform struct {
 	// Calls records method names in order.
 	Calls []string
 	// CreateErr and UpdateErr, when set, are returned by the respective
-	// calls.
+	// calls. CreateErrTimes bounds how often CreateErr is returned; zero
+	// means always.
 	CreateErr, UpdateErr error
+	CreateErrTimes       int
+	createErrs           int
 	// Verification is what CommitVerification answers.
 	Verification string
 	// Files answers ReadFile, keyed "project|path|ref".
@@ -81,7 +84,8 @@ func (p *Platform) History(_ context.Context, _ publish.Project, branch string) 
 
 func (p *Platform) CreateMergeRequest(_ context.Context, _ publish.Project, r publish.Request) (publish.MergeRequest, error) {
 	p.record("Create " + r.SourceBranch)
-	if p.CreateErr != nil {
+	if p.CreateErr != nil && (p.CreateErrTimes == 0 || p.createErrs < p.CreateErrTimes) {
+		p.createErrs++
 		return publish.MergeRequest{}, p.CreateErr
 	}
 	p.mu.Lock()

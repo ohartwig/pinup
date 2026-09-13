@@ -187,13 +187,17 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 // createWithRetry opens the merge request, retrying a 400 that says the
 // source branch does not exist: measured live, GitLab answered that for a
 // branch pushed a moment earlier and accepted the same request seconds
-// later. Three attempts, a second apart, then the error stands.
+// later. Three attempts a second apart were not enough on the first live
+// hour of forty repositories, eight at a time (2026-09-13, 20:33: five
+// requests failed, every branch there): six attempts, doubling from two
+// seconds, a minute in all, then the error stands and the next run opens
+// it.
 func createWithRetry(ctx context.Context, o Options, req publish.Request) (publish.MergeRequest, error) {
 	var last error
-	for attempt := range 3 {
+	for attempt := range 6 {
 		if attempt > 0 {
 			if o.Sleep != nil {
-				o.Sleep(time.Duration(attempt) * time.Second)
+				o.Sleep(time.Duration(1<<uint(attempt)) * time.Second)
 			}
 		}
 		mr, err := o.Platform.CreateMergeRequest(ctx, o.Project, req)

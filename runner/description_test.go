@@ -5,6 +5,7 @@ package runner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/ohartwig/pinup/fake/platformfake"
 	"github.com/ohartwig/pinup/git"
 	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
 )
 
 func TestDescriptionCarriesUpdatesNotesAndReleases(t *testing.T) {
@@ -140,5 +142,27 @@ func TestAnEmptyRepositoryDoesNotFailTheRun(t *testing.T) {
 	outcomes, err := Execute(context.Background(), plan(), options(repo, pf))
 	if err != nil || len(outcomes) != 0 {
 		t.Errorf("empty repository: %v %+v", err, outcomes)
+	}
+}
+
+// GitLab may not see a branch pushed a moment earlier: the request is
+// retried with a doubling wait, a minute in all, and opens on the attempt
+// that succeeds.
+func TestCreateRetriesUntilTheBranchIsVisible(t *testing.T) {
+	pf := &platformfake.Platform{CreateErr: errors.New(`gitlab: status 400: {"source_branch":["does not exist"]}`), CreateErrTimes: 4}
+	var waits []time.Duration
+	o := Options{Platform: pf, Sleep: func(d time.Duration) { waits = append(waits, d) }}
+	mr, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"})
+	if err != nil || mr.IID == 0 {
+		t.Fatalf("mr=%+v err=%v", mr, err)
+	}
+	if len(waits) != 4 || waits[0] != 2*time.Second || waits[3] != 16*time.Second {
+		t.Errorf("waits = %v", waits)
+	}
+	// Any other error stands at once.
+	pf = &platformfake.Platform{CreateErr: errors.New("gitlab: status 403")}
+	waits = nil
+	if _, err := createWithRetry(context.Background(), Options{Platform: pf, Sleep: o.Sleep}, publish.Request{}); err == nil || len(waits) != 0 {
+		t.Errorf("a 403 was retried: %v %v", err, waits)
 	}
 }
