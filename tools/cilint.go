@@ -125,7 +125,16 @@ func run() error {
 			missing++
 		}
 	}
-	fmt.Printf("resolved %d jobs, expected %d\n", len(resolved), expected)
+	kind := "branch"
+	switch {
+	case onTag:
+		kind = "tag"
+	case os.Getenv("CI_PIPELINE_SOURCE") == "schedule":
+		kind = "schedule"
+	case os.Getenv("CI_PIPELINE_SOURCE") == "push" && os.Getenv("CI_COMMIT_BRANCH") == os.Getenv("CI_DEFAULT_BRANCH"):
+		kind = "main"
+	}
+	fmt.Printf("resolved %d jobs, expected %d (%s pipeline)\n", len(resolved), expected, kind)
 	// A file that expects nothing checks nothing, and would pass forever.
 	if expected == 0 {
 		return fmt.Errorf("%s names no jobs", expectedFile)
