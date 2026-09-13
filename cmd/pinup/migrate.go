@@ -8,11 +8,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"os"
 	"sort"
 	"strings"
 
 	"git.ole-hartwig.eu/pinup/pinup/config"
 	"git.ole-hartwig.eu/pinup/pinup/config/preset"
+	"git.ole-hartwig.eu/pinup/pinup/config/toyaml"
 	"git.ole-hartwig.eu/pinup/pinup/rules"
 	"git.ole-hartwig.eu/pinup/pinup/wire"
 )
@@ -63,11 +65,37 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 	fs.SetOutput(errw)
 	cfgPath := fs.String("config", "", "configuration file to classify (required)")
 	asJSON := fs.Bool("json", false, "print the classification as JSON")
+	to := fs.String("to", "", "rewrite the file instead of classifying it: yaml (descriptions become comments, scalars YAML would misread are quoted)")
+	outPath := fs.String("out", "", "with --to: write here instead of stdout")
+	keep := fs.Bool("keep-descriptions", false, "with --to yaml: keep description keys as well as the comments")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *cfgPath == "" {
 		return fmt.Errorf("migrate: --config is required")
+	}
+	if *to != "" {
+		if *to != "yaml" {
+			return fmt.Errorf("migrate: --to %q: only yaml is written", *to)
+		}
+		src, err := os.ReadFile(*cfgPath)
+		if err != nil {
+			return err
+		}
+		converted, err := toyaml.Convert(src, *cfgPath, toyaml.Options{KeepDescriptions: *keep})
+		if err != nil {
+			return err
+		}
+		// The converted document must load to what the original loads
+		// to - checked here, every time, not only in the test.
+		if err := sameResolution(src, *cfgPath, converted); err != nil {
+			return fmt.Errorf("migrate: the conversion does not load to the same document: %w", err)
+		}
+		if *outPath == "" {
+			_, err = out.Write(converted)
+			return err
+		}
+		return os.WriteFile(*outPath, converted, 0o644)
 	}
 	layer, err := config.LoadFile(*cfgPath)
 	if err != nil {
@@ -162,6 +190,48 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 	}
 	if len(r.Migrations) > 0 {
 		fmt.Fprintf(out, "\nmigrated (%d)\n  %s\n", len(r.Migrations), strings.Join(r.Migrations, "\n  "))
+	}
+	return nil
+}
+
+// sameResolution parses both documents and compares their resolutions line
+// by line, the descriptions aside: those are comments in the conversion.
+func sameResolution(src []byte, name string, converted []byte) error {
+	flat := func(b []byte, n string) (map[string]string, error) {
+		layer, err := config.Parse(b, n)
+		if err != nil {
+			return nil, err
+		}
+		r, _, err := config.ResolveLayer(layer, preset.Builtin())
+		if err != nil {
+			return nil, err
+		}
+		out := map[string]string{}
+		for _, l := range config.Flatten(r.Raw) {
+			if l.Path == "description" || strings.Contains(l.Path, ".description") || strings.HasPrefix(l.Path, "description[") {
+				continue
+			}
+			out[l.Path] = l.Value
+		}
+		return out, nil
+	}
+	before, err := flat(src, name)
+	if err != nil {
+		return err
+	}
+	after, err := flat(converted, "converted.yaml")
+	if err != nil {
+		return err
+	}
+	for k, v := range before {
+		if after[k] != v {
+			return fmt.Errorf("%s: %s became %s", k, v, after[k])
+		}
+	}
+	for k := range after {
+		if _, ok := before[k]; !ok {
+			return fmt.Errorf("%s appeared", k)
+		}
 	}
 	return nil
 }

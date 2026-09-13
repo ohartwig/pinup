@@ -7,7 +7,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"git.ole-hartwig.eu/pinup/pinup/config"
+	"git.ole-hartwig.eu/pinup/pinup/config/preset"
+	"git.ole-hartwig.eu/pinup/pinup/config/toyaml"
 	"io"
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -200,5 +204,48 @@ func TestForEachBoundsConcurrencyAndCountsFailures(t *testing.T) {
 	}
 	if got := repositoryConcurrency(func(k string) string { return map[string]string{"PINUP_REPOSITORY_CONCURRENCY": "8"}[k] }); got != 8 {
 		t.Errorf("configured concurrency = %d, want 8", got)
+	}
+}
+
+// pinup migrate --to yaml rewrites a configuration and refuses to hand over
+// a conversion that loads differently.
+func TestMigrateToYAML(t *testing.T) {
+	var out, errw bytes.Buffer
+	if err := run([]string{"migrate", "--config", "../../testdata/parity/config/default.json", "--to", "yaml"}, &out, &errw); err != nil {
+		t.Fatalf("%v: %s", err, errw.String())
+	}
+	if !strings.HasPrefix(out.String(), "# ") || !strings.Contains(out.String(), "\npackageRules:\n") {
+		t.Errorf("unexpected output head: %q", out.String()[:200])
+	}
+	if err := run([]string{"migrate", "--config", "../../testdata/parity/config/default.json", "--to", "toml"}, &out, &errw); err == nil {
+		t.Error("--to toml must be refused")
+	}
+	// The round trip the command guards: the runner's configuration,
+	// converted and resolved, is the JSON resolution line for line, the
+	// descriptions aside, 771 rules in order.
+	src, err := os.ReadFile("../../testdata/parity/config/default.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	converted, err := toyaml.Convert(src, "default.json", toyaml.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := sameResolution(src, "default.json", converted); err != nil {
+		t.Fatal(err)
+	}
+	layer, err := config.Parse(converted, "default.pinup.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, _, err := config.ResolveLayer(layer, preset.Builtin())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rules, _ := r.Raw["packageRules"].([]any); len(rules) != 771 {
+		t.Errorf("the converted configuration resolves to %d rules, want 771", len(rules))
+	}
+	if strings.Contains(string(converted), "description:") {
+		t.Error("a description key survived; it is a comment now")
 	}
 }
