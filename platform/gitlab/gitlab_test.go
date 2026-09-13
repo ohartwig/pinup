@@ -61,6 +61,8 @@ type fakeIssue struct {
 	title, desc string
 	labels      []string
 	state       string
+	// authorID is who wrote it; the bot is 322, anyone else is not.
+	authorID int
 }
 
 type fakeProject struct {
@@ -176,6 +178,13 @@ func (s *gitlabServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if s.token != "" && r.Header.Get("PRIVATE-TOKEN") != s.token {
 		w.WriteHeader(http.StatusForbidden)
+		return
+	}
+
+	// /user: the account behind the token. The bot is user 322, as on
+	// the estate; issues carry their author.
+	if r.URL.Path == "/api/v4/user" && r.Method == http.MethodGet {
+		writeJSON(w, http.StatusOK, map[string]any{"id": 322, "username": "renovate-bot"})
 		return
 	}
 
@@ -769,8 +778,12 @@ func (s *gitlabServer) serveIssues(w http.ResponseWriter, r *http.Request, proj 
 	switch {
 	case r.Method == http.MethodGet && rest == "":
 		search := r.URL.Query().Get("search")
+		author := r.URL.Query().Get("author_id")
 		var out []map[string]any
 		for _, is := range proj.issues {
+			if author != "" && fmt.Sprint(is.authorID) != author {
+				continue
+			}
 			if is.state == "opened" && strings.Contains(is.title, search) {
 				out = append(out, encode(is))
 			}
@@ -783,7 +796,7 @@ func (s *gitlabServer) serveIssues(w http.ResponseWriter, r *http.Request, proj 
 		var in struct{ Title, Description, Labels string }
 		_ = json.Unmarshal(body, &in)
 		proj.nextIID++
-		is := &fakeIssue{iid: proj.nextIID, title: in.Title, desc: in.Description, state: "opened"}
+		is := &fakeIssue{iid: proj.nextIID, title: in.Title, desc: in.Description, state: "opened", authorID: 322}
 		if in.Labels != "" {
 			is.labels = strings.Split(in.Labels, ",")
 		}
@@ -889,5 +902,25 @@ func TestARedirectOffTheInstanceIsRefused(t *testing.T) {
 	}
 	if reached.Load() {
 		t.Error("the other host was reached")
+	}
+}
+
+// The dashboard is the bot's own issue. An issue somebody else opened
+// under the same title, boxes ticked, is not read and not updated: the
+// bot writes its own beside it.
+func TestTheDashboardIsTheBotsOwnIssue(t *testing.T) {
+	pf, srv, _ := newFixture(t, "glpat-x")
+	proj := srv.addProject("group/proj", "main")
+	proj.nextIID++
+	proj.issues = append(proj.issues, &fakeIssue{iid: proj.nextIID, title: "pinup Dashboard", desc: "- [x] <!-- approve-all-pending-prs -->", state: "opened", authorID: 7})
+	if _, body, ok, err := pf.ReadIssue(context.Background(), publish.Project{Path: "group/proj"}, "pinup Dashboard"); err != nil || ok || body != "" {
+		t.Errorf("a stranger's issue was read as the dashboard: ok=%v body=%q err=%v", ok, body, err)
+	}
+	is, created, err := pf.UpsertIssue(context.Background(), publish.Project{Path: "group/proj"}, "pinup Dashboard", "the bot's own", nil)
+	if err != nil || !created || is.IID == 1 {
+		t.Errorf("upsert: %+v created=%v err=%v", is, created, err)
+	}
+	if _, body, ok, _ := pf.ReadIssue(context.Background(), publish.Project{Path: "group/proj"}, "pinup Dashboard"); !ok || body != "the bot's own" {
+		t.Errorf("the bot's own issue is not read back: ok=%v body=%q", ok, body)
 	}
 }

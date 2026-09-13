@@ -31,7 +31,9 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/publish"
@@ -58,6 +60,37 @@ type Platform struct {
 	hc    *http.Client
 	base  string
 	token Token
+
+	// userMu guards userID, the id of the account the token belongs to,
+	// read once from /user: the dashboard is the issue that account
+	// wrote, not any issue with the title (review S7, 2026-09-13).
+	userMu sync.Mutex
+	userID int
+}
+
+// selfUserID answers the id of the account behind the token, from /user,
+// once.
+func (p *Platform) selfUserID(ctx context.Context) (int, error) {
+	p.userMu.Lock()
+	defer p.userMu.Unlock()
+	if p.userID != 0 {
+		return p.userID, nil
+	}
+	resp, err := p.do(ctx, http.MethodGet, p.base+"/api/v4/user", nil)
+	if err != nil {
+		return 0, err
+	}
+	if err := classifyToken(resp, "read its own user"); err != nil {
+		return 0, err
+	}
+	var payload struct {
+		ID int `json:"id"`
+	}
+	if err := json.Unmarshal(resp.body, &payload); err != nil || payload.ID == 0 {
+		return 0, fmt.Errorf("gitlab: decode /user: %v", err)
+	}
+	p.userID = payload.ID
+	return p.userID, nil
 }
 
 // New returns a Platform that dials base (e.g. "https://gitlab.example.org")
@@ -314,7 +347,13 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 // description, or false when there is none.
 func (p *Platform) ReadIssue(ctx context.Context, proj publish.Project, title string) (publish.Issue, string, bool, error) {
 	base := fmt.Sprintf("%s/api/v4/projects/%s/issues", p.base, url.PathEscape(proj.Path))
-	q := url.Values{"state": {"opened"}, "search": {title}, "in": {"title"}, "per_page": {"100"}}
+	me, err := p.selfUserID(ctx)
+	if err != nil {
+		return publish.Issue{}, "", false, err
+	}
+	// Only the bot's own issue is the dashboard: anyone who can open an
+	// issue could otherwise write one with the title and every box ticked.
+	q := url.Values{"state": {"opened"}, "search": {title}, "in": {"title"}, "per_page": {"100"}, "author_id": {strconv.Itoa(me)}}
 	resp, err := p.do(ctx, http.MethodGet, base+"?"+q.Encode(), nil)
 	if err != nil {
 		return publish.Issue{}, "", false, err
@@ -338,7 +377,11 @@ func (p *Platform) ReadIssue(ctx context.Context, proj publish.Project, title st
 // updates description and labels when they differ, or creates the issue.
 func (p *Platform) UpsertIssue(ctx context.Context, proj publish.Project, title, description string, labels []string) (publish.Issue, bool, error) {
 	base := fmt.Sprintf("%s/api/v4/projects/%s/issues", p.base, url.PathEscape(proj.Path))
-	q := url.Values{"state": {"opened"}, "search": {title}, "in": {"title"}, "per_page": {"100"}}
+	me, err := p.selfUserID(ctx)
+	if err != nil {
+		return publish.Issue{}, false, err
+	}
+	q := url.Values{"state": {"opened"}, "search": {title}, "in": {"title"}, "per_page": {"100"}, "author_id": {strconv.Itoa(me)}}
 	resp, err := p.do(ctx, http.MethodGet, base+"?"+q.Encode(), nil)
 	if err != nil {
 		return publish.Issue{}, false, err
