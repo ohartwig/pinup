@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -865,5 +866,28 @@ func TestMergedMergeRequestsSinceACutoff(t *testing.T) {
 	}
 	if len(got) != 1 || got[0].IID != 2 || got[0].State != "merged" {
 		t.Errorf("got %+v, want the one merged renovate/ request since the cut-off", got)
+	}
+}
+
+// A redirect off the instance is refused, not followed: the token would
+// travel with it. Measured on the estate: artifacts and packages redirect
+// to object storage.
+func TestARedirectOffTheInstanceIsRefused(t *testing.T) {
+	var reached atomic.Bool
+	elsewhere := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reached.Store(true)
+		w.WriteHeader(http.StatusOK)
+	})
+	instance := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "https://storage.example.net/blob", http.StatusFound)
+	})
+	rt := harness.NewRefusingTransport(t).Handle("git.example.org", instance).Handle("storage.example.net", elsewhere)
+	pf := New("https://git.example.org", rt, Token{Value: "glpat-x", Header: "PRIVATE-TOKEN"})
+	_, err := pf.Project(context.Background(), "group/proj")
+	if err == nil || !strings.Contains(err.Error(), "refusing to follow a redirect off the instance") {
+		t.Errorf("err = %v", err)
+	}
+	if reached.Load() {
+		t.Error("the other host was reached")
 	}
 }

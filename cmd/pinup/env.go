@@ -99,7 +99,8 @@ func datasourceOptions(p platformEnv) wire.DatasourceOptions {
 
 // httpClient builds the one HTTP client every datasource shares. The token
 // is bound to the instance's host and nothing else: httpx sends a host rule's
-// credential only to that host, and drops it on a cross-host redirect.
+// credential only to that host, and drops it - Authorization and the rule's
+// own header alike - on a cross-host redirect.
 func httpClient(p platformEnv) *httpx.Client {
 	var rules []httpx.HostRule
 	if p.Host != "" && p.Token != "" {

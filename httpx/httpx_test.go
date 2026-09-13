@@ -244,6 +244,43 @@ func TestRedirectDropsAuthorizationCrossHost(t *testing.T) {
 	}
 }
 
+// The same for a rule with a header of its own: PRIVATE-TOKEN is not one
+// of the headers net/http strips, and the instance redirects artifacts and
+// packages to object storage. A cross-host redirect must lose it.
+func TestRedirectDropsRuleHeaderCrossHost(t *testing.T) {
+	const token = "glpat-hostA-only"
+	var sawOnB atomic.Bool
+	hostB := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("PRIVATE-TOKEN") != "" {
+			sawOnB.Store(true)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer hostB.Close()
+	var sawOnA atomic.Bool
+	hostA := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("PRIVATE-TOKEN") == token {
+			sawOnA.Store(true)
+		}
+		http.Redirect(w, r, hostB.URL, http.StatusFound)
+	}))
+	defer hostA.Close()
+	client := New(Options{
+		HostRules: []HostRule{{MatchHost: hostOf(hostA.URL), Token: token, HeaderName: "PRIVATE-TOKEN"}},
+		Now:       time.Now,
+		Sleep:     func(time.Duration) {},
+	})
+	if _, err := client.Get(t.Context(), hostA.URL, ReqOptions{}); err != nil {
+		t.Fatal(err)
+	}
+	if !sawOnA.Load() {
+		t.Error("host A never received PRIVATE-TOKEN (test setup problem)")
+	}
+	if sawOnB.Load() {
+		t.Error("host B received the PRIVATE-TOKEN carried over from host A")
+	}
+}
+
 // TestErrorNeverLeaksToken is the hard requirement from CLAUDE.md: whatever
 // a failure's error text says, it must never contain the configured token.
 func TestErrorNeverLeaksToken(t *testing.T) {

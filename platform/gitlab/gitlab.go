@@ -24,6 +24,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -65,11 +66,24 @@ func New(base string, transport http.RoundTripper, token Token) *Platform {
 	if transport == nil {
 		transport = http.DefaultTransport
 	}
-	return &Platform{
-		hc:    &http.Client{Transport: transport},
+	p := &Platform{
 		base:  strings.TrimRight(base, "/"),
 		token: token,
 	}
+	// Nothing this client calls should leave the instance: a redirect to
+	// another host - object storage behind artifacts and packages, or a
+	// misconfigured instance - would carry PRIVATE-TOKEN with it, since
+	// net/http strips only Authorization. Refuse rather than follow.
+	p.hc = &http.Client{Transport: transport, CheckRedirect: func(req *http.Request, via []*http.Request) error {
+		if !strings.EqualFold(req.URL.Host, via[0].URL.Host) {
+			return fmt.Errorf("gitlab: refusing to follow a redirect off the instance to %s", req.URL.Host)
+		}
+		if len(via) >= 10 {
+			return errors.New("gitlab: stopped after 10 redirects")
+		}
+		return nil
+	}}
+	return p
 }
 
 func (p *Platform) Name() string { return Name }

@@ -174,16 +174,24 @@ func New(opts Options) *Client {
 	return c
 }
 
-// checkRedirect drops the Authorization header whenever a redirect crosses
+// checkRedirect drops every credential header whenever a redirect crosses
 // a host boundary. net/http copies the original request's headers onto the
-// redirected request before this hook runs, so without this the credentials
-// for host A would otherwise be replayed against host B.
+// redirected request before this hook runs and strips only Authorization
+// and the cookie headers itself; a host rule's own header - PRIVATE-TOKEN,
+// JOB-TOKEN - would otherwise be replayed against host B, which is what
+// the instance's redirects to object storage would do with the platform
+// token (review S3, 2026-09-13).
 func (c *Client) checkRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) >= defaultMaxRedirects {
 		return errors.New("httpx: stopped after too many redirects")
 	}
 	if !strings.EqualFold(req.URL.Host, via[0].URL.Host) {
 		req.Header.Del("Authorization")
+		for _, rule := range c.hostRules {
+			if rule.HeaderName != "" {
+				req.Header.Del(rule.HeaderName)
+			}
+		}
 	}
 	return nil
 }
