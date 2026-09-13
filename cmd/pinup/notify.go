@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/report"
@@ -19,6 +20,9 @@ import (
 // rollingMajorTitle is the one issue the notice lives in; the exact title
 // is how it is found again on the next run.
 const rollingMajorTitle = "Rolling major references (@N) with a newer major available"
+
+// estateTitle is the issue the estate overview lives in.
+const estateTitle = "pinup Estate: every dependency, every version in use"
 
 // cmdNotify renders the estate-wide rolling-major notice from the plans of
 // a run and keeps it in one issue of the runner project. It fails when the
@@ -31,10 +35,12 @@ func cmdNotify(args []string, out, errw io.Writer) error {
 	project := fs.String("project", "", "project that carries the issue, e.g. pinup/runner (required unless --dry-run)")
 	dryRun := fs.Bool("dry-run", false, "print the notice; write no issue")
 	minRefs := fs.Int("min-refs", 1, "fail when fewer bare-major references than this were found")
+	outPath := fs.String("out", "", "with estate: also write the overview to this file")
 	// The notice's name comes first, the flags after: `notify rolling-major --plans …`.
-	if len(args) == 0 || args[0] != "rolling-major" {
-		return fmt.Errorf("notify: usage: pinup notify rolling-major --plans 'reports/*.json' --project pinup/runner")
+	if len(args) == 0 || (args[0] != "rolling-major" && args[0] != "estate") {
+		return fmt.Errorf("notify: usage: pinup notify rolling-major|estate --plans 'reports/*.json' --project pinup/runner")
 	}
+	kind := args[0]
 	if err := fs.Parse(args[1:]); err != nil {
 		return err
 	}
@@ -58,11 +64,35 @@ func cmdNotify(args []string, out, errw io.Writer) error {
 		}
 		plans = append(plans, plan)
 	}
-	refs, notices := report.RollingMajors(plans)
-	body := report.RollingMajorIssue(refs, notices)
-	fmt.Fprintf(errw, "notify: %d plans, %d bare-major references, %d with a newer major\n", len(plans), len(refs), notices)
-	if len(refs) < *minRefs {
-		return fmt.Errorf("notify: %d bare-major references found, fewer than %d; the scan is not looking at the estate", len(refs), *minRefs)
+	title := rollingMajorTitle
+	var body string
+	if kind == "estate" {
+		// The estate overview: every dependency, every version in use,
+		// every repository, from the same plans.
+		e := report.EstateOf(plans)
+		version := ""
+		if len(plans) > 0 {
+			version = plans[0].PinupVersion
+		}
+		body = report.EstateMarkdown(e, version, time.Now())
+		title = estateTitle
+		fmt.Fprintf(errw, "notify: %d plans, %d repositories, %d dependencies, %d uses (%d current, %d behind, %d held, %d with advisories)\n",
+			len(plans), e.Repos, e.Deps, e.Uses, e.Current, e.Behind, e.Held, e.Vulnerable)
+		if e.Deps < *minRefs {
+			return fmt.Errorf("notify: %d dependencies found, fewer than %d; the scan is not looking at the estate", e.Deps, *minRefs)
+		}
+		if *outPath != "" {
+			if err := os.WriteFile(*outPath, []byte(body), 0o644); err != nil {
+				return err
+			}
+		}
+	} else {
+		refs, notices := report.RollingMajors(plans)
+		body = report.RollingMajorIssue(refs, notices)
+		fmt.Fprintf(errw, "notify: %d plans, %d bare-major references, %d with a newer major\n", len(plans), len(refs), notices)
+		if len(refs) < *minRefs {
+			return fmt.Errorf("notify: %d bare-major references found, fewer than %d; the scan is not looking at the estate", len(refs), *minRefs)
+		}
 	}
 	if *dryRun {
 		fmt.Fprint(out, body)
@@ -84,7 +114,11 @@ func cmdNotify(args []string, out, errw io.Writer) error {
 	if err != nil {
 		return err
 	}
-	issue, changed, err := platform.UpsertIssue(ctx, proj, rollingMajorTitle, body, []string{"pinup", "rolling-major"})
+	labels := []string{"pinup", "rolling-major"}
+	if kind == "estate" {
+		labels = []string{"pinup", "estate"}
+	}
+	issue, changed, err := platform.UpsertIssue(ctx, proj, title, body, labels)
 	if err != nil {
 		return err
 	}

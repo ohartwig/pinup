@@ -12,6 +12,7 @@ import (
 	"git.ole-hartwig.eu/pinup/pinup/config/toyaml"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -256,5 +257,33 @@ func TestMigrateToYAML(t *testing.T) {
 	}
 	if strings.Contains(string(converted), "description:") {
 		t.Error("a description key survived; it is a comment now")
+	}
+}
+
+// notify estate renders the overview from plan files and refuses a scan
+// that saw too little.
+func TestNotifyEstateFromPlans(t *testing.T) {
+	dir := t.TempDir()
+	for _, g := range []string{"estate", "lock"} {
+		src, err := os.ReadFile("../../testdata/golden/" + g + "/plan.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		os.WriteFile(filepath.Join(dir, g+".json"), src, 0o644)
+	}
+	var out, errw bytes.Buffer
+	outPath := filepath.Join(dir, "estate.md")
+	if err := run([]string{"notify", "estate", "--plans", filepath.Join(dir, "*.json"), "--dry-run", "--out", outPath}, &out, &errw); err != nil {
+		t.Fatalf("%v: %s", err, errw.String())
+	}
+	body, _ := os.ReadFile(outPath)
+	if !strings.Contains(string(body), "| Repositories | Dependencies |") || !strings.Contains(string(body), "<details><summary>") {
+		t.Errorf("overview: %s", body)
+	}
+	if !strings.Contains(errw.String(), "2 plans, 2 repositories") {
+		t.Errorf("stderr: %s", errw.String())
+	}
+	if err := run([]string{"notify", "estate", "--plans", filepath.Join(dir, "*.json"), "--dry-run", "--min-refs", "10000"}, &out, &errw); err == nil {
+		t.Error("a scan with too few dependencies must fail")
 	}
 }
