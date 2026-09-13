@@ -8,9 +8,10 @@
 // Core decides, plugins apply. A task is compiled from the plan - argv, no
 // shell - checked against the allowlist on the compiled command, run with an
 // environment the runner allowlisted (never the platform token, never the
-// signing key), bounded by a timeout, and its result is validated against
-// the file scope it was handed: one path outside the scope discards the
-// whole result. This is the exec flavour of the container contract the
+// signing key) and a scratch HOME of its own (never the job's, where the
+// key is imported), bounded by a timeout, and its result is validated
+// against the file scope it was handed: one path outside the scope discards
+// the whole result. This is the exec flavour of the container contract the
 // spec describes (§12): the toolchain is on the job image's PATH, as the
 // estate's runners have no DinD.
 //
@@ -249,12 +250,20 @@ type Runner struct {
 }
 
 // Baseline is the environment every task gets, credentials excluded.
-var Baseline = []string{"PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "TZ"}
+// HOME is not in it: a task gets a scratch home of its own (Run), so the
+// job's ~/.gnupg, ~/.netrc, ~/.gitconfig and whatever else the job
+// imported stay out of reach. A toolchain that needs its cache is told
+// where it is (GOMODCACHE, COMPOSER_HOME, npm_config_cache) through the
+// runner's PassEnv.
+var Baseline = []string{"PATH", "LANG", "LC_ALL", "TMPDIR", "TZ"}
 
 // Blocked are variable names that never cross even when listed: the
-// platform token and the signing material are the two things a task must
-// not see.
-var Blocked = []string{"PINUP_GITLAB_TOKEN", "GITLAB_TOKEN", "CI_JOB_TOKEN", "PINUP_SIGNING_KEY", "PINUP_GPG_PRIVATE_KEY", "GIT_ASKPASS"}
+// platform token, the signing material and the paths that lead to them
+// are the things a task must not see.
+var Blocked = []string{
+	"PINUP_GITLAB_TOKEN", "GITLAB_TOKEN", "CI_JOB_TOKEN", "PINUP_SIGNING_KEY", "PINUP_GPG_PRIVATE_KEY",
+	"GIT_ASKPASS", "HOME", "GNUPGHOME", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_PARAMETERS",
+}
 
 // Result is what one task produced.
 type Result struct {
@@ -288,8 +297,9 @@ func (r *Runner) Available(tasks []model.Task) error {
 	return nil
 }
 
-// Environment is the environment a task runs with.
-func (r *Runner) Environment() []string {
+// Environment is the environment a task runs with, home being the scratch
+// directory the task gets as HOME.
+func (r *Runner) Environment(home string) []string {
 	getenv := r.Getenv
 	if getenv == nil {
 		getenv = os.Getenv
@@ -309,6 +319,9 @@ func (r *Runner) Environment() []string {
 			env = append(env, name+"="+v)
 		}
 	}
+	if home != "" {
+		env = append(env, "HOME="+home)
+	}
 	sort.Strings(env)
 	return env
 }
@@ -327,9 +340,18 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	// A home of its own, gone when the task is: nothing the job keeps
+	// under its HOME - the imported signing key first of all - is where a
+	// task can read it.
+	home, err := os.MkdirTemp("", "pinup-task-home-")
+	if err != nil {
+		return Result{}, fmt.Errorf("plugin: %w", err)
+	}
+	defer os.RemoveAll(home)
+
 	cmd := exec.CommandContext(ctx, t.Command[0], t.Command[1:]...)
 	cmd.Dir = filepath.Join(root, t.Dir)
-	cmd.Env = r.Environment()
+	cmd.Env = r.Environment(home)
 	var stdout, stderr bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &stdout, &stderr
 	// A hung tool is killed, not waited for: the timeout is the contract.
@@ -343,7 +365,7 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	if r.Now != nil {
 		started = r.Now()
 	}
-	err := run(ctx, cmd)
+	err = run(ctx, cmd)
 	res := Result{Task: t, Stdout: stdout.String(), Stderr: stderr.String()}
 	if r.Now != nil {
 		res.Duration = r.Now().Sub(started)

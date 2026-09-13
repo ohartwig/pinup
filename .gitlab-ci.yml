@@ -330,10 +330,17 @@ update:pinup:
     PINUP_SIGNING_FORMAT: openpgp
     PINUP_SIGNING_KEY: $PINUP_GPG_KEY_ID
     PINUP_CACHE: .pinup/cache.db
+    # What the go.sum refresh may see besides the baseline: the module
+    # cache and the toolchain policy, nothing of the job's identity.
+    PINUP_PLUGIN_ENV: "GOPATH,GOMODCACHE,GOCACHE,GOFLAGS,GOTOOLCHAIN,GOPROXY,GONOSUMDB,GOPRIVATE"
   script:
     - |
       set -eu
       test -n "${PINUP_GITLAB_TOKEN:-}" || { echo "PINUP_GITLAB_TOKEN is not set; a job token cannot push or open a merge request"; exit 1; }
+      # The key lives outside HOME: a task pinup runs (go mod tidy here)
+      # gets a scratch HOME and none of the job's, so the imported key
+      # is nowhere a task can read.
+      GNUPGHOME=$(mktemp -d); export GNUPGHOME
       printf '%s\n' "$PINUP_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
       CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${CI_COMMIT_SHORT_SHA}" -o /tmp/pinup ./cmd/pinup
       /tmp/pinup version

@@ -6,6 +6,7 @@ package plugin
 import (
 	"context"
 	"errors"
+	"os"
 	"os/exec"
 	"runtime"
 	"strings"
@@ -97,16 +98,18 @@ func TestLockRefreshCommands(t *testing.T) {
 }
 
 // P1d.3: a task sees exactly the allowlisted variables - never the
-// platform token or the signing key, even when they are listed - and a
-// hanging command is killed at the timeout and reported as such.
+// platform token, the signing key or the job's HOME, even when they are
+// listed - and a hanging command is killed at the timeout and reported as
+// such.
 func TestEnvironmentIsAnAllowlistAndTimeoutsAreEnforced(t *testing.T) {
 	env := map[string]string{
 		"PATH": "/usr/bin", "HOME": "/h", "LANG": "C", "COMPOSER_AUTH": "{...}", "NPM_TOKEN": "n",
 		"PINUP_GITLAB_TOKEN": "secret", "PINUP_SIGNING_KEY": "key", "GIT_ASKPASS": "/tmp/x", "RANDOM_VAR": "no",
+		"GNUPGHOME": "/h/.gnupg",
 	}
-	r := &Runner{PassEnv: []string{"COMPOSER_AUTH", "PINUP_GITLAB_TOKEN", "GIT_ASKPASS"}, Getenv: func(k string) string { return env[k] }}
-	got := strings.Join(r.Environment(), ",")
-	if got != "COMPOSER_AUTH={...},HOME=/h,LANG=C,PATH=/usr/bin" {
+	r := &Runner{PassEnv: []string{"COMPOSER_AUTH", "PINUP_GITLAB_TOKEN", "GIT_ASKPASS", "HOME", "GNUPGHOME"}, Getenv: func(k string) string { return env[k] }}
+	got := strings.Join(r.Environment("/scratch"), ",")
+	if got != "COMPOSER_AUTH={...},HOME=/scratch,LANG=C,PATH=/usr/bin" {
 		t.Errorf("environment = %s", got)
 	}
 
@@ -115,8 +118,11 @@ func TestEnvironmentIsAnAllowlistAndTimeoutsAreEnforced(t *testing.T) {
 	if _, err := r.Run(context.Background(), t.TempDir(), model.Task{Command: []string{"composer", "update"}}); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(seenEnv, ",") != "HOME=/h,LANG=C,PATH=/usr/bin" {
+	if len(seenEnv) != 3 || !strings.HasPrefix(seenEnv[0], "HOME=") || seenEnv[0] == "HOME=/h" || seenEnv[1] != "LANG=C" || seenEnv[2] != "PATH=/usr/bin" {
 		t.Errorf("the process got %v", seenEnv)
+	}
+	if _, err := os.Stat(strings.TrimPrefix(seenEnv[0], "HOME=")); !os.IsNotExist(err) {
+		t.Errorf("the scratch home outlived the task: %v", err)
 	}
 
 	if runtime.GOOS == "windows" {

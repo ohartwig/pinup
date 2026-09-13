@@ -394,7 +394,7 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 		fmt.Fprintf(&s, "| `%s` | `%s` |\n", strings.Join(t.FileFilters, "`, `"), strings.Join(t.Command, " "))
 	}
 	if b.Body != "" {
-		s.WriteString("\n---\n\n" + b.Body + "\n")
+		s.WriteString("\n---\n\n" + Sanitize(b.Body) + "\n")
 	}
 	shown := 0
 	for _, u := range members {
@@ -413,12 +413,13 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 			if t := n.Title; t != "" && t != n.Version && t != strings.TrimPrefix(n.Version, "v") {
 				head += ": " + t
 			}
+			// The summary is HTML: escape it, then break references in the
+			// escaped text (the sanitiser's entities are HTML too).
+			head = Sanitize(escapeHTML(head))
 			if n.URL != "" {
-				head = fmt.Sprintf("<a href=\"%s\">%s</a>", n.URL, escapeHTML(head))
-			} else {
-				head = escapeHTML(head)
+				head = fmt.Sprintf("<a href=\"%s\">%s</a>", escapeHTML(n.URL), head)
 			}
-			body := strings.TrimSpace(n.Body)
+			body := Sanitize(strings.TrimSpace(n.Body))
 			if body == "" {
 				body = "*(no notes)*"
 			}
