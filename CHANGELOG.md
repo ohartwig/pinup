@@ -1,3 +1,9 @@
+## [0.11.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.10.0...v0.11.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **planner:** internalChecksFilter - the newest release that is old enough ([67b51f5](https://git.ole-hartwig.eu/pinup/pinup/commit/67b51f599950b29976e4dcf672376826d3642feb))
+
 ## [0.10.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.9.0...v0.10.0) (2026-09-13)
 
 ### :sparkles: Features
