@@ -178,6 +178,18 @@ func (p *Platform) MergedMergeRequests(_ context.Context, _ publish.Project, pre
 	return out, nil
 }
 
+// ReadIssue returns the recorded issue and its body.
+func (p *Platform) ReadIssue(_ context.Context, _ publish.Project, title string) (publish.Issue, string, bool, error) {
+	p.record("ReadIssue")
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	is, ok := p.Issues[title]
+	if !ok {
+		return publish.Issue{}, "", false, nil
+	}
+	return is, p.IssueBodies[title], true, nil
+}
+
 // UpsertIssue records the issue by title; a second call with the same
 // description reports no change.
 func (p *Platform) UpsertIssue(_ context.Context, _ publish.Project, title, description string, labels []string) (publish.Issue, bool, error) {

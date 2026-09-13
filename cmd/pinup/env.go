@@ -164,3 +164,13 @@ func repositoryConcurrency(getenv func(string) string) int {
 	}
 	return 4
 }
+
+// dashboardTitle is the dashboard issue's title: PINUP_DASHBOARD_TITLE, or
+// "pinup Dashboard" - a name of its own while Renovate's "Dependency
+// Dashboard" still exists beside it.
+func dashboardTitle(getenv func(string) string) string {
+	if v := getenv("PINUP_DASHBOARD_TITLE"); v != "" {
+		return v
+	}
+	return "pinup Dashboard"
+}

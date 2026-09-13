@@ -134,6 +134,22 @@ func TestCreatesThenUpdatesTheSameMergeRequest(t *testing.T) {
 		t.Fatalf("second run: %+v, MRs %d", outs, len(pf.MRs))
 	}
 
+	// The dashboard's rebase box: the same plan is pushed again although
+	// the tree did not change, and the request reads as updated.
+	repoR, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "workR"), git.CloneOptions{}, testEnv)
+	repoR.Env = testEnv
+	pR := plan(p.Branches[0])
+	pR.Branches[0].Existing = nil
+	oR := options(repoR, pf)
+	oR.Rebase = map[string]bool{"renovate/alpine-3.x": true}
+	outs, err = Execute(ctx, pR, oR)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(outs) != 1 || outs[0].Action != "updated" || outs[0].MRIID != 1 || len(pf.MRs) != 1 {
+		t.Fatalf("rebase run: %+v, MRs %d", outs, len(pf.MRs))
+	}
+
 	// A third run with a new title updates the request in place.
 	repo3, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work3"), git.CloneOptions{}, testEnv)
 	repo3.Env = testEnv

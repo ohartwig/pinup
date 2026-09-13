@@ -162,6 +162,9 @@ type whatifOptions struct {
 	// CustomDatasources builds the datasources a configuration declares;
 	// nil means customDatasources are unknown. wire supplies it.
 	CustomDatasources func(map[string]model.CustomDatasource) lookup.Registry
+	// Checks are the dashboard's ticked boxes, read before the run; a
+	// dry run has none.
+	Checks report.Checks
 	// Advisories asks the advisory database about current versions when
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
@@ -309,6 +312,12 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "config", Msg: w})
 	}
 	plan.Limits = model.Limits{PRHourlyLimit: intOf(resolved.Raw["prHourlyLimit"]), PRConcurrentLimit: intOf(resolved.Raw["prConcurrentLimit"])}
+	if on, _ := resolved.Raw["dependencyDashboard"].(bool); on {
+		plan.Dashboard = model.Dashboard{Enabled: true, Title: stringOf(resolved.Raw["dependencyDashboardTitle"])}
+		if plan.Dashboard.Title == "" {
+			plan.Dashboard.Title = "Dependency Dashboard"
+		}
+	}
 	for _, w := range engine.Warnings {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "rules", Msg: w})
 	}
@@ -504,6 +513,12 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	branches, err := planner.Compose(named)
 	if err != nil {
 		return nil, fmt.Errorf("branches: %w", err)
+	}
+	// The dashboard's ticked boxes lift the holds they name: an approval,
+	// a schedule, a release age. The plan records the lift on the branch,
+	// so "why did this open" has an answer.
+	for i := range branches {
+		liftByDashboard(&branches[i], plan.Updates, o.Checks)
 	}
 	// Every branch carries the byte-range edits that realise its updates,
 	// produced by the manager that extracted each dependency against the
@@ -1010,6 +1025,48 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		}
 	}
 	return tasks, nil
+}
+
+// liftByDashboard clears a branch's hold when the dashboard ticked the box
+// for it: the named block leaves every member update, the branch's
+// suppression is recomputed from what remains, and the branch carries the
+// dashboard as an origin.
+func liftByDashboard(b *model.Branch, updates []model.Update, checks report.Checks) {
+	if b.SuppressedBy == "" || !checks.Lifted(b.Name, b.SuppressedBy) {
+		return
+	}
+	reason := b.SuppressedBy
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	remaining := model.BlockReason("")
+	for i := range updates {
+		u := &updates[i]
+		if !keys[u.Key()] {
+			continue
+		}
+		kept := u.Blocks[:0]
+		for _, blk := range u.Blocks {
+			if blk.Reason != reason {
+				kept = append(kept, blk)
+			}
+		}
+		u.Blocks = kept
+		u.SuppressedBy = ""
+		if len(kept) > 0 {
+			u.SuppressedBy = kept[0].Reason
+			if remaining == "" {
+				remaining = kept[0].Reason
+			}
+		}
+	}
+	b.SuppressedBy = remaining
+	b.HeldWith = model.Block{}
+	if reason == model.BlockSchedule {
+		b.Schedule.Active = true
+	}
+	b.Prov = append(b.Prov, model.Origin{Source: "dashboard", Pointer: string(reason), Rule: model.NoRule})
 }
 
 // holdBranch marks a branch held for one reason: every update on it gets

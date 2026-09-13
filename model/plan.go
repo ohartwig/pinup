@@ -166,6 +166,10 @@ type Plan struct {
 	// Limits are the run-wide caps the configuration set; the runner
 	// enforces them and records what they held.
 	Limits Limits `json:"limits,omitzero"`
+	// Dashboard is whether the configuration asks for the dashboard issue
+	// and what it is titled: dependencyDashboard and
+	// dependencyDashboardTitle, resolved.
+	Dashboard Dashboard `json:"dashboard,omitzero"`
 
 	Deps     []Dependency `json:"deps"`
 	Updates  []Update     `json:"updates"`
@@ -175,6 +179,12 @@ type Plan struct {
 }
 
 // Limits are the run-wide caps from the configuration. Zero means none.
+// Dashboard is the resolved dashboard configuration.
+type Dashboard struct {
+	Enabled bool   `json:"enabled"`
+	Title   string `json:"title,omitempty"`
+}
+
 type Limits struct {
 	PRHourlyLimit     int `json:"prHourlyLimit"`
 	PRConcurrentLimit int `json:"prConcurrentLimit"`

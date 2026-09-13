@@ -109,6 +109,10 @@ type Platform interface {
 	// It reports the issue and whether anything changed. The rolling-major
 	// notice is one such issue: a report that stays, updated per run.
 	UpsertIssue(ctx context.Context, p Project, title, description string, labels []string) (Issue, bool, error)
+	// ReadIssue finds the open issue with exactly this title and returns
+	// it with its description - what the dashboard's ticked boxes are read
+	// from before a run plans.
+	ReadIssue(ctx context.Context, p Project, title string) (Issue, string, bool, error)
 }
 
 // Issue is an issue on the platform, as much of it as pinup reads back.

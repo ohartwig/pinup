@@ -296,6 +296,30 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 	return resp.body, nil
 }
 
+// ReadIssue returns the open issue with exactly this title and its
+// description, or false when there is none.
+func (p *Platform) ReadIssue(ctx context.Context, proj publish.Project, title string) (publish.Issue, string, bool, error) {
+	base := fmt.Sprintf("%s/api/v4/projects/%s/issues", p.base, url.PathEscape(proj.Path))
+	q := url.Values{"state": {"opened"}, "search": {title}, "in": {"title"}, "per_page": {"100"}}
+	resp, err := p.do(ctx, http.MethodGet, base+"?"+q.Encode(), nil)
+	if err != nil {
+		return publish.Issue{}, "", false, err
+	}
+	if err := classify(resp, proj.Path); err != nil {
+		return publish.Issue{}, "", false, err
+	}
+	var found []issueJSON
+	if err := json.Unmarshal(resp.body, &found); err != nil {
+		return publish.Issue{}, "", false, fmt.Errorf("gitlab: decode issues of %q: %w", proj.Path, err)
+	}
+	for _, is := range found {
+		if is.Title == title {
+			return is.issue(), is.Description, true, nil
+		}
+	}
+	return publish.Issue{}, "", false, nil
+}
+
 // UpsertIssue searches the project's open issues for the exact title and
 // updates description and labels when they differ, or creates the issue.
 func (p *Platform) UpsertIssue(ctx context.Context, proj publish.Project, title, description string, labels []string) (publish.Issue, bool, error) {

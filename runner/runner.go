@@ -59,6 +59,10 @@ type Options struct {
 	Tasks TaskRunner
 	// Sleep waits between retries; nil means no wait (tests).
 	Sleep func(time.Duration)
+	// Rebase names the branches to push again even when the rebuilt tree
+	// equals what the remote holds - the dashboard's rebase and retry
+	// boxes.
+	Rebase map[string]bool
 
 	Now time.Time
 }
@@ -264,7 +268,7 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, 
 	if !committed {
 		return "", false, fmt.Errorf("the edits changed nothing against %s", base)
 	}
-	if existed {
+	if existed && !o.Rebase[b.Name] {
 		same, err := o.Repo.SameTree(ctx, sha, o.Remote+"/"+b.Name)
 		if err != nil {
 			return "", false, err

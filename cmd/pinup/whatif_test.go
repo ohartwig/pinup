@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"git.ole-hartwig.eu/pinup/pinup/report"
 	"os"
 	"strings"
 	"testing"
@@ -647,5 +648,70 @@ func TestARepositoryWithoutConfigIgnoresNodeModules(t *testing.T) {
 	}
 	if !files["node_modules/dropzone/package.json"] {
 		t.Errorf("files extracted with the runner's own ignorePaths: %v; want the vendored package file too", files)
+	}
+}
+
+// A ticked dashboard box lifts exactly the hold it names: the block leaves
+// the members, the branch is actionable, the plan records the dashboard as
+// the origin. A hold the box does not name stays.
+func TestADashboardBoxLiftsTheHoldItNames(t *testing.T) {
+	if _, err := os.Stat(ciToolsRepo); err != nil {
+		t.Skipf("the ci-tools checkout is not present: %v", err)
+	}
+	at := time.Date(2026, 9, 13, 3, 5, 0, 0, time.UTC) // outside the 4-hourly window
+	base, err := whatif(context.Background(), ciToolsOptions(at))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scheduled string
+	for _, b := range base.Branches {
+		if b.SuppressedBy == model.BlockSchedule {
+			scheduled = b.Name
+			break
+		}
+	}
+	if scheduled == "" {
+		t.Skip("no branch held by schedule at this moment in ci-tools")
+	}
+	opts := ciToolsOptions(at)
+	opts.Checks = report.ParseChecks("- [x] <!-- unschedule-branch=" + scheduled + " -->x")
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var lifted *model.Branch
+	for i := range plan.Branches {
+		if plan.Branches[i].Name == scheduled {
+			lifted = &plan.Branches[i]
+		}
+	}
+	if lifted == nil || lifted.SuppressedBy != "" || len(lifted.Edits) == 0 {
+		t.Fatalf("the ticked branch is still held or carries no edits: %+v", lifted)
+	}
+	if len(lifted.Prov) == 0 || lifted.Prov[len(lifted.Prov)-1].Source != "dashboard" {
+		t.Errorf("the lift is not recorded on the branch: %+v", lifted.Prov)
+	}
+	keys := map[string]bool{}
+	for _, k := range lifted.UpdateKeys {
+		keys[k] = true
+	}
+	for _, u := range plan.Updates {
+		if keys[u.Key()] {
+			for _, blk := range u.Blocks {
+				if blk.Reason == model.BlockSchedule {
+					t.Errorf("a member still carries the schedule block: %+v", u.Blocks)
+				}
+			}
+		}
+	}
+	// Every other scheduled branch stays held.
+	for _, b := range plan.Branches {
+		if b.Name != scheduled && b.SuppressedBy == "" {
+			for _, ob := range base.Branches {
+				if ob.Name == b.Name && ob.SuppressedBy == model.BlockSchedule {
+					t.Errorf("%s was lifted without a box", b.Name)
+				}
+			}
+		}
 	}
 }

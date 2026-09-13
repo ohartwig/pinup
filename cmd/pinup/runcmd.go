@@ -133,6 +133,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	one := &runOptions{
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
 		identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
+		dashboardTitle: dashboardTitle(os.Getenv),
 	}
 	if *indexPath != "" {
 		idx, err := report.LoadIndex(*indexPath)
@@ -222,6 +223,54 @@ func forEach(projects []string, parallel int, run func(string) error, errw io.Wr
 	return failed
 }
 
+// rebaseSet is the branches the dashboard asked to push again.
+func rebaseSet(c report.Checks) map[string]bool {
+	out := map[string]bool{}
+	for b := range c.Rebase {
+		out[b] = true
+	}
+	for b := range c.Retry {
+		out[b] = true
+	}
+	if c.RebaseAll {
+		out["*"] = true
+	}
+	return out
+}
+
+// publishDashboard renders the dashboard for the plan and what the run did
+// and writes it: to the issue in a live run, beside the report in a dry
+// run, where the shadow phase can read what the issue would say.
+func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platform, proj publish.Project, plan *model.Plan, outcomes []runner.Outcome, reportPath, project string, out, errw io.Writer) error {
+	states := map[string]report.BranchState{}
+	for _, oc := range outcomes {
+		states[oc.Branch] = report.BranchState{Action: oc.Action, MRIID: oc.MRIID, Message: oc.Message}
+	}
+	open, err := platform.OpenMergeRequests(ctx, proj, "renovate/")
+	if err != nil {
+		return err
+	}
+	body := report.Dashboard(plan, states, open, o.now)
+	if o.dryRun {
+		if reportPath == "" {
+			return nil
+		}
+		path := reportPath
+		if project != "" && strings.Contains(reportPath, "%s") {
+			path = fmt.Sprintf(reportPath, strings.ReplaceAll(project, "/", "-"))
+		}
+		return os.WriteFile(strings.TrimSuffix(path, ".json")+".dashboard.md", []byte(body), 0o644)
+	}
+	issue, changed, err := platform.UpsertIssue(ctx, proj, o.dashboardTitle, body, []string{"pinup"})
+	if err != nil {
+		return err
+	}
+	if changed {
+		fmt.Fprintf(out, "%s: dashboard #%d updated\n", proj.Path, issue.IID)
+	}
+	return nil
+}
+
 // runOptions is what every project in one invocation shares.
 type runOptions struct {
 	cfgPath       string
@@ -234,6 +283,11 @@ type runOptions struct {
 	signing       git.Signing
 	platform      publish.Platform
 	now           time.Time
+	// dashboardTitle names the dashboard issue. "pinup Dashboard" until
+	// the cutover, so it lives beside Renovate's; PINUP_DASHBOARD_TITLE
+	// overrides, and the configuration's dependencyDashboardTitle takes
+	// over with D.16.
+	dashboardTitle string
 	// index is the consumer index, updated after every plan; nil means
 	// none is kept. indexMu serialises the projects that feed it.
 	index     *report.Index
@@ -317,7 +371,7 @@ func markSeen(path, spec string, now time.Time) {
 
 // runProject plans and executes one project, given as a path to clone or
 // as an existing checkout.
-func runProject(ctx context.Context, o *runOptions, project, repoDir, report string, out, errw io.Writer) error {
+func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath string, out, errw io.Writer) error {
 	env, platform := o.env, o.platform
 	// Phase timings on the summary line: where a slow run spends its
 	// minutes is the first thing anyone reading a job log wants to know.
@@ -384,6 +438,15 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, report str
 		RunnerDefault: o.runnerDefault,
 	}
 	opts.CustomDatasources = customDatasourcesHook(env)
+	// The dashboard's ticked boxes, read before planning: an approval, a
+	// window or a release age lifted by a person, a rebase asked for.
+	if !o.dryRun {
+		if _, body, ok, err := platform.ReadIssue(ctx, proj, o.dashboardTitle); err != nil {
+			fmt.Fprintf(errw, "warning: %s: dashboard: %v\n", proj.Path, err)
+		} else if ok {
+			opts.Checks = report.ParseChecks(body)
+		}
+	}
 	advisories := &osv.Client{}
 	if o.cache != nil {
 		advisories.Store = advisoryStore{cache: o.cache, now: o.now}
@@ -419,20 +482,26 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, report str
 			HourlyLimit:     plan.Limits.PRHourlyLimit,
 			ConcurrentLimit: plan.Limits.PRConcurrentLimit,
 			Prefix:          "renovate/", Now: o.now,
-			Tasks: plugin.TaskRunner{Runner: taskRunner(os.Getenv)},
-			Sleep: time.Sleep,
+			Tasks:  plugin.TaskRunner{Runner: taskRunner(os.Getenv)},
+			Sleep:  time.Sleep,
+			Rebase: rebaseSet(opts.Checks),
 		})
 		if err != nil {
 			return err
 		}
 	}
+	if plan.Dashboard.Enabled {
+		if err := publishDashboard(ctx, o, platform, proj, plan, outcomes, reportPath, project, out, errw); err != nil {
+			fmt.Fprintf(errw, "warning: %s: dashboard: %v\n", proj.Path, err)
+		}
+	}
 
-	if report != "" {
+	if reportPath != "" {
 		// Several projects write several reports: the path gains the
 		// project's path with slashes folded when it is not one project.
-		path := report
-		if project != "" && strings.Contains(report, "%s") {
-			path = fmt.Sprintf(report, strings.ReplaceAll(project, "/", "-"))
+		path := reportPath
+		if project != "" && strings.Contains(reportPath, "%s") {
+			path = fmt.Sprintf(reportPath, strings.ReplaceAll(project, "/", "-"))
 		}
 		f, err := os.Create(path)
 		if err != nil {
