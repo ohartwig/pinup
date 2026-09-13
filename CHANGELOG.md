@@ -1,3 +1,10 @@
+## [0.10.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.9.0...v0.10.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **notify:** the estate overview - every dependency, every version in use, where ([e4bfe66](https://git.ole-hartwig.eu/pinup/pinup/commit/e4bfe666a3c77b014557b424ea3b8fedeecd82d2))
+* **npm:** yarn.lock is a lock too - read, refreshed, maintained ([32a1360](https://git.ole-hartwig.eu/pinup/pinup/commit/32a1360abc60fe85c7416c930cf263e6364d02b4))
+
 ## [0.9.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.8.1...v0.9.0) (2026-09-13)
 
 ### :sparkles: Features
