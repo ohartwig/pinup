@@ -103,7 +103,86 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	if rs.Err != "" {
 		return nil, "lookup failed: " + rs.Err, nil
 	}
+	p := &planning{req: req, d: d, rs: rs}
+	if skip, warn := p.resolveScheme(); skip != "" {
+		return nil, skip, warn
+	}
+	if ups, skip, warn, done := p.digestOnly(); done {
+		return ups, skip, warn
+	}
+	if len(rs.Releases) == 0 {
+		return nil, "the registry lists no releases", nil
+	}
+	if skip := p.resolveBase(); skip != "" {
+		return nil, skip, nil
+	}
+	c, skip, warn := p.candidates()
+	if skip != "" {
+		return nil, skip, warn
+	}
+	if p.seen == 0 {
+		return nil, fmt.Sprintf("none of the %d releases is a valid %s version", len(rs.Releases), p.scheme), nil
+	}
+	if p.isRange && p.strategy == versioning.StrategyPin && d.VulnerabilityBound == "" {
+		// The range becomes the one version it resolves to; nothing else
+		// is offered on this run. Renovate types it "pin" and groups it
+		// under pin-dependencies. A security fix takes precedence and
+		// pins to the fix instead.
+		return pinRange(d, p.cur, p.base, byVersionOf(rs, p.v))
+	}
+	if d.VulnerabilityBound != "" {
+		return p.securityFix()
+	}
+	ups, unchanged, skip := p.ordinary(c)
+	if skip != "" {
+		return nil, skip, nil
+	}
+	if d.CurrentDigest != "" && versioning.GoPseudoCommit(d.CurrentValue) == "" {
+		return p.withDigests(ups)
+	}
+	if len(ups) == 0 {
+		return nil, p.upToDate(unchanged), nil
+	}
+	return ups, "", nil
+}
 
+// planning is the state one dependency's decision accumulates: the scheme
+// and the releases it is measured against, the value as written and the
+// version it stands for, and what the range strategy makes of the two.
+type planning struct {
+	req    Request
+	d      *model.Dependency
+	rs     *model.ReleaseSet
+	v      versioning.Versioning
+	scheme string
+	// cur is the value as written; base the version it is compared from -
+	// the value itself for a pin, the highest admitted release (or the
+	// lock's version) for a range; floor the lowest release a range
+	// admits, what a bump of the range is measured from.
+	cur, base, floor string
+	isRange          bool
+	baseStable       bool
+	strategy         versioning.RangeStrategy
+	// seen counts the releases the scheme could read at all.
+	seen int
+}
+
+// candidateSet is what the bucket pass produced: the newest-per-bucket
+// choices are made from majors and others; byVersion carries each
+// candidate's release record.
+type candidateSet struct {
+	majors, others []string
+	byVersion      map[string]model.Release
+	// ageWaived is set when internalChecksFilter "flexible" offered a
+	// release that is not old enough because none was.
+	ageWaived bool
+}
+
+// resolveScheme names the versioning every comparison uses, writes it and
+// the source URL back onto the dependency, and applies extractVersion to
+// the releases.
+func (p *planning) resolveScheme() (string, *model.Warning) {
+	d, req := p.d, p.req
 	scheme := d.Versioning
 	if scheme == "" && req.DefaultVersioning != nil {
 		scheme = req.DefaultVersioning(d.Datasource)
@@ -113,15 +192,16 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	}
 	v, err := req.Versionings.Get(scheme)
 	if err != nil {
-		return nil, fmt.Sprintf("versioning: %v", err), &model.Warning{
+		return fmt.Sprintf("versioning: %v", err), &model.Warning{
 			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: %v", d.DepName, err),
 		}
 	}
 	d.Versioning = scheme
+	p.v, p.scheme = v, scheme
 	// The source URL is a lookup result. Writing it back is what lets the
 	// per-update rule pass see it - the pre-lookup pass could not.
 	if d.SourceURL == "" {
-		d.SourceURL = rs.SourceURL
+		d.SourceURL = p.rs.SourceURL
 	}
 
 	// extractVersion rewrites every release's version before anything is
@@ -129,17 +209,25 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	// release the pattern does not match is not a release of this
 	// dependency and is dropped.
 	if d.ExtractVersion != "" {
-		extracted, err := extractVersions(rs, d.ExtractVersion)
+		extracted, err := extractVersions(p.rs, d.ExtractVersion)
 		if err != nil {
-			return nil, fmt.Sprintf("extractVersion: %v", err), &model.Warning{
+			return fmt.Sprintf("extractVersion: %v", err), &model.Warning{
 				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: extractVersion %q: %v", d.DepName, d.ExtractVersion, err),
 			}
 		}
-		rs = extracted
+		p.rs = extracted
 	}
+	p.cur = d.CurrentValue
+	p.strategy = rangeStrategy(d.RangeStrategy)
+	return "", nil
+}
 
-	cur := d.CurrentValue
-	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" && !unsatisfiedRange(v, cur, rs) {
+// digestOnly handles the references whose decision is about a digest, not
+// a version: a tag to be pinned, a bare digest, a tag that is no version.
+// done reports that it decided.
+func (p *planning) digestOnly() (ups []model.Update, skip string, warn *model.Warning, done bool) {
+	d, req, v, cur := p.d, p.req, p.v, p.cur
+	if d.PinDigests && d.CurrentDigest == "" && cur != "" && d.Manager != "custom.regex" && !unsatisfiedRange(v, cur, p.rs) {
 		// A valid range no release satisfies is skipped as an invalid
 		// value, pin and all. Measured in the pinned container over one
 		// job file: registry.ole-hartwig.eu/devops/images/node:24 - "24"
@@ -159,113 +247,119 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		// the tag resolves to is pinned onto it, as its own update type,
 		// before any version moves. Measured: "renovate/pin-dependencies",
 		// "pin docker.io/library/python docker tag to c6ead21".
-		return pinDigest(req, d, cur)
+		ups, skip, warn = pinDigest(req, d, cur)
+		return ups, skip, warn, true
 	}
 	if cur == "" && d.CurrentDigest != "" {
 		// A reference by digest alone - `image@sha256:…` - has no version
 		// to compare; what can move is the digest behind the tag it
 		// implies. Renovate reads that tag as "latest" when none is
 		// written (documented, not measured here).
-		return digestRefresh(req, d, "latest")
+		ups, skip, warn = digestRefresh(req, d, "latest")
+		return ups, skip, warn, true
 	}
 	if !v.IsValid(cur) {
 		if d.CurrentDigest != "" {
 			// `latest@sha256:…`: the tag is not a version and never
 			// moves, but the digest behind it does. Measured: Renovate
 			// opens "update …/wolfi-base:latest docker digest to 65e1acb".
-			return digestRefresh(req, d, cur)
+			ups, skip, warn = digestRefresh(req, d, cur)
+			return ups, skip, warn, true
 		}
-		return nil, fmt.Sprintf("current value %q is not a valid %s version", cur, scheme), nil
+		return nil, fmt.Sprintf("current value %q is not a valid %s version", cur, p.scheme), nil, true
 	}
-	if len(rs.Releases) == 0 {
-		return nil, "the registry lists no releases", nil
-	}
+	return nil, "", nil, false
+}
 
-	// A pin is compared against releases directly. A range - "^8.5", or "1"
-	// under semver-partial, which is how a rolling major is written - is
-	// first resolved to the highest release it admits, and that release is
-	// what candidates are compared against. Measured: semver-partial says
-	// isGreaterThan("2.0.0", "1") is false, so comparing against the range
-	// itself would find nothing newer, ever.
-	isRange := !v.IsVersion(cur)
-	base := cur
-	seen := 0
-	strategy := rangeStrategy(d.RangeStrategy)
-	// floor is the lowest release a range admits - what a bump of the
-	// range itself is measured from.
-	floor := ""
-	if isRange {
+// resolveBase fixes the version candidates are compared from.
+//
+// A pin is compared against releases directly. A range - "^8.5", or "1"
+// under semver-partial, which is how a rolling major is written - is
+// first resolved to the highest release it admits, and that release is
+// what candidates are compared against. Measured: semver-partial says
+// isGreaterThan("2.0.0", "1") is false, so comparing against the range
+// itself would find nothing newer, ever.
+func (p *planning) resolveBase() string {
+	d, v, cur := p.d, p.v, p.cur
+	p.isRange = !v.IsVersion(cur)
+	p.base = cur
+	if p.isRange {
 		var admitted []string
-		for _, r := range rs.Releases {
+		for _, r := range p.rs.Releases {
 			if !v.IsVersion(r.Version) {
 				continue
 			}
-			seen++
+			p.seen++
 			if v.Satisfies(r.Version, cur) {
 				admitted = append(admitted, r.Version)
 			}
 		}
-		if seen == 0 {
-			return nil, fmt.Sprintf("none of the %d releases is a valid %s version", len(rs.Releases), scheme), nil
+		if p.seen == 0 {
+			return fmt.Sprintf("none of the %d releases is a valid %s version", len(p.rs.Releases), p.scheme)
 		}
 		best, ok := versioning.Latest(v, admitted)
 		if !ok {
-			return nil, fmt.Sprintf("no release satisfies %q", cur), nil
+			return fmt.Sprintf("no release satisfies %q", cur)
 		}
-		base = best
-		floor = versioning.Sort(v, admitted)[0]
+		p.base = best
+		p.floor = versioning.Sort(v, admitted)[0]
 		// With a lock file the current version is what the lock pins,
 		// not the highest the range admits: under bump and
 		// update-lockfile every release above the lock is an update,
 		// inside the range or not. Renovate reads the current version
 		// the same way (lockedVersion first).
-		if strategy != versioning.StrategyReplace && d.LockedVersion != "" && v.IsVersion(d.LockedVersion) {
-			base = d.LockedVersion
+		if p.strategy != versioning.StrategyReplace && d.LockedVersion != "" && v.IsVersion(d.LockedVersion) {
+			p.base = d.LockedVersion
 		}
 	}
-	baseStable := v.IsStable(base)
+	p.baseStable = v.IsStable(p.base)
+	return ""
+}
 
-	// Bucket candidates by whether they cross a major. Within each bucket
-	// the latest wins; Latest tolerates the docker scheme's partial order.
-	//
-	// internalChecksFilter: under "strict" a release younger than the
-	// minimum age is no candidate, so the newest old-enough one is offered
-	// now rather than the newest held until it ages - a package releasing
-	// daily is updated to its three-day-old state each day instead of
-	// never. "flexible" falls back to the unfiltered choice when nothing
-	// is old enough. "none", the default, offers the newest and lets the
-	// policy hold it.
+// candidates buckets the releases above the base by whether they cross a
+// major. Within each bucket the latest wins; Latest tolerates the docker
+// scheme's partial order.
+//
+// internalChecksFilter: under "strict" a release younger than the
+// minimum age is no candidate, so the newest old-enough one is offered
+// now rather than the newest held until it ages - a package releasing
+// daily is updated to its three-day-old state each day instead of
+// never. "flexible" falls back to the unfiltered choice when nothing
+// is old enough. "none", the default, offers the newest and lets the
+// policy hold it.
+func (p *planning) candidates() (candidateSet, string, *model.Warning) {
+	d, req, v, cur, base := p.d, p.req, p.v, p.cur, p.base
 	ageFilter := time.Duration(0)
 	if d.InternalChecksFilter == "strict" || d.InternalChecksFilter == "flexible" {
 		if age, err := ParseAge(d.MinimumReleaseAge); err == nil && age > 0 {
 			ageFilter = age
 		}
 	}
-	var majors, others []string
+	var c candidateSet
 	var youngMajors, youngOthers []string // filtered out by age, kept for flexible
-	byVersion := map[string]model.Release{}
-	for _, r := range rs.Releases {
-		c := r.Version
-		if !v.IsVersion(c) {
+	c.byVersion = map[string]model.Release{}
+	for _, r := range p.rs.Releases {
+		cand := r.Version
+		if !v.IsVersion(cand) {
 			continue
 		}
-		if !isRange {
-			seen++
+		if !p.isRange {
+			p.seen++
 		}
-		if v.Compare(c, base) <= 0 {
+		if v.Compare(cand, base) <= 0 {
 			continue
 		}
-		if isRange && v.Satisfies(c, cur) && strategy == versioning.StrategyReplace {
+		if p.isRange && v.Satisfies(cand, cur) && p.strategy == versioning.StrategyReplace {
 			// Already admitted by the range: under replace, writing it
 			// back would change nothing in the file, and an update that
 			// changes nothing is not an update. Bump raises the floor
 			// anyway; update-lockfile moves the lock.
 			continue
 		}
-		if !versioning.IsCompatible(v, c, base) {
+		if !versioning.IsCompatible(v, cand, base) {
 			continue
 		}
-		if baseStable && !v.IsStable(c) {
+		if p.baseStable && !v.IsStable(cand) {
 			continue
 		}
 		if r.Deprecated {
@@ -275,9 +369,9 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 			continue
 		}
 		if d.AllowedVersions != "" {
-			ok, err := allowed(v, d.AllowedVersions, c)
+			ok, err := allowed(v, d.AllowedVersions, cand)
 			if err != nil {
-				return nil, fmt.Sprintf("allowedVersions %q: %v", d.AllowedVersions, err), &model.Warning{
+				return c, fmt.Sprintf("allowedVersions %q: %v", d.AllowedVersions, err), &model.Warning{
 					Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: allowedVersions %q: %v", d.DepName, d.AllowedVersions, err),
 				}
 			}
@@ -286,126 +380,120 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 			}
 		}
 		young := ageFilter > 0 && !oldEnough(r, ageFilter, req.Now, d.TimestampOptional)
-		switch versioning.UpdateType(v, base, c) {
+		switch versioning.UpdateType(v, base, cand) {
 		case model.UpdateMajor:
 			if young {
-				youngMajors = append(youngMajors, c)
+				youngMajors = append(youngMajors, cand)
 			} else {
-				majors = append(majors, c)
+				c.majors = append(c.majors, cand)
 			}
 		case model.UpdateMinor, model.UpdatePatch:
 			if young {
-				youngOthers = append(youngOthers, c)
+				youngOthers = append(youngOthers, cand)
 			} else {
-				others = append(others, c)
+				c.others = append(c.others, cand)
 			}
 		default:
 			// Unknown (different family, same version), rollback,
 			// compatibility: not offered by default.
 			continue
 		}
-		byVersion[c] = r
+		c.byVersion[cand] = r
 	}
 	// Nothing old enough in a bucket: strict offers the newest anyway
 	// and the policy holds it as pending (measured on Renovate's
 	// dashboard: "Pending Status Checks" for a docker tag whose age is
 	// unknown); flexible offers it and waives the age.
-	ageWaived := false
 	if ageFilter > 0 {
-		if len(majors) == 0 && len(youngMajors) > 0 {
-			majors = youngMajors
-			ageWaived = d.InternalChecksFilter == "flexible"
+		if len(c.majors) == 0 && len(youngMajors) > 0 {
+			c.majors = youngMajors
+			c.ageWaived = d.InternalChecksFilter == "flexible"
 		}
-		if len(others) == 0 && len(youngOthers) > 0 {
-			others = youngOthers
-			ageWaived = ageWaived || d.InternalChecksFilter == "flexible"
+		if len(c.others) == 0 && len(youngOthers) > 0 {
+			c.others = youngOthers
+			c.ageWaived = c.ageWaived || d.InternalChecksFilter == "flexible"
 		}
 	}
-	if seen == 0 {
-		return nil, fmt.Sprintf("none of the %d releases is a valid %s version", len(rs.Releases), scheme), nil
-	}
+	return c, "", nil
+}
 
-	if isRange && strategy == versioning.StrategyPin && d.VulnerabilityBound == "" {
-		// The range becomes the one version it resolves to; nothing else
-		// is offered on this run. Renovate types it "pin" and groups it
-		// under pin-dependencies. A security fix takes precedence and
-		// pins to the fix instead.
-		return pinRange(d, cur, base, byVersionOf(rs, v))
+// securityFix is the fast path. Measured: with advisories against the
+// current version, Renovate's one update is the LOWEST released,
+// non-deprecated version at or above the highest fix version - lodash
+// 4.17.20 goes to 4.18.1 (4.18.0 is deprecated), guzzle 7.4.4 to 7.15.2 -
+// on the vulnerabilityAlerts branch, whatever the usual buckets would
+// have offered.
+func (p *planning) securityFix() ([]model.Update, string, *model.Warning) {
+	d, v, cur, base := p.d, p.v, p.cur, p.base
+	if !v.IsValid(d.VulnerabilityBound) {
+		return nil, fmt.Sprintf("vulnerability bound %q is not a valid %s version", d.VulnerabilityBound, p.scheme), &model.Warning{
+			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: advisory fix version %q is not a %s version", d.DepName, d.VulnerabilityBound, p.scheme),
+		}
 	}
-	if d.VulnerabilityBound != "" {
-		// The fast path. Measured: with advisories against the current
-		// version, Renovate's one update is the LOWEST released,
-		// non-deprecated version at or above the highest fix version -
-		// lodash 4.17.20 goes to 4.18.1 (4.18.0 is deprecated), guzzle
-		// 7.4.4 to 7.15.2 - on the vulnerabilityAlerts branch, whatever
-		// the usual buckets would have offered.
-		if !v.IsValid(d.VulnerabilityBound) {
-			return nil, fmt.Sprintf("vulnerability bound %q is not a valid %s version", d.VulnerabilityBound, scheme), &model.Warning{
-				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: advisory fix version %q is not a %s version", d.DepName, d.VulnerabilityBound, scheme),
-			}
+	// The fix is searched among every release, not only those above
+	// the base: a range without a lock is taken to run its lowest
+	// admitted release, and the fix may sit inside the range (minimist
+	// ^1.2.5 is vulnerable at 1.2.5 and fixed at 1.2.6).
+	all := byVersionOf(p.rs, v)
+	fix, ok := "", false
+	for c, r := range all {
+		if v.Compare(c, d.VulnerabilityBound) < 0 || r.Deprecated || (p.baseStable && !v.IsStable(c)) {
+			continue
 		}
-		// The fix is searched among every release, not only those above
-		// the base: a range without a lock is taken to run its lowest
-		// admitted release, and the fix may sit inside the range (minimist
-		// ^1.2.5 is vulnerable at 1.2.5 and fixed at 1.2.6).
-		all := byVersionOf(rs, v)
-		fix, ok := "", false
-		for c, r := range all {
-			if v.Compare(c, d.VulnerabilityBound) < 0 || r.Deprecated || (baseStable && !v.IsStable(c)) {
-				continue
-			}
-			if !ok || v.Compare(c, fix) < 0 {
-				fix, ok = c, true
-			}
+		if !ok || v.Compare(c, fix) < 0 {
+			fix, ok = c, true
 		}
-		byVersion = all
-		if !ok {
-			ids := make([]string, 0, len(d.Advisories))
-			for _, a := range d.Advisories {
-				ids = append(ids, a.ID)
-			}
-			return nil, fmt.Sprintf("vulnerable (%s): no release at or above the fix version %s", strings.Join(ids, ", "), d.VulnerabilityBound), &model.Warning{
-				Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s %s is affected by %s and no release at or above %s exists", d.DepName, cur, strings.Join(ids, ", "), d.VulnerabilityBound),
-			}
-		}
-		// Typed from the version in use: the lock's, or a range's lowest
-		// admitted release - the one the advisory was asked about.
-		from := base
-		if isRange && floor != "" && (d.LockedVersion == "" || !v.IsVersion(d.LockedVersion)) {
-			from = floor
-		}
-		u, skip := buildUpdate(v, d, cur, from, fix, byVersion[fix], scheme)
-		if strings.HasPrefix(skip, unchangedPrefix) {
-			return nil, fmt.Sprintf("up to date: %q written as a %s value already admits the fix %s", cur, scheme, fix), nil
-		}
-		if skip != "" {
-			return nil, skip, nil
-		}
-		u.SecurityFix = true
-		return []model.Update{u}, "", nil
 	}
+	if !ok {
+		ids := make([]string, 0, len(d.Advisories))
+		for _, a := range d.Advisories {
+			ids = append(ids, a.ID)
+		}
+		return nil, fmt.Sprintf("vulnerable (%s): no release at or above the fix version %s", strings.Join(ids, ", "), d.VulnerabilityBound), &model.Warning{
+			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s %s is affected by %s and no release at or above %s exists", d.DepName, cur, strings.Join(ids, ", "), d.VulnerabilityBound),
+		}
+	}
+	// Typed from the version in use: the lock's, or a range's lowest
+	// admitted release - the one the advisory was asked about.
+	from := base
+	if p.isRange && p.floor != "" && (d.LockedVersion == "" || !v.IsVersion(d.LockedVersion)) {
+		from = p.floor
+	}
+	u, skip := buildUpdate(v, d, cur, from, fix, all[fix], p.scheme)
+	if strings.HasPrefix(skip, unchangedPrefix) {
+		return nil, fmt.Sprintf("up to date: %q written as a %s value already admits the fix %s", cur, p.scheme, fix), nil
+	}
+	if skip != "" {
+		return nil, skip, nil
+	}
+	u.SecurityFix = true
+	return []model.Update{u}, "", nil
+}
 
-	var ups []model.Update
-	unchanged := ""
-	if isRange && strategy == versioning.StrategyBump && base != d.LockedVersion && floor != "" {
+// ordinary builds the updates the buckets offer: the bump of a range's
+// floor, then the newest of each bucket. unchanged names a target the
+// scheme keeps the value as written for; skip is a reason to plan nothing.
+func (p *planning) ordinary(c candidateSet) (ups []model.Update, unchanged, skip string) {
+	d, v, cur, base := p.d, p.v, p.cur, p.base
+	if p.isRange && p.strategy == versioning.StrategyBump && base != d.LockedVersion && p.floor != "" {
 		// Bump raises the range to the highest release it admits even
 		// when nothing newer exists: "^8.5" becomes "^8.5.10". Measured:
 		// "update dependency php to ^8.5.10" on renovate/php-8.x, typed
 		// from the range's floor. A lock makes the lock the base instead
 		// and the ordinary buckets cover it.
-		if u, skip := buildUpdate(v, d, cur, floor, base, byVersionOf(rs, v)[base], scheme); skip == "" {
+		if u, skip := buildUpdate(v, d, cur, p.floor, base, byVersionOf(p.rs, v)[base], p.scheme); skip == "" {
 			ups = append(ups, u)
 		} else if !strings.HasPrefix(skip, unchangedPrefix) {
-			return nil, skip, nil
+			return nil, "", skip
 		}
 	}
-	for _, bucket := range [][]string{others, majors} {
+	for _, bucket := range [][]string{c.others, c.majors} {
 		target, ok := versioning.Latest(v, bucket)
 		if !ok {
 			continue
 		}
-		u, skip := buildUpdate(v, d, cur, base, target, byVersion[target], scheme)
-		if ageWaived {
+		u, skip := buildUpdate(v, d, cur, base, target, c.byVersion[target], p.scheme)
+		if c.ageWaived {
 			u.AgeWaived = true
 		}
 		if skip != "" {
@@ -418,58 +506,62 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 				unchanged = target
 				continue
 			}
-			return nil, skip, nil
+			return nil, "", skip
 		}
 		ups = append(ups, u)
 	}
-	if d.CurrentDigest != "" && versioning.GoPseudoCommit(d.CurrentValue) == "" {
-		// A digest-pinned reference moves value and digest together, or
-		// not at all: a runtime pulls by digest and ignores the tag, so
-		// `newtag@olddigest` would claim a version it does not run. A Go
-		// pseudo-version is the exception: its commit is spelled inside
-		// the value, and a move to a tagged release leaves it behind.
-		kept := ups[:0]
-		var warn *model.Warning
-		for _, u := range ups {
-			if u.NewDigest != "" {
-				kept = append(kept, u)
-				continue
-			}
-			digest, err := lookupDigest(req, *d, u.NewVersion)
-			if err != nil {
-				warn = &model.Warning{Stage: "plan", File: d.File,
-					Msg: fmt.Sprintf("%s: %s to %s not planned: %v", d.DepName, u.Type, u.NewValue, err)}
-				continue
-			}
-			u.NewDigest = digest
+	return ups, unchanged, ""
+}
+
+// withDigests completes the updates of a digest-pinned reference. Value
+// and digest move together, or not at all: a runtime pulls by digest and
+// ignores the tag, so `newtag@olddigest` would claim a version it does
+// not run. A Go pseudo-version is the exception (its commit is spelled
+// inside the value) and never reaches here.
+func (p *planning) withDigests(ups []model.Update) ([]model.Update, string, *model.Warning) {
+	d, req := p.d, p.req
+	kept := ups[:0]
+	var warn *model.Warning
+	for _, u := range ups {
+		if u.NewDigest != "" {
 			kept = append(kept, u)
+			continue
 		}
-		ups = kept
-		if len(ups) > 0 {
-			return ups, "", warn
+		digest, err := lookupDigest(req, *d, u.NewVersion)
+		if err != nil {
+			warn = &model.Warning{Stage: "plan", File: d.File,
+				Msg: fmt.Sprintf("%s: %s to %s not planned: %v", d.DepName, u.Type, u.NewValue, err)}
+			continue
 		}
-		// The tag stays; the digest behind it may not have.
-		refresh, skip, rwarn := digestRefresh(req, d, base)
-		if warn != nil {
-			// A version update was dropped for want of its digest; that,
-			// not "up to date", is what the dependency reports.
-			if len(refresh) == 0 {
-				skip = warn.Msg
-			}
-			return refresh, skip, warn
-		}
-		return refresh, skip, rwarn
+		u.NewDigest = digest
+		kept = append(kept, u)
 	}
-	if len(ups) == 0 {
-		if isRange {
-			return nil, fmt.Sprintf("up to date: %q admits %s, and none of %d releases is newer", cur, base, seen), nil
-		}
-		if unchanged != "" {
-			return nil, fmt.Sprintf("up to date: %q written as a %s value already admits %s", cur, scheme, unchanged), nil
-		}
-		return nil, fmt.Sprintf("up to date: none of %d releases is newer than %s", seen, cur), nil
+	ups = kept
+	if len(ups) > 0 {
+		return ups, "", warn
 	}
-	return ups, "", nil
+	// The tag stays; the digest behind it may not have.
+	refresh, skip, rwarn := digestRefresh(req, d, p.base)
+	if warn != nil {
+		// A version update was dropped for want of its digest; that,
+		// not "up to date", is what the dependency reports.
+		if len(refresh) == 0 {
+			skip = warn.Msg
+		}
+		return refresh, skip, warn
+	}
+	return refresh, skip, rwarn
+}
+
+// upToDate is the reason for planning nothing when nothing is newer.
+func (p *planning) upToDate(unchanged string) string {
+	if p.isRange {
+		return fmt.Sprintf("up to date: %q admits %s, and none of %d releases is newer", p.cur, p.base, p.seen)
+	}
+	if unchanged != "" {
+		return fmt.Sprintf("up to date: %q written as a %s value already admits %s", p.cur, p.scheme, unchanged)
+	}
+	return fmt.Sprintf("up to date: none of %d releases is newer than %s", p.seen, p.cur)
 }
 
 // allowed applies an allowedVersions constraint to one candidate: /regex/

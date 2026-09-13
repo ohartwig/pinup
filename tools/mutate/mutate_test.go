@@ -73,7 +73,7 @@ var mutators = []mutator{
 		"\t\tif !errors.As(err, &declined) {", "\t\tif true {", []string{"./lookup/"}, false},
 	// planner: selection, policy, naming
 	{13, "planner", "majors join the minor bucket", "planner/planner.go",
-		"\t\t\tmajors = append(majors, c)", "\t\t\tothers = append(others, c)", []string{"./planner/"}, false},
+		"\t\t\t\tc.majors = append(c.majors, cand)", "\t\t\t\tc.others = append(c.others, cand)", []string{"./planner/"}, false},
 	{14, "planner", "deprecated releases offered", "planner/planner.go",
 		"\t\tif r.Deprecated {", "\t\tif r.Deprecated && false {", []string{"./planner/"}, false},
 	{15, "planner", "release age never holds", "planner/policy.go",
