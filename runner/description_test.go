@@ -86,19 +86,36 @@ func TestDescriptionChangeCells(t *testing.T) {
 func TestDescriptionCapsReleaseSections(t *testing.T) {
 	var updates []model.Update
 	var keys []string
-	for i := 0; i < 3; i++ {
-		u := model.Update{DepKey: fmt.Sprintf("d%d", i), Dep: model.Dependency{DepName: fmt.Sprintf("d%d", i), CurrentValue: "1"}, NewValue: "2"}
+	for i := 0; i < 5; i++ {
+		u := model.Update{DepKey: fmt.Sprintf("d%d", i), Dep: model.Dependency{DepName: fmt.Sprintf("d%d", i), CurrentValue: "1"}, NewValue: "2", CompareURL: fmt.Sprintf("https://x/d%d/compare/1...2", i)}
 		for j := 0; j < 20; j++ {
 			u.Notes = append(u.Notes, model.ReleaseNote{Version: fmt.Sprintf("1.%d", j), Body: "x"})
 		}
 		updates = append(updates, u)
 		keys = append(keys, u.Key())
 	}
+	// The same dependency read from a second place: one row, no more sections.
+	twin := updates[0]
+	twin.DepKey = "d0-again"
+	updates = append(updates, twin)
+	keys = append(keys, twin.Key())
 	got := description(&model.Branch{UpdateKeys: keys}, updates, "")
+	if n := strings.Count(got, "| `d0` |"); n != 1 {
+		t.Errorf("d0 has %d rows, want 1", n)
+	}
+	// Ten per update, forty in all: d0..d3 show ten each, d4 none.
 	if n := strings.Count(got, "<details>"); n != maxNotesShown {
 		t.Errorf("%d sections, want %d", n, maxNotesShown)
 	}
-	if !strings.Contains(got, "… and 20 more releases") || strings.Count(got, "more releases") != 1 {
-		t.Errorf("trailer wrong:\n%s", got[len(got)-300:])
+	for _, want := range []string{
+		"*… and 10 more releases of `d0`: [compare](https://x/d0/compare/1...2).*",
+		"*… and 20 more releases of `d4`: [compare](https://x/d4/compare/1...2).*",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q", want)
+		}
+	}
+	if n := strings.Count(got, "more releases"); n != 5 {
+		t.Errorf("%d trailers, want 5", n)
 	}
 }

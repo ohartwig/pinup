@@ -346,16 +346,21 @@ func updateTypesOf(b *model.Branch) string {
 
 // description is the merge-request body: what changes, why anything is
 // held, and the footer.
-// maxNotesShown caps the release sections in one description: a group of
-// thirty members with a dozen releases each is a compare link, not a
-// scroll.
-const maxNotesShown = 40
+// maxNotesPerUpdate and maxNotesShown cap the release sections in one
+// description: a dependency thirty-five patch releases behind is a
+// compare link after its ten newest, and a group of many members is a
+// compare link per member beyond forty sections in all.
+const (
+	maxNotesPerUpdate = 10
+	maxNotesShown     = 40
+)
 
 // description is the merge request's body: what moves, from where to
 // where and with what notes; the bytes that change; the tasks that ran;
 // what the configuration's author wrote for the reader (prBodyNotes);
 // then the release notes the forge publishes for the span, each collapsed,
-// and the footer. updates are the plan's; only the branch's own are read.
+// and the footer. updates are the plan's; only the branch's own are read,
+// and a dependency read from several places is one row.
 func description(b *model.Branch, updates []model.Update, footer string) string {
 	var s strings.Builder
 	keys := map[string]bool{}
@@ -363,10 +368,14 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 		keys[k] = true
 	}
 	var members []model.Update
+	seen := map[string]bool{}
 	for _, u := range updates {
-		if keys[u.Key()] {
-			members = append(members, u)
+		row := u.Dep.DepName + "\x00" + change(u)
+		if !keys[u.Key()] || seen[row] {
+			continue
 		}
+		seen[row] = true
+		members = append(members, u)
 	}
 	if len(members) > 0 {
 		s.WriteString("| Dependency | Update | Change | Notes |\n|---|---|---|---|\n")
@@ -387,35 +396,34 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 	if b.Body != "" {
 		s.WriteString("\n---\n\n" + b.Body + "\n")
 	}
-	type noted struct {
-		dep  string
-		note model.ReleaseNote
-	}
-	var all []noted
+	shown := 0
 	for _, u := range members {
-		for _, n := range u.Notes {
-			all = append(all, noted{u.Dep.DepName, n})
+		for i, n := range u.Notes {
+			if shown == maxNotesShown || i == maxNotesPerUpdate {
+				more := len(u.Notes) - i
+				if u.CompareURL != "" {
+					fmt.Fprintf(&s, "\n*… and %d more releases of `%s`: [compare](%s).*\n", more, u.Dep.DepName, u.CompareURL)
+				} else {
+					fmt.Fprintf(&s, "\n*… and %d more releases of `%s`.*\n", more, u.Dep.DepName)
+				}
+				break
+			}
+			shown++
+			head := u.Dep.DepName + " " + n.Version
+			if t := n.Title; t != "" && t != n.Version && t != strings.TrimPrefix(n.Version, "v") {
+				head += ": " + t
+			}
+			if n.URL != "" {
+				head = fmt.Sprintf("<a href=\"%s\">%s</a>", n.URL, escapeHTML(head))
+			} else {
+				head = escapeHTML(head)
+			}
+			body := strings.TrimSpace(n.Body)
+			if body == "" {
+				body = "*(no notes)*"
+			}
+			fmt.Fprintf(&s, "\n<details>\n<summary>%s</summary>\n\n%s\n\n</details>\n", head, body)
 		}
-	}
-	for i, n := range all {
-		if i == maxNotesShown {
-			fmt.Fprintf(&s, "\n*… and %d more releases; see the compare links above.*\n", len(all)-i)
-			break
-		}
-		head := n.dep + " " + n.note.Version
-		if t := n.note.Title; t != "" && t != n.note.Version && t != strings.TrimPrefix(n.note.Version, "v") {
-			head += ": " + t
-		}
-		if n.note.URL != "" {
-			head = fmt.Sprintf("<a href=\"%s\">%s</a>", n.note.URL, escapeHTML(head))
-		} else {
-			head = escapeHTML(head)
-		}
-		body := strings.TrimSpace(n.note.Body)
-		if body == "" {
-			body = "*(no notes)*"
-		}
-		fmt.Fprintf(&s, "\n<details>\n<summary>%s</summary>\n\n%s\n\n</details>\n", head, body)
 	}
 	if footer != "" {
 		s.WriteString("\n" + footer + "\n")

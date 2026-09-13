@@ -51,13 +51,16 @@ func (f *Fetcher) Notes(ctx context.Context, sourceURL string, v versioning.Vers
 	if kind == "" {
 		return nil, compare, nil
 	}
-	all, err := f.releases(ctx, kind, owner, repo, sourceURL)
+	cur, tgt := strings.TrimPrefix(current, "v"), strings.TrimPrefix(target, "v")
+	if !v.IsVersion(cur) || !v.IsVersion(tgt) {
+		return nil, compare, nil
+	}
+	all, err := f.releases(ctx, kind, owner, repo, sourceURL, v, cur)
 	if err != nil {
 		return nil, compare, err
 	}
 	// The compare page wants the tags as the forge spells them: a
 	// manifest says 3.11.1, the tag is v3.11.1. The release list knows.
-	cur, tgt := strings.TrimPrefix(current, "v"), strings.TrimPrefix(target, "v")
 	curTag, tgtTag := current, target
 	for _, r := range all {
 		switch strings.TrimPrefix(r.Version, "v") {
@@ -71,7 +74,7 @@ func (f *Fetcher) Notes(ctx context.Context, sourceURL string, v versioning.Vers
 	var out []model.ReleaseNote
 	for _, r := range all {
 		ver := strings.TrimPrefix(r.Version, "v")
-		if !v.IsVersion(ver) || !v.IsVersion(cur) || !v.IsVersion(tgt) {
+		if !v.IsVersion(ver) {
 			continue
 		}
 		if v.Compare(ver, cur) <= 0 || v.Compare(ver, tgt) > 0 {
@@ -132,38 +135,81 @@ func compareURL(kind, sourceURL, current, target string) string {
 	return ""
 }
 
-func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL string) ([]model.ReleaseNote, error) {
+// maxPages bounds one source's release list: ten pages of a hundred. A
+// project releasing several times a day for years is a compare link
+// beyond that.
+const maxPages = 10
+
+// stored is what the cache holds for one source: the releases read so
+// far, newest first, and whether the list reached the source's end.
+type stored struct {
+	Releases []model.ReleaseNote `json:"releases"`
+	Complete bool                `json:"complete"`
+}
+
+// covers reports whether the list reaches below current under v - every
+// release in the span is then in it - or has no further page.
+func (st stored) covers(v versioning.Versioning, current string) bool {
+	if st.Complete {
+		return true
+	}
+	for _, r := range st.Releases {
+		if ver := strings.TrimPrefix(r.Version, "v"); v.IsVersion(ver) && v.Compare(ver, current) <= 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// releases reads the source's releases newest first, page by page, until
+// one older than current is in hand: a project on 2.5.x whose consumer
+// pins the 1.x line has its 1.63 notes deep in the list (measured:
+// composed-default-pipelines, 2026-09-13). The cache serves a list that
+// covers the span; a shorter one is read again.
+func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL string, v versioning.Versioning, current string) ([]model.ReleaseNote, error) {
 	key := "notes\x00" + sourceURL
 	if f.Cache != nil {
 		if payload, fresh, err := f.Cache.GetReleases(key, f.TTL, f.Now); err == nil && fresh && len(payload) > 0 {
-			var out []model.ReleaseNote
-			if json.Unmarshal(payload, &out) == nil {
-				return out, nil
+			var st stored
+			if json.Unmarshal(payload, &st) == nil && st.covers(v, current) {
+				return st.Releases, nil
 			}
 		}
 	}
-	var out []model.ReleaseNote
-	var err error
-	switch kind {
-	case "github":
-		out, err = f.github(ctx, owner, repo)
-	case "gitlab":
-		out, err = f.gitlab(ctx, owner)
-	}
-	if err != nil {
-		return nil, err
+	var st stored
+	for page := 1; page <= maxPages; page++ {
+		var batch []model.ReleaseNote
+		var err error
+		switch kind {
+		case "github":
+			batch, err = f.github(ctx, owner, repo, page)
+		case "gitlab":
+			batch, err = f.gitlab(ctx, owner, page)
+		}
+		if err != nil {
+			return nil, err
+		}
+		st.Releases = append(st.Releases, batch...)
+		if len(batch) < pageSize {
+			st.Complete = true
+		}
+		if st.covers(v, current) {
+			break
+		}
 	}
 	if f.Cache != nil {
-		if payload, err := json.Marshal(out); err == nil {
+		if payload, err := json.Marshal(st); err == nil {
 			_ = f.Cache.PutReleases(key, payload, f.Now)
 		}
 	}
-	return out, nil
+	return st.Releases, nil
 }
 
-// github reads the newest hundred releases of a repository.
-func (f *Fetcher) github(ctx context.Context, owner, repo string) ([]model.ReleaseNote, error) {
-	u := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=100", url.PathEscape(owner), url.PathEscape(repo))
+const pageSize = 100
+
+// github reads one page of a repository's releases, newest first.
+func (f *Fetcher) github(ctx context.Context, owner, repo string, page int) ([]model.ReleaseNote, error) {
+	u := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases?per_page=%d&page=%d", url.PathEscape(owner), url.PathEscape(repo), pageSize, page)
 	resp, err := f.Client.Get(ctx, u, httpx.ReqOptions{Accept: "application/vnd.github+json"})
 	if err != nil {
 		return nil, fmt.Errorf("changelog: github %s/%s: %w", owner, repo, err)
@@ -189,10 +235,10 @@ func (f *Fetcher) github(ctx context.Context, owner, repo string) ([]model.Relea
 	return out, nil
 }
 
-// gitlab reads the newest hundred releases of a project on the estate's
-// instance.
-func (f *Fetcher) gitlab(ctx context.Context, path string) ([]model.ReleaseNote, error) {
-	u := fmt.Sprintf("%s/api/v4/projects/%s/releases?per_page=100", strings.TrimRight(f.GitLabURL, "/"), url.PathEscape(path))
+// gitlab reads one page of a project's releases on the estate's instance,
+// newest first.
+func (f *Fetcher) gitlab(ctx context.Context, path string, page int) ([]model.ReleaseNote, error) {
+	u := fmt.Sprintf("%s/api/v4/projects/%s/releases?per_page=%d&page=%d", strings.TrimRight(f.GitLabURL, "/"), url.PathEscape(path), pageSize, page)
 	resp, err := f.Client.Get(ctx, u, httpx.ReqOptions{Accept: "application/json"})
 	if err != nil {
 		return nil, fmt.Errorf("changelog: gitlab %s: %w", path, err)

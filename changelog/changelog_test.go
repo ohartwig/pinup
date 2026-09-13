@@ -6,7 +6,10 @@ package changelog
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -14,7 +17,6 @@ import (
 
 	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
 	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/model"
 	"git.ole-hartwig.eu/pinup/pinup/semverx"
 	"git.ole-hartwig.eu/pinup/pinup/versioning"
 )
@@ -77,13 +79,14 @@ func (g *github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(list)
+	_ = json.NewEncoder(w).Encode(page(list, r.URL.Query()))
 }
 
 // gitlab speaks the projects releases endpoint with the path URL-encoded.
 type gitlab struct {
 	releases map[string][]map[string]any
 	seenAuth string
+	calls    int
 }
 
 func (g *gitlab) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -95,8 +98,30 @@ func (g *gitlab) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, `{"message":"404 Project Not Found"}`, http.StatusNotFound)
 		return
 	}
+	g.calls++
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(list)
+	_ = json.NewEncoder(w).Encode(page(list, r.URL.Query()))
+}
+
+// page slices a list the way both APIs do: per_page and page, 1-based.
+func page(list []map[string]any, q url.Values) []map[string]any {
+	per, _ := strconv.Atoi(q.Get("per_page"))
+	n, _ := strconv.Atoi(q.Get("page"))
+	if per <= 0 {
+		per = 30
+	}
+	if n <= 0 {
+		n = 1
+	}
+	from := (n - 1) * per
+	if from >= len(list) {
+		return []map[string]any{}
+	}
+	to := from + per
+	if to > len(list) {
+		to = len(list)
+	}
+	return list[from:to]
 }
 
 type memCache struct {
@@ -235,8 +260,47 @@ func TestCacheServesSecondCall(t *testing.T) {
 	if gh.calls != 1 {
 		t.Errorf("github called %d times, want 1", gh.calls)
 	}
-	var stored []model.ReleaseNote
-	if err := json.Unmarshal(f.Cache.(*memCache).m["notes\x00https://github.com/o/r.git"], &stored); err != nil || len(stored) != 1 {
-		t.Errorf("cache payload: %v %v", stored, err)
+	var st stored
+	if err := json.Unmarshal(f.Cache.(*memCache).m["notes\x00https://github.com/o/r.git"], &st); err != nil || len(st.Releases) != 1 || !st.Complete {
+		t.Errorf("cache payload: %+v %v", st, err)
+	}
+}
+
+// A project on 2.5.x whose consumer pins the 1.x line has its notes deep
+// in the list: pages are read until one release at or below the current
+// version is in hand, and a cached list that stops short is read again.
+func TestPagesAreReadUntilTheSpanIsCovered(t *testing.T) {
+	f, _, gl, _, rec := fixture(t)
+	f.Cache = &memCache{m: map[string][]byte{}}
+	var list []map[string]any
+	for minor := 5; minor >= 0; minor-- {
+		for patch := 60; patch >= 0; patch-- {
+			list = append(list, map[string]any{"tag_name": fmt.Sprintf("2.%d.%d", minor, patch), "description": "n"})
+		}
+	}
+	list = append(list, map[string]any{"tag_name": "1.63.3", "description": "the one"}, map[string]any{"tag_name": "1.63.2", "description": "n"}, map[string]any{"tag_name": "1.62.17", "description": "current"})
+	gl.releases["devops%2Fcdp"] = list // 366 on 2.x, then the three 1.x
+	src := "https://git.example.test/devops/cdp"
+	notes, _, err := f.Notes(context.Background(), src, scheme{}, "2.5.3", "2.5.5")
+	if err != nil || len(notes) != 2 || gl.calls != 1 {
+		t.Fatalf("2.x span: notes=%d calls=%d err=%v", len(notes), gl.calls, err)
+	}
+	notes, _, err = f.Notes(context.Background(), src, scheme{}, "1.62.17", "1.63.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(notes) != 2 || notes[0].Version != "1.63.3" || notes[0].Body != "the one" {
+		t.Errorf("1.x span: %+v", notes)
+	}
+	// One page was cached but did not reach 1.62.17: four pages read anew.
+	if gl.calls != 1+4 {
+		t.Errorf("gitlab called %d times, want 5", gl.calls)
+	}
+	// The cached list now covers everything: no further call.
+	if _, _, err := f.Notes(context.Background(), src, scheme{}, "2.0.0", "2.5.5"); err != nil || gl.calls != 5 {
+		t.Errorf("third call: calls=%d err=%v", gl.calls, err)
+	}
+	if len(rec.Errors) > 0 {
+		t.Fatal(rec.Errors)
 	}
 }

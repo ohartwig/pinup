@@ -41,6 +41,9 @@ func TestFillNotesAsksOnlyForWhatWillBePushed(t *testing.T) {
 		{DepKey: "e", Dep: dep("e", "", "5.0.0", "", "semver"), NewValue: "5.1.0", NewVersion: "5.1.0", Type: model.UpdateMinor},
 		{DepKey: "f", Dep: dep("f", "https://github.com/o/f", "6.0.0", "", "semver"), NewValue: "6.1.0", NewVersion: "6.1.0", Type: model.UpdateMinor},
 		{DepKey: "g", Dep: dep("g", "https://github.com/o/g", "7.0.0", "", "semver"), NewValue: "7.1.0", NewVersion: "7.1.0", Type: model.UpdateMinor, Blocks: []model.Block{{Reason: model.BlockSchedule}}, SuppressedBy: model.BlockSchedule},
+		// The same key as b: one include read twice. Both carry the notes,
+		// one fetch.
+		{DepKey: "b", Dep: dep("b", "https://github.com/o/b", "2.0.0", "", "semver"), NewValue: "2.1.0", NewVersion: "2.1.0", Type: model.UpdateMinor},
 	}
 	key := func(i int) string { return updates[i].Key() }
 	plan := &model.Plan{
@@ -71,6 +74,9 @@ func TestFillNotesAsksOnlyForWhatWillBePushed(t *testing.T) {
 	}
 	if n := plan.Updates[0].Notes; len(n) != 1 || n[0].Body != "notes for 1.1.0" || plan.Updates[0].CompareURL != "https://github.com/o/a/compare/1.0.2...1.1.0" {
 		t.Errorf("a: notes=%+v compare=%q", n, plan.Updates[0].CompareURL)
+	}
+	if len(plan.Updates[1].Notes) != 1 || len(plan.Updates[7].Notes) != 1 {
+		t.Errorf("b twice: %d and %d notes", len(plan.Updates[1].Notes), len(plan.Updates[7].Notes))
 	}
 	for _, i := range []int{2, 3, 4, 6} {
 		if plan.Updates[i].Notes != nil || plan.Updates[i].CompareURL != "" {
