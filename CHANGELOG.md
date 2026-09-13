@@ -1,3 +1,13 @@
+## [0.12.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.11.0...v0.12.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **runner:** release notes and prBodyNotes in the merge request description ([a6b0587](https://git.ole-hartwig.eu/pinup/pinup/commit/a6b05870fef8861f97bc38370f39c9198ad024df))
+
+### :repeat: Continuous Integrations
+
+* the scheduled self-update survives a push to main ([c0f5564](https://git.ole-hartwig.eu/pinup/pinup/commit/c0f55649ffc2e44bdbe2dc88c700f34d6624afc5))
+
 ## [0.11.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.10.0...v0.11.0) (2026-09-13)
 
 ### :sparkles: Features
