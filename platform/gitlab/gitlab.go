@@ -503,11 +503,15 @@ func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid 
 		mr.Automerge = true
 		return mr, true, nil
 	case resp.status == http.StatusBadRequest || resp.status == http.StatusMethodNotAllowed ||
-		resp.status == http.StatusNotAcceptable || resp.status == http.StatusUnprocessableEntity:
+		resp.status == http.StatusNotAcceptable || resp.status == http.StatusUnprocessableEntity ||
+		resp.status == http.StatusConflict:
 		// Measured on a freshly created request: 400 "SHA must be
 		// provided when merging" while GitLab is still preparing the
-		// diff; 405 without a pipeline; 406 when it cannot be merged.
-		// All mean "not yet", and the next run asks again.
+		// diff; 405 without a pipeline; 406 when it cannot be merged;
+		// 409 "SHA does not match HEAD of source branch" right after a
+		// rebase push, while the request still records the old head
+		// (pinup/pinup!1, 2026-09-13). All mean "not yet", and the next
+		// run asks again.
 		return mrJSON{}, false, nil
 	default:
 		return mrJSON{}, false, classify(resp, projectPath)

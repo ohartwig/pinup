@@ -39,6 +39,7 @@ type fakeMR struct {
 	webURL               string
 	automerge            bool
 	canMerge             bool // whether the /merge endpoint currently succeeds
+	staleHead            bool // the request still records the head before a rebase push
 	createdAt, updatedAt time.Time
 	mergedAt             time.Time
 }
@@ -397,6 +398,12 @@ func (s *gitlabServer) updateMergeRequest(w http.ResponseWriter, mr *fakeMR, bod
 func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if mr.staleHead {
+		// GitLab answers 409 when the sha sent is not the branch's head -
+		// which the request's own record is, right after a rebase push.
+		writeJSON(w, http.StatusConflict, map[string]string{"message": "SHA does not match HEAD of source branch: " + mr.sha})
+		return
+	}
 	if !mr.canMerge {
 		// GitLab answers 405 when the pipeline has not started yet.
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -559,6 +566,19 @@ func TestCreateWithAutomergeThenUpdateSetsItOnceThePipelineIsReady(t *testing.T)
 		t.Errorf("made %d requests, want 2 (POST create + PUT merge)", n)
 	}
 
+	// A run that rebased: GitLab still records the old head, and the
+	// merge call is refused with 409. Not yet, not an error.
+	proj.mrs[0].staleHead = true
+	mrS, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+	if err != nil || mrS.Automerge || slices.Contains(changed, "automerge") {
+		t.Errorf("stale head: err=%v automerge=%v changed=%v", err, mrS.Automerge, changed)
+	}
+	proj.mrs[0].staleHead = false
+	// GET current, then PUT merge (409): four requests so far.
+	if n := rt.Count("git.example.org"); n != 4 {
+		t.Errorf("made %d requests, want 4", n)
+	}
+
 	// The next run: the pipeline is ready now.
 	proj.mrs[0].canMerge = true
 
@@ -572,9 +592,9 @@ func TestCreateWithAutomergeThenUpdateSetsItOnceThePipelineIsReady(t *testing.T)
 	if !slices.Contains(changed, "automerge") {
 		t.Errorf("changed = %v, want it to contain \"automerge\"", changed)
 	}
-	// GET current, then PUT merge (200): two more requests, four total.
-	if n := rt.Count("git.example.org"); n != 4 {
-		t.Errorf("made %d requests total, want 4", n)
+	// GET current, then PUT merge (200): two more requests, six total.
+	if n := rt.Count("git.example.org"); n != 6 {
+		t.Errorf("made %d requests total, want 6", n)
 	}
 
 	// A rule stops allowing automerge: the flag is taken back through
@@ -587,8 +607,8 @@ func TestCreateWithAutomergeThenUpdateSetsItOnceThePipelineIsReady(t *testing.T)
 	if mr3.Automerge || !slices.Contains(changed, "automerge") {
 		t.Errorf("automerge must be cleared and reported: %+v %v", mr3, changed)
 	}
-	if n := rt.Count("git.example.org"); n != 6 {
-		t.Errorf("made %d requests total, want 6", n)
+	if n := rt.Count("git.example.org"); n != 8 {
+		t.Errorf("made %d requests total, want 8", n)
 	}
 	if proj.mrs[0].automerge {
 		t.Error("the fake still has automerge set")
