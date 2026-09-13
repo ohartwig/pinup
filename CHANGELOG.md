@@ -1,3 +1,41 @@
+## [0.12.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.3...v0.12.4) (2026-09-13)
+
+### :bug: Fixes
+
+* a task's output and git's stderr are bounded in memory ([e84a7a6](https://git.ole-hartwig.eu/pinup/pinup/commit/e84a7a67bf1831f83735eff54e50ad7d9b7b1391))
+* **httpx:** a body limit and a per-attempt timeout ([9ea6ae6](https://git.ole-hartwig.eu/pinup/pinup/commit/9ea6ae6a319189651f55749c9224f6fe9da50313))
+* **model:** a dependency key names the manager and the locus; a plan refuses duplicate updates ([09c6291](https://git.ole-hartwig.eu/pinup/pinup/commit/09c6291310576d9bf07c4ab2abb422e9e4449faa))
+* **plugin:** allowedCommands patterns are anchored whatever their author wrote ([f19ec68](https://git.ole-hartwig.eu/pinup/pinup/commit/f19ec68ca7d7cbe5b4ee41222d9ccc8a4b300331))
+* **security:** a credential header never follows a redirect off its host ([1fe9877](https://git.ole-hartwig.eu/pinup/pinup/commit/1fe9877d94fb12a0846a636b6e413d5d076689ad))
+* **security:** askpass answers only a prompt for the instance ([872cd11](https://git.ole-hartwig.eu/pinup/pinup/commit/872cd11c19a774777cfee076b3debf59bec9b48a))
+* **security:** git ls-remote takes an http(s) URL after --, in its own directory and environment ([7deb5c5](https://git.ole-hartwig.eu/pinup/pinup/commit/7deb5c5bce4c160dfd2ededb10c062a49f49951d))
+* **security:** sanitise foreign text in descriptions; tasks get a scratch HOME ([f12b5dd](https://git.ole-hartwig.eu/pinup/pinup/commit/f12b5dd072b18945eb748767b069c79a59dcee2b)), closes [#123](https://git.ole-hartwig.eu/pinup/pinup/issues/123) [#47](https://git.ole-hartwig.eu/pinup/pinup/issues/47)
+* **security:** the dashboard is the issue the bot itself wrote ([ef0c3e9](https://git.ole-hartwig.eu/pinup/pinup/commit/ef0c3e9259c6bb477bc833c9b352220546749556))
+* **security:** the platform token reaches only pinup's own API paths; the registry exchange is bound to the estate's registry ([79c5b6a](https://git.ole-hartwig.eu/pinup/pinup/commit/79c5b6a18b52c2ad50c1c23b33d18af1de10e806))
+
+### :memo: Documentation
+
+* **reviews:** code review and security review at 62016fe ([1861aeb](https://git.ole-hartwig.eu/pinup/pinup/commit/1861aeb9ba038ebd00ec01c964a8a384b63323dd))
+* **reviews:** status of every finding ([afe5c4b](https://git.ole-hartwig.eu/pinup/pinup/commit/afe5c4b1e7bb03e87ab048806975a9d935aef1df))
+* **tasks:** D.4 delivered - the first live self-update and what it found ([62016fe](https://git.ole-hartwig.eu/pinup/pinup/commit/62016fe0e9d169f39b26b25093a270ffc6201206))
+* the release chain and its three facts; D.4's token wording ([860ea0d](https://git.ole-hartwig.eu/pinup/pinup/commit/860ea0dc2206e463fe05a5385c82c7393747c5f0))
+
+### :zap: Refactor
+
+* **cmd:** one HTTP client per run, output per project, no swallowed cache errors ([5154ee8](https://git.ole-hartwig.eu/pinup/pinup/commit/5154ee8c09f9fa3441b2ca51d33346001fd540da))
+* **cmd:** whatif is a run state with one method per stage ([ea335da](https://git.ole-hartwig.eu/pinup/pinup/commit/ea335da7cf873a2ef0bba313fd768f39c41f6307))
+* **planner:** planOne becomes a planning state with one method per decision ([f7930bd](https://git.ole-hartwig.eu/pinup/pinup/commit/f7930bd8fe6534ba0a1c61b3d2d5fe0e66f8da92))
+* the dashboard, the project run and the comparator in pieces ([5112361](https://git.ole-hartwig.eu/pinup/pinup/commit/51123617e54f9ab3c8d2f9c201f91fa38f41fd0c))
+
+### :white_check_mark: Tests
+
+* **cmd:** migrate's support table must know every key the code reads ([46331a2](https://git.ole-hartwig.eu/pinup/pinup/commit/46331a27cf804ed9ea50317c55d3fbd00762925c))
+* **cmd:** the live path end to end without a network; the checkout returns to where it started ([e282a1d](https://git.ole-hartwig.eu/pinup/pinup/commit/e282a1d64dba9f14d1b58a555bc7ae9e0673e2ca))
+
+### :repeat: Chores
+
+* review items C4-C6, C9 - rune-safe truncation, getenv for the GitHub token, staticcheck clean and in CI ([47ebf7b](https://git.ole-hartwig.eu/pinup/pinup/commit/47ebf7bc1b67826231602a9a0836439c07551434))
+
 ## [0.12.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.2...v0.12.3) (2026-09-13)
 
 ### :bug: Fixes
