@@ -1,3 +1,9 @@
+## [0.13.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.6...v0.13.0) (2026-09-13)
+
+### :sparkles: Features
+
+* **token:** rotate into several scopes, and further tokens of the account alongside ([c6d3117](https://git.ole-hartwig.eu/pinup/pinup/commit/c6d311726ed1a5a138ad429a348f4c4abe78ad78))
+
 ## [0.12.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.12.5...v0.12.6) (2026-09-13)
 
 ### :bug: Fixes
