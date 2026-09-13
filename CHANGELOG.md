@@ -1,3 +1,13 @@
+## [0.14.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.2...v0.14.3) (2026-09-13)
+
+### :bug: Fixes
+
+* **ci:** cilint says which kind of pipeline it checked ([d52c598](https://git.ole-hartwig.eu/pinup/pinup/commit/d52c598721307159b07c3f408b15a2cf2732daa4))
+
+### :repeat: Continuous Integrations
+
+* the expected jobs follow the yasrt release - release:links on the tag, version and release on main ([599b77d](https://git.ole-hartwig.eu/pinup/pinup/commit/599b77d090d3aeefe19ca26d11bc5d121103156a))
+
 ## [0.14.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.1...v0.14.2) (2026-09-13)
 
 ### :bug: Fixes
