@@ -57,7 +57,11 @@ var keySupport = map[string]support{
 	"commitBody": partial, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
 	"semanticCommitType": supported, "semanticCommitScope": supported, "commitMessageTopic": supported,
 	"commitMessageExtra": supported, "commitMessageAction": supported, "branchPrefix": supported, "branchTopic": supported,
-	"executionTimeout": partial, "$schema": supported,
+	"additionalBranchPrefix": supported, "commitMessagePrefix": supported, "commitMessageSuffix": supported,
+	"commitMessageLowerCase": supported, "semanticCommits": supported,
+	// Read into the template variables, decided by separateMajorMinor alone.
+	"separateMultipleMinor": partial,
+	"executionTimeout":      partial, "$schema": supported,
 }
 
 // cmdMigrate resolves a configuration as a run would and reports, key by
