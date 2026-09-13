@@ -1,3 +1,9 @@
+## [0.8.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.8.0...v0.8.1) (2026-09-13)
+
+### :bug: Fixes
+
+* **migrate:** the classification says what is built today ([08e7ca1](https://git.ole-hartwig.eu/pinup/pinup/commit/08e7ca1217b8c2ee8a3d29409bb9edaf06493c24))
+
 ## [0.8.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.7.2...v0.8.0) (2026-09-13)
 
 ### :sparkles: Features
