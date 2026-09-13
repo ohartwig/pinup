@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 func origins(key string) model.Origin {

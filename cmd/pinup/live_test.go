@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/platformfake"
-	"git.ole-hartwig.eu/pinup/pinup/git"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
+	"github.com/ohartwig/pinup/fake/platformfake"
+	"github.com/ohartwig/pinup/git"
+	"github.com/ohartwig/pinup/lookup"
 )
 
 // cannedDocker answers digests too, as a registry does: the runner's

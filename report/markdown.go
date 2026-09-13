@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Markdown renders a plan for a person: what will be written, what is held

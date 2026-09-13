@@ -36,7 +36,7 @@ import (
 	"sync"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // Name is the platform name a plan's report refers to.

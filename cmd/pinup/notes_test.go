@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/versioning"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // fakeNotes records what it was asked and answers from a table.

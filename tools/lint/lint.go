@@ -26,7 +26,7 @@ import (
 
 // Module is the import path this repository publishes under. Imports that do
 // not carry this prefix are somebody else's problem.
-const Module = "git.ole-hartwig.eu/pinup/pinup"
+const Module = "github.com/ohartwig/pinup"
 
 // Violation is one broken rule, located well enough to fix without searching.
 type Violation struct {

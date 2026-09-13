@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // Ticked boxes are read by their markers, unticked ones are not, and the

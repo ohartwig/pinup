@@ -30,7 +30,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/jsonc"
+	"github.com/ohartwig/pinup/jsonc"
 )
 
 // Options shape the output.

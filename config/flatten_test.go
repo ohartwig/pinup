@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
+	"github.com/ohartwig/pinup/config/preset"
 )
 
 func TestFlattenNotationAndOrder(t *testing.T) {

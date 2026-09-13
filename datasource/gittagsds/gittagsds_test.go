@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
+	"github.com/ohartwig/pinup/lookup"
 )
 
 // testEnv pins identity and disables any global/system git config, the same

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/discover"
+	"github.com/ohartwig/pinup/discover"
 )
 
 // write creates a file with some content at rel (slash-separated) under root,

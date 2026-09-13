@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/plugin"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/plugin"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // platformEnv is what the process learns about its GitLab instance from the

@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Index maps a dependency reference to the repositories that carry it.

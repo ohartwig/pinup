@@ -3,6 +3,6 @@
 
 package githubds
 
-import "git.ole-hartwig.eu/pinup/pinup/lookup"
+import "github.com/ohartwig/pinup/lookup"
 
 var _ lookup.Datasource = (*Datasource)(nil)

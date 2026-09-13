@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
+	"github.com/ohartwig/pinup/fake/harness"
 )
 
 // tokenServer speaks the personal-access-token and CI-variable endpoints:

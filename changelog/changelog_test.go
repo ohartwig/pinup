@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/semverx"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/semverx"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // scheme is strict three-part semver, enough to order releases.

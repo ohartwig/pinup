@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/sched"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/sched"
 )
 
 // Policy is the part of a resolved configuration that decides whether one

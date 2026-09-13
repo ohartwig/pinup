@@ -24,7 +24,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Scheme is unconfigured until WithConfig is called. Registered under the bare

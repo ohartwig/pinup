@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/model"
 )
 
 const name = "terraform-version"

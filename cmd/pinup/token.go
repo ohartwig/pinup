@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/platform/gitlab"
+	"github.com/ohartwig/pinup/platform/gitlab"
 )
 
 // cmdToken renews the bot's tokens before they expire: `pinup token

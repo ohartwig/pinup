@@ -39,7 +39,7 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // defaultBase is OSV's public API. A test or an air-gapped mirror overrides

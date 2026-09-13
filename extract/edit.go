@@ -6,7 +6,7 @@ package extract
 import (
 	"fmt"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // EditRef turns an update into the byte-range edit of a versioned reference

@@ -20,13 +20,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"git.ole-hartwig.eu/pinup/pinup/glob"
+	"github.com/ohartwig/pinup/glob"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Conflict is two edits that claim the same bytes.

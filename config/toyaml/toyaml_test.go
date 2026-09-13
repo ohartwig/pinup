@@ -6,8 +6,8 @@ package toyaml_test
 import (
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/config/toyaml"
-	"git.ole-hartwig.eu/pinup/pinup/yamlx"
+	"github.com/ohartwig/pinup/config/toyaml"
+	"github.com/ohartwig/pinup/yamlx"
 )
 
 // The runner's configuration round trip - converted, loaded, resolved to

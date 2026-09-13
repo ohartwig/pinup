@@ -12,9 +12,9 @@ import (
 	"sync"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/semverx"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/semverx"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // testScheme is a small strict-semver scheme on top of the L0 parser. osv is

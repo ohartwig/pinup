@@ -19,8 +19,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/jsonc"
-	"git.ole-hartwig.eu/pinup/pinup/yamlx"
+	"github.com/ohartwig/pinup/jsonc"
+	"github.com/ohartwig/pinup/yamlx"
 )
 
 // Layer is one source of configuration, already parsed.

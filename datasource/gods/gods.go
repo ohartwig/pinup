@@ -77,11 +77,11 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/semverx"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/semverx"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Kind selects which of the two datasources an instance serves.

@@ -24,9 +24,9 @@ import (
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/glob"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/glob"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Subject is the dependency as the matchers see it. Empty strings mean

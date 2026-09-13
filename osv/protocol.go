@@ -6,7 +6,7 @@ package osv
 import (
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // The wire shapes below are OSV's documented protocol

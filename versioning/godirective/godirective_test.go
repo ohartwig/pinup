@@ -6,8 +6,8 @@ package godirective
 import (
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/vertest"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/fake/vertest"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {

@@ -33,8 +33,8 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 // defaultTimeout bounds one `git ls-remote` invocation against a remote

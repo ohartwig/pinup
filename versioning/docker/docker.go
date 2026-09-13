@@ -28,8 +28,8 @@ import (
 	"strconv"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 type Scheme struct{}

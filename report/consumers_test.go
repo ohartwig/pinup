@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 var now = time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)

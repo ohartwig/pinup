@@ -6,7 +6,7 @@ package regexver
 import (
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/vertest"
+	"github.com/ohartwig/pinup/fake/vertest"
 )
 
 // The estate's one literal regex versioning, on the bash package.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // D.12: every bare @N reference is classified, the ones with a newer major

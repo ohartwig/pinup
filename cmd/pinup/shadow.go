@@ -14,10 +14,10 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/publish"
-	"git.ole-hartwig.eu/pinup/pinup/report"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
+	"github.com/ohartwig/pinup/report"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // cmdShadow compares plan reports with the merge requests Renovate has

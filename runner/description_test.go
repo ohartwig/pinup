@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/platformfake"
-	"git.ole-hartwig.eu/pinup/pinup/git"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/fake/platformfake"
+	"github.com/ohartwig/pinup/git"
+	"github.com/ohartwig/pinup/model"
 )
 
 func TestDescriptionCarriesUpdatesNotesAndReleases(t *testing.T) {

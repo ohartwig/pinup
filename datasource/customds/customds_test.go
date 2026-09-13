@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 func client(rt http.RoundTripper) *httpx.Client {

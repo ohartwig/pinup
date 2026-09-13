@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/semverx"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/semverx"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Scheme is the semver implementation.

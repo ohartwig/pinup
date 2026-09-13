@@ -6,7 +6,7 @@ package hashicorp
 import (
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/vertest"
+	"github.com/ohartwig/pinup/fake/vertest"
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {

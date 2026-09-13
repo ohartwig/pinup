@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/semverx"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/semverx"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // testScheme is a small semver on top of the L0 parser. The planner is L2

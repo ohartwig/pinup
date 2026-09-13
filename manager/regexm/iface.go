@@ -3,6 +3,6 @@
 
 package regexm
 
-import "git.ole-hartwig.eu/pinup/pinup/extract"
+import "github.com/ohartwig/pinup/extract"
 
 var _ extract.Manager = (*Manager)(nil)

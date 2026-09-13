@@ -11,10 +11,10 @@ import (
 	"strings"
 	"unicode"
 
-	"git.ole-hartwig.eu/pinup/pinup/hbs"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/sched"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/hbs"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/sched"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // The templates that name a branch and title its merge request live in the

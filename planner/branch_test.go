@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/config"
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/config"
+	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // resolvedConfig is the estate configuration resolved over the captured

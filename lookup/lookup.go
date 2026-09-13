@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Ref is what a datasource needs to find a package.

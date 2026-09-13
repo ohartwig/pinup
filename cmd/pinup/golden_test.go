@@ -17,12 +17,12 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/osv"
-	"git.ole-hartwig.eu/pinup/pinup/report"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/osv"
+	"github.com/ohartwig/pinup/report"
+	"github.com/ohartwig/pinup/versioning"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // Golden repositories (H.5): testdata/golden/<name>/ holds a repository

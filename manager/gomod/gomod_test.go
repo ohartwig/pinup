@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/model"
 )
 
 func extractAll(t *testing.T, path, src string) (extract.File, []model.Dependency) {

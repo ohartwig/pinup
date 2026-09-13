@@ -32,9 +32,9 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Name is the datasource name dependencies and rules refer to.

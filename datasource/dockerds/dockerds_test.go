@@ -13,8 +13,8 @@ import (
 	"sync"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/lookup"
 )
 
 // hubRegistry fakes a Docker Registry HTTP API V2 host: it speaks the bearer

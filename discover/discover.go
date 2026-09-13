@@ -28,9 +28,9 @@ import (
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/glob"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/re2x"
+	"github.com/ohartwig/pinup/glob"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/re2x"
 )
 
 // Request describes one discovery run.

@@ -25,10 +25,10 @@ import (
 	"sync"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/yamlx"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/yamlx"
 )
 
 // Datasource is the helm datasource.

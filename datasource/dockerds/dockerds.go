@@ -41,8 +41,8 @@ import (
 	"strings"
 	"sync"
 
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Name is the datasource name dependencies and rules refer to.

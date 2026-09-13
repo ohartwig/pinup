@@ -6,7 +6,7 @@ package semver
 import (
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/vertest"
+	"github.com/ohartwig/pinup/fake/vertest"
 )
 
 // The captured behaviour table is the specification. This test is the whole

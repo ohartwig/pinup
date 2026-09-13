@@ -3,6 +3,6 @@
 
 package gitlab
 
-import "git.ole-hartwig.eu/pinup/pinup/publish"
+import "github.com/ohartwig/pinup/publish"
 
 var _ publish.Platform = (*Platform)(nil)

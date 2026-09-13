@@ -7,18 +7,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"git.ole-hartwig.eu/pinup/pinup/report"
+	"github.com/ohartwig/pinup/report"
 	"os"
 	"strings"
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/apply"
-	"git.ole-hartwig.eu/pinup/pinup/cache"
-	"git.ole-hartwig.eu/pinup/pinup/config"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/apply"
+	"github.com/ohartwig/pinup/cache"
+	"github.com/ohartwig/pinup/config"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // cannedDS answers lookups from a table and refuses everything else. The

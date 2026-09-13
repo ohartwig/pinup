@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // stub is a minimal three-part scheme, enough to exercise the free functions

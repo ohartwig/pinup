@@ -18,11 +18,11 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/hbs"
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/jsonata"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/hbs"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/jsonata"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Datasource serves one customDatasources entry as "custom.<name>".

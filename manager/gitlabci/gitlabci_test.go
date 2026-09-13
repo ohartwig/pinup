@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/model"
 )
 
 func run(t *testing.T, src string) extract.Result {

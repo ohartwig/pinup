@@ -12,11 +12,11 @@ import (
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/config"
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
-	"git.ole-hartwig.eu/pinup/pinup/config/toyaml"
-	"git.ole-hartwig.eu/pinup/pinup/rules"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/config"
+	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/config/toyaml"
+	"github.com/ohartwig/pinup/rules"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // Support classifies a configuration key by what this version of pinup does

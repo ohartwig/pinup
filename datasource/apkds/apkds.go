@@ -29,10 +29,10 @@ import (
 	"fmt"
 	"sync"
 
-	"git.ole-hartwig.eu/pinup/pinup/apkindex"
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/apkindex"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 // View names the repositories and architectures a datasource resolves

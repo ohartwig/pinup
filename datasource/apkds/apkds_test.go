@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/lookup"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/lookup"
 )
 
 // indexOf renders an APKINDEX.tar.gz carrying the given package versions.

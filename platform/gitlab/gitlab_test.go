@@ -19,8 +19,8 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // testPageSize forces pagination to be exercised on every run, the same

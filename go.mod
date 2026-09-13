@@ -1,4 +1,4 @@
-module git.ole-hartwig.eu/pinup/pinup
+module github.com/ohartwig/pinup
 
 go 1.27.0
 

@@ -6,8 +6,8 @@ package docker
 import (
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/vertest"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/fake/vertest"
+	"github.com/ohartwig/pinup/model"
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {

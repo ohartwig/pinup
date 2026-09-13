@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sort"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // RangeStrategy says how a new version should be written back into an existing

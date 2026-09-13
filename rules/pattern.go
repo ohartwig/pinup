@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/glob"
-	"git.ole-hartwig.eu/pinup/pinup/re2x"
+	"github.com/ohartwig/pinup/glob"
+	"github.com/ohartwig/pinup/re2x"
 )
 
 // pattern is one entry of a match list in Renovate's string-pattern form:

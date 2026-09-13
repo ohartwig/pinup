@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // ConcatKeys are the keys whose arrays concatenate instead of replacing.

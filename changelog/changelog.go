@@ -18,9 +18,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"git.ole-hartwig.eu/pinup/pinup/httpx"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Fetcher reads releases from the forges it knows. GitLab is the estate's

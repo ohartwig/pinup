@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/model"
 )
 
 // ResolveFile loads one configuration file, expands its extends against

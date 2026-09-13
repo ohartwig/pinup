@@ -6,7 +6,7 @@ package config
 import (
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
+	"github.com/ohartwig/pinup/config/preset"
 	"testing"
 )
 

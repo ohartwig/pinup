@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/re2x"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/re2x"
 )
 
 // The estate's runner allowlist, as its .gitlab-ci.yml sets it.

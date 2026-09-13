@@ -13,8 +13,8 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/model"
 )
 
 // depNamed finds the one dependency with the given (DepName, DepType) pair,

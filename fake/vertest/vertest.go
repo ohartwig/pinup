@@ -27,8 +27,8 @@ import (
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Table is a captured behaviour table.

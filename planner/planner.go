@@ -19,9 +19,9 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/re2x"
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/re2x"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 // Request is everything the planner needs for one repository.

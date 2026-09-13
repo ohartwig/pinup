@@ -11,7 +11,7 @@ import (
 	"sort"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 const (

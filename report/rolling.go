@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // RollingMajor is one bare-major reference (`@N`) somewhere in the estate,

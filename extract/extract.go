@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"sort"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // File is a file as it was read, with its bytes untouched.

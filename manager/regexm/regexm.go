@@ -28,10 +28,10 @@ import (
 	"fmt"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/hbs"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/re2x"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/hbs"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/re2x"
 )
 
 // Manager is the configured regex manager. One instance serves every custom

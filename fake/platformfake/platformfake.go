@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // Platform is the fake.

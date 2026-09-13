@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // The shadow comparison: pinup's plans against the merge requests Renovate

@@ -12,9 +12,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/report"
-	"git.ole-hartwig.eu/pinup/pinup/wire"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/report"
+	"github.com/ohartwig/pinup/wire"
 )
 
 // rollingMajorTitle is the one issue the notice lives in; the exact title

@@ -75,9 +75,9 @@ import (
 	"context"
 	"strings"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/yamlx"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/yamlx"
 )
 
 // name is both the registry key (extract.Registry) and model.Dependency.Manager.

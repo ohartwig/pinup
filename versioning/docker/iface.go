@@ -3,7 +3,7 @@
 
 package docker
 
-import "git.ole-hartwig.eu/pinup/pinup/versioning"
+import "github.com/ohartwig/pinup/versioning"
 
 var (
 	_ versioning.Versioning = (*Scheme)(nil)

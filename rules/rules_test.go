@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/versioning"
+	"github.com/ohartwig/pinup/versioning"
 )
 
 func rulesOf(t *testing.T, rs ...map[string]any) *Engine {

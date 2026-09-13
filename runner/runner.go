@@ -21,10 +21,10 @@ import (
 	"strings"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/apply"
-	"git.ole-hartwig.eu/pinup/pinup/git"
-	"git.ole-hartwig.eu/pinup/pinup/model"
-	"git.ole-hartwig.eu/pinup/pinup/publish"
+	"github.com/ohartwig/pinup/apply"
+	"github.com/ohartwig/pinup/git"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // Options is what one execution needs beyond the plan.

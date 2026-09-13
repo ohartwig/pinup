@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"git.ole-hartwig.eu/pinup/pinup/extract"
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/model"
 )
 
 // The corpus: both .terraform-version files of the synthetic tree, as

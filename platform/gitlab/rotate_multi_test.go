@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"git.ole-hartwig.eu/pinup/pinup/fake/harness"
+	"github.com/ohartwig/pinup/fake/harness"
 )
 
 // multiTokenServer speaks the token and variable endpoints for an account

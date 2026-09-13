@@ -6,9 +6,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
+	"github.com/ohartwig/pinup/config/preset"
 
-	"git.ole-hartwig.eu/pinup/pinup/model"
+	"github.com/ohartwig/pinup/model"
 )
 
 // Decoded is the part of a resolved configuration the pipeline needs in typed

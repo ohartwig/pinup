@@ -10,8 +10,8 @@ import (
 	"io"
 	"os"
 
-	"git.ole-hartwig.eu/pinup/pinup/config"
-	"git.ole-hartwig.eu/pinup/pinup/config/preset"
+	"github.com/ohartwig/pinup/config"
+	"github.com/ohartwig/pinup/config/preset"
 )
 
 // cmdPrintConfig prints the resolved configuration - the file with its
