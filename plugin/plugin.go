@@ -267,6 +267,35 @@ var Blocked = []string{
 	"GIT_ASKPASS", "HOME", "GNUPGHOME", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_PARAMETERS",
 }
 
+// maxOutput bounds a task's stdout and stderr each.
+const maxOutput = 4 << 20
+
+// limitedBuffer keeps the first limit bytes written to it and notes that
+// more followed.
+type limitedBuffer struct {
+	bytes.Buffer
+	limit     int
+	truncated bool
+}
+
+func (b *limitedBuffer) Write(p []byte) (int, error) {
+	if room := b.limit - b.Buffer.Len(); len(p) > room {
+		if room > 0 {
+			b.Buffer.Write(p[:room])
+		}
+		b.truncated = true
+		return len(p), nil
+	}
+	return b.Buffer.Write(p)
+}
+
+func (b *limitedBuffer) String() string {
+	if b.truncated {
+		return b.Buffer.String() + "\n… (output truncated)"
+	}
+	return b.Buffer.String()
+}
+
 // Result is what one task produced.
 type Result struct {
 	Task     model.Task
@@ -354,8 +383,11 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	cmd := exec.CommandContext(ctx, t.Command[0], t.Command[1:]...)
 	cmd.Dir = filepath.Join(root, t.Dir)
 	cmd.Env = r.Environment(home)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &stdout, &stderr
+	// Output is bounded: a verbose composer run prints megabytes, a task
+	// in a loop prints until the timeout, and neither is worth the
+	// partition's memory. The tail is cut, and the cut is marked.
+	stdout, stderr := &limitedBuffer{limit: maxOutput}, &limitedBuffer{limit: maxOutput}
+	cmd.Stdout, cmd.Stderr = stdout, stderr
 	// A hung tool is killed, not waited for: the timeout is the contract.
 	cmd.WaitDelay = 5 * time.Second
 

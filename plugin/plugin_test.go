@@ -165,3 +165,20 @@ func TestYarnLockIsRefreshedByYarn(t *testing.T) {
 		t.Errorf("gomod refresh = %+v", g)
 	}
 }
+
+// A task's output is bounded and the cut is marked.
+func TestTaskOutputIsBounded(t *testing.T) {
+	var b limitedBuffer
+	b.limit = 10
+	b.Write([]byte("0123456"))
+	b.Write([]byte("789abcdef"))
+	if got := b.String(); got != "0123456789\n… (output truncated)" {
+		t.Errorf("got %q", got)
+	}
+	var small limitedBuffer
+	small.limit = 10
+	small.Write([]byte("short"))
+	if small.String() != "short" {
+		t.Errorf("an output within the limit is not marked: %q", small.String())
+	}
+}

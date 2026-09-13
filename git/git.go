@@ -128,12 +128,30 @@ func (r *Repo) runWith(ctx context.Context, env []string, args ...string) (strin
 	cmd := exec.CommandContext(ctx, bin, args...)
 	cmd.Dir = r.Dir
 	cmd.Env = append(append(os.Environ(), r.Env...), env...)
-	var out, errb bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &out, &errb
+	var out bytes.Buffer
+	// stderr is a message for a log line; a megabyte of it is enough.
+	errb := &capped{limit: 1 << 20}
+	cmd.Stdout, cmd.Stderr = &out, errb
 	if err := cmd.Run(); err != nil {
 		return "", fmt.Errorf("git %s: %w: %s", args[0], err, redact(strings.TrimSpace(errb.String())))
 	}
 	return strings.TrimRight(out.String(), "\n"), nil
+}
+
+// capped keeps the first limit bytes written to it.
+type capped struct {
+	bytes.Buffer
+	limit int
+}
+
+func (c *capped) Write(p []byte) (int, error) {
+	if room := c.limit - c.Len(); len(p) > room {
+		if room > 0 {
+			c.Buffer.Write(p[:room])
+		}
+		return len(p), nil
+	}
+	return c.Buffer.Write(p)
 }
 
 // redact removes anything that looks like a token in a URL.
