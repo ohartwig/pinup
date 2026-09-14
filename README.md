@@ -98,6 +98,7 @@ Environment:
 | `PINUP_CACHE` | the lookup cache (bbolt); release lists, first-seen records, advisories, release notes |
 | `PINUP_ALLOWED_COMMANDS` | JSON array of anchored patterns a `postUpgradeTasks` command must match — the runner's decision, never a repository's |
 | `PINUP_PLUGIN_ENV` | variables a task may see besides `PATH`, `LANG`, `TZ`; tokens and keys never cross |
+| `PINUP_TASK_NETRC` | a `.netrc` written into each task's scratch `HOME` (`machine <host> login <user> password <read-only token>`), for a toolchain that fetches first-party modules over https - `go mod tidy` on a private Go module; never handed over as a variable |
 | `PINUP_RUNNER_PROJECT` | the project repositories extend the runner configuration from, as `local><project>`; taken from `--config local>…` when that names it |
 | `PINUP_APK_VIEWS` | apk indexes served natively besides the public Wolfi repository: `{"custom.<name>": {"mirrors": [...], "arches": [...]}}`; a configuration's `customDatasources` entry of the same name is superseded |
 

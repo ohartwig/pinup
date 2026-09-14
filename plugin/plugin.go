@@ -249,6 +249,13 @@ type Runner struct {
 	Exec func(ctx context.Context, cmd *exec.Cmd) error
 	// Now is the clock for the duration a task took; nil leaves it zero.
 	Now func() time.Time
+	// Netrc, when set, is written as .netrc into the task's scratch HOME,
+	// mode 0600, and gone with it: the credential a toolchain needs to
+	// fetch a first-party module over https - `go mod tidy` for a private
+	// Go module, the analogue of COMPOSER_AUTH and NPM_TOKEN in PassEnv.
+	// The runner composes it from a read-only token of its own choosing;
+	// the platform token is never handed over this way by pinup itself.
+	Netrc string
 }
 
 // Baseline is the environment every task gets, credentials excluded.
@@ -263,7 +270,7 @@ var Baseline = []string{"PATH", "LANG", "LC_ALL", "TMPDIR", "TZ"}
 // platform token, the signing material and the paths that lead to them
 // are the things a task must not see.
 var Blocked = []string{
-	"PINUP_GITLAB_TOKEN", "GITLAB_TOKEN", "CI_JOB_TOKEN", "PINUP_SIGNING_KEY", "PINUP_GPG_PRIVATE_KEY",
+	"PINUP_GITLAB_TOKEN", "GITLAB_TOKEN", "CI_JOB_TOKEN", "PINUP_SIGNING_KEY", "PINUP_GPG_PRIVATE_KEY", "PINUP_TASK_NETRC",
 	"GIT_ASKPASS", "HOME", "GNUPGHOME", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_PARAMETERS",
 }
 
@@ -379,6 +386,11 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 		return Result{}, fmt.Errorf("plugin: %w", err)
 	}
 	defer os.RemoveAll(home)
+	if r.Netrc != "" {
+		if err := os.WriteFile(filepath.Join(home, ".netrc"), []byte(strings.TrimSpace(r.Netrc)+"\n"), 0o600); err != nil {
+			return Result{}, fmt.Errorf("plugin: netrc: %w", err)
+		}
+	}
 
 	cmd := exec.CommandContext(ctx, t.Command[0], t.Command[1:]...)
 	cmd.Dir = filepath.Join(root, t.Dir)

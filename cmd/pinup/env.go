@@ -189,8 +189,11 @@ func httpClient(p platformEnv) *httpx.Client {
 // baseline (a registry credential for first-party packages, say),
 // PINUP_EXECUTION_TIMEOUT is minutes per task - Renovate's unit; the
 // estate's runner sets 45 for its largest composer repository.
+// PINUP_TASK_NETRC is a .netrc a task's toolchain fetches first-party
+// modules with (`machine <host> login <user> password <read-only token>`),
+// written into the task's scratch HOME and never seen as a variable.
 func taskRunner(getenv func(string) string) *plugin.Runner {
-	r := &plugin.Runner{Now: time.Now}
+	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC")}
 	for _, name := range strings.Split(getenv("PINUP_PLUGIN_ENV"), ",") {
 		if name = strings.TrimSpace(name); name != "" {
 			r.PassEnv = append(r.PassEnv, name)

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -221,5 +222,45 @@ func TestWolfiPackagesTasksPassTheRunnerAllowlist(t *testing.T) {
 	// character - is refused by the pattern, not run.
 	if _, err := Compile(goPin, []model.Update{upd("ksops.yaml; id", "x", "1", "2")}, runnerAllowed); err == nil {
 		t.Error("a packageFile with a chaining character was admitted")
+	}
+}
+
+// A .netrc the runner composes lands in the task's scratch HOME, mode
+// 0600, and goes with it; the variable it came from never crosses as an
+// environment variable.
+func TestNetrcIsWrittenIntoTheScratchHomeOnly(t *testing.T) {
+	env := map[string]string{"PATH": "/usr/bin", "PINUP_TASK_NETRC": "machine git.example.test login oauth2 password t0k"}
+	var seenEnv []string
+	var seenNetrc string
+	var mode os.FileMode
+	r := &Runner{
+		PassEnv: []string{"PINUP_TASK_NETRC"}, Netrc: env["PINUP_TASK_NETRC"],
+		Getenv: func(k string) string { return env[k] },
+		Exec: func(_ context.Context, c *exec.Cmd) error {
+			seenEnv = c.Env
+			for _, e := range c.Env {
+				if home, ok := strings.CutPrefix(e, "HOME="); ok {
+					raw, err := os.ReadFile(filepath.Join(home, ".netrc"))
+					if err != nil {
+						return err
+					}
+					st, _ := os.Stat(filepath.Join(home, ".netrc"))
+					mode = st.Mode().Perm()
+					seenNetrc = string(raw)
+				}
+			}
+			return nil
+		},
+	}
+	if _, err := r.Run(context.Background(), t.TempDir(), model.Task{Command: []string{"go", "mod", "tidy"}}); err != nil {
+		t.Fatal(err)
+	}
+	if seenNetrc != "machine git.example.test login oauth2 password t0k\n" || mode != 0o600 {
+		t.Errorf("netrc = %q mode %v", seenNetrc, mode)
+	}
+	for _, e := range seenEnv {
+		if strings.HasPrefix(e, "PINUP_TASK_NETRC=") {
+			t.Error("the netrc crossed as a variable")
+		}
 	}
 }
