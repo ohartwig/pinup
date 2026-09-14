@@ -9,7 +9,9 @@
 // on it - for free, from work already done. The release fast lane reads it
 // to run against the consumers of a package that was just released, rather
 // than searching or cloning the estate to find them, which is what cost the
-// Renovate runner 30 to 120 minutes per release.
+// Renovate runner 30 to 120 minutes per release. The index also keeps each
+// repository's dependencies with their versions, so the advisory watch can
+// ask OSV about the whole estate without a clone (plan.md §6.5).
 package report
 
 import (
@@ -31,11 +33,28 @@ type Index struct {
 	// Repositories records when each repository was last indexed, so a
 	// repository that disappeared is not carried forever.
 	Repositories map[string]time.Time `json:"repositories"`
+	// Dependencies is what each repository carries, by version: the
+	// advisory watch's input. A repository's list is replaced whole when
+	// it is recorded again. Absent in an index written before it existed.
+	Dependencies map[string][]Dependency `json:"dependencies,omitempty"`
+}
+
+// Dependency is one entry of Index.Dependencies: enough to ask a
+// vulnerability database about it and to name it in a targeted run.
+type Dependency struct {
+	Datasource  string `json:"datasource"`
+	PackageName string `json:"packageName"`
+	// Version is the dependency's locked version when one is known, else
+	// its current value - a range is not a version, and the watch says so
+	// rather than asking about it.
+	Version    string `json:"version"`
+	Versioning string `json:"versioning,omitempty"`
+	File       string `json:"file"`
 }
 
 // NewIndex returns an empty index.
 func NewIndex() *Index {
-	return &Index{Consumers: map[string][]string{}, Repositories: map[string]time.Time{}}
+	return &Index{Consumers: map[string][]string{}, Repositories: map[string]time.Time{}, Dependencies: map[string][]Dependency{}}
 }
 
 // LoadIndex reads an index file; a missing file is an empty index.
@@ -50,6 +69,9 @@ func LoadIndex(path string) (*Index, error) {
 	idx := NewIndex()
 	if err := json.Unmarshal(raw, idx); err != nil {
 		return nil, err
+	}
+	if idx.Dependencies == nil {
+		idx.Dependencies = map[string][]Dependency{}
 	}
 	return idx, nil
 }
@@ -82,6 +104,8 @@ func Key(d model.Dependency) string {
 // something that repository would want to hear about.
 func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 	x.forget(repo)
+	var deps []Dependency
+	seen := map[Dependency]bool{}
 	for _, d := range plan.Deps {
 		if d.Datasource == "" || (d.PackageName == "" && d.DepName == "") {
 			continue
@@ -90,12 +114,34 @@ func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 		if !contains(x.Consumers[k], repo) {
 			x.Consumers[k] = append(x.Consumers[k], repo)
 		}
+		_, name, _ := strings.Cut(k, "|")
+		version := d.LockedVersion
+		if version == "" {
+			version = d.CurrentValue
+		}
+		e := Dependency{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: d.Versioning, File: d.File}
+		if !seen[e] {
+			seen[e] = true
+			deps = append(deps, e)
+		}
 	}
+	sort.Slice(deps, func(i, j int) bool {
+		a, b := deps[i], deps[j]
+		if a.File != b.File {
+			return a.File < b.File
+		}
+		if a.PackageName != b.PackageName {
+			return a.PackageName < b.PackageName
+		}
+		return a.Version < b.Version
+	})
+	x.Dependencies[repo] = deps
 	x.Repositories[repo] = now.UTC()
 	x.GeneratedAt = now.UTC()
 }
 
 func (x *Index) forget(repo string) {
+	delete(x.Dependencies, repo)
 	for k, repos := range x.Consumers {
 		kept := repos[:0]
 		for _, r := range repos {

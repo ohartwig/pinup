@@ -50,6 +50,20 @@ func TestIndexRecordsAndAnswersEveryShapeTheEstateUses(t *testing.T) {
 	if x.Repositories["devops/images/ci-tools"] != now.Add(time.Hour) {
 		t.Error("the repository's index time was not updated")
 	}
+	// The repository's dependency list is replaced whole, with the
+	// version the watch will ask about: the locked one where there is one.
+	x.Record("devops/images/ci-tools", &model.Plan{Deps: []model.Dependency{
+		{Datasource: "npm", DepName: "lodash", CurrentValue: "^4.17.0", LockedVersion: "4.17.20", Versioning: "npm", File: "package.json", CustomManager: model.NoCustomManager},
+		{Datasource: "npm", DepName: "lodash", CurrentValue: "^4.17.0", LockedVersion: "4.17.20", Versioning: "npm", File: "package.json", CustomManager: model.NoCustomManager},
+		dep("docker", "registry.ole-hartwig.eu/devops/images/golang"),
+	}}, now.Add(2*time.Hour))
+	got := x.Dependencies["devops/images/ci-tools"]
+	if len(got) != 2 || got[1].PackageName != "lodash" || got[1].Version != "4.17.20" || got[1].Versioning != "npm" {
+		t.Errorf("dependencies = %+v", got)
+	}
+	if _, ok := x.Dependencies["development/moselwal/moselwal-websites"]; !ok {
+		t.Error("another repository's dependencies were dropped")
+	}
 }
 
 func TestIndexRoundTripsAndAMissingFileIsEmpty(t *testing.T) {
