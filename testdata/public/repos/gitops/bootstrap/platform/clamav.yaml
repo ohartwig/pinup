@@ -9,6 +9,10 @@ spec:
         - name: clamav
           # renovate: datasource=docker depName=clamav/clamav
           image: clamav/clamav:1.4.3
+          securityContext:
+            allowPrivilegeEscalation: false
         - name: exporter
           # renovate: datasource=docker depName=registry.acme.test/devops/images/clamav-exporter registryUrl=https://registry.acme.test
           image: "registry.acme.test/devops/images/clamav-exporter:0.6.1@sha256:8293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3"
+          securityContext:
+            allowPrivilegeEscalation: false
