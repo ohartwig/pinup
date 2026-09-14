@@ -1,3 +1,13 @@
+## [0.21.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.20.0...v0.21.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **gods:** a module hosted on the platform's own instance is served from its project's tags ([b69d579](https://git.ole-hartwig.eu/pinup/pinup/commit/b69d579c268169a6403607f32c804439ac5ed7ed))
+
+### :bug: Fixes
+
+* **index:** the partitions' indexes are read merged, and a narrowed run records nothing ([a50317a](https://git.ole-hartwig.eu/pinup/pinup/commit/a50317aa01bcbdd97601dfe901d18a713eadc9b1))
+
 ## [0.20.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.19.0...v0.20.0) (2026-09-14)
 
 ### :sparkles: Features
