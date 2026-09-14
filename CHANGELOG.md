@@ -1,3 +1,9 @@
+## [0.15.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.4...v0.15.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **runner:** automerge is withheld for a reverted change, not for a shared title ([5e32af4](https://git.ole-hartwig.eu/pinup/pinup/commit/5e32af4dd846a4cb6489a5026d2b2cae1a1469b3))
+
 ## [0.14.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.3...v0.14.4) (2026-09-14)
 
 ### :bug: Fixes
