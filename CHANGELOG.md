@@ -1,3 +1,9 @@
+## [0.21.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.21.0...v0.21.1) (2026-09-14)
+
+### :bug: Fixes
+
+* **planner:** a pin the pipeline file carries for the product stays a chore, and releases ([ff0e9e7](https://git.ole-hartwig.eu/pinup/pinup/commit/ff0e9e7df31a402188462f077d5e307c1b01577a))
+
 ## [0.21.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.20.0...v0.21.0) (2026-09-14)
 
 ### :sparkles: Features
