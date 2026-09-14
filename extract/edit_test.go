@@ -76,4 +76,13 @@ func TestEditRefRefusesANewTagAgainstTheOldDigest(t *testing.T) {
 	if _, err := EditRef("t", File{Path: "f", Content: []byte(src)}, model.Update{Dep: d, NewValue: "1.0", NewDigest: "sha256:aaaa"}); err == nil {
 		t.Error("an update that changes nothing was not refused")
 	}
+	// A new tag the planner resolved to the digest already pinned - a
+	// release that changed nothing in the image - moves the tag alone.
+	e, err := EditRef("t", File{Path: "f", Content: []byte(src)}, model.Update{Dep: d, NewValue: "1.1", NewDigest: "sha256:aaaa"})
+	if err != nil {
+		t.Fatalf("same digest, looked up: %v", err)
+	}
+	if got := src[:e.Start] + e.New + src[e.End:]; got != "FROM a:1.1@sha256:aaaa\n" {
+		t.Errorf("edited = %q", got)
+	}
 }

@@ -43,12 +43,28 @@ func EditRef(manager string, f File, up model.Update) (model.Edit, error) {
 
 	hasDigest := l.DigestStart != model.NoDigest && l.DigestEnd != model.NoDigest && dep.CurrentDigest != ""
 	valueChanges := up.NewValue != "" && up.NewValue != dep.CurrentValue
-	digestChanges := up.NewDigest != "" && up.NewDigest != dep.CurrentDigest
+	digestKnown := up.NewDigest != ""
+	digestChanges := digestKnown && up.NewDigest != dep.CurrentDigest
 
 	switch {
-	case hasDigest && valueChanges && !digestChanges:
+	case hasDigest && valueChanges && !digestKnown:
 		return model.Edit{}, fmt.Errorf("%s: %s: %s to %s carries no digest for the new value; a reference pinned by digest is not moved by tag alone",
 			manager, f.Path, dep.DepName, up.NewValue)
+
+	case hasDigest && valueChanges && !digestChanges:
+		// The new tag resolves to the very digest already pinned - a
+		// release that changed nothing in the image (measured:
+		// devops/images/c2patool 2.1.10 and 2.1.11 share sha256:79fec605,
+		// 2026-09-14). The tag moves, the digest stays, as Renovate writes
+		// it; the planner looked the digest up, so this is not the case
+		// above.
+		if err := verify(l.ValueStart, l.ValueEnd, dep.CurrentValue); err != nil {
+			return model.Edit{}, err
+		}
+		return model.Edit{
+			File: f.Path, Start: l.ValueStart, End: l.ValueEnd,
+			Old: dep.CurrentValue, New: up.NewValue, Manager: manager,
+		}, nil
 
 	case hasDigest && valueChanges && digestChanges:
 		if err := verify(l.ValueStart, l.ValueEnd, dep.CurrentValue); err != nil {

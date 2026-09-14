@@ -84,7 +84,7 @@ var mutators = []mutator{
 		"\t\tif newValue == cur {\n\t\t\treturn model.Update{}, unchangedPrefix + target\n\t\t}", "", []string{"./cmd/pinup/"}, false},
 	// delivery: apply, tasks, runner, shadow
 	{18, "delivery", "a new tag lands on the old digest", "extract/edit.go",
-		"\tcase hasDigest && valueChanges && !digestChanges:", "\tcase hasDigest && valueChanges && !digestChanges && false:", []string{"./extract/", "./manager/gitlabci/"}, false},
+		"\tcase hasDigest && valueChanges && !digestKnown:", "\tcase hasDigest && valueChanges && !digestKnown && false:", []string{"./extract/", "./manager/gitlabci/"}, false},
 	{19, "delivery", "overlapping edits pass", "apply/apply.go",
 		"\t\t\tif edits[i].Overlaps(edits[j]) {", "\t\t\tif false && edits[i].Overlaps(edits[j]) {", []string{"./apply/"}, false},
 	{20, "delivery", "every command is allowed", "plugin/plugin.go",
