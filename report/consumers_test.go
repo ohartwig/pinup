@@ -82,3 +82,62 @@ func TestIndexRoundTripsAndAMissingFileIsEmpty(t *testing.T) {
 		t.Fatalf("round trip: %v %v", y, err)
 	}
 }
+
+// TestIndexesMergeByWhoRecordedARepositoryLast: the partitions each write
+// their own index. Merged, a repository comes from the index that recorded
+// it most recently - its dependencies and its consumer entries - and one
+// that only an older index knows is kept, never dropped.
+func TestIndexesMergeByWhoRecordedARepositoryLast(t *testing.T) {
+	dir := t.TempDir()
+	older, newer := now, now.Add(time.Hour)
+
+	a := NewIndex()
+	a.Record("group/app", &model.Plan{Deps: []model.Dependency{
+		{Datasource: "npm", DepName: "left-pad", PackageName: "left-pad", CurrentValue: "1.0.0", CustomManager: model.NoCustomManager},
+	}}, older)
+	a.Record("group/lib", &model.Plan{Deps: []model.Dependency{dep("docker", "x/y")}}, newer)
+	if err := a.Save(filepath.Join(dir, "partition-a.json")); err != nil {
+		t.Fatal(err)
+	}
+	b := NewIndex()
+	b.Record("group/app", &model.Plan{Deps: []model.Dependency{
+		{Datasource: "npm", DepName: "left-pad", PackageName: "left-pad", CurrentValue: "1.3.0", CustomManager: model.NoCustomManager},
+		dep("docker", "x/y"),
+	}}, newer)
+	b.Record("group/lib", &model.Plan{Deps: []model.Dependency{dep("docker", "x/z")}}, older)
+	b.Record("pinup/shadow-fixture", &model.Plan{Deps: []model.Dependency{dep("docker", "x/y")}}, older)
+	if err := b.Save(filepath.Join(dir, "partition-b.json")); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, patterns := range [][]string{
+		{filepath.Join(dir, "partition-*.json")},
+		{filepath.Join(dir, "partition-b.json"), filepath.Join(dir, "partition-a.json")},
+		{filepath.Join(dir, "partition-a.json"), filepath.Join(dir, "partition-b.json"), filepath.Join(dir, "absent.json")},
+	} {
+		m, err := LoadIndexes(patterns...)
+		if err != nil {
+			t.Fatalf("%v: %v", patterns, err)
+		}
+		if got := m.Dependencies["group/app"]; len(got) != 2 || got[0].Version != "1.3.0" && got[1].Version != "1.3.0" {
+			t.Errorf("%v: group/app must come from b, the later record: %+v", patterns, got)
+		}
+		if got := m.Dependencies["group/lib"]; len(got) != 1 || got[0].PackageName != "x/y" {
+			t.Errorf("%v: group/lib must come from a, the later record: %+v", patterns, got)
+		}
+		if got := strings.Join(m.ConsumersOf("x/y"), ","); got != "group/app,group/lib,pinup/shadow-fixture" {
+			t.Errorf("%v: consumers of x/y: %q", patterns, got)
+		}
+		if len(m.ConsumersOf("x/z")) != 0 {
+			t.Errorf("%v: b's stale group/lib entry survived the merge", patterns)
+		}
+		if !m.Repositories["group/app"].Equal(newer) || !m.Repositories["pinup/shadow-fixture"].Equal(older) || !m.GeneratedAt.Equal(newer) {
+			t.Errorf("%v: timestamps %v %v", patterns, m.Repositories, m.GeneratedAt)
+		}
+	}
+	for value, pattern := range map[string]bool{"one.json": false, "a,b": true, "idx/*.json": true} {
+		if IsPattern(value) != pattern {
+			t.Errorf("IsPattern(%q) = %v", value, !pattern)
+		}
+	}
+}

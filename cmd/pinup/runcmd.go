@@ -51,7 +51,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	project := fs.String("project", "", "project path to clone and run against, e.g. devops/images/ci-tools")
 	autodiscover := fs.String("autodiscover", "", `run against every project the token can see that matches these patterns, a JSON list of globs with ! negations, e.g. '["devops/images/**", "!devops/images/pinup"]'`)
 	released := fs.String("released", "", "the fast lane: a project path that was just released, optionally @version; runs only its consumers from the index, only for that dependency, with fresh lookups")
-	indexPath := fs.String("index", "", "path of the consumer index (default: consumers.json beside --cache)")
+	indexPath := fs.String("index", "", "path of the consumer index (default: consumers.json beside --cache); several, comma-separated or a pattern, are merged and read only")
 	cfgPath := fs.String("config", "", "configuration file to resolve (required)")
 	reportPath := fs.String("report", "", "write the plan as JSON to this path; with several projects a %s in it becomes the project path")
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt)")
@@ -164,11 +164,20 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	one.datasources = wire.Datasources(one.client, dsOpts)
 	one.dsOptions = dsOpts
 	if *indexPath != "" {
-		idx, err := report.LoadIndex(*indexPath)
+		// Several indexes - a pattern, or a comma-separated list - are
+		// read and merged, never written: the partitions each write
+		// their own, and the fast lane reads them all.
+		idx, err := report.LoadIndexes(strings.Split(*indexPath, ",")...)
 		if err != nil {
 			return fmt.Errorf("index: %w", err)
 		}
-		one.index, one.indexPath = idx, *indexPath
+		one.index, one.indexPath, one.indexPattern = idx, *indexPath, *indexPath
+		if report.IsPattern(*indexPath) {
+			if *released == "" {
+				return fmt.Errorf("index: %s names several indexes, which a run that records cannot write; name one file", *indexPath)
+			}
+			one.indexPath = ""
+		}
 	}
 
 	if *released != "" {
@@ -344,6 +353,9 @@ type runOptions struct {
 	index     *report.Index
 	indexMu   sync.Mutex
 	indexPath string
+	// indexPattern is what --index named: indexPath, or the several
+	// indexes a fast-lane run read and does not write.
+	indexPattern string
 	// released narrows a run to one dependency; see whatifOptions.
 	released string
 	// pkg narrows a run to one external package, "datasource|name".
@@ -364,7 +376,9 @@ func runReleased(ctx context.Context, o *runOptions, spec string, only *glob.Set
 	if o.index == nil {
 		return fmt.Errorf("run --released needs the consumer index: pass --cache or --index")
 	}
-	seenPath := filepath.Join(filepath.Dir(o.indexPath), "released.json")
+	// The debounce record lives beside the index - beside the first of
+	// several, when the run reads a merged set it does not write.
+	seenPath := filepath.Join(filepath.Dir(strings.Split(o.indexPattern, ",")[0]), "released.json")
 	if seenRecently(seenPath, spec, o.now) {
 		fmt.Fprintf(out, "%s: already run within the hour; skipped\n", spec)
 		return nil
@@ -596,7 +610,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 // fast-lane plan sees one dependency and must not overwrite what the
 // repository has.
 func recordIndex(o *runOptions, proj publish.Project, plan *model.Plan, errw io.Writer) {
-	if o.index == nil || o.released != "" {
+	if o.index == nil || o.indexPath == "" || o.released != "" || o.pkg != "" {
 		return
 	}
 	o.indexMu.Lock()

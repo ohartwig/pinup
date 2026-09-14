@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +18,8 @@ import (
 	"github.com/ohartwig/pinup/git"
 	"github.com/ohartwig/pinup/glob"
 	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
 	"github.com/ohartwig/pinup/report"
 )
 
@@ -148,7 +151,7 @@ func TestReleasedTakesAutodiscoverAsAFilter(t *testing.T) {
 		"gitlab-tags|devops/ci-cd-components/lint-tools": {"development/app", "devops/images/ci-tools", "devops/ci-cd-components/deploy-tools"},
 	}, Repositories: map[string]time.Time{}}
 	dir := t.TempDir()
-	o := &runOptions{index: idx, indexPath: filepath.Join(dir, "consumers.json"), dryRun: true, now: time.Now(), platform: &platformfake.Platform{}}
+	o := &runOptions{index: idx, indexPath: filepath.Join(dir, "consumers.json"), indexPattern: filepath.Join(dir, "consumers.json"), dryRun: true, now: time.Now(), platform: &platformfake.Platform{}}
 	var out, errw strings.Builder
 	// Every consumer is outside the filter: nothing runs, nothing fails.
 	if err := runReleased(context.Background(), o, "devops/ci-cd-components/lint-tools@1.34.0", glob.NewSet([]string{"pinup/**"}), "", &out, &errw); err != nil {
@@ -164,5 +167,34 @@ func TestReleasedTakesAutodiscoverAsAFilter(t *testing.T) {
 	_ = runReleased(context.Background(), o, "devops/ci-cd-components/lint-tools@1.34.1", glob.NewSet([]string{"devops/images/**", "devops/ci-cd-components/**"}), "", &out, &errw)
 	if !strings.Contains(errw.String(), "3 consumers, 2 within the filter") || strings.Contains(errw.String(), "development/app") {
 		t.Errorf("errw=%q", errw.String())
+	}
+}
+
+// A run narrowed to one package sees one dependency and must not record
+// it as the repository's whole list; the fast lane and a run given
+// several indexes to read do not record either.
+func TestNarrowedRunsDoNotRecordTheIndex(t *testing.T) {
+	dir := t.TempDir()
+	plan := &model.Plan{Deps: []model.Dependency{{Datasource: "npm", DepName: "left-pad", PackageName: "left-pad", CurrentValue: "1.0.0", CustomManager: model.NoCustomManager}}}
+	for name, o := range map[string]*runOptions{
+		"package":  {index: report.NewIndex(), indexPath: filepath.Join(dir, "p.json"), pkg: "npm|left-pad", now: time.Now()},
+		"released": {index: report.NewIndex(), indexPath: filepath.Join(dir, "r.json"), released: "x/y@1.0.0", now: time.Now()},
+		"pattern":  {index: report.NewIndex(), indexPath: "", now: time.Now()},
+	} {
+		var errw strings.Builder
+		recordIndex(o, publish.Project{Path: "group/app"}, plan, &errw)
+		if len(o.index.Dependencies) != 0 || errw.Len() != 0 {
+			t.Errorf("%s: recorded %v %q", name, o.index.Dependencies, errw.String())
+		}
+		if o.indexPath != "" {
+			if _, err := os.Stat(o.indexPath); err == nil {
+				t.Errorf("%s: the index was written", name)
+			}
+		}
+	}
+	full := &runOptions{index: report.NewIndex(), indexPath: filepath.Join(dir, "f.json"), now: time.Now()}
+	recordIndex(full, publish.Project{Path: "group/app"}, plan, io.Discard)
+	if got := full.index.Dependencies["group/app"]; len(got) != 1 || got[0].Version != "1.0.0" {
+		t.Errorf("a full run records: %+v", got)
 	}
 }

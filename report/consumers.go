@@ -16,7 +16,10 @@ package report
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -74,6 +77,63 @@ func LoadIndex(path string) (*Index, error) {
 		idx.Dependencies = map[string][]Dependency{}
 	}
 	return idx, nil
+}
+
+// LoadIndexes reads every index the patterns name - each a path or a
+// filepath.Match pattern, a missing path an empty index - and merges them.
+// The partitions of a runner each write their own index; a shared file
+// they all wrote would carry whichever partition finished last (measured
+// 2026-09-14: the control repository fell out of the watch's index every
+// hour). Merged, each repository comes from the index that recorded it
+// most recently.
+func LoadIndexes(patterns ...string) (*Index, error) {
+	merged := NewIndex()
+	for _, pattern := range patterns {
+		paths := []string{pattern}
+		if strings.ContainsAny(pattern, "*?[") {
+			var err error
+			if paths, err = filepath.Glob(pattern); err != nil {
+				return nil, fmt.Errorf("index %s: %w", pattern, err)
+			}
+		}
+		for _, path := range paths {
+			idx, err := LoadIndex(path)
+			if err != nil {
+				return nil, fmt.Errorf("index %s: %w", path, err)
+			}
+			merged.Merge(idx)
+		}
+	}
+	return merged, nil
+}
+
+// IsPattern reports whether an --index value names several indexes to
+// read rather than one file to write.
+func IsPattern(value string) bool {
+	return strings.ContainsAny(value, "*?[,")
+}
+
+// Merge takes every repository y recorded later than x did - or that x
+// does not know - with its dependencies and its consumer entries.
+func (x *Index) Merge(y *Index) {
+	for repo, at := range y.Repositories {
+		if known, ok := x.Repositories[repo]; ok && !at.After(known) {
+			continue
+		}
+		x.forget(repo)
+		x.Repositories[repo] = at
+		if deps, ok := y.Dependencies[repo]; ok {
+			x.Dependencies[repo] = slices.Clone(deps)
+		}
+		for k, repos := range y.Consumers {
+			if contains(repos, repo) && !contains(x.Consumers[k], repo) {
+				x.Consumers[k] = append(x.Consumers[k], repo)
+			}
+		}
+		if at.After(x.GeneratedAt) {
+			x.GeneratedAt = at
+		}
+	}
 }
 
 // Save writes the index, sorted, so two saves of the same state are the

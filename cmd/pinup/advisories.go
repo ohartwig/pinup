@@ -12,6 +12,7 @@ import (
 	"os"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/ohartwig/pinup/glob"
@@ -70,7 +71,7 @@ type advisoriesState struct {
 func cmdAdvisories(args []string, out, errw io.Writer) error {
 	fs := flag.NewFlagSet("advisories", flag.ContinueOnError)
 	fs.SetOutput(errw)
-	indexPath := fs.String("index", ".pinup/consumers.json", "the consumer index a full run wrote")
+	indexPath := fs.String("index", ".pinup/consumers.json", "the consumer indexes the full runs wrote: paths or patterns, comma-separated, merged")
 	statePath := fs.String("state", ".pinup/advisories.json", "advisories already reported; written back after the run")
 	reportPath := fs.String("report", "", "write the report as JSON to this path")
 	control := fs.String("control", "", "a repository with known-vulnerable dependencies that must yield findings, e.g. pinup/shadow-fixture")
@@ -86,7 +87,7 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 		}
 		only = glob.NewSet(patterns)
 	}
-	idx, err := report.LoadIndex(*indexPath)
+	idx, err := report.LoadIndexes(strings.Split(*indexPath, ",")...)
 	if err != nil {
 		return err
 	}
