@@ -66,7 +66,8 @@ func advisoriesIndex() *report.Index {
 		{Datasource: "packagist", PackageName: "symfony/yaml", Version: "^7.3", Versioning: "composer", File: "composer.json"}, // a range: not a version
 	}
 	idx.Dependencies["devops/tooling"] = []report.Dependency{
-		{Datasource: "npm", PackageName: "lodash", Version: "4.17.21", Versioning: "npm", File: "package.json"},
+		// No versioning named: the datasource's default (npm) applies.
+		{Datasource: "npm", PackageName: "lodash", Version: "4.17.21", File: "package.json"},
 	}
 	return idx
 }
