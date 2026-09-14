@@ -418,22 +418,41 @@ func ciCommitType(title string, members []Named) string {
 	if len(members) == 0 {
 		return title
 	}
+	files := make([]string, 0, len(members))
 	for _, n := range members {
-		if !isPipelineFile(n.Update.Dep.File) {
-			return title
+		files = append(files, n.Update.Dep.File)
+	}
+	return CommitTypeFor(title, files)
+}
+
+// CommitTypeFor is the rule ciCommitType applies, on any set of files: a
+// chore title over pipeline files alone is a ci title; the runner asks it
+// again with the files a branch actually commits, tasks included, and a
+// task that touched anything else turns the title back. The reverse
+// direction exists for that: a ci title over a wider set is a chore.
+func CommitTypeFor(title string, files []string) string {
+	if len(files) == 0 {
+		return title
+	}
+	pipelineOnly := true
+	for _, f := range files {
+		if !IsPipelineFile(f) {
+			pipelineOnly = false
+			break
 		}
 	}
-	for _, prefix := range []string{"chore(deps):", "chore:"} {
-		if strings.HasPrefix(title, prefix) {
-			return "ci" + strings.TrimPrefix(title, "chore")
-		}
+	switch {
+	case pipelineOnly && strings.HasPrefix(title, "chore(deps):"), pipelineOnly && strings.HasPrefix(title, "chore:"):
+		return "ci" + strings.TrimPrefix(title, "chore")
+	case !pipelineOnly && strings.HasPrefix(title, "ci(deps):"), !pipelineOnly && strings.HasPrefix(title, "ci:"):
+		return "chore" + strings.TrimPrefix(title, "ci")
 	}
 	return title
 }
 
-// isPipelineFile reports whether a path is the repository's pipeline
+// IsPipelineFile reports whether a path is the repository's pipeline
 // definition or lives under its .gitlab directory.
-func isPipelineFile(path string) bool {
+func IsPipelineFile(path string) bool {
 	base := path[strings.LastIndex(path, "/")+1:]
 	return base == ".gitlab-ci.yml" || base == ".gitlab-ci.yaml" ||
 		strings.HasPrefix(path, ".gitlab/") || strings.Contains(path, "/.gitlab/")

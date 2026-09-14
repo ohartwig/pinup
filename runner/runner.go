@@ -25,6 +25,7 @@ import (
 	"github.com/ohartwig/pinup/apply"
 	"github.com/ohartwig/pinup/git"
 	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/planner"
 	"github.com/ohartwig/pinup/publish"
 )
 
@@ -339,6 +340,12 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, 
 		// A task-only branch whose tool found nothing to refresh: not a
 		// failure, there is simply nothing to open.
 		return before, false, nil
+	}
+	// The type was decided on the planned edits; a task may have touched
+	// more. Decided again on what is committed: a ci branch whose task
+	// wrote outside the pipeline is a chore after all, and releases.
+	if retitled := planner.CommitTypeFor(b.Title, paths); retitled != b.Title {
+		b.Title = retitled
 	}
 	sha, committed, err := o.Repo.Commit(ctx, o.Identity, o.Signing, b.Title+"\n\n"+commitBody(b), paths...)
 	if err != nil {

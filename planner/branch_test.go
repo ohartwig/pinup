@@ -388,4 +388,12 @@ func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
 			t.Errorf("%q over %d members: got %q, want %q", tc.title, len(tc.members), got, tc.want)
 		}
 	}
+	// The runner asks again with what a branch actually commits: a task
+	// that wrote outside the pipeline turns a ci title back into a chore.
+	if got := CommitTypeFor("ci(deps): update x", []string{".gitlab-ci.yml", "recipe.yaml"}); got != "chore(deps): update x" {
+		t.Errorf("a task's file outside the pipeline: %q", got)
+	}
+	if got := CommitTypeFor("ci(deps): update x", []string{".gitlab-ci.yml"}); got != "ci(deps): update x" {
+		t.Errorf("pipeline only stays ci: %q", got)
+	}
 }
