@@ -9,7 +9,6 @@ import (
 	"os"
 	"reflect"
 	"slices"
-	"sort"
 	"strings"
 	"testing"
 
@@ -209,23 +208,6 @@ type fakeSource map[string]map[string]any
 func (f fakeSource) Get(name string) (map[string]any, string, bool, error) {
 	d, ok := f[name]
 	return d, "", ok, nil
-}
-
-func sortedKeys(m map[string]any) []string {
-	out := make([]string, 0, len(m))
-	for k := range m {
-		out = append(out, k)
-	}
-	sort.Strings(out)
-	return out
-}
-
-func short(v any) string {
-	b, _ := json.Marshal(v)
-	if len(b) > 200 {
-		return string(b[:200]) + "…"
-	}
-	return string(b)
 }
 
 // The library is what the resolution is made of: an entry with its rules
