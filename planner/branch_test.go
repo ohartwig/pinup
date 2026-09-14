@@ -364,3 +364,28 @@ func TestPrBodyNotesRenderOnceOntoTheBranch(t *testing.T) {
 		t.Error("a note that does not render must fail the naming, not vanish")
 	}
 }
+
+// A branch that touches pipeline files alone is a ci commit, not a chore:
+// the image is the same, and a chore would tag it again for nothing. One
+// member outside the pipeline keeps the chore; a type a rule set stands.
+func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
+	ci := func(file string) Named {
+		return Named{Update: model.Update{Dep: model.Dependency{File: file}}}
+	}
+	for _, tc := range []struct {
+		title   string
+		members []Named
+		want    string
+	}{
+		{"chore(deps): update ci components", []Named{ci(".gitlab-ci.yml"), ci(".gitlab/ci/build.yml")}, "ci(deps): update ci components"},
+		{"chore: pin dependencies", []Named{ci("sub/.gitlab-ci.yml")}, "ci: pin dependencies"},
+		{"chore(deps): pin dependencies", []Named{ci(".gitlab-ci.yml"), ci("Containerfile")}, "chore(deps): pin dependencies"},
+		{"fix(deps): update dependency x to v2 [security]", []Named{ci(".gitlab-ci.yml")}, "fix(deps): update dependency x to v2 [security]"},
+		{"chore(deps): update x", []Named{ci("templates/build.yml")}, "chore(deps): update x"},
+		{"update x", []Named{ci(".gitlab-ci.yml")}, "update x"},
+	} {
+		if got := ciCommitType(tc.title, tc.members); got != tc.want {
+			t.Errorf("%q over %d members: got %q, want %q", tc.title, len(tc.members), got, tc.want)
+		}
+	}
+}

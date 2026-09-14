@@ -1,17 +1,20 @@
 # pinup plan for golden/estate
 
-16 dependencies in 4 files, 16 lookups (0 from cache), 3 updates (3 held), 0 branches to write.
+16 dependencies in 4 files, 16 lookups (0 from cache), 3 updates (2 held), 1 branches to write.
+
+## Branches
+
+| Branch | Title | Changes |
+|---|---|---|
+| `renovate/pin-dependencies` | chore(deps): pin bash docker tag to 84e9597 | `Containerfile` alpine3.22 → alpine3.22@sha256:84e9597a44c52678823f5292b595004b0bccc722092b0764cb4269e2859f540a |
 
 ## Held
 
 | Branch | Update | Reason | Held by | Thaws |
 |---|---|---|---|---|
-| `renovate/pin-dependencies` | bash alpine3.22 → alpine3.22 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[54] | 2026-09-14T14:00:00Z |
 | `renovate/terraform-aws-modules-vpc-aws-5.x` | terraform-aws-modules/vpc/aws 5.0.0 → 5.21.0 | minimumReleaseAge `the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional` | config | — |
-| `renovate/terraform-aws-modules-vpc-aws-5.x` | terraform-aws-modules/vpc/aws 5.0.0 → 5.21.0 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[54] | 2026-09-14T14:00:00Z |
 | `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | dependencyDashboardApproval | packageRules[36] | — |
 | `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | minimumReleaseAge `the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional` | packageRules[36] | — |
-| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[54] | 2026-09-14T14:00:00Z |
 
 ## Not planned
 

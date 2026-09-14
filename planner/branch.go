@@ -397,9 +397,46 @@ func Compose(named []Named) ([]model.Branch, error) {
 			}
 			m.branch.Title = first.GroupTitle(shared)
 		}
+		m.branch.Title = ciCommitType(m.branch.Title, m.members)
 		out = append(out, *m.branch)
 	}
 	return out, nil
+}
+
+// ciCommitType retypes a branch that touches pipeline files alone - every
+// member's file is .gitlab-ci.yml or under .gitlab/ - from chore to ci. A
+// bump there is tooling, whatever it bumps: the build is the same, the
+// image identical; released as a chore it makes a new tag for the same
+// bytes, which every consumer then rolls out for nothing (measured:
+// devops/images/c2patool 2.1.10 and 2.1.11, one digest, the difference a
+// container-scanning analyzer pin in .gitlab-ci.yml). `ci` is no release
+// type in the estate's rule set; a pin in a Containerfile stays chore and
+// releases. Only the file decides, never the datasource, and only the
+// default chore is retyped - a fix, or a type a rule set, stands. Decided
+// 2026-09-14; Renovate gets no rule for it, yasrt and pinup carry it.
+func ciCommitType(title string, members []Named) string {
+	if len(members) == 0 {
+		return title
+	}
+	for _, n := range members {
+		if !isPipelineFile(n.Update.Dep.File) {
+			return title
+		}
+	}
+	for _, prefix := range []string{"chore(deps):", "chore:"} {
+		if strings.HasPrefix(title, prefix) {
+			return "ci" + strings.TrimPrefix(title, "chore")
+		}
+	}
+	return title
+}
+
+// isPipelineFile reports whether a path is the repository's pipeline
+// definition or lives under its .gitlab directory.
+func isPipelineFile(path string) bool {
+	base := path[strings.LastIndex(path, "/")+1:]
+	return base == ".gitlab-ci.yml" || base == ".gitlab-ci.yaml" ||
+		strings.HasPrefix(path, ".gitlab/") || strings.Contains(path, "/.gitlab/")
 }
 
 // Overlay merges the configuration object for an update type - config.digest
