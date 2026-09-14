@@ -172,9 +172,10 @@ func (w *walker) imageRef(n *yamlx.Node, depType string) {
 	}
 	if tag == "" && digest == "" {
 		dep.SkipReason = "no tag and no digest: a bare image name pins nothing to update"
-	} else if tag == "" {
-		dep.SkipReason = "digest-only reference with no tag; a tag-less lookup would fall back to latest"
 	}
+	// A digest-only reference is a digest pin of the tag it implies,
+	// latest, and moves with it (measured on a Dockerfile, wolfi-packages
+	// !426; the planner treats the two managers alike).
 	w.deps = append(w.deps, dep)
 }
 

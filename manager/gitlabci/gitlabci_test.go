@@ -261,3 +261,24 @@ func TestAgreesWithTheCorpus(t *testing.T) {
 		t.Skip("no gitlabci capture with its files on this machine")
 	}
 }
+
+// A digest-only image is a digest pin of latest and stays actionable; a
+// bare name with neither tag nor digest is skipped (measured on a
+// Dockerfile, wolfi-packages !426; the planner treats both managers alike).
+func TestDigestOnlyImageIsADigestPin(t *testing.T) {
+	src := "a:\n  image: registry.example.test/tool@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\nb:\n  image: alpine\n"
+	res, err := New().Extract(context.Background(), extract.File{Path: ".gitlab-ci.yml", Content: []byte(src)}, extract.ManagerConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	byName := map[string]model.Dependency{}
+	for _, d := range res.Deps {
+		byName[d.DepName] = d
+	}
+	if d := byName["registry.example.test/tool"]; d.SkipReason != "" || d.CurrentValue != "" || !strings.HasPrefix(d.CurrentDigest, "sha256:bbbb") {
+		t.Errorf("digest-only image = %+v", d)
+	}
+	if d := byName["alpine"]; d.SkipReason == "" {
+		t.Error("a bare image name must be skipped")
+	}
+}

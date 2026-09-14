@@ -280,7 +280,7 @@ func interpolatedDependency(file string, lineNo int, ref string, refAbs int, glo
 		CurrentValue:  full[tagStart:tagEnd],
 		Locus:         model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest, Line: lineNo},
 	}
-	if tagStart == tagEnd {
+	if tagStart == tagEnd && digestStart < 0 {
 		dep.SkipReason = "reference carries no tag; a lookup would fall back to latest"
 		dep.Locus.ValueStart, dep.Locus.ValueEnd = refAbs+len(ref), refAbs+len(ref)
 		return dep, true
@@ -376,12 +376,16 @@ func refDependency(file string, lineNo int, ref string, refAbs int, globalArgs m
 			reason = fmt.Sprintf("tag %q resolves to ARG default %q, but that is not an independently editable reference here", tag, v)
 		}
 		dep.SkipReason = reason
-	case tag == "":
-		// Covers both the digest-only case (image@sha256:...) and a bare
-		// image name with neither tag nor digest: either way, a lookup with
-		// no tag to compare against would silently fall back to latest.
+	case tag == "" && digestStart < 0:
+		// A bare image name with neither tag nor digest: a lookup with no
+		// tag to compare against would silently fall back to latest, and
+		// what Renovate pins there is not measured.
 		dep.SkipReason = "reference carries no tag; a lookup would fall back to latest"
 	}
+	// A reference by digest alone - `image@sha256:…` - is a digest pin of
+	// the tag it implies, latest, and the digest moves with it. Measured:
+	// devops/wolfi-packages !426, "update cgr.dev/chainguard/wolfi-base
+	// docker digest to 9a8d954" on a tagless FROM.
 
 	return dep
 }

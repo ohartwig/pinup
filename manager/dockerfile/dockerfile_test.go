@@ -170,15 +170,24 @@ func TestOffsetsMatchCurrentValueAndDigest(t *testing.T) {
 
 // --- skip cases -------------------------------------------------------------
 
-func TestSkipDigestOnlyNoTag(t *testing.T) {
-	src := "FROM golang@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n"
+// A digest-only reference is a digest pin of latest and is not skipped:
+// the planner refreshes the digest behind the tag it implies (measured:
+// wolfi-packages !426). A bare name with neither is skipped.
+func TestDigestOnlyReferenceIsADigestPin(t *testing.T) {
+	src := "FROM golang@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\nFROM alpine\n"
 	_, deps := extractAll(t, src)
 	dep := depNamed(t, deps, "golang")
-	if dep.SkipReason == "" {
-		t.Error("a digest-only reference with no tag must carry a SkipReason")
+	if dep.SkipReason != "" {
+		t.Errorf("a digest-only reference must not be skipped, got %q", dep.SkipReason)
 	}
-	if dep.CurrentValue != "" {
-		t.Errorf("CurrentValue = %q, want empty (no tag was written)", dep.CurrentValue)
+	if dep.CurrentValue != "" || !strings.HasPrefix(dep.CurrentDigest, "sha256:bbbb") {
+		t.Errorf("CurrentValue = %q, CurrentDigest = %q", dep.CurrentValue, dep.CurrentDigest)
+	}
+	if got := src[dep.Locus.DigestStart:dep.Locus.DigestEnd]; got != dep.CurrentDigest {
+		t.Errorf("digest locus brackets %q", got)
+	}
+	if bare := depNamed(t, deps, "alpine"); bare.SkipReason == "" {
+		t.Error("a bare image name must still be skipped")
 	}
 }
 
