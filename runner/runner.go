@@ -18,6 +18,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -150,10 +151,27 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "unchanged", Message: "nothing to refresh"})
 			continue
 		}
+		footer := o.Footer
+		automerge := b.Automerge
+		if automerge && !hasMR {
+			// The same bytes merged before and gone from the base again
+			// is a revert; it does not land a second time on its own.
+			// Renovate withholds automerge on the title alone, which
+			// held a security bump for two days because an earlier bump
+			// of the same module in other files carried the same title
+			// (devops/wolfi-packages!404, 2026-09-14). The comparison
+			// here is the edits themselves.
+			if prior, ok := mergedBefore(ctx, o, b, plan.Updates); ok {
+				automerge = false
+				note := fmt.Sprintf("Automerge withheld: !%d merged exactly these edits before and the base no longer carries them; merge by hand if the revert is over.", prior)
+				footer = note + "\n\n" + footer
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: automerge withheld, !%d merged the same edits before", b.Name, prior)})
+			}
+		}
 		req := publish.Request{
 			SourceBranch: b.Name, TargetBranch: o.Base, Title: b.Title,
-			Description: description(b, plan.Updates, o.Footer), Labels: union(o.Labels, b.Labels),
-			Automerge: b.Automerge, RemoveSourceBranch: true,
+			Description: description(b, plan.Updates, footer), Labels: union(o.Labels, b.Labels),
+			Automerge: automerge, RemoveSourceBranch: true,
 		}
 		var out Outcome
 		switch {
@@ -182,6 +200,47 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		outcomes = append(outcomes, out)
 	}
 	return outcomes, nil
+}
+
+// mergedBefore reports the newest merged request on the branch whose
+// edits - the "| File | Change |" rows of its description - are exactly
+// this branch's. That is a change that landed and was taken back; a bump
+// that merely shares the title (the same module and version in other
+// files) is not.
+func mergedBefore(ctx context.Context, o Options, b *model.Branch, updates []model.Update) (int, bool) {
+	history, err := o.Platform.History(ctx, o.Project, b.Name)
+	if err != nil || len(history) == 0 {
+		return 0, false
+	}
+	mine := editRows(description(b, updates, ""))
+	if len(mine) == 0 {
+		return 0, false
+	}
+	for _, m := range history {
+		if m.State != "merged" {
+			continue
+		}
+		if theirs := editRows(m.Description); len(theirs) == len(mine) && theirs == mine {
+			return m.IID, true
+		}
+	}
+	return 0, false
+}
+
+// editRows is the set of "| `file` | `old` → `new` |" rows of a
+// description, sorted and joined - the fingerprint of what the branch
+// changes.
+func editRows(description string) string {
+	var rows []string
+	for _, line := range strings.Split(description, "\n") {
+		// The file table's rows have two cells; the updates table's rows
+		// carry a release count that moves between runs.
+		if strings.HasPrefix(line, "| `") && strings.Contains(line, "` → `") && strings.Count(line, "|") == 3 {
+			rows = append(rows, line)
+		}
+	}
+	sort.Strings(rows)
+	return strings.Join(rows, "\n")
 }
 
 // createWithRetry opens the merge request, retrying a 400 that says the

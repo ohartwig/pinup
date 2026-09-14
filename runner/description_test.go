@@ -166,3 +166,50 @@ func TestCreateRetriesUntilTheBranchIsVisible(t *testing.T) {
 		t.Errorf("a 403 was retried: %v %v", err, waits)
 	}
 }
+
+// Automerge is withheld only for a change that merged before and was
+// taken back - the same edits, not the same title: a security bump of
+// the same module in other files shares Renovate's title and branch, and
+// Renovate held it for two days for that (wolfi-packages!404).
+func TestAutomergeIsWithheldForARevertedChangeNotForASharedTitle(t *testing.T) {
+	_, repo := fixture(t)
+	edit1 := edit("3.20", "3.21")
+	mk := func() *model.Plan {
+		p := plan(model.Branch{Name: "renovate/go-x-crypto-vulnerability", Title: "fix(deps): update module x/crypto to v0.56.0 [security]", UpdateKeys: []string{"a"}, Edits: []model.Edit{edit1}, Automerge: true})
+		return p
+	}
+	// A merged request on the branch with the same title but other edits.
+	pf := &platformfake.Platform{Verification: "verified", MRs: []publish.MergeRequest{{
+		IID: 182, State: "merged", SourceBranch: "renovate/go-x-crypto-vulnerability",
+		Title:       "fix(deps): update module x/crypto to v0.56.0 [security]",
+		Description: "| File | Change |\n|---|---|\n| `other/Containerfile` | `3.20` → `3.21` |\n",
+	}}}
+	p := mk()
+	out, err := Execute(context.Background(), p, options(repo, pf))
+	if err != nil || len(out) != 1 || out[0].Action != "created" {
+		t.Fatalf("%v %+v", err, out)
+	}
+	if !pf.MRs[len(pf.MRs)-1].Automerge {
+		t.Error("a shared title alone withheld automerge")
+	}
+
+	// The same edits merged before: withheld, said so, request still opened.
+	pf = &platformfake.Platform{Verification: "verified", MRs: []publish.MergeRequest{{
+		IID: 182, State: "merged", SourceBranch: "renovate/go-x-crypto-vulnerability",
+		Title:       "fix(deps): update module x/crypto to v0.56.0 [security]",
+		Description: "| File | Change |\n|---|---|\n| `Containerfile` | `3.20` → `3.21` |\n",
+	}}}
+	_, repo2 := fixture(t)
+	p = mk()
+	out, err = Execute(context.Background(), p, options(repo2, pf))
+	if err != nil || len(out) != 1 || out[0].Action != "created" {
+		t.Fatalf("%v %+v", err, out)
+	}
+	last := pf.MRs[len(pf.MRs)-1]
+	if last.Automerge || !strings.Contains(last.Description, "Automerge withheld: !182") {
+		t.Errorf("reverted change: automerge=%v description:\n%s", last.Automerge, last.Description)
+	}
+	if len(p.Warnings) == 0 || !strings.Contains(p.Warnings[len(p.Warnings)-1].Msg, "automerge withheld") {
+		t.Errorf("the plan does not say: %+v", p.Warnings)
+	}
+}
