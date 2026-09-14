@@ -58,8 +58,19 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
 	dryRun := fs.Bool("dry-run", false, "plan only; push nothing, open nothing")
 	baseBranch := fs.String("base", "", "plan and branch from this branch instead of the project's default branch")
+	pkg := fs.String("package", "", "narrow the run to one external package, datasource:name (e.g. npm:lodash), with a fresh lookup for it - the advisory watch's targeted run; with --project or --autodiscover")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if *pkg != "" {
+		ds, name, ok := strings.Cut(*pkg, ":")
+		if !ok || ds == "" || name == "" {
+			return fmt.Errorf("run: --package wants datasource:name, got %q", *pkg)
+		}
+		if *released != "" || *repoDir != "" {
+			return fmt.Errorf("run: --package goes with --project or --autodiscover")
+		}
+		*pkg = ds + "|" + name
 	}
 	if *cfgPath == "" {
 		return fmt.Errorf("run: --config is required")
@@ -142,7 +153,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		store = s
 	}
 	one := &runOptions{
-		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
+		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env, pkg: *pkg,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: dashboardTitle(os.Getenv),
 	}
@@ -335,6 +346,8 @@ type runOptions struct {
 	indexPath string
 	// released narrows a run to one dependency; see whatifOptions.
 	released string
+	// pkg narrows a run to one external package, "datasource|name".
+	pkg string
 	// base, when set, replaces the project's default branch as the
 	// branch the run reads and branches from.
 	base string
@@ -547,6 +560,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		CacheTTL:      o.cacheTTL,
 		Presets:       preset.Remote{Reader: o.platform, Ctx: ctx},
 		Released:      o.released,
+		Package:       o.pkg,
 		RunnerDefault: o.runnerDefault,
 		RunnerProject: o.runnerProject,
 	}

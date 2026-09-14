@@ -178,6 +178,10 @@ type whatifOptions struct {
 	// released: only dependencies on it are planned, every other one is
 	// skipped by name, and its lookups bypass the cache.
 	Released string
+	// Package, when set, is an index key "datasource|packageName" - an
+	// external package an advisory names: the same narrowing as Released,
+	// by exact key, for the targeted run the advisory watch starts.
+	Package string
 	// CustomDatasources builds the datasources a configuration declares;
 	// nil means customDatasources are unknown. wire supplies it.
 	CustomDatasources func(map[string]model.CustomDatasource) lookup.Registry
@@ -494,6 +498,9 @@ func (r *whatifRun) extractAll() error {
 			if o.Released != "" && d.SkipReason == "" && !report.RefersTo(report.Key(d), o.Released) {
 				d.SkipReason = "not the released package " + o.Released + "; the scheduled run covers it"
 			}
+			if o.Package != "" && d.SkipReason == "" && report.Key(d) != o.Package {
+				d.SkipReason = "not the package " + o.Package + " this run is for; the scheduled run covers it"
+			}
 			plan.Deps = append(plan.Deps, applyDepRules(r.engine, resolved.Raw, d))
 		}
 	}
@@ -540,6 +547,9 @@ func (r *whatifRun) lookupAll() error {
 	r.fetcher = &lookup.Fetcher{Registry: r.datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: r.now}
 	if o.Released != "" {
 		r.fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
+	}
+	if o.Package != "" {
+		r.fetcher.Bypass = func(ref lookup.Ref) bool { return ref.Datasource+"|"+ref.PackageName == o.Package }
 	}
 	// A disabled dependency is not looked up - unless the advisory
 	// database says it is vulnerable, which is checked after the first

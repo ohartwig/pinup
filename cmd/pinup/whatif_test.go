@@ -278,7 +278,7 @@ func skippedAfterExtraction(reason string) bool {
 	for _, prefix := range []string{
 		"lookup failed:", "no lookup was made", "up to date:", "the registry lists no releases",
 		"current value", "none of the", "versioning:", "cannot write",
-		"disabled by packageRules", "listed in ignoreDeps", "not the released package",
+		"disabled by packageRules", "listed in ignoreDeps", "not the released package", "not the package ",
 	} {
 		if strings.HasPrefix(reason, prefix) {
 			return true
@@ -620,6 +620,40 @@ func TestWhatifReleasedNarrowsToTheReleasedPackage(t *testing.T) {
 	}
 	if plan.Stats.LookupsIssued != 2 {
 		t.Errorf("only the released package is looked up (gitlab-tags and gitlab-releases): %d lookups", plan.Stats.LookupsIssued)
+	}
+}
+
+// The advisory watch's targeted run: one external package by index key,
+// every other dependency skipped by name, only that package looked up.
+func TestWhatifPackageNarrowsToOnePackage(t *testing.T) {
+	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(t, at)
+	opts.Package = "github-releases|editorconfig-checker/editorconfig-checker"
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	planned, skippedByName := 0, 0
+	for _, d := range plan.Deps {
+		switch {
+		case d.Datasource == "github-releases" && d.DepName == "editorconfig-checker/editorconfig-checker":
+			// Looked up, and up to date in the canned answers: skipped by
+			// the lookup, never by name.
+			if strings.Contains(d.SkipReason, "not the package") {
+				t.Errorf("the package was skipped by name: %s", d.SkipReason)
+			}
+			planned++
+		case strings.Contains(d.SkipReason, "not the package github-releases|editorconfig-checker/editorconfig-checker"):
+			skippedByName++
+		case d.SkipReason == "":
+			t.Errorf("%s was planned although it is not the package", d.DepName)
+		}
+	}
+	if planned == 0 || skippedByName == 0 {
+		t.Errorf("planned %d, %d skipped by name", planned, skippedByName)
+	}
+	if plan.Stats.LookupsIssued != 1 {
+		t.Errorf("only the package is looked up: %d lookups", plan.Stats.LookupsIssued)
 	}
 }
 
