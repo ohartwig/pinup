@@ -6,91 +6,91 @@ package preset
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
+
+	"github.com/ohartwig/pinup/fake/fixture"
 )
 
-// presetFloor is asserted so a truncated closure cannot pass.
-const presetFloor = 1000
-
-type closure struct {
-	Presets map[string]struct {
-		Definition map[string]any `json:"definition"`
-		Resolved   struct {
-			Config  map[string]any `json:"config"`
-			Visited struct {
-				Merged []string `json:"merged"`
-			} `json:"visitedPresets"`
-		} `json:"resolved"`
-	} `json:"presets"`
-}
-
-func loadClosure(t *testing.T) closure {
-	t.Helper()
-	raw, err := os.ReadFile(fixture.SharedCaptured(t, "presets", "closure.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var c closure
-	if err := json.Unmarshal(raw, &c); err != nil {
-		t.Fatal(err)
-	}
-	if len(c.Presets) < presetFloor {
-		t.Fatalf("only %d presets captured; the closure was barely read", len(c.Presets))
-	}
-	return c
-}
-
-// Every captured preset, resolved here, must equal what Renovate resolved
-// for `{extends: [name]}` - config and the visited list both.
-func TestResolvesEveryCapturedPresetAsRenovateDid(t *testing.T) {
-	c := loadClosure(t)
+// The library is pinup's own and closed: every preset it names exists in
+// it, every entry resolves, and the names a fixture root's configuration
+// extends are all there - the preset surface the estate and the twin need.
+func TestLibraryIsClosedAndResolves(t *testing.T) {
 	lib := Builtin()
-	names := make([]string, 0, len(c.Presets))
-	for n := range c.Presets {
-		names = append(names, n)
+	if !strings.Contains(lib.Source, "pinup's own") {
+		t.Errorf("the library's source must say whose it is: %q", lib.Source)
 	}
-	sort.Strings(names)
-
-	mismatch, compared := 0, 0
-	for _, name := range names {
-		want := c.Presets[name]
+	if len(lib.Presets) < 20 {
+		t.Fatalf("library holds %d presets; the estate's closure needs more", len(lib.Presets))
+	}
+	for _, name := range lib.Names() {
 		got, err := Resolve(map[string]any{"extends": []any{name}}, lib)
 		if err != nil {
 			t.Errorf("%s: %v", name, err)
-			mismatch++
 			continue
 		}
-		compared++
-		if !reflect.DeepEqual(got.Config, want.Resolved.Config) {
-			mismatch++
-			if mismatch <= 5 {
-				t.Errorf("%s: resolved config differs\n got: %s\nwant: %s", name, short(got.Config), short(want.Resolved.Config))
-			}
+		if len(got.Visited) == 0 || got.Visited[0] != name {
+			t.Errorf("%s: visited %v", name, got.Visited)
 		}
-		if !reflect.DeepEqual(got.Visited, want.Resolved.Visited.Merged) {
-			mismatch++
-			if mismatch <= 5 {
-				t.Errorf("%s: visited %v, Renovate %v", name, got.Visited, want.Resolved.Visited.Merged)
-			}
+		def := lib.Presets[name].Definition
+		if d, _ := def["description"].([]any); len(d) != 1 {
+			t.Errorf("%s: a library preset carries one description of its own, got %v", name, def["description"])
 		}
 	}
-	t.Logf("%d presets compared, %d mismatches", compared, mismatch)
-	if compared < presetFloor {
-		t.Fatalf("compared only %d", compared)
+	raw, err := os.ReadFile(fixture.Config(t))
+	if err != nil {
+		t.Fatal(err)
 	}
-	if mismatch != 0 {
-		t.Fail()
+	var cfg struct {
+		Extends []string `json:"extends"`
+	}
+	if err := json.Unmarshal(raw, &cfg); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range cfg.Extends {
+		if _, _, ok, _ := lib.Get(name); !ok {
+			t.Errorf("the configuration extends %s, which the library does not carry", name)
+		}
 	}
 }
 
-// The acceptance case: default.json's extends resolve to what the container
-// resolved them to - 771 rules and all.
-func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
+// Descriptions follow the rule measured on the pinned container's resolver
+// (testdata/renovate/.../presets/README.md): a nested preset with a
+// description of its own drops the descriptions of children whose
+// definition carries packageRules, and every other child's description is
+// appended before its own; the top-level configuration keeps every
+// child's regardless.
+func TestDescriptionsAccumulateAsMeasured(t *testing.T) {
+	src := fakeSource{
+		"parent":  {"description": []any{"parent"}, "extends": []any{"rules", "plain"}},
+		"rules":   {"description": []any{"rules"}, "packageRules": []any{map[string]any{"matchPackageNames": []any{"*"}, "automerge": true}}},
+		"plain":   {"description": []any{"plain"}, "dependencyDashboard": true},
+		"unnamed": {"extends": []any{"rules", "plain"}},
+	}
+	got, err := Resolve(map[string]any{"extends": []any{"parent"}}, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []any{"plain", "parent"}; !reflect.DeepEqual(got.Config["description"], want) {
+		t.Errorf("a described parent: got %v, want %v", got.Config["description"], want)
+	}
+	got, err = Resolve(map[string]any{"extends": []any{"unnamed"}}, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := []any{"rules", "plain"}; !reflect.DeepEqual(got.Config["description"], want) {
+		t.Errorf("an undescribed parent: got %v, want %v", got.Config["description"], want)
+	}
+}
+
+// The acceptance case: the configuration's extends resolve to the
+// library's rules first and the file's own last, the preset custom
+// managers before the file's, with one warning per inert preset used.
+func TestResolvesTheConfiguration(t *testing.T) {
 	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
@@ -99,57 +99,50 @@ func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
 	if err := json.Unmarshal(raw, &cfg); err != nil {
 		t.Fatal(err)
 	}
-	raw, err = os.ReadFile(fixture.Captured(t, "presets", "default-resolved.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var want map[string]any
-	if err := json.Unmarshal(raw, &want); err != nil {
-		t.Fatal(err)
-	}
-
 	got, err := Resolve(cfg, Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, k := range sortedKeys(want) {
-		if !reflect.DeepEqual(got.Config[k], want[k]) {
-			t.Errorf("key %s differs\n got: %s\nwant: %s", k, short(got.Config[k]), short(want[k]))
-		}
+	own, _ := cfg["packageRules"].([]any)
+	rules, _ := got.Config["packageRules"].([]any)
+	if want := fixture.Expect(t).RulesResolved; len(rules) != want || len(rules) <= len(own) {
+		t.Errorf("resolved %d rules, expect.json pins %d (the file's own %d come last)", len(rules), want, len(own))
 	}
-	for k := range got.Config {
-		if _, ok := want[k]; !ok {
-			t.Errorf("key %s is set here and not by Renovate", k)
-		}
+	if len(rules) >= len(own) && !reflect.DeepEqual(stripDescriptions(rules[len(rules)-len(own):]), stripDescriptions(own)) {
+		t.Error("the file's own rules are not the last ones, verbatim")
 	}
-	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 771 {
-		t.Errorf("resolved %d rules, want 771 - the numbering must stay Renovate's", len(rules))
+	ownCM, _ := cfg["customManagers"].([]any)
+	cms, _ := got.Config["customManagers"].([]any)
+	if len(cms) != len(ownCM)+2 {
+		t.Errorf("%d custom managers, want the file's %d after the two the presets add", len(cms), len(ownCM))
 	}
-	// The two mergeConfidence presets - all-badges from default.json itself,
-	// age-confidence-badges through config:recommended - resolve but have
-	// no effect, and each is warned about once.
-	if len(got.Warnings) != 2 {
+	// The three inert presets - all-badges from the file itself,
+	// age-confidence-badges through config:recommended, abandonments -
+	// resolve but have no effect, and each is warned about once.
+	if len(got.Warnings) != 3 {
 		t.Errorf("want one warning per inert preset, got %v", got.Warnings)
 	}
-	for _, w := range got.Warnings {
-		if !strings.Contains(w, "mergeConfidence:") || !strings.Contains(w, "developer.mend.io") {
-			t.Errorf("warning must name the preset and the reason: %q", w)
-		}
-	}
-	// The closure the task names, as merged presets.
 	for _, name := range []string{"config:recommended", ":dependencyDashboard", ":semanticPrefixFixDepsChoreOthers",
 		"group:monorepos", "group:recommended", "replacements:all", "workarounds:all"} {
-		found := false
-		for _, v := range got.Visited {
-			if v == name {
-				found = true
-				break
-			}
-		}
-		if !found {
+		if !slices.Contains(got.Visited, name) {
 			t.Errorf("%s was not visited", name)
 		}
 	}
+}
+
+func stripDescriptions(rules []any) []any {
+	out := make([]any, 0, len(rules))
+	for _, r := range rules {
+		m, _ := r.(map[string]any)
+		c := map[string]any{}
+		for k, v := range m {
+			if k != "description" {
+				c[k] = v
+			}
+		}
+		out = append(out, c)
+	}
+	return out
 }
 
 func TestInertPresetResolvesButWarnsOnce(t *testing.T) {
@@ -160,8 +153,11 @@ func TestInertPresetResolvesButWarnsOnce(t *testing.T) {
 	if len(got.Warnings) != 1 || !strings.Contains(got.Warnings[0], "developer.mend.io") {
 		t.Errorf("warnings %v", got.Warnings)
 	}
-	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 2 {
-		t.Errorf("an inert preset still resolves its rules (numbering), got %d", len(rules))
+	if rules, _ := got.Config["packageRules"].([]any); len(rules) != 0 {
+		t.Errorf("an inert preset resolves to nothing, got %d rules", len(rules))
+	}
+	if got.Config["x"] != 1 {
+		t.Error("the configuration's own keys survive an inert preset")
 	}
 }
 
@@ -208,21 +204,6 @@ func TestCycleIsAnError(t *testing.T) {
 	}
 }
 
-func TestLibraryMatchesGenerator(t *testing.T) {
-	// The committed library must be exactly what presetgen produces from the
-	// closure, so the two cannot drift apart unnoticed.
-	want, err := os.ReadFile("library.json")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(string(want), `"source": "executed in renovate/renovate:43.288.0`) {
-		t.Fatal("the library must name the capture it was generated from")
-	}
-	if len(Builtin().Presets) < presetFloor {
-		t.Fatalf("library holds %d presets", len(Builtin().Presets))
-	}
-}
-
 type fakeSource map[string]map[string]any
 
 func (f fakeSource) Get(name string) (map[string]any, string, bool, error) {
@@ -247,10 +228,13 @@ func short(v any) string {
 	return string(b)
 }
 
-// The comparison must be able to fail: a library with one preset's rules
-// removed resolves config:recommended differently.
-func TestParityGoesRedWhenTheLibraryIsBroken(t *testing.T) {
-	c := loadClosure(t)
+// The library is what the resolution is made of: an entry with its rules
+// removed resolves config:recommended to fewer rules.
+func TestResolutionGoesRedWhenTheLibraryIsBroken(t *testing.T) {
+	intact, err := Resolve(map[string]any{"extends": []any{"config:recommended"}}, Builtin())
+	if err != nil {
+		t.Fatal(err)
+	}
 	lib := &Library{Presets: map[string]Entry{}}
 	for n, e := range Builtin().Presets {
 		lib.Presets[n] = e
@@ -266,8 +250,8 @@ func TestParityGoesRedWhenTheLibraryIsBroken(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if reflect.DeepEqual(got.Config, c.Presets["config:recommended"].Resolved.Config) {
-		t.Fatal("a broken library resolved identically; the comparison is not comparing")
+	if reflect.DeepEqual(got.Config["packageRules"], intact.Config["packageRules"]) {
+		t.Fatal("a broken library resolved identically; the library is not what resolves")
 	}
 }
 

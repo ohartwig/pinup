@@ -14,12 +14,13 @@
 
 | Branch | Update | Reason | Held by | Thaws |
 |---|---|---|---|---|
-| `renovate/js-tokens-10.x` | js-tokens ^4.0.0 → ^10.0.0 | dependencyDashboardApproval | packageRules[740] | — |
-| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[771] | 2026-09-14T23:00:00Z |
-| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[771] | 2026-09-14T23:00:00Z |
-| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[771] | 2026-09-14T23:00:00Z |
+| `renovate/js-tokens-10.x` | js-tokens ^4.0.0 → ^10.0.0 | dependencyDashboardApproval | packageRules[36] | — |
+| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[67] | 2026-09-14T23:00:00Z |
+| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[67] | 2026-09-14T23:00:00Z |
+| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[67] | 2026-09-14T23:00:00Z |
 
 ## Warnings
 
-- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect
-- **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect
+- **config**: preset "abandonments:recommended" has no effect: abandonment detection is not implemented; the preset resolves to nothing
+- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing
+- **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing

@@ -10,6 +10,9 @@ import (
 )
 
 func TestCommittedDefaultsAreGenerated(t *testing.T) {
+	if _, err := os.Stat("../../" + fullPath); err != nil {
+		t.Skipf("the upstream captures are not in this tree (%v); the generator's output is checked where they are", err)
+	}
 	got, err := Generate("../../"+fullPath, "../../"+directPath)
 	if err != nil {
 		t.Fatal(err)

@@ -51,7 +51,7 @@ func TestExpectationsComeFromTheRoot(t *testing.T) {
 func TestCheckedInRootsAreConsistent(t *testing.T) {
 	t.Setenv("PINUP_FIXTURES", "")
 	v := Version(t)
-	for _, p := range []string{SharedCaptured(t, "versioning"), Captured(t, "full-resolved.json"), Config(t), Path(t, "golden")} {
+	for _, p := range []string{SharedCaptured(t, "versioning"), Captured(t, "resolved-options.json"), Config(t), Path(t, "golden")} {
 		if _, err := os.Stat(p); err != nil {
 			t.Errorf("%s: %v", p, err)
 		}

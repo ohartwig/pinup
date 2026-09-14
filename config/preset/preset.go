@@ -3,22 +3,21 @@
 
 // Package preset resolves `extends` into a flat configuration.
 //
-// Layer 1. The library it ships is the observed definition of every preset in
-// the transitive closure of the estate's configuration, recorded by running
-// the pinned Renovate container's resolver (tools/capture/presets.sh) and
-// generated into library.json by tools/presetgen - rebuilt once, from
-// behaviour, not embedded from the Renovate tree. Presets whose behaviour
-// pinup deliberately does not carry are marked inert: their definitions
-// still resolve, so packageRules keep Renovate's numbering, and resolving
-// one warns with the reason, so a configuration that names one is not
-// silently weaker than it reads.
+// Layer 1. The library it ships, presets.json, is pinup's own: written for
+// the behaviour the configurations it serves need, under the names
+// Renovate uses, and checked by effect against the rule vectors the pinned
+// container recorded rather than against Renovate's preset data, which is
+// AGPL and not carried (README.md in this directory). Presets whose
+// behaviour pinup deliberately does not carry are inert: they resolve to
+// nothing, and resolving one warns with the reason, so a configuration that
+// names one is not silently weaker than it reads.
 //
-// Resolution order is Renovate's, checked against 1085 captured presets: a
-// preset's own extends resolve before its body, presets listed later override
-// earlier ones, and the configuration's own keys win over everything it
-// extends. packageRules concatenate, description accumulates, everything
-// else replaces. A rule inside packageRules may itself extend presets; those
-// resolve into the rule.
+// Resolution order is Renovate's, measured on the pinned container's
+// resolver: a preset's own extends resolve before its body, presets listed
+// later override earlier ones, and the configuration's own keys win over
+// everything it extends. packageRules concatenate, description accumulates,
+// everything else replaces. A rule inside packageRules may itself extend
+// presets; those resolve into the rule.
 package preset
 
 import (
@@ -30,7 +29,7 @@ import (
 	"strings"
 )
 
-//go:embed library.json
+//go:embed presets.json
 var libraryJSON []byte
 
 // Entry is one library preset.

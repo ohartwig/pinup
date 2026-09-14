@@ -6,16 +6,18 @@
 # resolveConfigPresets over the file - as presets/default-resolved.json, and
 # --print-config with the file as the global configuration AND as the
 # repository's renovate.json as presets/runner-and-repo-resolved.json (the
-# shape a repository extending the runner has). Both under the root
-# PINUP_FIXTURES names (default testdata/estate). Refuses to overwrite.
+# shape a repository extending the runner has). Both are Renovate's full
+# expansions - they carry its preset data - and go under testdata/upstream/
+# <root>, outside the public mirror; PINUP_FIXTURES (default
+# testdata/estate) names whose configuration. Refuses to overwrite.
 set -eu
 
 IMAGE="renovate/renovate:43.288.0"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-FIXTURES="$ROOT/${PINUP_FIXTURES:-testdata/estate}"
-CFG="$FIXTURES/config"
-OUT="$FIXTURES/renovate-43.288.0/presets"
+FIX="${PINUP_FIXTURES:-testdata/estate}"
+CFG="$ROOT/$FIX/config"
+OUT="$ROOT/testdata/upstream/$(basename "$FIX")/renovate-43.288.0/presets"
 
 for f in default-resolved.json runner-and-repo-resolved.json; do
   if [ -e "$OUT/$f" ]; then

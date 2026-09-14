@@ -4,6 +4,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/ohartwig/pinup/config/preset"
@@ -15,35 +16,37 @@ import (
 // synthetic one would only prove the decoder agrees with itself.
 func TestDecodeTheRealConfig(t *testing.T) {
 	// With the presets expanded, as a run sees it: the 25 custom managers
-	// the file declares plus the four its extends contribute, which come
-	// first (customManagers:dockerfileVersions, :gitlabPipelineVersions,
-	// and two for tsconfig via workarounds:typesNodeVersioning).
+	// the file declares plus the two its extends contribute, which come
+	// first (customManagers:dockerfileVersions, :gitlabPipelineVersions).
 	d, r, warnings, err := DecodeFile(fixture.Config(t), preset.Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(warnings) != 2 {
-		t.Errorf("want the two inert mergeConfidence warnings, got %v", warnings)
+	if len(warnings) != 3 {
+		t.Errorf("want the three inert-preset warnings, got %v", warnings)
 	}
-	if rules, _ := r.Raw["packageRules"].([]any); len(rules) != 771 {
-		t.Errorf("resolved %d rules, want 771", len(rules))
+	want := fixture.Expect(t)
+	rules, _ := r.Raw["packageRules"].([]any)
+	if len(rules) != want.RulesResolved {
+		t.Errorf("resolved %d rules, want %d", len(rules), want.RulesResolved)
 	}
-	if len(d.CustomManagers) != 29 {
-		t.Errorf("decoded %d custom managers, expected 29", len(d.CustomManagers))
+	if len(d.CustomManagers) != 27 {
+		t.Errorf("decoded %d custom managers, expected 27", len(d.CustomManagers))
 	}
-	// The file's definitions start at 4; the offset is read off provenance
+	// The file's definitions start at 2; the offset is read off provenance
 	// rather than assumed.
-	const own = 4
-	if o, ok := r.Winner("/customManagers/3"); !ok || !strings.HasPrefix(o.Source, "preset:") {
-		t.Errorf("customManagers[3] origin = %+v, want a preset", o)
+	const own = 2
+	if o, ok := r.Winner("/customManagers/1"); !ok || !strings.HasPrefix(o.Source, "preset:") {
+		t.Errorf("customManagers[1] origin = %+v, want a preset", o)
 	}
-	if o, ok := r.Winner("/customManagers/4"); !ok || !strings.HasSuffix(o.Source, "default.json") {
-		t.Errorf("customManagers[4] origin = %+v, want the file", o)
+	if o, ok := r.Winner("/customManagers/2"); !ok || !strings.HasSuffix(o.Source, "default.json") {
+		t.Errorf("customManagers[2] origin = %+v, want the file", o)
 	}
-	// Provenance: the file's first own rule follows 722 preset rules, and
+	// Provenance: the file's first own rule follows the library's, and
 	// names the file.
-	if o, ok := r.Winner("/packageRules/722"); !ok || o.Rule != 722 || !strings.HasSuffix(o.Source, "default.json") {
-		t.Errorf("packageRules[722] origin = %+v", o)
+	first := len(rules) - want.RulesOwn
+	if o, ok := r.Winner(fmt.Sprintf("/packageRules/%d", first)); !ok || o.Rule != first || !strings.HasSuffix(o.Source, "default.json") {
+		t.Errorf("packageRules[%d] origin = %+v", first, o)
 	}
 	if o, ok := r.Winner("/packageRules/0"); !ok || o.Source != "preset::semanticPrefixFixDepsChoreOthers" {
 		t.Errorf("packageRules[0] origin = %+v", o)

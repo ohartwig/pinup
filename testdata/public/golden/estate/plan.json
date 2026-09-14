@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "pinupVersion": "golden",
-  "generatedAt": "2026-09-14T08:00:00Z",
+  "generatedAt": "2026-09-14T11:00:00Z",
   "repo": {
     "path": "golden/estate"
   },
@@ -17,7 +17,7 @@
     {
       "manager": "custom.regex",
       "file": ".gitlab-ci.yml",
-      "customManager": 28,
+      "customManager": 26,
       "depName": "devops/ci-cd-components/lint-tools",
       "currentValue": "1",
       "datasource": "gitlab-releases",
@@ -66,7 +66,7 @@
     {
       "manager": "custom.regex",
       "file": ".gitlab-ci.yml",
-      "customManager": 17,
+      "customManager": 15,
       "depName": "devops/ci-cd-components/release-tools",
       "currentValue": "1.17.59",
       "datasource": "gitlab-releases",
@@ -116,7 +116,7 @@
     {
       "manager": "custom.regex",
       "file": ".gitlab-ci.yml",
-      "customManager": 28,
+      "customManager": 26,
       "depName": "devops/ci-cd-components/supply-chain-verify",
       "currentValue": "2",
       "datasource": "gitlab-releases",
@@ -209,7 +209,7 @@
     {
       "manager": "custom.regex",
       "file": "Containerfile",
-      "customManager": 2,
+      "customManager": 0,
       "depName": "git",
       "currentValue": "2.55.0-r7",
       "datasource": "custom.wolfi",
@@ -239,7 +239,7 @@
     {
       "manager": "custom.regex",
       "file": "Containerfile",
-      "customManager": 2,
+      "customManager": 0,
       "depName": "php-frankenphp-8.5",
       "currentValue": "8.5.10-r0",
       "datasource": "custom.corp-apk",
@@ -302,8 +302,8 @@
         "digestEnd": -1,
         "line": 4
       },
-      "skipReason": "disabled by packageRules[734]",
-      "disabled": "disabled by packageRules[734]",
+      "skipReason": "disabled by packageRules[30]",
+      "disabled": "disabled by packageRules[30]",
       "lockFiles": [
         "composer.lock"
       ]
@@ -311,7 +311,7 @@
     {
       "manager": "custom.regex",
       "file": "composer.json",
-      "customManager": 14,
+      "customManager": 12,
       "depName": "acme/sitepackage",
       "packageName": "development/acme/sitepackage:acme/sitepackage",
       "currentValue": "^5.0",
@@ -446,10 +446,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -501,10 +501,10 @@
         },
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -549,7 +549,7 @@
           "reason": "dependencyDashboardApproval",
           "origin": {
             "source": "packageRules",
-            "rule": 740,
+            "rule": 36,
             "order": 0
           }
         },
@@ -557,17 +557,17 @@
           "reason": "minimumReleaseAge",
           "origin": {
             "source": "packageRules",
-            "rule": 740,
+            "rule": 36,
             "order": 0
           },
           "note": "the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional"
         },
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -595,7 +595,7 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     },
     {
@@ -615,7 +615,7 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     },
     {
@@ -635,18 +635,22 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     }
   ],
   "warnings": [
     {
       "stage": "config",
-      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+      "msg": "preset \"abandonments:recommended\" has no effect: abandonment detection is not implemented; the preset resolves to nothing"
     },
     {
       "stage": "config",
-      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing"
     },
     {
       "stage": "lookup",

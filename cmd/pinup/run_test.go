@@ -57,8 +57,9 @@ func TestEveryCommandIsListed(t *testing.T) {
 
 func TestPrintConfigExplainAndDiff(t *testing.T) {
 	var out, errw strings.Builder
+	first := fixture.Expect(t).RulesResolved - fixture.Expect(t).RulesOwn
 	err := run([]string{"print-config", "--config", fixture.Config(t),
-		"--explain", "packageRules[768].enabled"}, &out, &errw)
+		"--explain", fmt.Sprintf("packageRules[%d].enabled", first+46)}, &out, &errw)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -76,37 +77,32 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 		t.Error("an unset path must be an error, not silence")
 	}
 
-	// Against the direct resolution of the file - presets, no defaults -
-	// every line the snapshot has is present here, and what is only here
-	// is a builtin default.
+	// Against the captured options - every option the container resolved,
+	// without its rules, custom managers and descriptions - the diff must
+	// fail, and what it lists as only here is exactly those three keys;
+	// what is only in the capture describes the capture run (hostRules,
+	// the repository, its branch list), which config's parity test drops
+	// by name.
 	out.Reset()
 	err = run([]string{"print-config", "--config", fixture.Config(t),
-		"--diff", fixture.Captured(t, "presets", "default-resolved.json")}, &out, &errw)
+		"--diff", fixture.Captured(t, "resolved-options.json")}, &out, &errw)
 	if err == nil {
-		t.Error("the defaults make the resolution larger than the direct snapshot; the diff must say so")
+		t.Error("the rules and custom managers make the resolution larger than the options capture; the diff must say so")
 	}
+	extra, other := 0, 0
 	for _, line := range strings.Split(out.String(), "\n") {
-		// The direct snapshot is pre-migration: its string descriptions
-		// are lists here, its minimumReleaseAge "0" is null, and the
-		// global-only executionTimeout is gone. Anything else the snapshot
-		// has and this lacks is a real difference.
-		if !strings.HasPrefix(line, "+ ") {
-			continue
-		}
-		migrated := strings.Contains(line, ".description \"") ||
-			strings.HasSuffix(line, `minimumReleaseAge "0"`) ||
-			strings.HasPrefix(line, "+ executionTimeout ")
-		if !migrated {
-			t.Errorf("the snapshot has a line this resolution lacks: %s", line)
+		switch {
+		case strings.HasPrefix(line, "- packageRules["), strings.HasPrefix(line, "- customManagers["), strings.HasPrefix(line, "- description["):
+			extra++
+		case strings.HasPrefix(line, "- "):
+			other++
+			if other <= 5 {
+				t.Errorf("a line differs beyond the rules and managers: %s", line)
+			}
 		}
 	}
-	// And the diff must be able to fail: the production-shape capture has
-	// 1540 rules and differs.
-	out.Reset()
-	err = run([]string{"print-config", "--config", fixture.Config(t),
-		"--diff", fixture.Captured(t, "presets", "runner-and-repo-resolved.json")}, &out, &errw)
-	if err == nil || !strings.Contains(out.String(), "packageRules[1539]") {
-		t.Errorf("diff against the 1540-rule capture must fail and show the extra rules: err=%v", err)
+	if extra == 0 {
+		t.Error("the diff listed no rule or manager lines; it compared nothing")
 	}
 }
 
@@ -274,7 +270,7 @@ func TestMigrateToYAML(t *testing.T) {
 	}
 	// The round trip the command guards: the runner's configuration,
 	// converted and resolved, is the JSON resolution line for line, the
-	// descriptions aside, 771 rules in order.
+	// descriptions aside, every rule in order.
 	src, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
@@ -294,8 +290,8 @@ func TestMigrateToYAML(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rules, _ := r.Raw["packageRules"].([]any); len(rules) != 771 {
-		t.Errorf("the converted configuration resolves to %d rules, want 771", len(rules))
+	if rules, _ := r.Raw["packageRules"].([]any); len(rules) != fixture.Expect(t).RulesResolved {
+		t.Errorf("the converted configuration resolves to %d rules, want %d", len(rules), fixture.Expect(t).RulesResolved)
 	}
 	if strings.Contains(string(converted), "description:") {
 		t.Error("a description key survived; it is a comment now")

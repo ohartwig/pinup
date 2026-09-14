@@ -5,6 +5,7 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/config/preset"
 	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"path/filepath"
@@ -76,15 +77,19 @@ func TestSnapshotProvenanceIsComplete(t *testing.T) {
 	}
 }
 
-// What the eleven presets actually contribute. These numbers are the scope of
-// the preset rebuild, and they are pinned so a recapture that moves them shows
-// up as a reviewed change rather than a quiet one.
+// What the presets contribute here. These numbers are the scope of the
+// preset library, and they are pinned so a change to it or a recapture
+// shows up as a reviewed change rather than a quiet one.
 func TestPresetExpansionScope(t *testing.T) {
 	dir := snapshotDir(t)
-	full := readJSON[map[string]any](t, filepath.Join(dir, "full-resolved.json"))
+	opts := readJSON[map[string]any](t, filepath.Join(dir, "resolved-options.json"))
 	rawCfg := readJSON[map[string]any](t, fixture.Config(t))
+	r, _, err := ResolveFile(fixture.Config(t), preset.Builtin())
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	rules, _ := full["packageRules"].([]any)
+	rules, _ := r.Raw["packageRules"].([]any)
 	written, _ := rawCfg["packageRules"].([]any)
 	t.Logf("packageRules: %d written, %d after preset expansion", len(written), len(rules))
 
@@ -93,88 +98,15 @@ func TestPresetExpansionScope(t *testing.T) {
 		t.Errorf("the config writes %d rules, expected %d", len(written), want.RulesOwn)
 	}
 	if len(rules) != want.RulesResolved {
-		t.Errorf("resolution yields %d rules, expected %d - the preset content moved", len(rules), want.RulesResolved)
+		t.Errorf("resolution yields %d rules, expected %d - the library moved", len(rules), want.RulesResolved)
 	}
-	if len(full) != want.ResolvedKeys {
-		t.Errorf("resolved config has %d top-level keys, expected %d", len(full), want.ResolvedKeys)
+	if len(opts) != want.ResolvedKeys {
+		t.Errorf("the captured options have %d top-level keys, expected %d", len(opts), want.ResolvedKeys)
 	}
 
 	visited := readJSON[map[string][]string](t, filepath.Join(dir, "visited-presets.json"))
 	if n := len(visited["unmerged"]); n != want.Presets {
 		t.Errorf("%d top-level presets visited, expected %d", n, want.Presets)
-	}
-}
-
-// The matchers the resolved rules use, which is a wider surface than the
-// hand-written config suggests. This test exists to keep that visible: the
-// spec's first reading of the config found six matchers, and resolution needs
-// four more.
-func TestResolvedRulesNeedMatchersTheWrittenConfigDoesNot(t *testing.T) {
-	dir := snapshotDir(t)
-	full := readJSON[map[string]any](t, filepath.Join(dir, "full-resolved.json"))
-	rules, _ := full["packageRules"].([]any)
-
-	counts := map[string]int{}
-	for _, r := range rules {
-		m, _ := r.(map[string]any)
-		for k := range m {
-			if strings.HasPrefix(k, "match") {
-				counts[k]++
-			}
-		}
-	}
-
-	// Implemented, or planned for phase 0.
-	for _, k := range []string{"matchPackageNames", "matchDatasources", "matchUpdateTypes", "matchManagers"} {
-		if counts[k] == 0 {
-			t.Errorf("%s does not appear in the resolved rules; the snapshot looks wrong", k)
-		}
-	}
-
-	// Not yet implemented. Each is load-bearing for preset-contributed rules,
-	// and the counts say how much.
-	for _, c := range []struct {
-		key  string
-		want int
-	}{
-		{"matchSourceUrls", 445},
-		{"matchCurrentVersion", 110},
-		{"matchDepTypes", 7},
-		{"matchJsonata", 5},
-	} {
-		if counts[c.key] != c.want {
-			t.Errorf("%s used by %d rules, expected %d", c.key, counts[c.key], c.want)
-		}
-	}
-
-	// The bound that makes the rebuild tractable: almost every rule using an
-	// unimplemented matcher is keyed to a named upstream package, so it can
-	// only fire if this estate depends on that exact package.
-	unimplemented := map[string]bool{
-		"matchSourceUrls": true, "matchCurrentVersion": true,
-		"matchJsonata": true, "matchDepTypes": true,
-	}
-	var affected, named int
-	for _, r := range rules {
-		m, _ := r.(map[string]any)
-		hit := false
-		for k := range m {
-			if unimplemented[k] {
-				hit = true
-			}
-		}
-		if !hit {
-			continue
-		}
-		affected++
-		if m["matchPackageNames"] != nil || m["matchSourceUrls"] != nil {
-			named++
-		}
-	}
-	t.Logf("rules needing an unimplemented matcher: %d, of which %d are keyed to named packages", affected, named)
-	if affected-named > 20 {
-		t.Errorf("%d rules using an unimplemented matcher are generic and could fire for anything; "+
-			"the rebuild is no longer bounded by the estate's dependency set", affected-named)
 	}
 }
 

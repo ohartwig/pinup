@@ -9,11 +9,19 @@ Behavioural compatibility with Renovate (https://github.com/renovatebot/renovate
 is a goal of this project. Renovate is licensed under the GNU Affero General
 Public License v3.0.
 
-No source code, configuration preset, fixture table or other copyrightable
-expression from the Renovate project has been copied into this repository.
-Where compatibility required knowledge of Renovate's behaviour, that behaviour
-was observed by executing a pinned Renovate container and recording its
-input/output pairs; the implementation here was written from those recordings.
+No source code, fixture table or other copyrightable expression from the
+Renovate project has been copied into this repository. Where compatibility
+required knowledge of Renovate's behaviour, that behaviour was observed by
+executing a pinned Renovate container and recording its input/output pairs;
+the implementation here was written from those recordings.
+
+The preset library (config/preset/presets.json) is pinup's own, written for
+the behaviour its configurations need under the names Renovate uses. Releases
+up to 0.16.0 embedded a library generated from the preset definitions the
+pinned container's resolver returned - obtained by execution, but identical
+in content to Renovate's preset data, including its curated monorepo and
+replacement lists. That library was replaced on 2026-09-14; see
+config/preset/README.md and docs/tech-spec.md section 0.1.
 
 This separation is what allows pinup to be MIT-licensed while reproducing the
-decisions of an AGPL-licensed program. See docs/tech-spec.md section 0.1.
+decisions of an AGPL-licensed program.

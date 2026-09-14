@@ -7,7 +7,11 @@
 // and its presets set, and everything that describes the one run rather
 // than the program. Nothing is copied from the Renovate source tree.
 //
-// Deterministic, and a test asserts the committed file equals its output.
+// The inputs are Renovate's full expansions of the estate configuration,
+// which carry Renovate's own preset data and live under testdata/upstream,
+// outside the public mirror; the generated defaults are option values
+// alone. Deterministic, and a test asserts the committed file equals its
+// output wherever the inputs are present.
 //
 // Usage: go run ./tools/defaultsgen
 package main
@@ -21,8 +25,8 @@ import (
 )
 
 const (
-	fullPath   = "testdata/estate/renovate-43.288.0/full-resolved.json"
-	directPath = "testdata/estate/renovate-43.288.0/presets/default-resolved.json"
+	fullPath   = "testdata/upstream/estate/renovate-43.288.0/full-resolved.json"
+	directPath = "testdata/upstream/estate/renovate-43.288.0/presets/default-resolved.json"
 	outPath    = "config/defaults.json"
 )
 

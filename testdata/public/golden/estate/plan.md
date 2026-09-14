@@ -6,12 +6,12 @@
 
 | Branch | Update | Reason | Held by | Thaws |
 |---|---|---|---|---|
-| `renovate/pin-dependencies` | bash alpine3.22 → alpine3.22 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[758] | 2026-09-14T10:00:00Z |
+| `renovate/pin-dependencies` | bash alpine3.22 → alpine3.22 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[54] | 2026-09-14T14:00:00Z |
 | `renovate/terraform-aws-modules-vpc-aws-5.x` | terraform-aws-modules/vpc/aws 5.0.0 → 5.21.0 | minimumReleaseAge `the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional` | config | — |
-| `renovate/terraform-aws-modules-vpc-aws-5.x` | terraform-aws-modules/vpc/aws 5.0.0 → 5.21.0 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[758] | 2026-09-14T10:00:00Z |
-| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | dependencyDashboardApproval | packageRules[740] | — |
-| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | minimumReleaseAge `the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional` | packageRules[740] | — |
-| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[758] | 2026-09-14T10:00:00Z |
+| `renovate/terraform-aws-modules-vpc-aws-5.x` | terraform-aws-modules/vpc/aws 5.0.0 → 5.21.0 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[54] | 2026-09-14T14:00:00Z |
+| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | dependencyDashboardApproval | packageRules[36] | — |
+| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | minimumReleaseAge `the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional` | packageRules[36] | — |
+| `renovate/terraform-aws-modules-vpc-aws-6.x` | terraform-aws-modules/vpc/aws 5.0.0 → 6.7.2 | schedule `outside * 0,4,8,12,16,20 * * * (Europe/Berlin)` | packageRules[54] | 2026-09-14T14:00:00Z |
 
 ## Not planned
 
@@ -26,13 +26,14 @@
 | registry.acme.test/devops/ci-mirrors/alpine 3.22 | `.gitlab-ci.yml` | lookup failed: docker: request to registry.acme.test failed: Get "https://registry.acme.test/v2/devops/ci-mirrors/alpine/tags/list?n=1000": dial tcp: lookup registry.acme.test: no such host |
 | registry.acme.test/devops/images/wolfi-base 2 | `Containerfile` | lookup failed: docker: request to registry.acme.test failed: Get "https://registry.acme.test/v2/devops/images/wolfi-base/tags/list?n=1000": dial tcp: lookup registry.acme.test: no such host |
 | php-frankenphp-8.5 8.5.10-r0 | `Containerfile` | lookup failed: custom.corp-apk: php-frankenphp-8.5: httpx: request failed: Get "http://127.0.0.1:8099/corp/php-frankenphp-8.5.json": dial tcp 127.0.0.1:8099: connect: connection refused |
-| acme/sitepackage ^5.0 | `composer.json` | disabled by packageRules[734] |
+| acme/sitepackage ^5.0 | `composer.json` | disabled by packageRules[30] |
 | acme/sitepackage ^5.0 | `composer.json` | lookup failed: gitlab-packages: development/acme/sitepackage: httpx: request failed: Get "https://git.acme.test/api/v4/projects/development%2Facme%2Fsitepackage/packages?package_name=acme%2Fsitepackage&per_page=100&page=1": dial tcp: lookup git.acme.test: no such host |
 
 ## Warnings
 
-- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect
-- **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect
+- **config**: preset "abandonments:recommended" has no effect: abandonment detection is not implemented; the preset resolves to nothing
+- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing
+- **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing
 - **lookup**: development/acme/sitepackage:acme/sitepackage via gitlab-packages: gitlab-packages: development/acme/sitepackage: httpx: request failed: Get "https://git.acme.test/api/v4/projects/development%2Facme%2Fsitepackage/packages?package_name=acme%2Fsitepackage&per_page=100&page=1": dial tcp: lookup git.acme.test: no such host
 - **lookup**: devops/ci-cd-components/lint-tools via gitlab-releases: gitlab-releases: devops/ci-cd-components/lint-tools: httpx: request failed: Get "https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/releases?per_page=100&page=1": dial tcp: lookup git.acme.test: no such host
 - **lookup**: devops/ci-cd-components/lint-tools via gitlab-tags: gitlab-tags: devops/ci-cd-components/lint-tools: httpx: request failed: Get "https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/repository/tags?per_page=100&page=1": dial tcp: lookup git.acme.test: no such host

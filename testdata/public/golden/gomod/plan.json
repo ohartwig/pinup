@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "pinupVersion": "golden",
-  "generatedAt": "2026-09-14T08:00:00Z",
+  "generatedAt": "2026-09-14T11:00:00Z",
   "repo": {
     "path": "golden/gomod"
   },
@@ -364,10 +364,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -412,10 +412,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -461,10 +461,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -567,10 +567,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -599,7 +599,7 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     },
     {
@@ -619,7 +619,7 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     },
     {
@@ -689,18 +689,22 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     }
   ],
   "warnings": [
     {
       "stage": "config",
-      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+      "msg": "preset \"abandonments:recommended\" has no effect: abandonment detection is not implemented; the preset resolves to nothing"
     },
     {
       "stage": "config",
-      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing"
     }
   ],
   "stats": {

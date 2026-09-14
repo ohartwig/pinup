@@ -6,6 +6,13 @@
 # running rules-probe.mjs inside the pinned container. Output is NDJSON,
 # under the fixture root PINUP_FIXTURES names (default testdata/estate).
 #
+# The base is the production resolution, runner-and-repo-resolved.json
+# (tools/capture/resolve-config.sh): the file as the global configuration
+# and as the repository's own, the file's rules last, so a rule of the
+# file's beats a preset's the way it does in a run. Its full expansion
+# carries Renovate's preset data and lives under testdata/upstream, outside
+# the mirror; the vectors record only what fired and what changed.
+#
 # Refuses to overwrite an existing table: a captured behaviour table is a
 # golden file, and golden files change by deliberate deletion, not by re-run.
 set -eu
@@ -13,7 +20,9 @@ set -eu
 IMAGE="renovate/renovate:43.288.0"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-PARITY="$ROOT/${PINUP_FIXTURES:-testdata/estate}/renovate-43.288.0"
+FIX="${PINUP_FIXTURES:-testdata/estate}"
+PARITY="$ROOT/$FIX/renovate-43.288.0"
+BASE="$ROOT/testdata/upstream/$(basename "$FIX")/renovate-43.288.0/presets/runner-and-repo-resolved.json"
 OUT="$PARITY/rules/vectors.ndjson"
 
 if [ -e "$OUT" ]; then
@@ -25,7 +34,7 @@ fi
 STAGE="${HOME}/.cache/pinup-probe/rules"
 rm -rf "$STAGE" && mkdir -p "$STAGE/corpus"
 cp "$HERE/rules-probe.mjs" "$STAGE/"
-cp "$PARITY/full-resolved.json" "$STAGE/"
+cp "$BASE" "$STAGE/full-resolved.json"
 cp "$PARITY"/extract/*.json "$STAGE/corpus/"
 
 mkdir -p "$(dirname "$OUT")"

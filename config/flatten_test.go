@@ -65,38 +65,44 @@ func TestDiffSeesARuleSwap(t *testing.T) {
 	}
 }
 
-// print-config parity: the estate configuration resolved here - defaults,
+// print-config parity: the configuration resolved here - defaults,
 // presets, file - flattened, against what the pinned container printed for
-// the same file. Two adjustments to the captured surface, both measured
-// and recorded in testdata/renovate/.../presets/README.md: keys that describe
-// the capture run rather than the program are dropped, and the four keys
-// the onboarding config:recommended overrode or reordered in that run
-// (ignorePaths, packageRules, description, customManagers) are taken from
-// the direct resolution of the file. Everything else must agree line for
-// line, and the line count is asserted so an empty comparison cannot pass.
+// the same file, on every key but three. packageRules and customManagers
+// are compared elsewhere, by effect (rules/parity_test) and by extraction
+// (the corpus tests): the preset library is pinup's own and carries fewer
+// rules than Renovate's, on purpose (config/preset/README.md). description
+// is the library's wording. Keys that describe the capture run rather than
+// the program are dropped, as measured and recorded in
+// testdata/renovate/.../presets/README.md. Everything else must agree line
+// for line, and the line count is asserted so an empty comparison cannot
+// pass.
 func TestPrintConfigParityWithTheCapturedResolution(t *testing.T) {
 	r, _, err := ResolveFile(fixture.Config(t), preset.Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := loadJSON(t, fixture.Captured(t, "full-resolved.json"))
-	// The direct resolution is pre-migration, as the container's own
-	// migration ran in the print-config path; apply ours, which is the
-	// thing under test as well.
-	direct, _ := Migrate(loadJSON(t, fixture.Captured(t, "presets", "default-resolved.json")))
-	for _, k := range []string{"ignorePaths", "packageRules", "description", "customManagers"} {
-		want[k] = direct[k]
-	}
+	want := loadJSON(t, fixture.Captured(t, "resolved-options.json"))
 	for k := range want {
 		if runSpecific[k] {
 			delete(want, k)
 		}
 	}
-	mine, theirs := Flatten(r.Raw), Flatten(want)
-	if len(theirs) < 6000 {
+	mine := map[string]any{}
+	for k, v := range r.Raw {
+		if k != "packageRules" && k != "customManagers" && k != "description" {
+			mine[k] = v
+		}
+	}
+	for _, k := range []string{"packageRules", "customManagers", "description"} {
+		if _, ok := want[k]; ok {
+			t.Fatalf("resolved-options.json carries %s; the capture was not reduced", k)
+		}
+	}
+	flatMine, theirs := Flatten(mine), Flatten(want)
+	if len(theirs) < 400 {
 		t.Fatalf("only %d lines captured; the snapshot was barely read", len(theirs))
 	}
-	d := Diff(mine, theirs)
+	d := Diff(flatMine, theirs)
 	if len(d) != 0 {
 		limit := min(len(d), 30)
 		t.Errorf("%d lines differ from the captured resolution (first %d):\n%s", len(d), limit, strings.Join(d[:limit], "\n"))

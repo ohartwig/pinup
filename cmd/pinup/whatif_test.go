@@ -110,9 +110,13 @@ func ciTools(t *testing.T) string {
 // checked out. CI must not require a sibling checkout; a developer who has one
 // should be told when the two disagree.
 // fileRule maps an index in default.json's own packageRules to its index in
-// the resolved configuration, where 722 preset rules precede the file's 48.
+// the resolved configuration, where the library's rules precede the file's.
 // Rules are always reported in the resolved numbering, which is Renovate's.
-func fileRule(i int) int { return 722 + i }
+func fileRule(t *testing.T, i int) int {
+	t.Helper()
+	e := fixture.Expect(t)
+	return e.RulesResolved - e.RulesOwn + i
+}
 
 // TestWhatifAgreesWithTheCorpus runs the whole extraction over every
 // repository the fixture root has a capture for - the run's discovery, the
@@ -364,8 +368,8 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 			t.Errorf("release-tools via %s: only the gitlab-releases reading may propose anything, got %+v", u.Dep.Datasource, u)
 			continue
 		}
-		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDisabled || u.Blocks[0].Org.Rule != fileRule(46) {
-			t.Errorf("release-tools 1 -> %s must be disabled by the file's packageRules[46] (resolved %d), got blocks %+v", u.NewValue, fileRule(46), u.Blocks)
+		if !u.Blocked() || u.Blocks[0].Reason != model.BlockDisabled || u.Blocks[0].Org.Rule != fileRule(t, 46) {
+			t.Errorf("release-tools 1 -> %s must be disabled by the file's packageRules[46] (resolved %d), got blocks %+v", u.NewValue, fileRule(t, 46), u.Blocks)
 		}
 		if u.SuppressedBy != model.BlockDisabled {
 			t.Errorf("suppressedBy = %q", u.SuppressedBy)
@@ -385,7 +389,7 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 		if _, ok := reasons[model.BlockRollingMajor]; !ok {
 			t.Errorf("lint-tools majorAvailable is not held as a rolling major: %+v", u.Blocks)
 		}
-		if org, ok := reasons[model.BlockDashboardApproval]; !ok || org.Rule != fileRule(18) {
+		if org, ok := reasons[model.BlockDashboardApproval]; !ok || org.Rule != fileRule(t, 18) {
 			t.Errorf("lint-tools major must wait for dashboard approval by the file's packageRules[18], got %+v", u.Blocks)
 		}
 		if u.SuppressedBy != model.BlockRollingMajor {
@@ -564,10 +568,10 @@ func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
 		t.Fatal("nothing extracted: the alias did not resolve the runner's managers")
 	}
 	// A dependency disabled before lookup is skipped, not looked up: the
-	// repository's own rule is the 772nd, after the runner's 771.
+	// repository's own rule comes after the runner's.
 	disabled := 0
 	for _, d := range plan.Deps {
-		if strings.Contains(d.SkipReason, "packageRules[771]") {
+		if strings.Contains(d.SkipReason, fmt.Sprintf("packageRules[%d]", fixture.Expect(t).RulesResolved)) {
 			disabled++
 		}
 	}

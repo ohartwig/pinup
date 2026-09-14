@@ -11,10 +11,12 @@
 #
 #   tools/capture/print-config.sh [renovate-version]
 #
-# Output goes to <fixture root>/renovate-<version>/ and REFUSES to overwrite
-# an existing snapshot: a new capture is an addition, reviewed as a directory
-# diff. That is how this repository keeps golden files read-only without an
-# -update flag.
+# Output goes to <fixture root>/renovate-<version>/ - the resolved options,
+# the visited presets, the provenance - and REFUSES to overwrite an existing
+# snapshot: a new capture is an addition, reviewed as a directory diff. That
+# is how this repository keeps golden files read-only without an -update
+# flag. The full expansion, which carries Renovate's preset data, goes under
+# testdata/upstream/<root>, outside the public mirror.
 #
 # PINUP_FIXTURES picks the fixture root whose config is resolved (default
 # testdata/estate; testdata/public is the synthetic twin). The version the
@@ -24,8 +26,10 @@ set -euo pipefail
 VERSION="${1:-43.288.0}"
 IMAGE="renovate/renovate:${VERSION}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-FIXTURES="${ROOT}/${PINUP_FIXTURES:-testdata/estate}"
+FIX="${PINUP_FIXTURES:-testdata/estate}"
+FIXTURES="${ROOT}/${FIX}"
 OUT="${FIXTURES}/renovate-${VERSION}"
+UPSTREAM="${ROOT}/testdata/upstream/$(basename "$FIX")/renovate-${VERSION}"
 CFG="${FIXTURES}/config"
 
 if [ -d "$OUT" ]; then
@@ -63,8 +67,8 @@ docker run --rm \
   -w /repo \
   "$IMAGE" --print-config --dry-run=full > "${WORK}/capture.ndjson"
 
-mkdir -p "$OUT"
-VERSION="$VERSION" IMAGE="$IMAGE" DIGEST="$DIGEST" OUT="$OUT" CFG="$CFG" \
+mkdir -p "$OUT" "$UPSTREAM"
+VERSION="$VERSION" IMAGE="$IMAGE" DIGEST="$DIGEST" OUT="$OUT" UPSTREAM="$UPSTREAM" CFG="$CFG" \
   python3 "${ROOT}/tools/capture/extract.py" "${WORK}/capture.ndjson"
 
 echo "renovate-${VERSION}" > "${ROOT}/testdata/renovate/CURRENT"

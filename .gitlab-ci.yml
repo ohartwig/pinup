@@ -368,10 +368,16 @@ mirror:github:
         --path CLAUDE.md --path .gitsigners --path .gitsigners.d --path .gitlab/ \
         --path .mise.toml --path lefthook.yml \
         --path docs/tasks.md --path docs/reviews/ \
-        --path testdata/estate/ --path testdata/parity/ --path testdata/golden/
+        --path testdata/estate/ --path testdata/parity/ --path testdata/golden/ \
+        --path testdata/upstream/ --path testdata/renovate/renovate-43.288.0/presets/closure.json \
+        --path config/preset/library.json --path tools/presetgen/
       # What must not be there, checked rather than assumed: a path that
       # slipped past the list above would be published with the push.
-      for p in testdata/estate testdata/parity testdata/golden docs/reviews docs/tasks.md CLAUDE.md; do
+      # config/preset/library.json and tools/presetgen are filtered for
+      # their history: until 0.16.0 the library was Renovate's preset data,
+      # generated (NOTICE). The authored library is config/preset/presets.json,
+      # a different path, whose history starts clean.
+      for p in testdata/estate testdata/parity testdata/golden testdata/upstream docs/reviews docs/tasks.md CLAUDE.md tools/presetgen; do
         if git log --all --oneline -1 -- "$p" | grep -q .; then
           echo "$p is still in the rewritten history; refusing to publish"; exit 1
         fi

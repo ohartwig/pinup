@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "pinupVersion": "golden",
-  "generatedAt": "2026-09-14T08:00:00Z",
+  "generatedAt": "2026-09-14T11:00:00Z",
   "repo": {
     "path": "golden/gitrefs"
   },
@@ -39,7 +39,7 @@
     {
       "manager": "custom.regex",
       "file": "crowdsec-hub.yaml",
-      "customManager": 29,
+      "customManager": 27,
       "depName": "https://github.com/crowdsecurity/hub",
       "currentValue": "master",
       "currentDigest": "6359f3c81f253cddf075afae75e5355e2be1eef0",
@@ -98,10 +98,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -110,11 +110,11 @@
       "suppressedBy": "schedule"
     },
     {
-      "depKey": "crowdsec-hub.yaml|custom.regex#29|https://github.com/crowdsecurity/hub|master|333",
+      "depKey": "crowdsec-hub.yaml|custom.regex#27|https://github.com/crowdsecurity/hub|master|333",
       "dep": {
         "manager": "custom.regex",
         "file": "crowdsec-hub.yaml",
-        "customManager": 29,
+        "customManager": 27,
         "depName": "https://github.com/crowdsecurity/hub",
         "currentValue": "master",
         "currentDigest": "6359f3c81f253cddf075afae75e5355e2be1eef0",
@@ -147,10 +147,10 @@
       "blocks": [
         {
           "reason": "schedule",
-          "until": "2026-09-14T10:00:00Z",
+          "until": "2026-09-14T14:00:00Z",
           "origin": {
             "source": "packageRules",
-            "rule": 758,
+            "rule": 54,
             "order": 0
           },
           "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
@@ -165,7 +165,7 @@
       "slug": "https-github.com-crowdsecurity-hub-digest",
       "title": "chore(deps): update https://github.com/crowdsecurity/hub digest to 4a9e186",
       "updateKeys": [
-        "crowdsec-hub.yaml|custom.regex#29|https://github.com/crowdsecurity/hub|master|333>master@4a9e186dc93e642bf8b33fe5fcc7c319a276676e"
+        "crowdsec-hub.yaml|custom.regex#27|https://github.com/crowdsecurity/hub|master|333>master@4a9e186dc93e642bf8b33fe5fcc7c319a276676e"
       ],
       "automerge": true,
       "labels": [
@@ -177,7 +177,7 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     },
     {
@@ -198,18 +198,22 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": false,
-        "nextOpen": "2026-09-14T10:00:00Z"
+        "nextOpen": "2026-09-14T14:00:00Z"
       }
     }
   ],
   "warnings": [
     {
       "stage": "config",
-      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+      "msg": "preset \"abandonments:recommended\" has no effect: abandonment detection is not implemented; the preset resolves to nothing"
     },
     {
       "stage": "config",
-      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing"
     }
   ],
   "stats": {

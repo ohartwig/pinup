@@ -4,9 +4,11 @@
 package rules
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/versioning"
 )
 
@@ -24,7 +26,8 @@ func rulesOf(t *testing.T, rs ...map[string]any) *Engine {
 }
 
 // The P0.13 acceptance case, read off the real config: rangeStrategy for a
-// typo3/cms-* composer dependency is decided by rule 33 over 32 over 0, and
+// typo3/cms-* composer dependency is decided by the file's rule 33 over 32
+// over 0 - after the library's rules in the resolved numbering - and
 // Explain names all three with the winner last.
 func TestExplainNamesEveryRuleThatWroteAKey(t *testing.T) {
 	base, _ := loadVectors(t)
@@ -33,18 +36,19 @@ func TestExplainNamesEveryRuleThatWroteAKey(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	first := len(rulesRaw) - fixture.Expect(t).RulesOwn
 	res := eng.Apply(base, Subject{
 		DepName: "typo3/cms-core", PackageName: "typo3/cms-core", Datasource: "packagist",
 		Manager: "composer", PackageFile: "composer.json", DepType: "require", CurrentValue: "^14.0",
 	})
-	if got := res.Wrote["rangeStrategy"]; len(got) != 3 || got[0] != 0 || got[1] != 32 || got[2] != 33 {
-		t.Fatalf("rangeStrategy written by %v, want [0 32 33]", got)
+	if got := res.Wrote["rangeStrategy"]; len(got) != 3 || got[0] != first || got[1] != first+32 || got[2] != first+33 {
+		t.Fatalf("rangeStrategy written by %v, want [%d %d %d]", got, first, first+32, first+33)
 	}
 	if got := res.Config["rangeStrategy"]; got != "update-lockfile" {
-		t.Errorf("rangeStrategy = %v, want update-lockfile from rule 33", got)
+		t.Errorf("rangeStrategy = %v, want update-lockfile from the file's rule 33", got)
 	}
 	explain := res.Explain("rangeStrategy")
-	for _, want := range []string{"  packageRules[0]\n", "  packageRules[32]\n", "> packageRules[33]\n"} {
+	for _, want := range []string{fmt.Sprintf("  packageRules[%d]\n", first), fmt.Sprintf("  packageRules[%d]\n", first+32), fmt.Sprintf("> packageRules[%d]\n", first+33)} {
 		if !strings.Contains(explain, want) {
 			t.Errorf("explain lacks %q:\n%s", want, explain)
 		}

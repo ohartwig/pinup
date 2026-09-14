@@ -1,8 +1,8 @@
 {
   "config": "config/default.json",
   "rulesOwn": 49,
-  "rulesResolved": 771,
-  "resolvedKeys": 337,
+  "rulesResolved": 67,
+  "resolvedKeys": 334,
   "presets": 11,
   "patternEntries": 107,
   "ruleVectors": 1728,

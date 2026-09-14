@@ -1,0 +1,565 @@
+{
+  "source": "pinup's own preset library, written for the behaviour its configurations need. Names follow Renovate's so a configuration extends the same presets, and the effect of each is the observed one; the text is pinup's, and the curated data sets Renovate ships (monorepo groups, replacements, abandonments) are not carried - see config/preset/README.md.",
+  "presets": {
+    "config:recommended": {
+      "definition": {
+        "description": [
+          "The recommended starting point: a dashboard, semantic commit types, the usual ignored directories, the groups and workarounds this library carries."
+        ],
+        "extends": [
+          ":dependencyDashboard",
+          ":semanticPrefixFixDepsChoreOthers",
+          ":ignoreModulesAndTests",
+          "group:monorepos",
+          "group:recommended",
+          "mergeConfidence:age-confidence-badges",
+          "replacements:all",
+          "workarounds:all"
+        ]
+      }
+    },
+    ":dependencyDashboard": {
+      "definition": {
+        "description": [
+          "Keep a dependency dashboard issue."
+        ],
+        "dependencyDashboard": true
+      }
+    },
+    ":configMigration": {
+      "definition": {
+        "description": [
+          "Open a merge request that migrates a configuration written for an older version."
+        ],
+        "configMigration": true
+      }
+    },
+    ":automergeDigest": {
+      "definition": {
+        "description": [
+          "Automerge digest updates once their pipeline passes."
+        ],
+        "digest": {
+          "automerge": true
+        }
+      }
+    },
+    ":pinDevDependencies": {
+      "definition": {
+        "description": [
+          "Pin the versions of development dependencies."
+        ],
+        "packageRules": [
+          {
+            "matchDepTypes": [
+              "devDependencies",
+              "dev-dependencies",
+              "dev"
+            ],
+            "rangeStrategy": "pin"
+          }
+        ]
+      }
+    },
+    ":semanticPrefixFixDepsChoreOthers": {
+      "definition": {
+        "description": [
+          "With semantic commits, a runtime dependency is a fix and everything else a chore."
+        ],
+        "packageRules": [
+          {
+            "matchPackageNames": [
+              "*"
+            ],
+            "semanticCommitType": "chore"
+          },
+          {
+            "matchDepTypes": [
+              "dependencies",
+              "require"
+            ],
+            "semanticCommitType": "fix"
+          }
+        ]
+      }
+    },
+    ":ignoreModulesAndTests": {
+      "definition": {
+        "description": [
+          "Leave vendored, generated and test directories alone."
+        ],
+        "ignorePaths": [
+          "**/node_modules/**",
+          "**/bower_components/**",
+          "**/vendor/**",
+          "**/examples/**",
+          "**/__tests__/**",
+          "**/test/**",
+          "**/tests/**",
+          "**/__fixtures__/**"
+        ],
+        "nuget": {
+          "ignorePaths": [
+            "**/node_modules/**",
+            "**/bower_components/**",
+            "**/vendor/**",
+            "**/examples/**",
+            "**/__fixtures__/**"
+          ]
+        }
+      }
+    },
+    "docker:pinDigests": {
+      "definition": {
+        "description": [
+          "Pin container images by digest."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker"
+            ],
+            "pinDigests": true
+          }
+        ]
+      }
+    },
+    "helpers:pinGitHubActionDigests": {
+      "definition": {
+        "description": [
+          "Pin GitHub Actions by digest."
+        ],
+        "packageRules": [
+          {
+            "matchDepTypes": [
+              "action"
+            ],
+            "pinDigests": true
+          }
+        ]
+      }
+    },
+    "abandonments:recommended": {
+      "definition": {
+        "description": [
+          "Treat a package without a release for a year as abandoned. Not implemented here; the preset resolves to nothing."
+        ]
+      },
+      "inert": "abandonment detection is not implemented; the preset resolves to nothing"
+    },
+    "mergeConfidence:age-confidence-badges": {
+      "definition": {
+        "description": [
+          "The Age and Confidence badge columns in merge requests."
+        ]
+      },
+      "inert": "merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing"
+    },
+    "mergeConfidence:all-badges": {
+      "definition": {
+        "description": [
+          "Every merge-confidence badge column in merge requests."
+        ]
+      },
+      "inert": "merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing"
+    },
+    "customManagers:dockerfileVersions": {
+      "definition": {
+        "description": [
+          "An annotated `ARG` or `ENV` `*_VERSION` line in a Dockerfile or Containerfile is a dependency."
+        ],
+        "customManagers": [
+          {
+            "customType": "regex",
+            "managerFilePatterns": [
+              "**/[Dd]ockerfile*",
+              "**/[Cc]ontainerfile*",
+              "**/*.[Dd]ockerfile*",
+              "**/*.[Cc]ontainerfile*"
+            ],
+            "matchStrings": [
+              "# renovate: datasource=(?<datasource>[a-zA-Z0-9._-]+?) depName=(?<depName>\\S+?)(?: (?:lookupName|packageName)=(?<packageName>\\S+?))?(?: versioning=(?<versioning>\\S+?))?(?: extractVersion=(?<extractVersion>\\S+?))?(?: registryUrl=(?<registryUrl>\\S+?))?\\s(?:ENV|ARG)\\s+[A-Za-z0-9_]+?_VERSION[ =][\"']?(?<currentValue>.+?)[\"']?\\s"
+            ]
+          }
+        ]
+      }
+    },
+    "customManagers:gitlabPipelineVersions": {
+      "definition": {
+        "description": [
+          "An annotated `*_VERSION` variable in a GitLab pipeline file is a dependency."
+        ],
+        "customManagers": [
+          {
+            "customType": "regex",
+            "managerFilePatterns": [
+              "**/*.gitlab-ci.{yml,yaml}"
+            ],
+            "matchStrings": [
+              "# renovate: datasource=(?<datasource>[a-zA-Z0-9._-]+?) depName=(?<depName>\\S+?)(?: (?:packageName)=(?<packageName>\\S+?))?(?: versioning=(?<versioning>\\S+?))?(?: extractVersion=(?<extractVersion>\\S+?))?(?: registryUrl=(?<registryUrl>\\S+?))?\\s+[A-Za-z0-9_]+?_VERSION\\s*:\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
+            ]
+          }
+        ]
+      }
+    },
+    "customManagers:tsconfigNodeVersions": {
+      "definition": {
+        "description": [
+          "The `@tsconfig/node<major>` base a tsconfig or jsconfig extends is a dependency on that major. Not part of config:recommended here; extend it where it is wanted."
+        ],
+        "customManagers": [
+          {
+            "customType": "regex",
+            "managerFilePatterns": [
+              "**/{j,t}sconfig.json",
+              "**/{j,t}sconfig.*.json"
+            ],
+            "matchStrings": [
+              "\"(?<depName>@tsconfig/node(?<major>\\d+))/tsconfig\\.json\""
+            ],
+            "currentValueTemplate": "{{{major}}}",
+            "autoReplaceStringTemplate": "\"@tsconfig/node{{{major}}}/tsconfig.json\"",
+            "datasourceTemplate": "npm"
+          },
+          {
+            "customType": "regex",
+            "managerFilePatterns": [
+              "**/{j,t}sconfig.json",
+              "**/{j,t}sconfig.*.json"
+            ],
+            "matchStrings": [
+              "\"(?<depName>@tsconfig/node(?<major>\\d+))\""
+            ],
+            "currentValueTemplate": "{{{major}}}",
+            "autoReplaceStringTemplate": "\"@tsconfig/node{{{major}}}\"",
+            "datasourceTemplate": "npm"
+          }
+        ]
+      }
+    },
+    "workarounds:all": {
+      "definition": {
+        "description": [
+          "The workarounds this library carries, for the ecosystems pinup reads."
+        ],
+        "extends": [
+          "workarounds:typesNodeVersioning",
+          "workarounds:nodeDockerVersioning",
+          "workarounds:doNotUpgradeFromAlpineStableToEdge",
+          "workarounds:containerbase",
+          "workarounds:clamavDockerImageVersioning",
+          "workarounds:grafanaDockerImageVersioning",
+          "workarounds:k3sKubernetesVersioning"
+        ]
+      }
+    },
+    "workarounds:typesNodeVersioning": {
+      "definition": {
+        "description": [
+          "`@types/node` follows Node.js versions."
+        ],
+        "packageRules": [
+          {
+            "matchManagers": [
+              "npm"
+            ],
+            "matchPackageNames": [
+              "@types/node"
+            ],
+            "versioning": "node"
+          }
+        ]
+      }
+    },
+    "workarounds:nodeDockerVersioning": {
+      "definition": {
+        "description": [
+          "A `node` image follows Node.js versions; images that merely end in /node do not."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker"
+            ],
+            "matchPackageNames": [
+              "/(?:^|/)node$/",
+              "!calico/node",
+              "!docker.io/calico/node",
+              "!ghcr.io/devcontainers/features/node",
+              "!kindest/node",
+              "!docker.io/kindest/node"
+            ],
+            "versioning": "node",
+            "versionCompatibility": "^(?<version>[^-]+)(?<compatibility>-.*)?$"
+          }
+        ]
+      }
+    },
+    "workarounds:doNotUpgradeFromAlpineStableToEdge": {
+      "definition": {
+        "description": [
+          "An `alpine` image on a release stays off the dated edge builds."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker"
+            ],
+            "matchPackageNames": [
+              "alpine"
+            ],
+            "matchCurrentVersion": "!/^\\d{8}$/",
+            "allowedVersions": "<20000000"
+          }
+        ]
+      }
+    },
+    "workarounds:containerbase": {
+      "definition": {
+        "description": [
+          "The containerbase and renovate `node` images follow Node.js versions."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker"
+            ],
+            "matchPackageNames": [
+              "/^(?:(?:docker|ghcr)\\.io/)?(?:containerbase|renovate)/node$/"
+            ],
+            "versioning": "node"
+          }
+        ]
+      }
+    },
+    "workarounds:clamavDockerImageVersioning": {
+      "definition": {
+        "description": [
+          "ClamAV tags carry a build number and a variant after the version."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker"
+            ],
+            "matchPackageNames": [
+              "clamav/clamav",
+              "clamav/clamav-debian"
+            ],
+            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)(\\.(?<patch>\\d+))?(-(?<build>\\d+))?(_(?<compatibility>.+))?$"
+          }
+        ]
+      }
+    },
+    "workarounds:grafanaDockerImageVersioning": {
+      "definition": {
+        "description": [
+          "Grafana security releases are a build of the version they patch."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker"
+            ],
+            "matchPackageNames": [
+              "grafana/grafana",
+              "docker.io/grafana/grafana",
+              "grafana/grafana-enterprise",
+              "docker.io/grafana/grafana-enterprise"
+            ],
+            "versioning": "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-security-(?<build>\\d+))?(?:-(?<compatibility>.*))?$"
+          }
+        ]
+      }
+    },
+    "workarounds:k3sKubernetesVersioning": {
+      "definition": {
+        "description": [
+          "A k3s release is the Kubernetes version plus a k3s build."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "github-releases"
+            ],
+            "matchPackageNames": [
+              "k3s-io/k3s"
+            ],
+            "versioning": "regex:^v(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)(?:-(?<prerelease>[a-z]+\\d+))?(?<compatibility>\\+k3s)(?<build>\\d+)$"
+          }
+        ]
+      }
+    },
+    "group:monorepos": {
+      "definition": {
+        "description": [
+          "Packages released together from one repository, grouped: the monorepos the configurations this library serves depend on. Not a list of the world's monorepos - add a group:<name>Monorepo of your own for another, or a rule with matchSourceUrls."
+        ],
+        "extends": [
+          "group:aws-sdk-go-v2Monorepo",
+          "group:vitestMonorepo"
+        ]
+      }
+    },
+    "group:aws-sdk-go-v2Monorepo": {
+      "definition": {
+        "description": [
+          "One update for the aws-sdk-go-v2 monorepo."
+        ],
+        "packageRules": [
+          {
+            "extends": [
+              "monorepo:aws-sdk-go-v2"
+            ],
+            "matchUpdateTypes": [
+              "digest",
+              "patch",
+              "minor",
+              "major"
+            ],
+            "groupName": "aws-sdk-go-v2 monorepo"
+          }
+        ]
+      }
+    },
+    "monorepo:aws-sdk-go-v2": {
+      "definition": {
+        "description": [
+          "The packages of the aws-sdk-go-v2 monorepo, by source."
+        ],
+        "matchSourceUrls": [
+          "https://github.com/aws/aws-sdk-go-v2"
+        ]
+      }
+    },
+    "group:vitestMonorepo": {
+      "definition": {
+        "description": [
+          "One update for the vitest monorepo."
+        ],
+        "packageRules": [
+          {
+            "extends": [
+              "monorepo:vitest"
+            ],
+            "matchUpdateTypes": [
+              "digest",
+              "patch",
+              "minor",
+              "major"
+            ],
+            "groupName": "vitest monorepo"
+          }
+        ]
+      }
+    },
+    "monorepo:vitest": {
+      "definition": {
+        "description": [
+          "The packages of the vitest monorepo, by source."
+        ],
+        "matchSourceUrls": [
+          "https://github.com/vitest-dev/vitest"
+        ]
+      }
+    },
+    "group:recommended": {
+      "definition": {
+        "description": [
+          "The groups this library carries: packages released together that a manifest names separately."
+        ],
+        "extends": [
+          "group:nodeJs",
+          "group:phpstan",
+          "group:symfony"
+        ]
+      }
+    },
+    "group:nodeJs": {
+      "definition": {
+        "description": [
+          "A `node` image or toolchain pin is titled Node.js in its commit."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "docker",
+              "node-version"
+            ],
+            "matchPackageNames": [
+              "/(?:^|/)node$/",
+              "!calico/node",
+              "!docker.io/calico/node",
+              "!ghcr.io/devcontainers/features/node",
+              "!kindest/node",
+              "!docker.io/kindest/node"
+            ],
+            "commitMessageTopic": "Node.js"
+          }
+        ]
+      }
+    },
+    "group:phpstan": {
+      "definition": {
+        "description": [
+          "PHPStan and its extensions are released together."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "packagist"
+            ],
+            "matchPackageNames": [
+              "phpstan/phpstan",
+              "/\\/phpstan-/",
+              "/\\/larastan/",
+              "phpstan/extension-installer"
+            ],
+            "groupName": "PHPStan packages"
+          }
+        ]
+      }
+    },
+    "group:symfony": {
+      "definition": {
+        "description": [
+          "The Symfony components are released together; the packages in the namespace that are not are left out."
+        ],
+        "packageRules": [
+          {
+            "matchDatasources": [
+              "packagist"
+            ],
+            "matchPackageNames": [
+              "symfony/*",
+              "!symfony/*contracts",
+              "!symfony/*pack",
+              "!symfony/flex",
+              "!symfony/maker-bundle",
+              "!symfony/monolog-bundle",
+              "!symfony/panther",
+              "!symfony/polyfill*",
+              "!symfony/proxy-manager-bridge",
+              "!symfony/security-guard",
+              "!symfony/stimulus-bundle",
+              "!symfony/templating",
+              "!symfony/thanks",
+              "!symfony/ux*",
+              "!symfony/webpack-encore-bundle"
+            ],
+            "groupName": "symfony packages",
+            "groupSlug": "symfony"
+          }
+        ]
+      }
+    },
+    "replacements:all": {
+      "definition": {
+        "description": [
+          "Package replacements. pinup carries no replacement list; a configuration names its own with replacementName."
+        ],
+        "extends": []
+      }
+    }
+  }
+}

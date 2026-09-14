@@ -4,9 +4,10 @@
 #
 # Captures the preset closure of the fixture root's configuration's
 # `extends` by running presets-probe.mjs inside the pinned container, then
-# regenerates config/preset/library.json from it with tools/presetgen. The
-# closure is Renovate's own behaviour, not the configuration's, so it lands
-# in the shared root testdata/renovate; PINUP_FIXTURES (default
+# writes it under testdata/upstream, outside the public mirror: the
+# closure is Renovate's own preset data, kept for reference while
+# config/preset/presets.json - pinup's own, authored - is checked against
+# the vectors instead (config/preset/README.md). PINUP_FIXTURES (default
 # testdata/estate) only says whose extends are the roots.
 #
 # Refuses to overwrite an existing closure: a captured behaviour table is a
@@ -17,7 +18,7 @@ IMAGE="renovate/renovate:43.288.0"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 FIXTURES="$ROOT/${PINUP_FIXTURES:-testdata/estate}"
-OUT="$ROOT/testdata/renovate/renovate-43.288.0/presets/closure.json"
+OUT="$ROOT/testdata/upstream/renovate-43.288.0/presets/closure.json"
 
 if [ -e "$OUT" ]; then
   echo "refusing to overwrite $OUT; delete it first if a re-capture is intended" >&2
@@ -39,5 +40,3 @@ docker run --rm -e LOG_LEVEL=fatal -v "$STAGE:/probe:ro" --entrypoint node "$IMA
   /probe/presets-probe.mjs $ROOTS \
   | python3 -c "import json,sys;d=json.load(sys.stdin);json.dump(d,open('$OUT','w'),indent=1,sort_keys=True);open('$OUT','a').write('\n')"
 echo "wrote $OUT" >&2
-(cd "$ROOT" && go run ./tools/presetgen)
-echo "regenerated config/preset/library.json" >&2

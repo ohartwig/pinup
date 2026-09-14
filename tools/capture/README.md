@@ -20,17 +20,22 @@ two compatible here. See `docs/tech-spec.md` §0.1 and `NOTICE`.
 
 | Script | Produces | Root |
 |---|---|---|
-| `print-config.sh` | `full-resolved.json`, `host-rules.json`, `visited-presets.json`, `provenance.json`: `--print-config` over the root's `default.json` | `PINUP_FIXTURES` |
-| `resolve-config.sh` | `presets/default-resolved.json` (the direct resolution) and `presets/runner-and-repo-resolved.json` (the file as global config and as the repository's own) | `PINUP_FIXTURES` |
+| `print-config.sh` | `resolved-options.json` (every option as resolved, without rules, managers and descriptions), `host-rules.json`, `visited-presets.json`, `provenance.json`: `--print-config` over the root's `default.json`; the full expansion goes to `testdata/upstream/<root>` | `PINUP_FIXTURES` |
+| `resolve-config.sh` | `presets/default-resolved.json` (the direct resolution) and `presets/runner-and-repo-resolved.json` (the file as global config and as the repository's own) under `testdata/upstream/<root>` - Renovate's full expansions, not published | `PINUP_FIXTURES` |
 | `extract-corpus.sh <tree>...` | `extract/<name>.json`: what Renovate extracts from each repository, a checkout's HEAD or a plain tree such as `testdata/public/repos/*` | `PINUP_FIXTURES` |
-| `rules.sh` | `rules/vectors.ndjson`: `packageRules` resolution over the corpus | `PINUP_FIXTURES` |
-| `presets.sh` | `presets/closure.json`: every preset the root's `extends` reaches, then `config/preset/library.json` | `testdata/renovate` |
+| `rules.sh` | `rules/vectors.ndjson`: `packageRules` resolution over the corpus, on the production-shape base from `resolve-config.sh` | `PINUP_FIXTURES` |
+| `presets.sh` | `presets/closure.json` under `testdata/upstream`: every preset the root's `extends` reaches, as Renovate's resolver defines it - reference only, the library is authored | `testdata/upstream` |
 | `sourceurls.sh` | `rules/source-urls.ndjson`: `matchSourceUrls` over synthetic inputs | `testdata/renovate` |
 | `versioning-probe.cjs` | input/output pairs per versioning module | `testdata/renovate` |
 
-A root is captured in the order listed: the configuration first, the corpus
-next, the vectors last (they need both). The public root was captured that
-way on 2026-09-14 with `PINUP_FIXTURES=testdata/public`.
+A root is captured in the order: `resolve-config.sh`, `print-config.sh`
+(it reads the direct resolution for one option), `extract-corpus.sh`,
+`rules.sh` (it needs the corpus and the production-shape resolution). Both
+roots were captured that way on 2026-09-14.
+
+`testdata/upstream` is where Renovate's own data lands - its preset closure,
+its full expansions of a configuration. Those are AGPL and never published:
+the mirror filters the directory, and no test reads it.
 
 ## Rules for every capture
 
