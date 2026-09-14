@@ -1,3 +1,9 @@
+## [0.16.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.16.1...v0.16.2) (2026-09-14)
+
+### :bug: Fixes
+
+* **dockerfile:** a digest-only image reference is a digest pin, not a skip ([10f0c87](https://git.ole-hartwig.eu/pinup/pinup/commit/10f0c87dbcab1a1cf0ca8ba366ed6b88e378777f))
+
 ## [0.16.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.16.0...v0.16.1) (2026-09-14)
 
 ### :bug: Fixes
