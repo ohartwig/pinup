@@ -450,12 +450,34 @@ func CommitTypeFor(title string, files []string) string {
 	return title
 }
 
-// IsPipelineFile reports whether a path is the repository's pipeline
-// definition or lives under its .gitlab directory.
+// IsPipelineFile reports whether a path is a CI definition: the file or
+// directory each platform reserves for its pipelines, at any depth. What
+// a build produces - a Containerfile, a compose file, a component's own
+// templates, a chart - is not on the list: that is the product.
 func IsPipelineFile(path string) bool {
 	base := path[strings.LastIndex(path, "/")+1:]
-	return base == ".gitlab-ci.yml" || base == ".gitlab-ci.yaml" ||
-		strings.HasPrefix(path, ".gitlab/") || strings.Contains(path, "/.gitlab/")
+	switch base {
+	case ".gitlab-ci.yml", ".gitlab-ci.yaml", // GitLab
+		".woodpecker.yml", ".woodpecker.yaml", // Woodpecker
+		".drone.yml", ".drone.yaml", // Drone
+		"azure-pipelines.yml", "azure-pipelines.yaml", // Azure Pipelines
+		"bitbucket-pipelines.yml", // Bitbucket
+		".travis.yml",             // Travis
+		"Jenkinsfile":             // Jenkins
+		return true
+	}
+	for _, dir := range []string{
+		".gitlab/",           // GitLab: included pipeline files
+		".github/workflows/", // GitHub Actions
+		".github/actions/",   // GitHub Actions: local actions
+		".forgejo/workflows/", ".gitea/workflows/", // Forgejo, Gitea
+		".woodpecker/", ".circleci/", ".buildkite/", ".azure-pipelines/",
+	} {
+		if strings.HasPrefix(path, dir) || strings.Contains(path, "/"+dir) {
+			return true
+		}
+	}
+	return false
 }
 
 // Overlay merges the configuration object for an update type - config.digest

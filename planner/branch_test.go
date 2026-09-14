@@ -396,4 +396,17 @@ func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
 	if got := CommitTypeFor("ci(deps): update x", []string{".gitlab-ci.yml"}); got != "ci(deps): update x" {
 		t.Errorf("pipeline only stays ci: %q", got)
 	}
+	// The platforms' own pipeline locations count; a product file does not.
+	for _, f := range []string{".github/workflows/ci.yml", ".github/actions/setup/action.yml", ".forgejo/workflows/test.yml",
+		".gitea/workflows/test.yml", ".woodpecker.yml", ".woodpecker/build.yml", ".drone.yml", ".circleci/config.yml",
+		".buildkite/pipeline.yml", "azure-pipelines.yml", "bitbucket-pipelines.yml", ".travis.yml", "Jenkinsfile", "sub/.gitlab-ci.yml", "app/.github/workflows/x.yml"} {
+		if !IsPipelineFile(f) {
+			t.Errorf("%s is a pipeline file", f)
+		}
+	}
+	for _, f := range []string{"Containerfile", "compose.yaml", "templates/build.yml", ".github/CODEOWNERS", ".github/ISSUE_TEMPLATE/bug.md", "charts/x/values.yaml", "gitlab-ci.yml"} {
+		if IsPipelineFile(f) {
+			t.Errorf("%s is not a pipeline file", f)
+		}
+	}
 }
