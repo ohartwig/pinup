@@ -1,3 +1,9 @@
+## [0.20.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.19.0...v0.20.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **plugin:** a task's toolchain may fetch first-party modules with a .netrc the runner composes ([1f19a36](https://git.ole-hartwig.eu/pinup/pinup/commit/1f19a3607b2a459bb4fe63b1eaddc16e62afd6d2))
+
 ## [0.19.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.18.0...v0.19.0) (2026-09-14)
 
 ### :sparkles: Features
