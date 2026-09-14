@@ -4,6 +4,8 @@
 package gods
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -13,6 +15,7 @@ import (
 	"github.com/ohartwig/pinup/fake/harness"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/model"
 )
 
 // proxy is a server that speaks the Go module proxy protocol closely enough
@@ -594,5 +597,120 @@ func TestATaggedModuleDoesNotAskLatest(t *testing.T) {
 	}
 	if n := f.proxy.requestCount("/@latest"); n != 0 {
 		t.Errorf("@latest was requested %d times, want never", n)
+	}
+}
+
+// instanceTags is a gitlab-tags datasource of the shape gods probes: a
+// project path answers with its tags, anything else with the wrapped 404
+// gitlabds returns, and one path may be made to fail outright.
+type instanceTags struct {
+	projects map[string][]string
+	broken   string
+	asked    []string
+}
+
+func (f *instanceTags) Name() string              { return "gitlab-tags" }
+func (f *instanceTags) DefaultVersioning() string { return "semver" }
+func (f *instanceTags) Releases(_ context.Context, ref lookup.Ref) (*model.ReleaseSet, error) {
+	f.asked = append(f.asked, ref.PackageName)
+	if ref.PackageName == f.broken {
+		return nil, fmt.Errorf("gitlab-tags: %s: %w", ref.PackageName, &httpx.StatusError{StatusCode: http.StatusBadGateway})
+	}
+	tags, ok := f.projects[ref.PackageName]
+	if !ok {
+		return nil, fmt.Errorf("gitlab-tags: 404 for %s - the project does not exist or the token cannot read it: %w",
+			ref.PackageName, &httpx.StatusError{StatusCode: http.StatusNotFound})
+	}
+	rs := &model.ReleaseSet{PackageName: ref.PackageName, Datasource: "gitlab-tags",
+		RegistryURL: ref.RegistryURLs[0], SourceURL: ref.RegistryURLs[0] + "/" + ref.PackageName}
+	for _, tag := range tags {
+		rs.Releases = append(rs.Releases, model.Release{Version: tag, Digest: "sha-" + tag})
+	}
+	return rs, nil
+}
+
+// TestModuleOnTheInstanceIsServedFromTheProjectsTags: a module path under
+// the platform's host is a repository there. The project is the longest
+// prefix that answers, the rest is the module's directory, and only the
+// tags Go gives that directory count - stripped, filtered to the major the
+// path names. The proxy is never asked (it would refuse).
+func TestModuleOnTheInstanceIsServedFromTheProjectsTags(t *testing.T) {
+	tags := &instanceTags{projects: map[string][]string{
+		"development/s3mail/s3mail": {"v1.4.3", "v1.5.0", "go/v1.5.0", "go/v1.5.1", "go/v2.0.0", "go/not-a-version", "cli/v1.5.0"},
+		"devops/tool":               {"v0.9.0", "v1.0.0", "v2.0.0", "v2.1.0", "v3.0.0"},
+	}}
+	f := newFixture(t)
+	f.rt.Forbid("proxy.example")
+	ds := New(Module, f.client, "https://proxy.example").WithInstance("https://git.example", tags)
+
+	for _, tc := range []struct {
+		module   string
+		versions []string
+		asked    []string
+	}{
+		{"git.example/development/s3mail/s3mail/go", []string{"v1.5.0", "v1.5.1"},
+			[]string{"development/s3mail/s3mail/go", "development/s3mail/s3mail"}},
+		{"git.example/development/s3mail/s3mail/go/v2", []string{"v2.0.0"},
+			[]string{"development/s3mail/s3mail/go", "development/s3mail/s3mail"}},
+		{"git.example/development/s3mail/s3mail", []string{"v1.4.3", "v1.5.0"},
+			[]string{"development/s3mail/s3mail"}},
+		{"git.example/devops/tool", []string{"v0.9.0", "v1.0.0"}, []string{"devops/tool"}},
+		{"git.example/devops/tool/v2", []string{"v2.0.0", "v2.1.0"}, []string{"devops/tool"}},
+	} {
+		tags.asked = nil
+		rs, err := ds.Releases(t.Context(), lookup.Ref{Datasource: "go", PackageName: tc.module})
+		if err != nil {
+			t.Fatalf("%s: %v", tc.module, err)
+		}
+		var got []string
+		for _, r := range rs.Releases {
+			got = append(got, r.Version)
+			if r.Digest == "" {
+				t.Errorf("%s: %s lost the tag's commit", tc.module, r.Version)
+			}
+		}
+		if strings.Join(got, " ") != strings.Join(tc.versions, " ") {
+			t.Errorf("%s: versions %v, want %v", tc.module, got, tc.versions)
+		}
+		if strings.Join(tags.asked, " ") != strings.Join(tc.asked, " ") {
+			t.Errorf("%s: probed %v, want %v", tc.module, tags.asked, tc.asked)
+		}
+		if rs.PackageName != tc.module || rs.Datasource != "go" || rs.RegistryURL != "https://git.example" {
+			t.Errorf("%s: set names %q %q %q", tc.module, rs.PackageName, rs.Datasource, rs.RegistryURL)
+		}
+		if rs.SourceURL != "https://git.example/"+strings.Join(strings.Split(strings.TrimPrefix(tc.module, "git.example/"), "/")[:2], "/") &&
+			!strings.HasPrefix(rs.SourceURL, "https://git.example/development/s3mail/s3mail") {
+			t.Errorf("%s: source %q", tc.module, rs.SourceURL)
+		}
+	}
+	f.rt.MustNotHaveBeenCalled("proxy.example")
+}
+
+// TestModuleOnTheInstanceNobodyAnswersForIsAnError: a path no project
+// answers for is an error naming the path and the instance, not an empty
+// set; and an outage while probing is that outage, not a 404 walked past.
+func TestModuleOnTheInstanceNobodyAnswersForIsAnError(t *testing.T) {
+	f := newFixture(t)
+	tags := &instanceTags{projects: map[string][]string{}, broken: "devops/down"}
+	ds := New(Module, f.client, "https://proxy.example").WithInstance("https://git.example", tags)
+
+	_, err := ds.Releases(t.Context(), lookup.Ref{Datasource: "go", PackageName: "git.example/devops/nosuch/go"})
+	if err == nil || !strings.Contains(err.Error(), "git.example/devops/nosuch/go") || !strings.Contains(err.Error(), "git.example") {
+		t.Errorf("no project: %v", err)
+	}
+	if strings.Join(tags.asked, " ") != "devops/nosuch/go devops/nosuch" {
+		t.Errorf("probed %v; a single segment is never a project", tags.asked)
+	}
+
+	_, err = ds.Releases(t.Context(), lookup.Ref{Datasource: "go", PackageName: "git.example/devops/down/go"})
+	if err == nil || !strings.Contains(err.Error(), "502") {
+		t.Errorf("an outage while probing must surface: %v", err)
+	}
+
+	// Another host is the proxy's business, untouched by the instance.
+	f.proxy.lists["/example.com/lib/@v/list"] = "v1.0.0\n"
+	rs, err := ds.Releases(t.Context(), lookup.Ref{Datasource: "go", PackageName: "example.com/lib", RegistryURLs: []string{"https://proxy.example"}})
+	if err != nil || len(rs.Releases) != 1 || len(tags.asked) != 4 {
+		t.Errorf("a proxied module: %v %v asked=%v", rs, err, tags.asked)
 	}
 }

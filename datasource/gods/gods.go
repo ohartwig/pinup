@@ -47,6 +47,24 @@
 // this package does not implement - but it covers the hosts the estate's
 // dependencies actually use.
 //
+// # Modules on the platform's own instance
+//
+// A module whose path starts with the GitLab instance's host is not on any
+// proxy: it is a repository there, private or not, and its versions are
+// tags. Renovate resolves such a path through the go-import meta tag the
+// instance serves and then asks gitlab-tags; this package asks gitlab-tags
+// directly, because the platform token is bound to the API paths it needs
+// (decision record dependency-bot-credential-scope) and the meta tag is
+// not one of them - unauthenticated, the instance answers that request
+// with the enclosing group as the repository, which is wrong (measured
+// 2026-09-14). The project behind the path is found by probing: the
+// longest prefix of the path that is a project the token can see; what
+// follows it is the module's directory in that repository, and Go names
+// the versions of a module in a directory with tags prefixed by it -
+// "go/v1.5.0" for the module in go/ - so only tags under that prefix
+// count, stripped of it. A major-version suffix ("/v2") is neither
+// project nor directory; it selects the tags of that major.
+//
 // # golang-version (Go toolchain releases)
 //
 // Renovate's own implementation parses a source file it fetches from
@@ -72,6 +90,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -109,6 +128,11 @@ type Datasource struct {
 	kind            Kind
 	client          *httpx.Client
 	defaultRegistry string
+	// instanceHost is the platform's GitLab host and instanceTags that
+	// instance's tags datasource, for modules that live there; empty when
+	// there is none.
+	instanceHost string
+	instanceTags lookup.Datasource
 }
 
 // New returns a datasource of the given kind. An empty defaultRegistry
@@ -130,6 +154,19 @@ func New(kind Kind, client *httpx.Client, defaultRegistry string) *Datasource {
 }
 
 func (d *Datasource) Name() string { return string(d.kind) }
+
+// WithInstance makes the Module datasource serve modules whose path starts
+// with host from the tags of that GitLab instance's projects, through
+// tags - its gitlab-tags datasource. baseURL is the instance's URL; its host
+// is what a module path starts with.
+func (d *Datasource) WithInstance(baseURL string, tags lookup.Datasource) *Datasource {
+	d.instanceHost = ""
+	if u, err := url.Parse(baseURL); err == nil && u.Host != "" && tags != nil {
+		d.instanceHost = u.Host
+		d.instanceTags = tags
+	}
+	return d
+}
 
 // DefaultVersioning is "semver" for both kinds - measured: Renovate's lookup
 // log shows "versioning: semver" for both a `require` line and the
@@ -174,6 +211,9 @@ func (d *Datasource) moduleReleases(ctx context.Context, ref lookup.Ref, origin 
 	}
 
 	base := ref.PackageName
+	if d.instanceHost != "" && strings.HasPrefix(base, d.instanceHost+"/") {
+		return d.instanceReleases(ctx, ref)
+	}
 	entries, err := d.fetchListEntries(ctx, origin, base)
 	if err != nil {
 		return nil, wrapModuleNotFound(base, origin, err)
@@ -204,6 +244,65 @@ func (d *Datasource) moduleReleases(ctx context.Context, ref lookup.Ref, origin 
 		RegistryURL: origin,
 		Releases:    releases,
 		SourceURL:   sourceURLFor(base),
+	}, nil
+}
+
+// instanceReleases lists the versions of a module hosted on the platform's
+// own GitLab instance: the tags of the project behind the module path,
+// under the prefix Go gives a module in a subdirectory.
+func (d *Datasource) instanceReleases(ctx context.Context, ref lookup.Ref) (*model.ReleaseSet, error) {
+	path := strings.TrimPrefix(ref.PackageName, d.instanceHost+"/")
+	major := 0
+	if prefix, sep, n, ok := parseMajorSuffix(path); ok && sep == "/" {
+		path, major = prefix, n
+	}
+	segments := strings.Split(path, "/")
+	base := "https://" + d.instanceHost
+	var tags *model.ReleaseSet
+	var dir string
+	// A project path has at least two segments; a single one is a group
+	// or a user, never a repository.
+	for i := len(segments); i >= 2; i-- {
+		project := strings.Join(segments[:i], "/")
+		rs, err := d.instanceTags.Releases(ctx, lookup.Ref{PackageName: project, RegistryURLs: []string{base}})
+		if err != nil {
+			if se, ok := errors.AsType[*httpx.StatusError](err); ok && se.StatusCode == http.StatusNotFound {
+				continue
+			}
+			return nil, fmt.Errorf("go: %s: %w", ref.PackageName, err)
+		}
+		tags, dir = rs, strings.Join(segments[i:], "/")
+		break
+	}
+	if tags == nil {
+		return nil, fmt.Errorf("go: %s: no project on %s answers for that path - it does not exist or the token cannot read it", ref.PackageName, d.instanceHost)
+	}
+	prefix := ""
+	if dir != "" {
+		prefix = dir + "/"
+	}
+	var releases []model.Release
+	for _, r := range tags.Releases {
+		v, ok := strings.CutPrefix(r.Version, prefix)
+		if !ok || !strings.HasPrefix(v, "v") || strings.Contains(v, "/") {
+			continue
+		}
+		// Go's rule: v0 and v1 live at the bare path, every later major
+		// at its own suffix. A tag of the wrong major is another module's.
+		numeral, _, _ := strings.Cut(strings.TrimPrefix(v, "v"), ".")
+		m, err := strconv.Atoi(numeral)
+		if err != nil || (major == 0 && m > 1) || (major > 0 && m != major) {
+			continue
+		}
+		r.Version = v
+		releases = append(releases, r)
+	}
+	return &model.ReleaseSet{
+		PackageName: ref.PackageName,
+		Datasource:  string(Module),
+		RegistryURL: base,
+		Releases:    releases,
+		SourceURL:   tags.SourceURL,
 	}, nil
 }
 

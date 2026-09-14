@@ -148,12 +148,14 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		// pins every provider to registry.opentofu.org instead.
 		"terraform-provider": terraformds.New(terraformds.Provider, client, "https://registry.terraform.io"),
 		"terraform-module":   terraformds.New(terraformds.Module, client, "https://registry.terraform.io"),
-		"go":                 gods.New(gods.Module, client, "https://proxy.golang.org"),
 		"golang-version":     gods.New(gods.Toolchain, client, "https://go.dev"),
 		"helm":               helmds.New(client),
 		"git-tags":           gittagsds.New(),
 		"git-refs":           gittagsds.NewKind(gittagsds.Refs),
 	}
+	// A module on the platform's own instance is a repository there; its
+	// versions are that project's tags.
+	r["go"] = gods.New(gods.Module, client, "https://proxy.golang.org").WithInstance(o.GitLabURL, r["gitlab-tags"])
 	views := o.ApkViews
 	if views == nil {
 		views = DefaultApkViews()

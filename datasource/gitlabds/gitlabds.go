@@ -137,8 +137,11 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 				// to see it - GitLab does not distinguish, and neither can
 				// this code. Say both, so nobody reads "not found" as "does
 				// not exist".
-				return nil, fmt.Errorf("%s: 404 for %s - the project does not exist or the token cannot read it",
-					d.kind, project)
+				// Wrapped, so a caller probing for the project behind a
+				// path (gods, for a module on the instance) can tell
+				// this from an outage.
+				return nil, fmt.Errorf("%s: 404 for %s - the project does not exist or the token cannot read it: %w",
+					d.kind, project, err)
 			}
 			return nil, fmt.Errorf("%s: %s: %w", d.kind, project, err)
 		}
