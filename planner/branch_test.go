@@ -370,8 +370,15 @@ func TestPrBodyNotesRenderOnceOntoTheBranch(t *testing.T) {
 // member outside the pipeline keeps the chore; a type a rule set stands.
 func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
 	ci := func(file string) Named {
-		return Named{Update: model.Update{Dep: model.Dependency{File: file}}}
+		return Named{Update: model.Update{Dep: model.Dependency{File: file, DepName: "devops/ci-cd-components/lint-tools", Manager: "gitlabci", CustomManager: model.NoCustomManager}}}
 	}
+	// The estate's regex manager 15 reads component includes beside
+	// gitlabci; its twin of the same dependency is the pipeline's own.
+	twin := Named{Update: model.Update{Dep: model.Dependency{File: ".gitlab-ci.yml", DepName: "devops/ci-cd-components/lint-tools", Manager: "custom.regex", CustomManager: 15}}}
+	// A version variable the pipeline file carries for the product, under
+	// an annotation a custom manager reads: devops/images/pinup's
+	// PINUP_VERSION, which the image is built from.
+	pin := Named{Update: model.Update{Dep: model.Dependency{File: ".gitlab-ci.yml", DepName: "pinup/pinup", Manager: "custom.regex", CustomManager: 3}}}
 	for _, tc := range []struct {
 		title   string
 		members []Named
@@ -383,6 +390,10 @@ func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
 		{"fix(deps): update dependency x to v2 [security]", []Named{ci(".gitlab-ci.yml")}, "fix(deps): update dependency x to v2 [security]"},
 		{"chore(deps): update x", []Named{ci("templates/build.yml")}, "chore(deps): update x"},
 		{"update x", []Named{ci(".gitlab-ci.yml")}, "update x"},
+		{"chore(deps): update dependency pinup/pinup to v0.21.0", []Named{pin}, "chore(deps): update dependency pinup/pinup to v0.21.0"},
+		{"chore(deps): update ci components", []Named{ci(".gitlab-ci.yml"), pin}, "chore(deps): update ci components"},
+		{"chore(deps): update ci components", []Named{ci(".gitlab-ci.yml"), twin}, "ci(deps): update ci components"},
+		{"chore(deps): update ci components", []Named{twin}, "chore(deps): update ci components"},
 	} {
 		if got := ciCommitType(tc.title, tc.members); got != tc.want {
 			t.Errorf("%q over %d members: got %q, want %q", tc.title, len(tc.members), got, tc.want)
@@ -395,6 +406,11 @@ func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
 	}
 	if got := CommitTypeFor("ci(deps): update x", []string{".gitlab-ci.yml"}); got != "ci(deps): update x" {
 		t.Errorf("pipeline only stays ci: %q", got)
+	}
+	// The paths alone never make a ci commit: they cannot tell the
+	// product's pin from the pipeline's own.
+	if got := CommitTypeFor("chore(deps): update dependency pinup/pinup to v0.21.0", []string{".gitlab-ci.yml"}); got != "chore(deps): update dependency pinup/pinup to v0.21.0" {
+		t.Errorf("the runner retyped a chore to ci on paths alone: %q", got)
 	}
 	// The platforms' own pipeline locations count; a product file does not.
 	for _, f := range []string{".github/workflows/ci.yml", ".github/actions/setup/action.yml", ".forgejo/workflows/test.yml",

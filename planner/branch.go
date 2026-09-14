@@ -404,48 +404,79 @@ func Compose(named []Named) ([]model.Branch, error) {
 }
 
 // ciCommitType retypes a branch that touches pipeline files alone - every
-// member's file is .gitlab-ci.yml or under .gitlab/ - from chore to ci. A
-// bump there is tooling, whatever it bumps: the build is the same, the
-// image identical; released as a chore it makes a new tag for the same
-// bytes, which every consumer then rolls out for nothing (measured:
-// devops/images/c2patool 2.1.10 and 2.1.11, one digest, the difference a
-// container-scanning analyzer pin in .gitlab-ci.yml). `ci` is no release
-// type in the estate's rule set; a pin in a Containerfile stays chore and
-// releases. Only the file decides, never the datasource, and only the
-// default chore is retyped - a fix, or a type a rule set, stands. Decided
+// member's file is .gitlab-ci.yml or under .gitlab/, and every member is
+// the pipeline's own: an image a job runs in, a component it includes,
+// found by the pipeline manager - from chore to ci. A bump there is
+// tooling, whatever it bumps: the build is the same, the image identical;
+// released as a chore it makes a new tag for the same bytes, which every
+// consumer then rolls out for nothing (measured: devops/images/c2patool
+// 2.1.10 and 2.1.11, one digest, the difference a container-scanning
+// analyzer pin in .gitlab-ci.yml). `ci` is no release type in the estate's
+// rule set; a pin in a Containerfile stays chore and releases. So does a
+// pin the pipeline file carries for the product - a version variable
+// under a `# renovate:` annotation, found by a custom manager: measured
+// 2026-09-14, devops/images/pinup's PINUP_VERSION retyped to ci went
+// unreleased, and the image stayed on the old binary. Only the default
+// chore is retyped - a fix, or a type a rule set, stands. Decided
 // 2026-09-14; Renovate gets no rule for it, yasrt and pinup carry it.
 func ciCommitType(title string, members []Named) string {
 	if len(members) == 0 {
 		return title
 	}
-	files := make([]string, 0, len(members))
+	// What the pipeline manager found is the pipeline's own; a custom
+	// manager's find is too when the pipeline manager found the same
+	// dependency in the same file (the estate's regex manager 15 reads
+	// component includes beside gitlabci, and both land on the branch).
+	// A custom manager's find nobody else made - an annotated variable -
+	// is the product's.
+	own := map[string]bool{}
 	for _, n := range members {
-		files = append(files, n.Update.Dep.File)
+		if d := n.Update.Dep; d.CustomManager == model.NoCustomManager && isPipelineManager(d.Manager) {
+			own[d.File+"\x00"+d.DepName] = true
+		}
 	}
-	return CommitTypeFor(title, files)
+	for _, n := range members {
+		d := n.Update.Dep
+		if !IsPipelineFile(d.File) || !own[d.File+"\x00"+d.DepName] {
+			return title
+		}
+	}
+	switch {
+	case strings.HasPrefix(title, "chore(deps):"), strings.HasPrefix(title, "chore:"):
+		return "ci" + strings.TrimPrefix(title, "chore")
+	}
+	return title
 }
 
-// CommitTypeFor is the rule ciCommitType applies, on any set of files: a
-// chore title over pipeline files alone is a ci title; the runner asks it
-// again with the files a branch actually commits, tasks included, and a
-// task that touched anything else turns the title back. The reverse
-// direction exists for that: a ci title over a wider set is a chore.
+// isPipelineManager names the managers that read a pipeline file for the
+// pipeline's own needs: the images its jobs run in, the components and
+// actions it includes.
+func isPipelineManager(manager string) bool {
+	switch manager {
+	case "gitlabci", "gitlabci-include", "github-actions", "woodpecker", "drone", "azure-pipelines", "bitbucket-pipelines", "travis", "circleci", "buildkite", "jenkins":
+		return true
+	}
+	return false
+}
+
+// CommitTypeFor is the runner's second look, with the files a branch
+// actually commits, tasks included: a ci title over a set that reaches
+// outside the pipeline is a chore after all, and releases. The other
+// direction is ciCommitType's alone - it knows the managers, the paths do
+// not say which pin is the product's.
 func CommitTypeFor(title string, files []string) string {
 	if len(files) == 0 {
 		return title
 	}
-	pipelineOnly := true
 	for _, f := range files {
-		if !IsPipelineFile(f) {
-			pipelineOnly = false
-			break
+		if IsPipelineFile(f) {
+			continue
 		}
-	}
-	switch {
-	case pipelineOnly && strings.HasPrefix(title, "chore(deps):"), pipelineOnly && strings.HasPrefix(title, "chore:"):
-		return "ci" + strings.TrimPrefix(title, "chore")
-	case !pipelineOnly && strings.HasPrefix(title, "ci(deps):"), !pipelineOnly && strings.HasPrefix(title, "ci:"):
-		return "chore" + strings.TrimPrefix(title, "ci")
+		switch {
+		case strings.HasPrefix(title, "ci(deps):"), strings.HasPrefix(title, "ci:"):
+			return "chore" + strings.TrimPrefix(title, "ci")
+		}
+		return title
 	}
 	return title
 }
