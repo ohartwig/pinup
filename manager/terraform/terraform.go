@@ -5,7 +5,7 @@
 // Terraform/OpenTofu configuration.
 //
 // Four shapes, measured across the extraction corpus
-// (testdata/parity/renovate-43.288.0/extract/koh-infra.json, key "terraform",
+// (testdata/<root>/renovate-43.288.0/extract/koh-infra.json, key "terraform",
 // 56 dependencies over 22 files):
 //
 //	terraform {

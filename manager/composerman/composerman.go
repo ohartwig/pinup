@@ -5,7 +5,7 @@
 // Composer's composer.json.
 //
 // Three shapes, measured against the extraction corpus
-// (testdata/parity/renovate-43.288.0/extract/*.json, key "composer"):
+// (testdata/<root>/renovate-43.288.0/extract/*.json, key "composer"):
 //
 //	"require": { "vendor/name": "^7.0" }         depType require      packagist
 //	"require-dev": { "vendor/name": "*" }        depType require-dev  packagist

@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	fullPath   = "testdata/parity/renovate-43.288.0/full-resolved.json"
-	directPath = "testdata/parity/renovate-43.288.0/presets/default-resolved.json"
+	fullPath   = "testdata/estate/renovate-43.288.0/full-resolved.json"
+	directPath = "testdata/estate/renovate-43.288.0/presets/default-resolved.json"
 	outPath    = "config/defaults.json"
 )
 

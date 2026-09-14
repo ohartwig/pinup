@@ -12,7 +12,7 @@ import (
 // The captured behaviour table is the specification. This test is the whole
 // acceptance check for the scheme.
 func TestConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("semver"))
+	tbl, err := vertest.Load(vertest.Path(t, "semver"))
 	if err != nil {
 		t.Fatal(err)
 	}

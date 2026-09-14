@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -169,7 +170,7 @@ func TestExplainSaysWhenNothingSetIt(t *testing.T) {
 // Provenance must be complete: every leaf of the merged document has an
 // origin. The count is asserted so a walk that found nothing cannot pass.
 func TestEveryLeafOfTheRealConfigHasProvenance(t *testing.T) {
-	l, err := LoadFile("../testdata/parity/config/default.json")
+	l, err := LoadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}

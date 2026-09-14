@@ -11,14 +11,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/versioning"
-)
-
-const (
-	resolvedPath = "../testdata/parity/renovate-43.288.0/full-resolved.json"
-	vectorsPath  = "../testdata/parity/renovate-43.288.0/rules/vectors.ndjson"
-	// vectorFloor is asserted so an empty or truncated table cannot pass.
-	vectorFloor = 3000
 )
 
 type vector struct {
@@ -30,7 +24,7 @@ type vector struct {
 
 func loadVectors(t *testing.T) (map[string]any, []vector) {
 	t.Helper()
-	raw, err := os.ReadFile(resolvedPath)
+	raw, err := os.ReadFile(fixture.Captured(t, "full-resolved.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +32,7 @@ func loadVectors(t *testing.T) (map[string]any, []vector) {
 	if err := json.Unmarshal(raw, &base); err != nil {
 		t.Fatal(err)
 	}
-	f, err := os.Open(vectorsPath)
+	f, err := os.Open(fixture.Captured(t, "rules", "vectors.ndjson"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,8 +74,9 @@ func subjectOf(in map[string]any) Subject {
 // and both the fired-rule list and the resulting delta must agree exactly.
 func TestResolvesEveryVectorAsRenovateDid(t *testing.T) {
 	base, vs := loadVectors(t)
-	if len(vs) < vectorFloor {
-		t.Fatalf("only %d vectors; the table was barely read", len(vs))
+	// The count is pinned so an empty or truncated table cannot pass.
+	if want := fixture.Expect(t).RuleVectors; len(vs) != want {
+		t.Fatalf("%d vectors, expect.json pins %d; the table was recaptured or barely read", len(vs), want)
 	}
 	rulesRaw, _ := base["packageRules"].([]any)
 	eng, err := Compile(rulesRaw, versioning.Registry{})

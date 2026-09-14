@@ -25,8 +25,9 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
+	"testing"
 
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/fake/harness"
 	"github.com/ohartwig/pinup/versioning"
 )
@@ -367,9 +368,8 @@ func Run(t harness.T, v versioning.Versioning, tbl *Table, divergences []Diverge
 	return res
 }
 
-// Path returns the captured table for a scheme, relative to a package two
-// levels below the module root (versioning/<scheme>).
-func Path(scheme string) string {
-	return strings.Join([]string{"..", "..", "testdata", "parity",
-		"renovate-43.288.0", "versioning", scheme + ".json"}, "/")
+// Path returns the captured table for a scheme under the shared root.
+func Path(t testing.TB, scheme string) string {
+	t.Helper()
+	return fixture.SharedCaptured(t, "versioning", scheme+".json")
 }

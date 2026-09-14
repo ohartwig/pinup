@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -387,15 +388,13 @@ func (k depKey) String() string {
 }
 
 // TestAgreesWithTheCorpus extracts every kustomize packageFile in
-// testdata/parity/synthetic/tfversion and compares the result, as a
-// multiset, against testdata/parity/renovate-43.288.0/extract/tfversion.json
+// testdata/renovate/synthetic/tfversion and compares the result, as a
+// multiset, against testdata/<root>/renovate-43.288.0/extract/tfversion.json
 // key "kustomize" - 12 dependencies over two files. This is the manager's
 // acceptance test.
 func TestAgreesWithTheCorpus(t *testing.T) {
-	const (
-		corpusPath = "../../testdata/parity/renovate-43.288.0/extract/tfversion.json"
-		treeDir    = "../../testdata/parity/synthetic/tfversion"
-	)
+	corpusPath := fixture.Captured(t, "extract", "tfversion.json")
+	treeDir := fixture.Shared(t, "synthetic", "tfversion")
 
 	corpusBytes, err := os.ReadFile(corpusPath)
 	if err != nil {

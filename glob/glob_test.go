@@ -5,6 +5,7 @@ package glob
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"strings"
 	"testing"
@@ -158,7 +159,7 @@ func TestSetPredicate(t *testing.T) {
 // Every pattern in the real config must compile and behave. The counts are
 // asserted so a walk that finds nothing cannot pass as agreement.
 func TestEveryPatternInTheRealConfigCompiles(t *testing.T) {
-	const configPath = "../testdata/parity/config/default.json"
+	configPath := fixture.Config(t)
 	raw, err := os.ReadFile(configPath)
 	if err != nil {
 		t.Fatalf("the captured acceptance config is missing: %v", err)
@@ -216,8 +217,8 @@ func TestEveryPatternInTheRealConfigCompiles(t *testing.T) {
 
 	// Denominators. These are the measured values; a change means the config
 	// moved, and the parity snapshots need to move with it.
-	if total != 107 {
-		t.Errorf("found %d pattern entries, expected 107 - the config changed", total)
+	if want := fixture.Expect(t).PatternEntries; total != want {
+		t.Errorf("found %d pattern entries, expected %d - the config changed", total, want)
 	}
 	if exact != 54 || globs != 52 || regexes != 1 {
 		t.Errorf("classification drifted: %d exact, %d glob, %d regex; expected 54/52/1", exact, globs, regexes)

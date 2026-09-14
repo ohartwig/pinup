@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/fake/fixture"
 )
 
 func TestFlattenNotationAndOrder(t *testing.T) {
@@ -67,22 +68,22 @@ func TestDiffSeesARuleSwap(t *testing.T) {
 // print-config parity: the estate configuration resolved here - defaults,
 // presets, file - flattened, against what the pinned container printed for
 // the same file. Two adjustments to the captured surface, both measured
-// and recorded in testdata/parity/.../presets/README.md: keys that describe
+// and recorded in testdata/renovate/.../presets/README.md: keys that describe
 // the capture run rather than the program are dropped, and the four keys
 // the onboarding config:recommended overrode or reordered in that run
 // (ignorePaths, packageRules, description, customManagers) are taken from
 // the direct resolution of the file. Everything else must agree line for
 // line, and the line count is asserted so an empty comparison cannot pass.
 func TestPrintConfigParityWithTheCapturedResolution(t *testing.T) {
-	r, _, err := ResolveFile("../testdata/parity/config/default.json", preset.Builtin())
+	r, _, err := ResolveFile(fixture.Config(t), preset.Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := loadJSON(t, "../testdata/parity/renovate-43.288.0/full-resolved.json")
+	want := loadJSON(t, fixture.Captured(t, "full-resolved.json"))
 	// The direct resolution is pre-migration, as the container's own
 	// migration ran in the print-config path; apply ours, which is the
 	// thing under test as well.
-	direct, _ := Migrate(loadJSON(t, "../testdata/parity/renovate-43.288.0/presets/default-resolved.json"))
+	direct, _ := Migrate(loadJSON(t, fixture.Captured(t, "presets", "default-resolved.json")))
 	for _, k := range []string{"ignorePaths", "packageRules", "description", "customManagers"} {
 		want[k] = direct[k]
 	}

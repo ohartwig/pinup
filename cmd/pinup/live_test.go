@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/fake/platformfake"
 	"github.com/ohartwig/pinup/git"
 	"github.com/ohartwig/pinup/glob"
@@ -79,7 +80,7 @@ func TestRunProjectPushesOpensAndRebasesOnRequest(t *testing.T) {
 	pf := &platformfake.Platform{Verification: "verified"}
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC) // the 4-hourly window is open
 	o := &runOptions{
-		cfgPath: "../../testdata/parity/config/default.json", dryRun: false,
+		cfgPath: fixture.Config(t), dryRun: false,
 		platform: pf, now: at, dashboardTitle: "pinup Dashboard",
 		identity:    git.Identity{Name: "fixture", Email: "fixture@example.invalid"},
 		datasources: lookup.Registry{"docker": cannedDocker{cannedDS{name: "docker", scheme: "docker", releases: map[string][]string{"alpine": {"3.20", "3.21"}}}}},

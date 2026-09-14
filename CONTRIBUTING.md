@@ -45,7 +45,7 @@ Every behavioural change needs a test, and every test must be able to fail:
 
 - HTTP is served by `httptest` servers that speak the real protocol, behind
   a transport that fails the test on any host nobody registered.
-- Golden repositories under `testdata/golden` are read, never rewritten.
+- Golden repositories under `testdata/<root>/golden` are read, never rewritten.
   A behaviour change that moves a golden is recorded into a new directory
   and reviewed as a diff (`PINUP_GOLDEN_RECORD=<name> go test ./cmd/pinup`).
 - Layering, `time.Now()` placement and other house rules are tests in

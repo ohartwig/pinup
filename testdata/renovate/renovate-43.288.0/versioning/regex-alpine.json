@@ -1,0 +1,11630 @@
+{
+  "configString": "regex:^alpine(?<major>[0-9]+)\\.(?<minor>[0-9]+)",
+  "equals": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "bookworm",
+      "out": false
+    }
+  ],
+  "getMajor": [
+    {
+      "in": "1.0.0",
+      "out": null
+    },
+    {
+      "in": "1.0.1",
+      "out": null
+    },
+    {
+      "in": "1.1.0",
+      "out": null
+    },
+    {
+      "in": "2.0.0",
+      "out": null
+    },
+    {
+      "in": "0.9.0",
+      "out": null
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": null
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": null
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": null
+    },
+    {
+      "in": "v1.2.3",
+      "out": null
+    },
+    {
+      "in": "1.2",
+      "out": null
+    },
+    {
+      "in": "1",
+      "out": null
+    },
+    {
+      "in": "1.2.3.4",
+      "out": null
+    },
+    {
+      "in": "",
+      "out": null
+    },
+    {
+      "in": "latest",
+      "out": null
+    },
+    {
+      "in": "not-a-version",
+      "out": null
+    },
+    {
+      "in": "alpine3.21",
+      "out": 3
+    },
+    {
+      "in": "alpine3.20",
+      "out": 3
+    },
+    {
+      "in": "alpine3.9",
+      "out": 3
+    },
+    {
+      "in": "alpine4.0",
+      "out": 4
+    },
+    {
+      "in": "alpine3",
+      "out": null
+    },
+    {
+      "in": "alpine",
+      "out": null
+    },
+    {
+      "in": "3.21",
+      "out": null
+    },
+    {
+      "in": "bookworm",
+      "out": null
+    }
+  ],
+  "getMinor": [
+    {
+      "in": "1.0.0",
+      "out": null
+    },
+    {
+      "in": "1.0.1",
+      "out": null
+    },
+    {
+      "in": "1.1.0",
+      "out": null
+    },
+    {
+      "in": "2.0.0",
+      "out": null
+    },
+    {
+      "in": "0.9.0",
+      "out": null
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": null
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": null
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": null
+    },
+    {
+      "in": "v1.2.3",
+      "out": null
+    },
+    {
+      "in": "1.2",
+      "out": null
+    },
+    {
+      "in": "1",
+      "out": null
+    },
+    {
+      "in": "1.2.3.4",
+      "out": null
+    },
+    {
+      "in": "",
+      "out": null
+    },
+    {
+      "in": "latest",
+      "out": null
+    },
+    {
+      "in": "not-a-version",
+      "out": null
+    },
+    {
+      "in": "alpine3.21",
+      "out": 21
+    },
+    {
+      "in": "alpine3.20",
+      "out": 20
+    },
+    {
+      "in": "alpine3.9",
+      "out": 9
+    },
+    {
+      "in": "alpine4.0",
+      "out": 0
+    },
+    {
+      "in": "alpine3",
+      "out": null
+    },
+    {
+      "in": "alpine",
+      "out": null
+    },
+    {
+      "in": "3.21",
+      "out": null
+    },
+    {
+      "in": "bookworm",
+      "out": null
+    }
+  ],
+  "getNewValue": [
+    {
+      "currentValue": "alpine3.21",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "replace"
+    },
+    {
+      "currentValue": "alpine3.21",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "bump"
+    },
+    {
+      "currentValue": "alpine3.21",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "pin"
+    },
+    {
+      "currentValue": "alpine3.21",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "widen"
+    },
+    {
+      "currentValue": "alpine3.21",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "currentValue": "alpine3.21",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "auto"
+    },
+    {
+      "currentValue": "alpine3",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "replace"
+    },
+    {
+      "currentValue": "alpine3",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "bump"
+    },
+    {
+      "currentValue": "alpine3",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "pin"
+    },
+    {
+      "currentValue": "alpine3",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "widen"
+    },
+    {
+      "currentValue": "alpine3",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "currentValue": "alpine3",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "auto"
+    }
+  ],
+  "getPatch": [
+    {
+      "in": "1.0.0",
+      "out": null
+    },
+    {
+      "in": "1.0.1",
+      "out": null
+    },
+    {
+      "in": "1.1.0",
+      "out": null
+    },
+    {
+      "in": "2.0.0",
+      "out": null
+    },
+    {
+      "in": "0.9.0",
+      "out": null
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": null
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": null
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": null
+    },
+    {
+      "in": "v1.2.3",
+      "out": null
+    },
+    {
+      "in": "1.2",
+      "out": null
+    },
+    {
+      "in": "1",
+      "out": null
+    },
+    {
+      "in": "1.2.3.4",
+      "out": null
+    },
+    {
+      "in": "",
+      "out": null
+    },
+    {
+      "in": "latest",
+      "out": null
+    },
+    {
+      "in": "not-a-version",
+      "out": null
+    },
+    {
+      "in": "alpine3.21",
+      "out": 0
+    },
+    {
+      "in": "alpine3.20",
+      "out": 0
+    },
+    {
+      "in": "alpine3.9",
+      "out": 0
+    },
+    {
+      "in": "alpine4.0",
+      "out": 0
+    },
+    {
+      "in": "alpine3",
+      "out": null
+    },
+    {
+      "in": "alpine",
+      "out": null
+    },
+    {
+      "in": "3.21",
+      "out": null
+    },
+    {
+      "in": "bookworm",
+      "out": null
+    }
+  ],
+  "getSatisfyingVersion": [
+    {
+      "out": "alpine3.21",
+      "range": "alpine3.21",
+      "versions": [
+        "1.0.0",
+        "1.0.1",
+        "1.1.0",
+        "2.0.0",
+        "0.9.0",
+        "1.0.0-alpha",
+        "1.0.0-alpha.1",
+        "1.0.0-rc.1",
+        "v1.2.3",
+        "1.2",
+        "1",
+        "1.2.3.4",
+        "",
+        "latest",
+        "not-a-version",
+        "alpine3.21",
+        "alpine3.20",
+        "alpine3.9",
+        "alpine4.0",
+        "alpine3",
+        "alpine",
+        "3.21",
+        "bookworm"
+      ]
+    },
+    {
+      "out": null,
+      "range": "alpine3",
+      "versions": [
+        "1.0.0",
+        "1.0.1",
+        "1.1.0",
+        "2.0.0",
+        "0.9.0",
+        "1.0.0-alpha",
+        "1.0.0-alpha.1",
+        "1.0.0-rc.1",
+        "v1.2.3",
+        "1.2",
+        "1",
+        "1.2.3.4",
+        "",
+        "latest",
+        "not-a-version",
+        "alpine3.21",
+        "alpine3.20",
+        "alpine3.9",
+        "alpine4.0",
+        "alpine3",
+        "alpine",
+        "3.21",
+        "bookworm"
+      ]
+    }
+  ],
+  "isCompatible": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "alpine",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "3.21",
+      "b": "bookworm",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "3.21",
+      "out": false
+    },
+    {
+      "a": "bookworm",
+      "b": "bookworm",
+      "out": false
+    }
+  ],
+  "isGreaterThan": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "latest",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "not-a-version",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.21",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.20",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.21",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.20",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.9",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3.9",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine4.0",
+      "out": false
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine4.0",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine3",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "alpine",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "3.21",
+      "b": "bookworm",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.21",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.20",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.9",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine4.0",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "3.21",
+      "out": true
+    },
+    {
+      "a": "bookworm",
+      "b": "bookworm",
+      "out": true
+    }
+  ],
+  "isSingleVersion": [
+    {
+      "in": "1.0.0",
+      "out": false
+    },
+    {
+      "in": "1.0.1",
+      "out": false
+    },
+    {
+      "in": "1.1.0",
+      "out": false
+    },
+    {
+      "in": "2.0.0",
+      "out": false
+    },
+    {
+      "in": "0.9.0",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "in": "v1.2.3",
+      "out": false
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "alpine3.21",
+      "out": true
+    },
+    {
+      "in": "alpine3.20",
+      "out": true
+    },
+    {
+      "in": "alpine3.9",
+      "out": true
+    },
+    {
+      "in": "alpine4.0",
+      "out": true
+    },
+    {
+      "in": "alpine3",
+      "out": false
+    },
+    {
+      "in": "alpine",
+      "out": false
+    },
+    {
+      "in": "3.21",
+      "out": false
+    },
+    {
+      "in": "bookworm",
+      "out": false
+    }
+  ],
+  "isStable": [
+    {
+      "in": "1.0.0",
+      "out": false
+    },
+    {
+      "in": "1.0.1",
+      "out": false
+    },
+    {
+      "in": "1.1.0",
+      "out": false
+    },
+    {
+      "in": "2.0.0",
+      "out": false
+    },
+    {
+      "in": "0.9.0",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "in": "v1.2.3",
+      "out": false
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "alpine3.21",
+      "out": true
+    },
+    {
+      "in": "alpine3.20",
+      "out": true
+    },
+    {
+      "in": "alpine3.9",
+      "out": true
+    },
+    {
+      "in": "alpine4.0",
+      "out": true
+    },
+    {
+      "in": "alpine3",
+      "out": false
+    },
+    {
+      "in": "alpine",
+      "out": false
+    },
+    {
+      "in": "3.21",
+      "out": false
+    },
+    {
+      "in": "bookworm",
+      "out": false
+    }
+  ],
+  "isValid": [
+    {
+      "in": "1.0.0",
+      "out": false
+    },
+    {
+      "in": "1.0.1",
+      "out": false
+    },
+    {
+      "in": "1.1.0",
+      "out": false
+    },
+    {
+      "in": "2.0.0",
+      "out": false
+    },
+    {
+      "in": "0.9.0",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "in": "v1.2.3",
+      "out": false
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "alpine3.21",
+      "out": true
+    },
+    {
+      "in": "alpine3.20",
+      "out": true
+    },
+    {
+      "in": "alpine3.9",
+      "out": true
+    },
+    {
+      "in": "alpine4.0",
+      "out": true
+    },
+    {
+      "in": "alpine3",
+      "out": false
+    },
+    {
+      "in": "alpine",
+      "out": false
+    },
+    {
+      "in": "3.21",
+      "out": false
+    },
+    {
+      "in": "bookworm",
+      "out": false
+    }
+  ],
+  "isVersion": [
+    {
+      "in": "1.0.0",
+      "out": false
+    },
+    {
+      "in": "1.0.1",
+      "out": false
+    },
+    {
+      "in": "1.1.0",
+      "out": false
+    },
+    {
+      "in": "2.0.0",
+      "out": false
+    },
+    {
+      "in": "0.9.0",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "in": "v1.2.3",
+      "out": false
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "alpine3.21",
+      "out": true
+    },
+    {
+      "in": "alpine3.20",
+      "out": true
+    },
+    {
+      "in": "alpine3.9",
+      "out": true
+    },
+    {
+      "in": "alpine4.0",
+      "out": true
+    },
+    {
+      "in": "alpine3",
+      "out": false
+    },
+    {
+      "in": "alpine",
+      "out": false
+    },
+    {
+      "in": "3.21",
+      "out": false
+    },
+    {
+      "in": "bookworm",
+      "out": false
+    }
+  ],
+  "matches": [
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.0.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.0.1"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.1.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "2.0.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "0.9.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.0.0-alpha"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.0.0-alpha.1"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.0.0-rc.1"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "v1.2.3"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.2"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "1.2.3.4"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": ""
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "latest"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "not-a-version"
+    },
+    {
+      "out": true,
+      "range": "alpine3.21",
+      "version": "alpine3.21"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "alpine3.20"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "alpine3.9"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "alpine4.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "alpine3"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "alpine"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "3.21"
+    },
+    {
+      "out": false,
+      "range": "alpine3.21",
+      "version": "bookworm"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.0.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.0.1"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.1.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "2.0.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "0.9.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.0.0-alpha"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.0.0-alpha.1"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.0.0-rc.1"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "v1.2.3"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.2"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "1.2.3.4"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": ""
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "latest"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "not-a-version"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "alpine3.21"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "alpine3.20"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "alpine3.9"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "alpine4.0"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "alpine3"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "alpine"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "3.21"
+    },
+    {
+      "out": false,
+      "range": "alpine3",
+      "version": "bookworm"
+    }
+  ],
+  "module": "regex:^alpine(?<major>[0-9]+)\\.(?<minor>[0-9]+)",
+  "note": "The only literal regex versioning in the estate config (packageRules, matchPackageNames [bash]). Re-captured with an extended input grid: the first capture used the generic grid, which this pattern matches none of, so it recorded nothing but 'invalid' and proved nothing.",
+  "sortVersions": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "latest",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "not-a-version",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.21",
+      "out": 0
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3.9",
+      "out": 12
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine4.0",
+      "out": -1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine3.21",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.21",
+      "out": -1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.20",
+      "out": 0
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3.9",
+      "out": 11
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine4.0",
+      "out": -1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine3.20",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.21",
+      "out": -12
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.20",
+      "out": -11
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3.9",
+      "out": 0
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine4.0",
+      "out": -1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine3.9",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine4.0",
+      "out": 0
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine4.0",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine3",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "alpine",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "3.21",
+      "b": "bookworm",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "2.0.0",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "latest",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "not-a-version",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.21",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.20",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3.9",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine4.0",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine3",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "alpine",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "3.21",
+      "out": 1
+    },
+    {
+      "a": "bookworm",
+      "b": "bookworm",
+      "out": 1
+    }
+  ],
+  "source": "executed in renovate/renovate:43.288.0"
+}

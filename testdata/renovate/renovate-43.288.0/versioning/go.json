@@ -1,0 +1,7172 @@
+{
+  "equals": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    }
+  ],
+  "getMajor": [
+    {
+      "in": "1.0.0",
+      "out": 1
+    },
+    {
+      "in": "1.0.1",
+      "out": 1
+    },
+    {
+      "in": "1.1.0",
+      "out": 1
+    },
+    {
+      "in": "2.0.0",
+      "out": 2
+    },
+    {
+      "in": "0.9.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "in": "v1.2.3",
+      "out": 1
+    },
+    {
+      "in": "1.2",
+      "out": 1
+    },
+    {
+      "in": "1",
+      "out": 1
+    },
+    {
+      "in": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "in": "",
+      "out": null
+    },
+    {
+      "in": "latest",
+      "out": null
+    },
+    {
+      "in": "not-a-version",
+      "out": null
+    },
+    {
+      "in": "v1.27.0",
+      "out": 1
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": 2
+    }
+  ],
+  "getMinor": [
+    {
+      "in": "1.0.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.1",
+      "out": 0
+    },
+    {
+      "in": "1.1.0",
+      "out": 1
+    },
+    {
+      "in": "2.0.0",
+      "out": 0
+    },
+    {
+      "in": "0.9.0",
+      "out": 9
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "in": "v1.2.3",
+      "out": 2
+    },
+    {
+      "in": "1.2",
+      "out": 2
+    },
+    {
+      "in": "1",
+      "out": 0
+    },
+    {
+      "in": "1.2.3.4",
+      "out": 2
+    },
+    {
+      "in": "",
+      "out": null
+    },
+    {
+      "in": "latest",
+      "out": null
+    },
+    {
+      "in": "not-a-version",
+      "out": null
+    },
+    {
+      "in": "v1.27.0",
+      "out": 27
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": 0
+    }
+  ],
+  "getNewValue": [
+    {
+      "currentValue": "v1.27.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "replace"
+    },
+    {
+      "currentValue": "v1.27.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "bump"
+    },
+    {
+      "currentValue": "v1.27.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "pin"
+    },
+    {
+      "currentValue": "v1.27.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "widen"
+    },
+    {
+      "currentValue": "v1.27.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "currentValue": "v1.27.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "auto"
+    }
+  ],
+  "getPatch": [
+    {
+      "in": "1.0.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.1",
+      "out": 1
+    },
+    {
+      "in": "1.1.0",
+      "out": 0
+    },
+    {
+      "in": "2.0.0",
+      "out": 0
+    },
+    {
+      "in": "0.9.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "in": "v1.2.3",
+      "out": 3
+    },
+    {
+      "in": "1.2",
+      "out": 0
+    },
+    {
+      "in": "1",
+      "out": 0
+    },
+    {
+      "in": "1.2.3.4",
+      "out": 3
+    },
+    {
+      "in": "",
+      "out": null
+    },
+    {
+      "in": "latest",
+      "out": null
+    },
+    {
+      "in": "not-a-version",
+      "out": null
+    },
+    {
+      "in": "v1.27.0",
+      "out": 0
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": 0
+    }
+  ],
+  "getSatisfyingVersion": [
+    {
+      "out": "v1.27.0",
+      "range": "v1.27.0",
+      "versions": [
+        "1.0.0",
+        "1.0.1",
+        "1.1.0",
+        "2.0.0",
+        "0.9.0",
+        "1.0.0-alpha",
+        "1.0.0-alpha.1",
+        "1.0.0-rc.1",
+        "v1.2.3",
+        "1.2",
+        "1",
+        "1.2.3.4",
+        "",
+        "latest",
+        "not-a-version",
+        "v1.27.0",
+        "v0.0.0-20260101000000-abcdef123456",
+        "v2.0.0+incompatible"
+      ]
+    }
+  ],
+  "isCompatible": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v2.0.0+incompatible",
+      "out": true
+    }
+  ],
+  "isGreaterThan": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.27.0",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.27.0",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v2.0.0+incompatible",
+      "out": false
+    }
+  ],
+  "isSingleVersion": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": true
+    },
+    {
+      "in": "1",
+      "out": true
+    },
+    {
+      "in": "1.2.3.4",
+      "out": true
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "v1.27.0",
+      "out": true
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": true
+    }
+  ],
+  "isStable": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": true
+    },
+    {
+      "in": "1",
+      "out": true
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "v1.27.0",
+      "out": true
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": false
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": true
+    }
+  ],
+  "isValid": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": true
+    },
+    {
+      "in": "1",
+      "out": true
+    },
+    {
+      "in": "1.2.3.4",
+      "out": true
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "v1.27.0",
+      "out": true
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": true
+    }
+  ],
+  "isVersion": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": true
+    },
+    {
+      "in": "1",
+      "out": true
+    },
+    {
+      "in": "1.2.3.4",
+      "out": true
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    },
+    {
+      "in": "v1.27.0",
+      "out": true
+    },
+    {
+      "in": "v0.0.0-20260101000000-abcdef123456",
+      "out": true
+    },
+    {
+      "in": "v2.0.0+incompatible",
+      "out": true
+    }
+  ],
+  "matches": [
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.0.0"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.0.1"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.1.0"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "2.0.0"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "0.9.0"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.0.0-alpha"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.0.0-alpha.1"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.0.0-rc.1"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "v1.2.3"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.2"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "1.2.3.4"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": ""
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "latest"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "not-a-version"
+    },
+    {
+      "out": true,
+      "range": "v1.27.0",
+      "version": "v1.27.0"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "v0.0.0-20260101000000-abcdef123456"
+    },
+    {
+      "out": false,
+      "range": "v1.27.0",
+      "version": "v2.0.0+incompatible"
+    }
+  ],
+  "module": "go",
+  "sortVersions": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": 0
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": 0
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.27.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "v2.0.0+incompatible",
+      "out": 0
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": 0
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "0.9.0",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": 0
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": 0
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": 0
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.2",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.2",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.2",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": 0
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": 0
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "v1.27.0",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "a": "",
+      "b": "v2.0.0+incompatible",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "v1.27.0",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "a": "latest",
+      "b": "v2.0.0+incompatible",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.27.0",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "a": "not-a-version",
+      "b": "v2.0.0+incompatible",
+      "out": 0
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "v1.27.0",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "v1.27.0",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v1.27.0",
+      "out": 0
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "v1.27.0",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "0.9.0",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-alpha.1",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.0.0-rc.1",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "1.2.3.4",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v1.27.0",
+      "out": -1
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 0
+    },
+    {
+      "a": "v0.0.0-20260101000000-abcdef123456",
+      "b": "v2.0.0+incompatible",
+      "out": -1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "2.0.0",
+      "out": 0
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "1.2.3.4",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "",
+      "out": 0
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "latest",
+      "out": 0
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "not-a-version",
+      "out": 0
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v1.27.0",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v0.0.0-20260101000000-abcdef123456",
+      "out": 1
+    },
+    {
+      "a": "v2.0.0+incompatible",
+      "b": "v2.0.0+incompatible",
+      "out": 0
+    }
+  ],
+  "source": "executed in renovate/renovate:43.288.0"
+}

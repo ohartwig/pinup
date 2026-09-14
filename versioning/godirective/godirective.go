@@ -5,7 +5,7 @@
 // version written after `go` or `toolchain` in a go.mod file.
 //
 // Measured oddities worth knowing (docs/tech-spec.md's parity table,
-// testdata/parity/renovate-43.288.0/versioning/go-mod-directive.json):
+// testdata/renovate/renovate-43.288.0/versioning/go-mod-directive.json):
 //
 //   - IsValid and IsVersion disagree on which shape they accept, and neither
 //     is a subset of the other. IsValid takes the DIRECTIVE shape: two or

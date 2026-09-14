@@ -5,6 +5,7 @@ package jsonc
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"reflect"
 	"strings"
 	"testing"
@@ -115,7 +116,7 @@ func TestHasComments(t *testing.T) {
 
 // The acceptance surface is plain JSON, and it must survive untouched.
 func TestTheRealConfigIsUnchanged(t *testing.T) {
-	src := mustRead(t, "../testdata/parity/config/default.json")
+	src := mustRead(t, fixture.Config(t))
 	if HasComments(src) {
 		t.Error("default.json contains comments; it is meant to be plain JSON")
 	}

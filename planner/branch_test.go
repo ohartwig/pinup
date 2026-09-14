@@ -9,6 +9,7 @@ import (
 
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/versioning"
 )
@@ -17,7 +18,7 @@ import (
 // defaults: every template a branch name and a commit message come from.
 func resolvedConfig(t *testing.T) map[string]any {
 	t.Helper()
-	r, _, err := config.ResolveFile("../testdata/parity/config/default.json", preset.Builtin())
+	r, _, err := config.ResolveFile(fixture.Config(t), preset.Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,7 +50,7 @@ func upd(manager, ds, dep, current, value, version string, t model.UpdateType) m
 }
 
 // Every case is a branch open on the estate on 2026-09-11
-// (testdata/parity/live/renovate-branches.json), with the title Renovate
+// (testdata/<root>/live/renovate-branches.json), with the title Renovate
 // gave it.
 func TestBranchNamesAndTitlesMatchTheEstate(t *testing.T) {
 	base := resolvedConfig(t)

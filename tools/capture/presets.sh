@@ -2,9 +2,12 @@
 # SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 # SPDX-License-Identifier: MIT
 #
-# Captures the preset closure of the estate configuration's `extends` by
-# running presets-probe.mjs inside the pinned container, then regenerates
-# config/preset/library.json from it with tools/presetgen.
+# Captures the preset closure of the fixture root's configuration's
+# `extends` by running presets-probe.mjs inside the pinned container, then
+# regenerates config/preset/library.json from it with tools/presetgen. The
+# closure is Renovate's own behaviour, not the configuration's, so it lands
+# in the shared root testdata/renovate; PINUP_FIXTURES (default
+# testdata/estate) only says whose extends are the roots.
 #
 # Refuses to overwrite an existing closure: a captured behaviour table is a
 # golden file, and golden files change by deliberate deletion, not by re-run.
@@ -13,8 +16,8 @@ set -eu
 IMAGE="renovate/renovate:43.288.0"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-PARITY="$ROOT/testdata/parity/renovate-43.288.0"
-OUT="$PARITY/presets/closure.json"
+FIXTURES="$ROOT/${PINUP_FIXTURES:-testdata/estate}"
+OUT="$ROOT/testdata/renovate/renovate-43.288.0/presets/closure.json"
 
 if [ -e "$OUT" ]; then
   echo "refusing to overwrite $OUT; delete it first if a re-capture is intended" >&2
@@ -23,7 +26,7 @@ fi
 
 # The roots are default.json's extends. Read them rather than listing them
 # here, so a change to the file changes the capture.
-ROOTS="$(python3 -c "import json;print(' '.join(json.load(open('$ROOT/testdata/parity/config/default.json'))['extends']))")"
+ROOTS="$(python3 -c "import json;print(' '.join(json.load(open('$FIXTURES/config/default.json'))['extends']))")"
 
 # colima shares only $HOME and the projects volume, so stage under $HOME.
 STAGE="${HOME}/.cache/pinup-probe/presets"

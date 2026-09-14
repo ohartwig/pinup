@@ -12,6 +12,7 @@ import (
 
 	"github.com/ohartwig/pinup/config/preset"
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -21,7 +22,7 @@ import (
 // config to prove the copies are still faithful.
 func loadDefinition(t *testing.T, index int) map[string]any {
 	t.Helper()
-	raw, err := os.ReadFile("../../testdata/parity/config/default.json")
+	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}

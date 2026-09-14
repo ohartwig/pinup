@@ -5,24 +5,22 @@ package re2x
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"strings"
 	"testing"
 )
 
-// estateConfigPath is the real config this package's whole design is
-// justified by: three pairs of customManagers definitions in it exist
-// only because Renovate cannot distinguish "group absent" from "group
-// matched empty". Reading it (never writing) keeps the tests honest
-// against the patterns actually in production rather than idealized
-// ones invented for the test file.
-const estateConfigPath = "../testdata/parity/config/default.json"
-
 // estateMatchStrings loads every customManagers[].matchStrings entry
-// from the real estate config.
+// from the root's runner configuration - the real config this package's
+// whole design is justified by: three pairs of customManagers definitions
+// in it exist only because Renovate cannot distinguish "group absent"
+// from "group matched empty". Reading it (never writing) keeps the tests
+// honest against the patterns actually in production rather than
+// idealized ones invented for the test file.
 func estateMatchStrings(t *testing.T) []string {
 	t.Helper()
-	data, err := os.ReadFile(estateConfigPath)
+	data, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatalf("reading estate config: %v", err)
 	}
@@ -273,7 +271,7 @@ func TestCheckRE2AcceptsEveryEstatePattern(t *testing.T) {
 			t.Errorf("pattern %d (%q): CheckRE2 rejected a real estate pattern: %v", i, p, err)
 		}
 	}
-	t.Logf("CheckRE2 ran over %d matchStrings patterns from %s", len(patterns), estateConfigPath)
+	t.Logf("CheckRE2 ran over %d matchStrings patterns from %s", len(patterns), fixture.Config(t))
 }
 
 func TestCompileAcceptsEveryEstatePattern(t *testing.T) {

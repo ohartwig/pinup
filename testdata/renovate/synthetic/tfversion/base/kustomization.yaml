@@ -1,0 +1,5 @@
+resources:
+  - deployment.yaml
+images:
+  - name: registry.ole-hartwig.eu/devops/images/wolfi-base
+    newTag: "2"

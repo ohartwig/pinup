@@ -7,7 +7,7 @@ import "fmt"
 
 // Migrate applies the normalisations Renovate performs on a configuration
 // before it is used, each one measured on the estate file against the
-// container's --print-config output (testdata/parity/.../presets/README.md):
+// container's --print-config output (testdata/renovate/.../presets/README.md):
 //
 //   - minimumReleaseAge: "0" becomes null. Both mean no hold; the resolved
 //     form is null, and a rule's null is what the rules engine sees.

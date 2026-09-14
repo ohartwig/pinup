@@ -11,7 +11,7 @@
 // this dependency configured like this": a later rule overrides an earlier
 // one, and Explain names them all.
 //
-// Semantics are Renovate's, checked against testdata/parity/.../rules:
+// Semantics are Renovate's, checked against testdata/<root>/.../rules:
 // every rule is tried in array order; a rule applies when every matcher it
 // carries matches; applying merges the rule's non-matcher keys over the
 // configuration, arrays and objects replacing, description appending.

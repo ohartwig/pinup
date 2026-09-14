@@ -11,13 +11,14 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
 // The corpus: both .terraform-version files of the synthetic tree, as
 // Renovate extracted them. The value is taken verbatim, v included.
 func TestAgreesWithTheCorpus(t *testing.T) {
-	raw, err := os.ReadFile("../../testdata/parity/renovate-43.288.0/extract/tfversion.json")
+	raw, err := os.ReadFile(fixture.Captured(t, "extract", "tfversion.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +39,7 @@ func TestAgreesWithTheCorpus(t *testing.T) {
 		t.Fatalf("corpus has %d terraform-version files, want 2", len(files))
 	}
 	for _, pf := range files {
-		content, err := os.ReadFile(filepath.Join("../../testdata/parity/synthetic/tfversion", pf.PackageFile))
+		content, err := os.ReadFile(filepath.Join(fixture.Shared(t, "synthetic", "tfversion"), pf.PackageFile))
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -6,6 +6,7 @@ package rules
 import (
 	"bufio"
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"testing"
 )
@@ -18,7 +19,7 @@ import (
 // URL as-is (so `^…$` does not admit the slash and `\/$` demands it), and an
 // absent sourceUrl matches nothing - not even a lone negative pattern.
 func TestMatchSourceUrlsAgreesWithTheCapturedTable(t *testing.T) {
-	f, err := os.Open("../testdata/parity/renovate-43.288.0/rules/source-urls.ndjson")
+	f, err := os.Open(fixture.SharedCaptured(t, "rules", "source-urls.ndjson"))
 	if err != nil {
 		t.Fatal(err)
 	}

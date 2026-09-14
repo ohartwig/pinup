@@ -16,6 +16,7 @@ import (
 	"github.com/ohartwig/pinup/apply"
 	"github.com/ohartwig/pinup/cache"
 	"github.com/ohartwig/pinup/config"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/wire"
@@ -76,9 +77,10 @@ func canned() lookup.Registry {
 	}
 }
 
-func ciToolsOptions(at time.Time) whatifOptions {
+func ciToolsOptions(t *testing.T, at time.Time) whatifOptions {
+	t.Helper()
 	return whatifOptions{
-		Root: ciToolsRepo, ConfigPath: "../../testdata/parity/config/default.json",
+		Root: ciToolsRepo, ConfigPath: fixture.Config(t),
 		RepoName: "devops/images/ci-tools", Now: at, Datasources: canned(),
 	}
 }
@@ -95,10 +97,7 @@ func ciToolsOptions(at time.Time) whatifOptions {
 // Rules are always reported in the resolved numbering, which is Renovate's.
 func fileRule(i int) int { return 722 + i }
 
-const (
-	ciToolsRepo   = "/Volumes/Samsung_X5/Projects/moselwal/devops/images/ci-tools"
-	ciToolsCorpus = "../../testdata/parity/renovate-43.288.0/extract/ci-tools.json"
-)
+const ciToolsRepo = "/Volumes/Samsung_X5/Projects/moselwal/devops/images/ci-tools"
 
 func TestWhatifAgainstARealRepository(t *testing.T) {
 	if _, err := os.Stat(ciToolsRepo); err != nil {
@@ -106,7 +105,7 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 	}
 
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
-	plan, err := whatif(context.Background(), ciToolsOptions(at))
+	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,7 +136,7 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 		mine[d.File+"|"+d.DepName+"|"+d.CurrentValue+"|"+mgr] = true
 	}
 
-	raw, err := os.ReadFile(ciToolsCorpus)
+	raw, err := os.ReadFile(fixture.Captured(t, "extract", "ci-tools.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +195,7 @@ func TestWhatifProducesAValidPlan(t *testing.T) {
 		t.Skipf("the ci-tools checkout is not present: %v", err)
 	}
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
-	plan, err := whatif(context.Background(), ciToolsOptions(at))
+	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -231,7 +230,7 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 		t.Skipf("the ci-tools checkout is not present: %v", err)
 	}
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
-	plan, err := whatif(context.Background(), ciToolsOptions(at))
+	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -336,7 +335,7 @@ func TestWhatifHoldsExplainThemselves(t *testing.T) {
 		t.Skipf("the ci-tools checkout is not present: %v", err)
 	}
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC) // 14:00 in Berlin: the cron window is closed
-	opts := ciToolsOptions(at)
+	opts := ciToolsOptions(t, at)
 	opts.Cache = newEmptyCache(t)
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -395,7 +394,7 @@ func TestWhatifEditsApplyByteExact(t *testing.T) {
 		t.Skipf("the ci-tools checkout is not present: %v", err)
 	}
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC) // window open, holds thawed
-	plan, err := whatif(context.Background(), ciToolsOptions(at))
+	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -495,7 +494,7 @@ func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
   "packageRules": [{"description": "the fixture's own rule", "matchPackageNames": ["*"], "enabled": false}]
 }`), 0o644)
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(at)
+	opts := ciToolsOptions(t, at)
 	opts.Root = root
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -535,7 +534,7 @@ func TestWhatifReleasedNarrowsToTheReleasedPackage(t *testing.T) {
 		t.Skipf("the ci-tools checkout is not present: %v", err)
 	}
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(at)
+	opts := ciToolsOptions(t, at)
 	opts.Released = "devops/ci-cd-components/lint-tools"
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -627,7 +626,7 @@ func TestARepositoryWithoutConfigIgnoresNodeModules(t *testing.T) {
 	os.WriteFile(root+"/package.json", []byte(`{"name":"root","dependencies":{"lodash":"4.17.20"}}`), 0o644)
 	os.WriteFile(root+"/node_modules/dropzone/package.json", []byte(`{"name":"dropzone","version":"6.0.0","devDependencies":{"karma":"^6.1.0"}}`), 0o644)
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(at)
+	opts := ciToolsOptions(t, at)
 	opts.Root = root
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
@@ -663,7 +662,7 @@ func TestADashboardBoxLiftsTheHoldItNames(t *testing.T) {
 		t.Skipf("the ci-tools checkout is not present: %v", err)
 	}
 	at := time.Date(2026, 9, 13, 3, 5, 0, 0, time.UTC) // outside the 4-hourly window
-	base, err := whatif(context.Background(), ciToolsOptions(at))
+	base, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -677,7 +676,7 @@ func TestADashboardBoxLiftsTheHoldItNames(t *testing.T) {
 	if scheduled == "" {
 		t.Skip("no branch held by schedule at this moment in ci-tools")
 	}
-	opts := ciToolsOptions(at)
+	opts := ciToolsOptions(t, at)
 	opts.Checks = report.ParseChecks("- [x] <!-- unschedule-branch=" + scheduled + " -->x")
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {

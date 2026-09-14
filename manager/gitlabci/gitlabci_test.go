@@ -212,7 +212,7 @@ func TestRealCiToolsPipeline(t *testing.T) {
 			t.Errorf("%s: offsets point at %q", d.DepName, slice)
 		}
 	}
-	// From testdata/parity/renovate-43.288.0/extract/ci-tools.json, gitlabci.
+	// From testdata/<root>/renovate-43.288.0/extract/ci-tools.json, gitlabci.
 	for _, want := range []string{
 		"moby/buildkit|v0.32.2-rootless",
 		"registry.ole-hartwig.eu/devops/ci-mirrors/container-scanning|8.6.34",

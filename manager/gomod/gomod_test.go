@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -278,10 +279,10 @@ func (k depKey) String() string {
 
 // TestAgreesWithTheCorpus is the acceptance test: this manager's extraction
 // of the synthetic tree's two go.mod files must agree with the Renovate
-// corpus recording (testdata/parity/renovate-43.288.0/extract/gomod.json,
+// corpus recording (testdata/<root>/renovate-43.288.0/extract/gomod.json,
 // key "gomod") on all 10 dependencies.
 func TestAgreesWithTheCorpus(t *testing.T) {
-	raw, err := os.ReadFile("../../testdata/parity/renovate-43.288.0/extract/gomod.json")
+	raw, err := os.ReadFile(fixture.Captured(t, "extract", "gomod.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -321,7 +322,7 @@ func TestAgreesWithTheCorpus(t *testing.T) {
 
 	got := make(map[string]int)
 	for _, pf := range corpus.Gomod {
-		content, err := os.ReadFile(filepath.Join("../../testdata/parity/synthetic/gomod", pf.PackageFile))
+		content, err := os.ReadFile(filepath.Join(fixture.Shared(t, "synthetic", "gomod"), pf.PackageFile))
 		if err != nil {
 			t.Fatal(err)
 		}

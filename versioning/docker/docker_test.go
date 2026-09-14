@@ -11,7 +11,7 @@ import (
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("docker"))
+	tbl, err := vertest.Load(vertest.Path(t, "docker"))
 	if err != nil {
 		t.Fatal(err)
 	}

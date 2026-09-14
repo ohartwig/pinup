@@ -10,7 +10,7 @@ import (
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("go"))
+	tbl, err := vertest.Load(vertest.Path(t, "go"))
 	if err != nil {
 		t.Fatal(err)
 	}

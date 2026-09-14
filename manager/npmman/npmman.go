@@ -4,7 +4,7 @@
 // Package npmman extracts and rewrites dependency versions in package.json.
 //
 // Behaviour is measured against the pinned Renovate container's own npm
-// manager output, recorded in testdata/parity - nothing is copied from the
+// manager output, recorded under testdata/<root> - nothing is copied from the
 // Renovate tree itself (AGPL-3.0; see CLAUDE.md's licensing section).
 // Measured: depType is the section name verbatim ("dependencies",
 // "devDependencies", "optionalDependencies", "peerDependencies"); Renovate

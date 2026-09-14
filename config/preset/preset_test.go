@@ -6,6 +6,7 @@ package preset
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"reflect"
 	"sort"
@@ -13,13 +14,8 @@ import (
 	"testing"
 )
 
-const (
-	closurePath         = "../../testdata/parity/renovate-43.288.0/presets/closure.json"
-	defaultResolvedPath = "../../testdata/parity/renovate-43.288.0/presets/default-resolved.json"
-	defaultConfigPath   = "../../testdata/parity/config/default.json"
-	// presetFloor is asserted so a truncated closure cannot pass.
-	presetFloor = 1000
-)
+// presetFloor is asserted so a truncated closure cannot pass.
+const presetFloor = 1000
 
 type closure struct {
 	Presets map[string]struct {
@@ -35,7 +31,7 @@ type closure struct {
 
 func loadClosure(t *testing.T) closure {
 	t.Helper()
-	raw, err := os.ReadFile(closurePath)
+	raw, err := os.ReadFile(fixture.SharedCaptured(t, "presets", "closure.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +91,7 @@ func TestResolvesEveryCapturedPresetAsRenovateDid(t *testing.T) {
 // The acceptance case: default.json's extends resolve to what the container
 // resolved them to - 771 rules and all.
 func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
-	raw, err := os.ReadFile(defaultConfigPath)
+	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +99,7 @@ func TestResolvesDefaultConfigAsRenovateDid(t *testing.T) {
 	if err := json.Unmarshal(raw, &cfg); err != nil {
 		t.Fatal(err)
 	}
-	raw, err = os.ReadFile(defaultResolvedPath)
+	raw, err = os.ReadFile(fixture.Captured(t, "presets", "default-resolved.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,7 +274,7 @@ func TestParityGoesRedWhenTheLibraryIsBroken(t *testing.T) {
 // Provenance names, for every resolved key, the chain that wrote it - and
 // for every rule, the preset it came from, at the index it ended up at.
 func TestOriginsNameThePresetThatWroteEachKey(t *testing.T) {
-	raw, err := os.ReadFile(defaultConfigPath)
+	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}

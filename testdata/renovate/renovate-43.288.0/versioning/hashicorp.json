@@ -1,0 +1,5990 @@
+{
+  "equals": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    }
+  ],
+  "getMajor": [
+    {
+      "in": "1.0.0",
+      "out": 1
+    },
+    {
+      "in": "1.0.1",
+      "out": 1
+    },
+    {
+      "in": "1.1.0",
+      "out": 1
+    },
+    {
+      "in": "2.0.0",
+      "out": 2
+    },
+    {
+      "in": "0.9.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "in": "v1.2.3",
+      "out": 1
+    },
+    {
+      "in": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "in": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "in": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "in": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "in": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "in": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    }
+  ],
+  "getMinor": [
+    {
+      "in": "1.0.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.1",
+      "out": 0
+    },
+    {
+      "in": "1.1.0",
+      "out": 1
+    },
+    {
+      "in": "2.0.0",
+      "out": 0
+    },
+    {
+      "in": "0.9.0",
+      "out": 9
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "in": "v1.2.3",
+      "out": 2
+    },
+    {
+      "in": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "in": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "in": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "in": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "in": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "in": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    }
+  ],
+  "getNewValue": [
+    {
+      "currentValue": "1.0.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "replace"
+    },
+    {
+      "currentValue": "1.0.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "bump"
+    },
+    {
+      "currentValue": "1.0.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "pin"
+    },
+    {
+      "currentValue": "1.0.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "widen"
+    },
+    {
+      "currentValue": "1.0.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "currentValue": "1.0.0",
+      "currentVersion": "1.0.0",
+      "newVersion": "1.1.0",
+      "out": "1.1.0",
+      "rangeStrategy": "auto"
+    }
+  ],
+  "getPatch": [
+    {
+      "in": "1.0.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.1",
+      "out": 1
+    },
+    {
+      "in": "1.1.0",
+      "out": 0
+    },
+    {
+      "in": "2.0.0",
+      "out": 0
+    },
+    {
+      "in": "0.9.0",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "in": "v1.2.3",
+      "out": 3
+    },
+    {
+      "in": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "in": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "in": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "in": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "in": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "in": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    }
+  ],
+  "getSatisfyingVersion": [
+    {
+      "out": "1.0.0",
+      "range": "1.0.0",
+      "versions": [
+        "1.0.0",
+        "1.0.1",
+        "1.1.0",
+        "2.0.0",
+        "0.9.0",
+        "1.0.0-alpha",
+        "1.0.0-alpha.1",
+        "1.0.0-rc.1",
+        "v1.2.3",
+        "1.2",
+        "1",
+        "1.2.3.4",
+        "",
+        "latest",
+        "not-a-version"
+      ]
+    }
+  ],
+  "isCompatible": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": true
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": false
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": false
+    }
+  ],
+  "isGreaterThan": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": true
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": false
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    }
+  ],
+  "isSingleVersion": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    }
+  ],
+  "isStable": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": false
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": false
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": false
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    }
+  ],
+  "isValid": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": true
+    },
+    {
+      "in": "1",
+      "out": true
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    }
+  ],
+  "isVersion": [
+    {
+      "in": "1.0.0",
+      "out": true
+    },
+    {
+      "in": "1.0.1",
+      "out": true
+    },
+    {
+      "in": "1.1.0",
+      "out": true
+    },
+    {
+      "in": "2.0.0",
+      "out": true
+    },
+    {
+      "in": "0.9.0",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha",
+      "out": true
+    },
+    {
+      "in": "1.0.0-alpha.1",
+      "out": true
+    },
+    {
+      "in": "1.0.0-rc.1",
+      "out": true
+    },
+    {
+      "in": "v1.2.3",
+      "out": true
+    },
+    {
+      "in": "1.2",
+      "out": false
+    },
+    {
+      "in": "1",
+      "out": false
+    },
+    {
+      "in": "1.2.3.4",
+      "out": false
+    },
+    {
+      "in": "",
+      "out": false
+    },
+    {
+      "in": "latest",
+      "out": false
+    },
+    {
+      "in": "not-a-version",
+      "out": false
+    }
+  ],
+  "matches": [
+    {
+      "out": true,
+      "range": "1.0.0",
+      "version": "1.0.0"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.0.1"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.1.0"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "2.0.0"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "0.9.0"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.0.0-alpha"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.0.0-alpha.1"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.0.0-rc.1"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "v1.2.3"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.2"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "1.2.3.4"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": ""
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "latest"
+    },
+    {
+      "out": false,
+      "range": "1.0.0",
+      "version": "not-a-version"
+    }
+  ],
+  "module": "hashicorp",
+  "sortVersions": [
+    {
+      "a": "1.0.0",
+      "b": "1.0.0",
+      "out": 0
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.1.0",
+      "out": 0
+    },
+    {
+      "a": "1.1.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "1.1.0",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.1.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "2.0.0",
+      "out": 0
+    },
+    {
+      "a": "2.0.0",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "v1.2.3",
+      "out": 1
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "2.0.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "0.9.0",
+      "out": 0
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-alpha.1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.0.0-rc.1",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "0.9.0",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-alpha.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.0.0-rc.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-alpha",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-alpha.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.0.0-rc.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-alpha.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.1",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.1.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.0.0-rc.1",
+      "out": 0
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "v1.2.3",
+      "out": -1
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "1.0.0-rc.1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.1.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "2.0.0",
+      "out": -1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "0.9.0",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-alpha.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.0.0-rc.1",
+      "out": 1
+    },
+    {
+      "a": "v1.2.3",
+      "b": "v1.2.3",
+      "out": 0
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "v1.2.3",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1.2",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1.2"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "1.2.3.4",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: 1.2.3.4"
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: "
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "latest",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: latest"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.1.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "2.0.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "0.9.0",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-alpha.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.0.0-rc.1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "v1.2.3",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "1.2.3.4",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "latest",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    },
+    {
+      "a": "not-a-version",
+      "b": "not-a-version",
+      "out": {
+        "__error": "Invalid Version: not-a-version"
+      }
+    }
+  ],
+  "source": "executed in renovate/renovate:43.288.0"
+}

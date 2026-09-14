@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"testing"
 )
 
@@ -17,7 +18,7 @@ func TestDecodeTheRealConfig(t *testing.T) {
 	// the file declares plus the four its extends contribute, which come
 	// first (customManagers:dockerfileVersions, :gitlabPipelineVersions,
 	// and two for tsconfig via workarounds:typesNodeVersioning).
-	d, r, warnings, err := DecodeFile("../testdata/parity/config/default.json", preset.Builtin())
+	d, r, warnings, err := DecodeFile(fixture.Config(t), preset.Builtin())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +51,7 @@ func TestDecodeTheRealConfig(t *testing.T) {
 
 	// Without presets, the file on its own - which is only meaningful for a
 	// file that extends nothing, and this one does.
-	if _, _, _, err := DecodeFile("../testdata/parity/config/default.json", nil); err == nil {
+	if _, _, _, err := DecodeFile(fixture.Config(t), nil); err == nil {
 		t.Error("a file with extends and no preset source must fail, not resolve to less")
 	}
 	if len(d.EnabledManagers) != 10 {

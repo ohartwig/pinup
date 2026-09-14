@@ -26,7 +26,7 @@ two compatible here. See `docs/tech-spec.md` §0.1 and `NOTICE`.
 ## Rules for every capture
 
 1. **The version is in the path.** Output goes to
-   `testdata/parity/renovate-<version>/`. A new capture is an *addition*
+   `<fixture root>/renovate-<version>/`. A new capture is an *addition*
    reviewed as a directory diff, never an overwrite. That is how this
    repository keeps its no-golden-rewrite rule without needing an `-update`
    flag.
@@ -35,4 +35,12 @@ two compatible here. See `docs/tech-spec.md` §0.1 and `NOTICE`.
    snapshot missing any field is rejected by a test.
 3. **These scripts never run in the ordinary test job.** They need a container
    and a network; `test:go` needs neither and must stay that way.
-4. **`testdata/parity/CURRENT`** names the snapshot the tests compare against.
+4. **`testdata/renovate/CURRENT`** names the snapshot the tests compare against.
+5. **Two roots.** What is Renovate's behaviour alone - versioning tables, the
+   preset closure, the advisory captures, the synthetic repositories - lives
+   in `testdata/renovate` and is the same for everyone. What depends on a
+   runner configuration - its resolution, the extraction of repositories under
+   it, the rule vectors, the goldens - lives in the root `PINUP_FIXTURES`
+   names: `testdata/estate` by default (the author's estate, filtered out of
+   the public mirror), `testdata/public` for the synthetic twin. Each root
+   pins its denominators in `expect.json`; the tests read them from there.

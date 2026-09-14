@@ -22,7 +22,7 @@ func configured(t *testing.T) *Scheme {
 }
 
 func TestConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("regex-alpine"))
+	tbl, err := vertest.Load(vertest.Path(t, "regex-alpine"))
 	if err != nil {
 		t.Fatal(err)
 	}

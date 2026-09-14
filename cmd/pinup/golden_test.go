@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/osv"
@@ -25,7 +26,7 @@ import (
 	"github.com/ohartwig/pinup/wire"
 )
 
-// Golden repositories (H.5): testdata/golden/<name>/ holds a repository
+// Golden repositories (H.5): <root>/golden/<name>/ holds a repository
 // tree, the lookups a live run answered (recorded once, then canned), and
 // the plan pinup produced from them. The test re-plans each tree from the
 // canned lookups at the recorded moment and compares byte for byte.
@@ -39,12 +40,12 @@ import (
 // golden.json per repository:
 //
 //	{"repo": "<name recorded in the plan>", "now": "<RFC 3339>",
-//	 "config": "<path relative to testdata/parity/config, default default.json>",
+//	 "config": "<path relative to <root>/config, default default.json>",
 //	 "covers": {"managers": [...], "datasources": [...], "versionings": [...]}}
 //
 // covers is asserted against the plan, both ways: everything listed must
 // appear, and everything that appears must be listed.
-const goldenRoot = "../../testdata/golden"
+func goldenRoot(t *testing.T) string { return fixture.Path(t, "golden") }
 
 type goldenMeta struct {
 	Repo   string `json:"repo"`
@@ -193,8 +194,8 @@ func goldenOptions(t *testing.T, dir string, meta goldenMeta, ds lookup.Registry
 	// The toolchain is "present" for every task: the golden plan records
 	// the tasks, not this machine's PATH.
 	return whatifOptions{
-		Root: filepath.Join(dir, "repo"), ConfigPath: filepath.Join("../../testdata/parity/config", cfg),
-		RunnerDefault: "../../testdata/parity/config/default.json",
+		Root: filepath.Join(dir, "repo"), ConfigPath: fixture.Path(t, "config", cfg),
+		RunnerDefault: fixture.Config(t),
 		RepoName:      meta.Repo, Now: now, Datasources: ds,
 		LookPath: func(string) (string, error) { return "/usr/bin/true", nil },
 		AllowedCommands: []string{
@@ -205,7 +206,7 @@ func goldenOptions(t *testing.T, dir string, meta goldenMeta, ds lookup.Registry
 }
 
 func TestGoldenRepositories(t *testing.T) {
-	entries, err := os.ReadDir(goldenRoot)
+	entries, err := os.ReadDir(goldenRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -216,7 +217,7 @@ func TestGoldenRepositories(t *testing.T) {
 			continue
 		}
 		name := e.Name()
-		dir := filepath.Join(goldenRoot, name)
+		dir := filepath.Join(goldenRoot(t), name)
 		t.Run(name, func(t *testing.T) {
 			raw, err := os.ReadFile(filepath.Join(dir, "golden.json"))
 			if err != nil {
@@ -377,7 +378,7 @@ func firstDiff(got, want string) string {
 // knows: every manager and datasource is either covered or named in
 // UNCOVERED.json with an owner and a reason.
 func TestGoldenCoverageIsComplete(t *testing.T) {
-	entries, err := os.ReadDir(goldenRoot)
+	entries, err := os.ReadDir(goldenRoot(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -386,7 +387,7 @@ func TestGoldenCoverageIsComplete(t *testing.T) {
 		if !e.IsDir() {
 			continue
 		}
-		raw, err := os.ReadFile(filepath.Join(goldenRoot, e.Name(), "golden.json"))
+		raw, err := os.ReadFile(filepath.Join(goldenRoot(t), e.Name(), "golden.json"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -409,7 +410,7 @@ func TestGoldenCoverageIsComplete(t *testing.T) {
 			covered["versioning:"+v] = true
 		}
 	}
-	raw, err := os.ReadFile(filepath.Join(goldenRoot, "UNCOVERED.json"))
+	raw, err := os.ReadFile(filepath.Join(goldenRoot(t), "UNCOVERED.json"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -295,7 +296,7 @@ func (k depKey) String() string {
 
 // TestAgainstRealKohInfraCheckout compares this manager's extraction of the
 // koh-infra checkout's 22 terraform packageFiles against the Renovate corpus
-// recording for the same repository (testdata/parity/renovate-43.288.0/extract,
+// recording for the same repository (testdata/<root>/renovate-43.288.0/extract,
 // key "terraform"). It is skipped, not failed, when either side is
 // unavailable - the checkout is a local mirror this repository does not own.
 //
@@ -309,7 +310,7 @@ func TestAgainstRealKohInfraCheckout(t *testing.T) {
 		t.Skipf("real checkout not available: %v", err)
 	}
 
-	corpusBytes, err := os.ReadFile("../../testdata/parity/renovate-43.288.0/extract/koh-infra.json")
+	corpusBytes, err := os.ReadFile(fixture.Captured(t, "extract", "koh-infra.json"))
 	if err != nil {
 		t.Skipf("corpus fixture not available: %v", err)
 	}

@@ -5,6 +5,7 @@ package hbs
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"strings"
 	"testing"
@@ -191,7 +192,7 @@ func TestPlainTextIsAlwaysSet(t *testing.T) {
 // parse with this package and use only implemented helpers. A new helper
 // appearing upstream then turns this red before it turns a run wrong.
 func TestEveryTemplateInTheRealConfigParses(t *testing.T) {
-	raw, err := os.ReadFile("../testdata/parity/config/default.json")
+	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatalf("the captured acceptance config is missing: %v", err)
 	}

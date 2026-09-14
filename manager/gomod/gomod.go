@@ -5,7 +5,7 @@
 // Renovate's `gomod` manager.
 //
 // Measured across the extraction corpus
-// (testdata/parity/renovate-43.288.0/extract/gomod.json, key "gomod", 10
+// (testdata/<root>/renovate-43.288.0/extract/gomod.json, key "gomod", 10
 // dependencies over the synthetic tree's two go.mod files):
 //
 //	go 1.27.0                              depName go, depType golang

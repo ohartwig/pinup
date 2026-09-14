@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -194,7 +195,7 @@ func TestNonObjectPackageJSONYieldsAWarningNotAnError(t *testing.T) {
 
 // TestAgainstRealTemplate2024Checkout compares this manager's extraction of
 // the estate's own template-2024 package.json against the Renovate corpus
-// recording for the same file (testdata/parity/renovate-43.288.0/extract,
+// recording for the same file (testdata/<root>/renovate-43.288.0/extract,
 // key "npm"). It is skipped, not failed, when either side is unavailable -
 // the checkout is a local mirror this repository does not own.
 //
@@ -213,7 +214,7 @@ func TestAgainstRealTemplate2024Checkout(t *testing.T) {
 		t.Skipf("could not read package.json from the checkout's HEAD commit: %v", err)
 	}
 
-	corpusBytes, err := os.ReadFile("../../testdata/parity/renovate-43.288.0/extract/template-2024.json")
+	corpusBytes, err := os.ReadFile(fixture.Captured(t, "extract", "template-2024.json"))
 	if err != nil {
 		t.Skipf("corpus fixture not available: %v", err)
 	}

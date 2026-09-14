@@ -216,7 +216,7 @@ var runnerAliases = []string{
 // its own renovate.json (or .pinup.*) is resolved from that file, with the
 // runner's file answering the local> alias its extends name - the way
 // Renovate composes them in production, where the repository's own keys
-// and rules come last and decide (testdata/parity/.../presets/README.md).
+// and rules come last and decide (testdata/renovate/.../presets/README.md).
 // A repository without one runs under the runner's file alone.
 func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
 	global, err := config.LoadFile(cfgPath)
@@ -261,7 +261,7 @@ func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (c
 		// onboarding default on top of the runner's file, and the one
 		// key that changes is ignorePaths: the recommended list, not the
 		// runner's own. Measured twice - print-config against a bare
-		// repository (testdata/parity/.../full-resolved.json) and the
+		// repository (testdata/<root>/.../full-resolved.json) and the
 		// pinned container on a repository with a committed
 		// node_modules: one package file matched, not two - and on the
 		// estate, where partner-a-jobs' vendored node_modules/dropzone/

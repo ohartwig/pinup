@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -296,7 +297,7 @@ func TestNameAndFilePatterns(t *testing.T) {
 // --- the real fixture -------------------------------------------------------
 
 // corpusExtraction is the shape of one manager's entry in a captured
-// testdata/parity/renovate-43.288.0/extract/*.json file: only the fields
+// testdata/<root>/renovate-43.288.0/extract/*.json file: only the fields
 // this comparison needs.
 type corpusExtraction struct {
 	Deps []struct {
@@ -323,7 +324,7 @@ func TestRealMoselwalWebsites(t *testing.T) {
 		t.Skipf("real fixture not available: %v", err)
 	}
 
-	const corpusPath = "../../testdata/parity/renovate-43.288.0/extract/moselwal-websites.json"
+	corpusPath := fixture.Captured(t, "extract", "moselwal-websites.json")
 	corpusRaw, err := os.ReadFile(corpusPath)
 	if err != nil {
 		t.Fatalf("reading corpus fixture: %v", err) // this file lives in the repository; its absence is a bug

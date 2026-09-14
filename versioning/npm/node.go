@@ -5,7 +5,7 @@ package npm
 
 // Node is Renovate's node versioning: npm's reading of versions and ranges,
 // with stability meaning "a release line Node.js supports long term".
-// Measured (testdata/parity/renovate-43.288.0/versioning/node.json): the two
+// Measured (testdata/renovate/renovate-43.288.0/versioning/node.json): the two
 // schemes agree on all 1005 shared rows but isStable, where 1.0.0, 2.0.0 and
 // v1.2.3 are unstable and 22.19.0 and 24.8.0 are stable.
 //

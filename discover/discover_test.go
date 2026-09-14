@@ -37,7 +37,7 @@ func TestDiscover(t *testing.T) {
 		wantWMs string // a fragment every warning message must contain, when wantWc == 1
 	}{
 		{
-			// Real pattern from testdata/parity/config/default.json: the
+			// Real pattern from the runner configuration: the
 			// regex form, anchored so it matches both a root-level file and
 			// one nested arbitrarily deep.
 			name: "regex pattern matches nested file",
@@ -61,7 +61,7 @@ func TestDiscover(t *testing.T) {
 			},
 		},
 		{
-			// Real pattern from testdata/parity/renovate-43.288.0/full-resolved.json:
+			// Real pattern from the root's full-resolved.json:
 			// a glob with a character class and no leading slashes, proving
 			// the compatibility branch (the non-regex path) works.
 			name: "glob pattern compatibility branch",

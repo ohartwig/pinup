@@ -5,6 +5,7 @@ package jsonata
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"reflect"
 	"strings"
 	"testing"
@@ -101,7 +102,7 @@ func TestUnsupportedConstructsAreLocatedErrors(t *testing.T) {
 // Every transform in the real config must parse, so a new one appearing
 // upstream turns this red before it turns a run wrong.
 func TestEveryTransformInTheRealConfigParses(t *testing.T) {
-	raw := doc(t, mustRead(t, "../testdata/parity/config/default.json"))
+	raw := doc(t, mustRead(t, fixture.Config(t)))
 	cfg, _ := raw.(map[string]any)
 	ds, _ := cfg["customDatasources"].(map[string]any)
 	if len(ds) == 0 {

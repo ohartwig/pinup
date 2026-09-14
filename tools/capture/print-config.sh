@@ -11,17 +11,22 @@
 #
 #   tools/capture/print-config.sh [renovate-version]
 #
-# Output goes to testdata/parity/renovate-<version>/ and REFUSES to overwrite
+# Output goes to <fixture root>/renovate-<version>/ and REFUSES to overwrite
 # an existing snapshot: a new capture is an addition, reviewed as a directory
 # diff. That is how this repository keeps golden files read-only without an
 # -update flag.
+#
+# PINUP_FIXTURES picks the fixture root whose config is resolved (default
+# testdata/estate; testdata/public is the synthetic twin). The version the
+# tests read, testdata/renovate/CURRENT, is shared by every root.
 set -euo pipefail
 
 VERSION="${1:-43.288.0}"
 IMAGE="renovate/renovate:${VERSION}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-OUT="${ROOT}/testdata/parity/renovate-${VERSION}"
-CFG="${ROOT}/testdata/parity/config"
+FIXTURES="${ROOT}/${PINUP_FIXTURES:-testdata/estate}"
+OUT="${FIXTURES}/renovate-${VERSION}"
+CFG="${FIXTURES}/config"
 
 if [ -d "$OUT" ]; then
   echo "snapshot already exists: $OUT" >&2
@@ -59,6 +64,6 @@ mkdir -p "$OUT"
 VERSION="$VERSION" IMAGE="$IMAGE" DIGEST="$DIGEST" OUT="$OUT" CFG="$CFG" \
   python3 "${ROOT}/tools/capture/extract.py" "${WORK}/capture.ndjson"
 
-echo "renovate-${VERSION}" > "${ROOT}/testdata/parity/CURRENT"
+echo "renovate-${VERSION}" > "${ROOT}/testdata/renovate/CURRENT"
 echo "wrote ${OUT}"
 ls -la "$OUT"

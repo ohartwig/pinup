@@ -9,7 +9,7 @@ set -eu
 IMAGE="renovate/renovate:43.288.0"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-OUT="$ROOT/testdata/parity/renovate-43.288.0/rules/source-urls.ndjson"
+OUT="$ROOT/testdata/renovate/renovate-43.288.0/rules/source-urls.ndjson"
 
 if [ -e "$OUT" ]; then
   echo "refusing to overwrite $OUT; delete it first if a re-capture is intended" >&2

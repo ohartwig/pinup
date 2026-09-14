@@ -4,7 +4,7 @@
 // Package tfversion is Renovate's terraform-version manager: a
 // `.terraform-version` file (tfenv's) whose whole content is one version.
 //
-// Measured on testdata/parity/synthetic/tfversion (corpus key
+// Measured on testdata/renovate/synthetic/tfversion (corpus key
 // "terraform-version"): the value is taken as written - `v1.7.0` keeps its
 // v - the dependency is `hashicorp/terraform` on github-releases, looked
 // up (the runner carries a GitHub token; the first capture ran without one

@@ -11,6 +11,7 @@ import (
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
 	"github.com/ohartwig/pinup/config/toyaml"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"io"
 	"os"
 	"path/filepath"
@@ -56,7 +57,7 @@ func TestEveryCommandIsListed(t *testing.T) {
 
 func TestPrintConfigExplainAndDiff(t *testing.T) {
 	var out, errw strings.Builder
-	err := run([]string{"print-config", "--config", "../../testdata/parity/config/default.json",
+	err := run([]string{"print-config", "--config", fixture.Config(t),
 		"--explain", "packageRules[768].enabled"}, &out, &errw)
 	if err != nil {
 		t.Fatal(err)
@@ -69,7 +70,7 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 	}
 
 	out.Reset()
-	err = run([]string{"print-config", "--config", "../../testdata/parity/config/default.json",
+	err = run([]string{"print-config", "--config", fixture.Config(t),
 		"--explain", "nonesuch"}, &out, &errw)
 	if err == nil {
 		t.Error("an unset path must be an error, not silence")
@@ -79,8 +80,8 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 	// every line the snapshot has is present here, and what is only here
 	// is a builtin default.
 	out.Reset()
-	err = run([]string{"print-config", "--config", "../../testdata/parity/config/default.json",
-		"--diff", "../../testdata/parity/renovate-43.288.0/presets/default-resolved.json"}, &out, &errw)
+	err = run([]string{"print-config", "--config", fixture.Config(t),
+		"--diff", fixture.Captured(t, "presets", "default-resolved.json")}, &out, &errw)
 	if err == nil {
 		t.Error("the defaults make the resolution larger than the direct snapshot; the diff must say so")
 	}
@@ -102,8 +103,8 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 	// And the diff must be able to fail: the production-shape capture has
 	// 1540 rules and differs.
 	out.Reset()
-	err = run([]string{"print-config", "--config", "../../testdata/parity/config/default.json",
-		"--diff", "../../testdata/parity/renovate-43.288.0/presets/runner-and-repo-resolved.json"}, &out, &errw)
+	err = run([]string{"print-config", "--config", fixture.Config(t),
+		"--diff", fixture.Captured(t, "presets", "runner-and-repo-resolved.json")}, &out, &errw)
 	if err == nil || !strings.Contains(out.String(), "packageRules[1539]") {
 		t.Errorf("diff against the 1540-rule capture must fail and show the extra rules: err=%v", err)
 	}
@@ -113,7 +114,7 @@ func TestPrintConfigExplainAndDiff(t *testing.T) {
 // are printed. The counts are asserted so the table cannot silently shrink.
 func TestMigrateClassifiesEveryKey(t *testing.T) {
 	var out strings.Builder
-	if err := run([]string{"migrate", "--config", "../../testdata/parity/config/default.json", "--json"}, &out, io.Discard); err != nil {
+	if err := run([]string{"migrate", "--config", fixture.Config(t), "--json"}, &out, io.Discard); err != nil {
 		t.Fatal(err)
 	}
 	var got struct {
@@ -262,19 +263,19 @@ func TestForEachBoundsConcurrencyAndCountsFailures(t *testing.T) {
 // a conversion that loads differently.
 func TestMigrateToYAML(t *testing.T) {
 	var out, errw bytes.Buffer
-	if err := run([]string{"migrate", "--config", "../../testdata/parity/config/default.json", "--to", "yaml"}, &out, &errw); err != nil {
+	if err := run([]string{"migrate", "--config", fixture.Config(t), "--to", "yaml"}, &out, &errw); err != nil {
 		t.Fatalf("%v: %s", err, errw.String())
 	}
 	if !strings.HasPrefix(out.String(), "# ") || !strings.Contains(out.String(), "\npackageRules:\n") {
 		t.Errorf("unexpected output head: %q", out.String()[:200])
 	}
-	if err := run([]string{"migrate", "--config", "../../testdata/parity/config/default.json", "--to", "toml"}, &out, &errw); err == nil {
+	if err := run([]string{"migrate", "--config", fixture.Config(t), "--to", "toml"}, &out, &errw); err == nil {
 		t.Error("--to toml must be refused")
 	}
 	// The round trip the command guards: the runner's configuration,
 	// converted and resolved, is the JSON resolution line for line, the
 	// descriptions aside, 771 rules in order.
-	src, err := os.ReadFile("../../testdata/parity/config/default.json")
+	src, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -306,7 +307,7 @@ func TestMigrateToYAML(t *testing.T) {
 func TestNotifyEstateFromPlans(t *testing.T) {
 	dir := t.TempDir()
 	for _, g := range []string{"estate", "lock"} {
-		src, err := os.ReadFile("../../testdata/golden/" + g + "/plan.json")
+		src, err := os.ReadFile(fixture.Path(t, "golden", g, "plan.json"))
 		if err != nil {
 			t.Fatal(err)
 		}

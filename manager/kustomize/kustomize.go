@@ -5,7 +5,7 @@
 // kustomization file carries.
 //
 // Four shapes, measured across the extraction corpus
-// (testdata/parity/renovate-43.288.0/extract/tfversion.json, key "kustomize",
+// (testdata/<root>/renovate-43.288.0/extract/tfversion.json, key "kustomize",
 // 12 dependencies over two files):
 //
 //	resources: [ github.com/OWNER/REPO/path?ref=V ]

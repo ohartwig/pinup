@@ -13,7 +13,7 @@ import (
 var _ versioning.Versioning = (*Node)(nil)
 
 func TestNodeConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("node"))
+	tbl, err := vertest.Load(vertest.Path(t, "node"))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,8 +12,10 @@
 #
 #   tools/capture/extract-corpus.sh <repo-path>...
 #
-# CONFIG_NAME picks another file from testdata/parity/config (default.json
-# by default) - gomod.json enables the one manager the runner never does.
+# PINUP_FIXTURES picks the fixture root (default testdata/estate) whose
+# config runs and whose extract/ receives the result. CONFIG_NAME picks
+# another file from its config/ (default.json by default) - gomod.json
+# enables the one manager the runner never does.
 #
 # GITHUB_COM_TOKEN must be set to what the Renovate runner carries: without
 # it Renovate skips every dependency that needs github.com at extraction
@@ -31,8 +33,9 @@ set -euo pipefail
 VERSION="${RENOVATE_VERSION:-43.288.0}"
 IMAGE="renovate/renovate:${VERSION}"
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-OUT="${ROOT}/testdata/parity/renovate-${VERSION}/extract"
-CFG="${ROOT}/testdata/parity/config"
+FIXTURES="${ROOT}/${PINUP_FIXTURES:-testdata/estate}"
+OUT="${FIXTURES}/renovate-${VERSION}/extract"
+CFG="${FIXTURES}/config"
 STAGE="${HOME}/.cache/pinup-corpus"
 
 [ $# -gt 0 ] || { echo "usage: $0 <repo-path>..." >&2; exit 2; }

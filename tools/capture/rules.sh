@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: MIT
 #
 # Captures Renovate's packageRules resolution over the extraction corpus by
-# running rules-probe.mjs inside the pinned container. Output is NDJSON.
+# running rules-probe.mjs inside the pinned container. Output is NDJSON,
+# under the fixture root PINUP_FIXTURES names (default testdata/estate).
 #
 # Refuses to overwrite an existing table: a captured behaviour table is a
 # golden file, and golden files change by deliberate deletion, not by re-run.
@@ -12,7 +13,7 @@ set -eu
 IMAGE="renovate/renovate:43.288.0"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-PARITY="$ROOT/testdata/parity/renovate-43.288.0"
+PARITY="$ROOT/${PINUP_FIXTURES:-testdata/estate}/renovate-43.288.0"
 OUT="$PARITY/rules/vectors.ndjson"
 
 if [ -e "$OUT" ]; then

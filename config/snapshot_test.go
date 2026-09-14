@@ -5,6 +5,7 @@ package config
 
 import (
 	"encoding/json"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -23,15 +24,7 @@ import (
 
 func snapshotDir(t *testing.T) string {
 	t.Helper()
-	cur, err := os.ReadFile("../testdata/parity/CURRENT")
-	if err != nil {
-		t.Skipf("no parity snapshot captured: %v", err)
-	}
-	dir := filepath.Join("..", "testdata", "parity", strings.TrimSpace(string(cur)))
-	if _, err := os.Stat(dir); err != nil {
-		t.Fatalf("CURRENT names %q, which does not exist", dir)
-	}
-	return dir
+	return fixture.Captured(t)
 }
 
 func readJSON[T any](t *testing.T, path string) T {
@@ -67,11 +60,11 @@ func TestSnapshotProvenanceIsComplete(t *testing.T) {
 	// The snapshot must describe the config actually checked in beside it,
 	// or the two drifted and every comparison below is against the wrong
 	// target.
-	raw, err := os.ReadFile("../testdata/parity/config/default.json")
+	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := strings.TrimSpace(string(mustRead(t, "../testdata/parity/config/default.json.sha256")))
+	want := strings.TrimSpace(string(mustRead(t, fixture.Config(t)+".sha256")))
 	if got, _ := prov["configSha256"].(string); got != want {
 		t.Errorf("snapshot was captured against a different config\n  snapshot: %s\n  on disk:  %s", got, want)
 	}
@@ -89,25 +82,26 @@ func TestSnapshotProvenanceIsComplete(t *testing.T) {
 func TestPresetExpansionScope(t *testing.T) {
 	dir := snapshotDir(t)
 	full := readJSON[map[string]any](t, filepath.Join(dir, "full-resolved.json"))
-	rawCfg := readJSON[map[string]any](t, "../testdata/parity/config/default.json")
+	rawCfg := readJSON[map[string]any](t, fixture.Config(t))
 
 	rules, _ := full["packageRules"].([]any)
 	written, _ := rawCfg["packageRules"].([]any)
 	t.Logf("packageRules: %d written, %d after preset expansion", len(written), len(rules))
 
-	if len(written) != 49 {
-		t.Errorf("the config writes %d rules, expected 49", len(written))
+	want := fixture.Expect(t)
+	if len(written) != want.RulesOwn {
+		t.Errorf("the config writes %d rules, expected %d", len(written), want.RulesOwn)
 	}
-	if len(rules) != 771 {
-		t.Errorf("resolution yields %d rules, expected 771 - the preset content moved", len(rules))
+	if len(rules) != want.RulesResolved {
+		t.Errorf("resolution yields %d rules, expected %d - the preset content moved", len(rules), want.RulesResolved)
 	}
-	if len(full) != 337 {
-		t.Errorf("resolved config has %d top-level keys, expected 337", len(full))
+	if len(full) != want.ResolvedKeys {
+		t.Errorf("resolved config has %d top-level keys, expected %d", len(full), want.ResolvedKeys)
 	}
 
 	visited := readJSON[map[string][]string](t, filepath.Join(dir, "visited-presets.json"))
-	if n := len(visited["unmerged"]); n != 11 {
-		t.Errorf("%d top-level presets visited, expected 11", n)
+	if n := len(visited["unmerged"]); n != want.Presets {
+		t.Errorf("%d top-level presets visited, expected %d", n, want.Presets)
 	}
 }
 
@@ -242,12 +236,12 @@ func TestCorpusIsRepresentative(t *testing.T) {
 	deps := corpusDeps(t)
 	t.Logf("%d dependency vectors from %d repositories", len(deps), len(loadCorpus(t)))
 	// 350 from seven estate repositories, plus 14 from the synthetic tree
-	// under testdata/parity/synthetic that exercises the two enabled
+	// under testdata/renovate/synthetic that exercises the two enabled
 	// managers no estate repository uses yet (terraform-version, kustomize).
 	// ... plus 10 from the synthetic gomod tree captured with gomod.json,
 	// the one manager the runner never enables and pinup needs for itself.
-	if len(deps) != 374 {
-		t.Errorf("corpus has %d vectors, expected 374 - it was recaptured", len(deps))
+	if want := fixture.Expect(t).CorpusDeps; len(deps) != want {
+		t.Errorf("corpus has %d vectors, expected %d - it was recaptured", len(deps), want)
 	}
 
 	seen := map[string]bool{}
@@ -366,7 +360,7 @@ type verTable struct {
 
 func verTableFor(t *testing.T, module string) verTable {
 	t.Helper()
-	return readJSON[verTable](t, filepath.Join(snapshotDir(t), "versioning", module+".json"))
+	return readJSON[verTable](t, fixture.SharedCaptured(t, "versioning", module+".json"))
 }
 
 func TestVersioningTablesAreUsable(t *testing.T) {

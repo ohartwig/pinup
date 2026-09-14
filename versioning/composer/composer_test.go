@@ -11,7 +11,7 @@ import (
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("composer"))
+	tbl, err := vertest.Load(vertest.Path(t, "composer"))
 	if err != nil {
 		t.Fatal(err)
 	}

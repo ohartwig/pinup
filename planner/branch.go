@@ -22,7 +22,7 @@ import (
 // per-update-type overrides under digest, pin, group and the rest - and
 // were captured by execution with everything else. This file renders them.
 // What it adds is measured against the estate's live renovate/* branches
-// (testdata/parity/live/renovate-branches.json): the manager-level commit
+// (testdata/<root>/live/renovate-branches.json): the manager-level commit
 // topics Renovate keeps outside the configuration, the "(major)" group
 // split, and the cleaning a branch name goes through.
 

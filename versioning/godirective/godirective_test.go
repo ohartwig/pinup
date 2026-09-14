@@ -11,7 +11,7 @@ import (
 )
 
 func TestConformsToCapturedBehaviour(t *testing.T) {
-	tbl, err := vertest.Load(vertest.Path("go-mod-directive"))
+	tbl, err := vertest.Load(vertest.Path(t, "go-mod-directive"))
 	if err != nil {
 		t.Fatal(err)
 	}
