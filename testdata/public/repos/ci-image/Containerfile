@@ -16,7 +16,7 @@ RUN install-tool trivy 0.66.0
 # renovate: datasource=github-releases packageName=getsops/sops
 RUN install-tool sops 3.10.2
 
-RUN go install github.com/google/go-containerregistry/cmd/crane@latest \
+RUN go install github.com/google/go-containerregistry/cmd/crane@v0.20.6 \
     --with github.com/sigstore/cosign/v2@v2.5.3 \
     --with github.com/anchore/syft@v1.32.0
 

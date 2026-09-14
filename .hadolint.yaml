@@ -1,0 +1,5 @@
+# The only Containerfiles here are test fixtures under testdata/: they are
+# shaped for the managers that read them, and a `# renovate:` annotation
+# wants its own RUN right below it, so consecutive RUNs are the point.
+ignored:
+  - DL3059
