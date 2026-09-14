@@ -182,3 +182,44 @@ func TestTaskOutputIsBounded(t *testing.T) {
 		t.Errorf("an output within the limit is not marked: %q", small.String())
 	}
 }
+
+// The cutover's joint test (docs/plan.md §6.4, step 4): the runner's
+// allowlist exactly as pinup/runner's .gitlab-ci.yml sets it - `[.]` for
+// the dot, since the value crosses YAML and a variable expansion - against
+// the post-upgrade tasks of the repository that has the most security
+// merge requests in the estate, devops/wolfi-packages: a raised commit pin
+// runs update-expected-commit and raise-epoch on its recipe, a Go module
+// pin both, in update mode, each admitted by its own pattern. Thirteen
+// [security] merge requests once merged green while the allowlist silently
+// rejected the task; here a rejection holds the branch by name.
+func TestWolfiPackagesTasksPassTheRunnerAllowlist(t *testing.T) {
+	runnerAllowed := []string{
+		"^node scripts/update-pass-cli-hashes[.]mjs$",
+		"^node tools/update-expected-commit[.]mjs [^;&|]+$",
+		"^node tools/raise-epoch[.]mjs [^;&|]+$",
+		"^composer update [^;&|]+$",
+		"^npm install --package-lock-only [^;&|]+$",
+	}
+	goPin := PostUpgrade{
+		Commands:      []string{"node tools/update-expected-commit.mjs {{{packageFile}}}", "node tools/raise-epoch.mjs {{{packageFile}}}"},
+		ExecutionMode: model.ExecUpdate, FileFilters: []string{"*.yaml"},
+	}
+	up := upd("ksops.yaml", "github.com/getsops/sops/v3", "v3.10.2", "v3.11.0")
+	tasks, err := Compile(goPin, []model.Update{up}, runnerAllowed)
+	if err != nil {
+		t.Fatalf("the Go pin's tasks were refused: %v", err)
+	}
+	if len(tasks) != 2 || tasks[0].AllowedBy != 1 || tasks[1].AllowedBy != 2 {
+		t.Fatalf("tasks = %+v", tasks)
+	}
+	for i, want := range []string{"node tools/update-expected-commit.mjs ksops.yaml", "node tools/raise-epoch.mjs ksops.yaml"} {
+		if got := strings.Join(tasks[i].Command, " "); got != want {
+			t.Errorf("task %d = %q, want %q", i, got, want)
+		}
+	}
+	// A recipe path a repository could not carry - one with a chaining
+	// character - is refused by the pattern, not run.
+	if _, err := Compile(goPin, []model.Update{upd("ksops.yaml; id", "x", "1", "2")}, runnerAllowed); err == nil {
+		t.Error("a packageFile with a chaining character was admitted")
+	}
+}
