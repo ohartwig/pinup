@@ -1,3 +1,25 @@
+## [0.17.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.16.2...v0.17.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **run:** --package narrows a run to one external package with a fresh lookup ([1dc3c96](https://git.ole-hartwig.eu/pinup/pinup/commit/1dc3c965a854cd92c578297a32a77e19ba79e967))
+* **cmd:** pinup advisories asks OSV about the index's dependencies, no clone ([f6a2adf](https://git.ole-hartwig.eu/pinup/pinup/commit/f6a2adf6034f62f44076954ccf34c71061ab9386))
+* **report:** the consumer index carries each repository's dependency versions ([8f1fffb](https://git.ole-hartwig.eu/pinup/pinup/commit/8f1fffb0689b384e6103cae2a452f9f8424c3c5a))
+
+### :bug: Fixes
+
+* **extract:** a new tag that resolves to the pinned digest moves the tag alone ([d223b7b](https://git.ole-hartwig.eu/pinup/pinup/commit/d223b7b795db01aa8baf68e5959a2a3974fa8daf))
+* **gitlab:** a merge the bot may not arm is reported on the request, not a failed create ([cbc85f2](https://git.ole-hartwig.eu/pinup/pinup/commit/cbc85f2696ce2fd82a936a4bab8a7815b2458c6e))
+
+### :memo: Documentation
+
+* **tasks:** blank lines under the D.22 headings ([c6e8cf4](https://git.ole-hartwig.eu/pinup/pinup/commit/c6e8cf4f47b932c7e6c0f99c57452fb4e08da91d))
+* **plan:** event-driven runs - the advisory watch first, then the push trigger, then the cadence ([1e71480](https://git.ole-hartwig.eu/pinup/pinup/commit/1e714808719e826a4623f6c117fe610a737007ab))
+
+### :white_check_mark: Tests
+
+* **plugin:** the runner's allowlist admits wolfi-packages' tasks, as the cutover's joint test asks ([7a02369](https://git.ole-hartwig.eu/pinup/pinup/commit/7a02369438a5fe4afbffa4a85897d3e3613132d5))
+
 ## [0.16.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.16.1...v0.16.2) (2026-09-14)
 
 ### :bug: Fixes
