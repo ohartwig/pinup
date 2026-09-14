@@ -1,0 +1,7 @@
+// The lock-probe branch of the shadow fixture: real composer and npm
+// lock files, no automerge ever - the fixture is a control, not a target.
+{
+  "extends": ["local>devops/renovate-runner"],
+  "enabledManagers": ["npm", "composer"],
+  "packageRules": [{ "matchPackageNames": ["*"], "automerge": false, "minimumReleaseAge": null, "schedule": ["at any time"] }]
+}

@@ -1,0 +1,15 @@
+include:
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/terraform@2.14.3
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-ci-yaml@1
+
+default:
+  image: registry.acme.test/devops/ci-mirrors/opentofu:1.10.6
+
+variables:
+  # renovate: datasource=github-releases depName=terraform-linters/tflint
+  TFLINT_VERSION: "0.59.1"
+
+plan:
+  image: registry.acme.test/devops/ci-mirrors/opentofu:1.10.6@sha256:60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1
+  script:
+    - tofu init && tofu plan

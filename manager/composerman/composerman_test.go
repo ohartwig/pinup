@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"maps"
-	"os"
 	"slices"
 	"testing"
 
@@ -296,61 +295,60 @@ func TestNameAndFilePatterns(t *testing.T) {
 
 // --- the real fixture -------------------------------------------------------
 
-// corpusExtraction is the shape of one manager's entry in a captured
-// testdata/<root>/renovate-43.288.0/extract/*.json file: only the fields
-// this comparison needs.
-type corpusExtraction struct {
-	Deps []struct {
-		CurrentValue string   `json:"currentValue"`
-		Datasource   string   `json:"datasource"`
-		DepName      string   `json:"depName"`
-		DepType      string   `json:"depType"`
-		PackageName  string   `json:"packageName"`
-		SkipReason   string   `json:"skipReason"`
-		RegistryURLs []string `json:"registryUrls"`
-	} `json:"deps"`
-	PackageFile string `json:"packageFile"`
+// TestAgreesWithTheCorpus compares this manager's extraction of every
+// composer.json in the fixture root's corpus against what the pinned
+// Renovate container extracted from the same file. A capture whose checkout
+// is not on this machine is skipped - this manager must not depend on a
+// private checkout to build or to pass CI - but the public root's
+// repositories are in the tree, so there the comparison always runs.
+func TestAgreesWithTheCorpus(t *testing.T) {
+	ran := 0
+	for _, c := range fixture.Corpora(t) {
+		for _, e := range c.Entries(t, "composer") {
+			if c.Tree == "" {
+				t.Logf("%s: checkout not present; %s skipped", c.Name, e.PackageFile)
+				continue
+			}
+			ran++
+			t.Run(c.Name+"/"+e.PackageFile, func(t *testing.T) {
+				var want []corpusDep
+				if err := json.Unmarshal(e.Deps, &want); err != nil {
+					t.Fatal(err)
+				}
+				content := c.Read(t, e.PackageFile)
+				res, err := New().Extract(context.Background(),
+					extract.File{Path: e.PackageFile, Content: content}, extract.ManagerConfig{})
+				if err != nil {
+					t.Fatalf("Extract returned an error: %v", err)
+				}
+				compareWithCorpus(t, res.Deps, want)
+			})
+		}
+	}
+	if ran == 0 {
+		t.Skip("no composer capture with its files on this machine")
+	}
 }
 
-// TestRealMoselwalWebsites compares this manager's extraction of the estate's
-// own moselwal-websites composer.json against what the pinned Renovate
-// container extracted from the same file, captured in the corpus. It is
-// skipped when the real repository checkout is not present - this manager
-// must not depend on a private checkout to build or to pass CI.
-func TestRealMoselwalWebsites(t *testing.T) {
-	const realPath = "/Volumes/Samsung_X5/Projects/moselwal/development/moselwal/moselwal-websites/composer.json"
-	content, err := os.ReadFile(realPath)
-	if err != nil {
-		t.Skipf("real fixture not available: %v", err)
-	}
+// corpusDep is one dependency as the capture records it: only the fields
+// this comparison needs.
+type corpusDep struct {
+	CurrentValue string   `json:"currentValue"`
+	Datasource   string   `json:"datasource"`
+	DepName      string   `json:"depName"`
+	DepType      string   `json:"depType"`
+	PackageName  string   `json:"packageName"`
+	SkipReason   string   `json:"skipReason"`
+	RegistryURLs []string `json:"registryUrls"`
+}
 
-	corpusPath := fixture.Captured(t, "extract", "moselwal-websites.json")
-	corpusRaw, err := os.ReadFile(corpusPath)
-	if err != nil {
-		t.Fatalf("reading corpus fixture: %v", err) // this file lives in the repository; its absence is a bug
-	}
-	var corpus struct {
-		Composer []corpusExtraction `json:"composer"`
-	}
-	if err := json.Unmarshal(corpusRaw, &corpus); err != nil {
-		t.Fatalf("decoding corpus fixture: %v", err)
-	}
-	if len(corpus.Composer) != 1 {
-		t.Fatalf("corpus has %d composer extractions, want 1", len(corpus.Composer))
-	}
-	want := corpus.Composer[0].Deps
-
-	f := extract.File{Path: realPath, Content: content}
-	res, err := New().Extract(context.Background(), f, extract.ManagerConfig{})
-	if err != nil {
-		t.Fatalf("Extract returned an error: %v", err)
-	}
-
+func compareWithCorpus(t *testing.T, deps []model.Dependency, want []corpusDep) {
+	t.Helper()
 	type key struct {
 		depName, currentValue, depType string
 	}
-	remaining := make(map[key]model.Dependency, len(res.Deps))
-	for _, d := range res.Deps {
+	remaining := make(map[key]model.Dependency, len(deps))
+	for _, d := range deps {
 		remaining[key{d.DepName, d.CurrentValue, d.DepType}] = d
 	}
 

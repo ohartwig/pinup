@@ -1,0 +1,16 @@
+.build:
+  image:
+    name: registry.acme.test/devops/ci-mirrors/kaniko:1.25.0@sha256:3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8
+  variables:
+    # renovate: datasource=github-releases depName=goreleaser/goreleaser versioning=semver
+    GORELEASER_VERSION: "2.12.3"
+    # renovate: datasource=docker depName=registry.acme.test/devops/ci-mirrors/node versioning=docker
+    NODE_IMAGE_TAG: "24.8.0-alpine3.22"
+  script:
+    - /kaniko/executor --context "$CI_PROJECT_DIR"
+
+.php:
+  image: registry.acme.test/devops/images/php-ci:3.2.1-$PHP_VERSION
+  # renovate: datasource=gitlab-releases depName=images/php-ci
+  variables:
+    PHP_VERSION: "8.4"

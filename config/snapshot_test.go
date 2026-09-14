@@ -265,41 +265,41 @@ func TestCorpusIsRepresentative(t *testing.T) {
 	}
 }
 
-// Custom manager #10 builds a composite packageName with a triple-nested
-// Handlebars conditional. These are the real outputs it produces, and they are
-// what hbs and manager/regexm together must reproduce.
+// The custom manager with the nested Handlebars conditional builds a
+// composite packageName, "<project path>:<depName>" on the gitlab-packages
+// datasource. The corpus records the real outputs - what hbs and
+// manager/regexm together must reproduce (manager/regexm compares them) -
+// and this test pins that the capture carries them at all: at least one,
+// every one in the template's shape, and the count as expect.json says.
 func TestCorpusPinsTheTemplatedPackageNames(t *testing.T) {
-	want := map[string]string{
-		"moselwal/dev":                "development/moselwal/dev:moselwal/dev",
-		"moselwal/content-provenance": "development/moselwal/content-provenance:moselwal/content-provenance",
-		"moselwal/keyvalue-store":     "development/moselwal/keyvalue-store:moselwal/keyvalue-store",
-		"moselwal/typo3-config":       "development/moselwal/typo3-config:moselwal/typo3-config",
-		"moselwal/structured-content": "development/moselwal/structured-content:moselwal/structured-content",
-	}
-	got := map[string]string{}
+	n := 0
 	for _, d := range corpusDeps(t) {
-		if strings.HasPrefix(d.DepName, "moselwal/") && d.PackageName != "" {
-			got[d.DepName] = d.PackageName
+		if d.Datasource != "gitlab-packages" || d.PackageName == "" {
+			continue
+		}
+		n++
+		if project, dep, ok := strings.Cut(d.PackageName, ":"); !ok || dep != d.DepName || project == "" {
+			t.Errorf("packageName %q for %s is not <project>:<depName>", d.PackageName, d.DepName)
 		}
 	}
-	for dep, pkg := range want {
-		if got[dep] != pkg {
-			t.Errorf("packageName for %s:\n got %q\nwant %q", dep, got[dep], pkg)
-		}
+	if want := fixture.Expect(t).TemplatedNames; n != want {
+		t.Errorf("the corpus carries %d templated package names, expect.json pins %d", n, want)
 	}
 }
 
-// A defect in the estate configuration, found by running the corpus rather
+// A defect in the runner configuration, found by running the corpus rather
 // than by reading the config.
 //
-// Custom manager #10 matches `"moselwal/x": "y"` anywhere in composer.json,
-// with no notion of which block it is in. composer's `suggest` maps a package
-// name to a human description, so the manager reads those descriptions as
-// version constraints and emits dependencies whose currentValue is prose.
+// The first-party composer manager matches `"<vendor>/x": "y"` anywhere in
+// composer.json, with no notion of which block it is in. composer's
+// `suggest` maps a package name to a human description, so the manager
+// reads those descriptions as version constraints and emits dependencies
+// whose currentValue is prose.
 //
 // They cannot resolve, so today this is noise rather than damage. The test
-// exists so the noise is recorded rather than tolerated: if the config is
-// fixed, this goes red and gets deleted, which is the point.
+// exists so the noise is recorded rather than tolerated: expect.json pins
+// how many the root's corpus carries, and a configuration that was fixed
+// moves the pin to zero in the same commit, which is the point.
 func TestCorpusRecordsTheSuggestBlockOverMatch(t *testing.T) {
 	// Discriminating prose from a constraint needs care, and the obvious rule
 	// is wrong. "contains a space" flags `^0.3 || ^0.4 || ^0.5` - twenty-one
@@ -326,9 +326,9 @@ func TestCorpusRecordsTheSuggestBlockOverMatch(t *testing.T) {
 			}
 		}
 	}
-	if len(prose) != 3 {
-		t.Errorf("found %d dependencies whose currentValue is prose, expected 3 "+
-			"(the composer `suggest` over-match). If the estate config was fixed, delete this test.", len(prose))
+	if want := fixture.Expect(t).SuggestOverMatches; len(prose) != want {
+		t.Errorf("found %d dependencies whose currentValue is prose, expect.json pins %d "+
+			"(the composer `suggest` over-match)", len(prose), want)
 	}
 	for _, d := range prose {
 		t.Logf("  over-match: %s = %q", d.DepName, d.CurrentValue)

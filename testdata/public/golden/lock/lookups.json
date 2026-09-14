@@ -1,0 +1,719 @@
+{
+ "releases": {
+  "npm\u0000js-tokens\u0000": {
+   "packageName": "js-tokens",
+   "datasource": "npm",
+   "registryUrl": "https://registry.npmjs.org",
+   "releases": [
+    {
+     "version": "0.1.0",
+     "timestamp": "2014-03-08T22:30:50.672Z"
+    },
+    {
+     "version": "0.2.0",
+     "timestamp": "2014-06-19T20:20:22.938Z"
+    },
+    {
+     "version": "0.3.0",
+     "timestamp": "2014-12-19T17:50:28.104Z"
+    },
+    {
+     "version": "0.3.1",
+     "timestamp": "2015-01-06T21:17:50.696Z"
+    },
+    {
+     "version": "0.4.0",
+     "timestamp": "2015-02-21T19:00:41.297Z"
+    },
+    {
+     "version": "0.4.1",
+     "timestamp": "2015-02-21T20:20:20.154Z"
+    },
+    {
+     "version": "1.0.0",
+     "timestamp": "2015-02-26T09:34:56.843Z"
+    },
+    {
+     "version": "1.0.1",
+     "timestamp": "2015-06-20T06:38:03.183Z"
+    },
+    {
+     "version": "1.0.2",
+     "timestamp": "2015-10-18T15:00:47.347Z"
+    },
+    {
+     "version": "1.0.3",
+     "timestamp": "2016-03-27T10:52:26.157Z"
+    },
+    {
+     "version": "10.0.0",
+     "timestamp": "2025-12-08T21:09:55.458Z"
+    },
+    {
+     "version": "2.0.0",
+     "timestamp": "2016-06-19T07:38:11.688Z"
+    },
+    {
+     "version": "3.0.0",
+     "timestamp": "2017-01-11T20:38:15.672Z"
+    },
+    {
+     "version": "3.0.1",
+     "timestamp": "2017-01-30T18:28:23.511Z"
+    },
+    {
+     "version": "3.0.2",
+     "timestamp": "2017-06-28T20:54:17.623Z"
+    },
+    {
+     "version": "4.0.0",
+     "timestamp": "2018-01-28T11:58:58.17Z"
+    },
+    {
+     "version": "5.0.0",
+     "timestamp": "2019-06-15T14:54:25.462Z"
+    },
+    {
+     "version": "6.0.0",
+     "timestamp": "2020-04-13T16:44:04.779Z"
+    },
+    {
+     "version": "7.0.0",
+     "timestamp": "2021-04-25T10:03:20.082Z"
+    },
+    {
+     "version": "8.0.0",
+     "timestamp": "2022-05-15T09:51:05.42Z"
+    },
+    {
+     "version": "8.0.1",
+     "timestamp": "2023-01-16T21:14:53Z"
+    },
+    {
+     "version": "8.0.2",
+     "timestamp": "2023-09-09T13:03:23.579Z"
+    },
+    {
+     "version": "8.0.3",
+     "timestamp": "2024-02-03T10:12:26.165Z"
+    },
+    {
+     "version": "9.0.0",
+     "timestamp": "2024-02-08T22:59:07.471Z"
+    },
+    {
+     "version": "9.0.1",
+     "timestamp": "2024-11-22T17:21:10.496Z"
+    }
+   ],
+   "sourceUrl": "https://github.com/lydell/js-tokens"
+  },
+  "npm\u0000minimist\u0000": {
+   "packageName": "minimist",
+   "datasource": "npm",
+   "registryUrl": "https://registry.npmjs.org",
+   "releases": [
+    {
+     "version": "0.0.0",
+     "timestamp": "2013-06-25T08:17:18.123Z"
+    },
+    {
+     "version": "0.0.1",
+     "timestamp": "2013-06-25T08:22:05.384Z"
+    },
+    {
+     "version": "0.0.10",
+     "timestamp": "2014-05-11T21:43:10.663Z"
+    },
+    {
+     "version": "0.0.2",
+     "timestamp": "2013-08-28T23:00:17.595Z"
+    },
+    {
+     "version": "0.0.3",
+     "timestamp": "2013-09-12T16:27:07.34Z"
+    },
+    {
+     "version": "0.0.4",
+     "timestamp": "2013-09-17T15:13:28.184Z"
+    },
+    {
+     "version": "0.0.5",
+     "timestamp": "2013-09-19T06:45:40.016Z"
+    },
+    {
+     "version": "0.0.6",
+     "timestamp": "2014-02-09T03:49:41.327Z"
+    },
+    {
+     "version": "0.0.7",
+     "timestamp": "2014-02-09T04:03:57.665Z"
+    },
+    {
+     "version": "0.0.8",
+     "timestamp": "2014-02-21T04:46:49.997Z"
+    },
+    {
+     "version": "0.0.9",
+     "timestamp": "2014-05-08T14:56:24.311Z"
+    },
+    {
+     "version": "0.1.0",
+     "timestamp": "2014-05-12T01:23:35.188Z"
+    },
+    {
+     "version": "0.2.0",
+     "timestamp": "2014-06-19T14:57:41.126Z"
+    },
+    {
+     "version": "0.2.1",
+     "timestamp": "2020-03-12T22:15:03.676Z"
+    },
+    {
+     "version": "0.2.2",
+     "timestamp": "2022-10-11T20:41:29.569Z"
+    },
+    {
+     "version": "0.2.3",
+     "timestamp": "2023-02-09T20:11:17.634Z"
+    },
+    {
+     "version": "0.2.4",
+     "timestamp": "2023-02-25T06:18:06.349Z"
+    },
+    {
+     "version": "1.0.0",
+     "timestamp": "2014-08-11T01:08:53.376Z"
+    },
+    {
+     "version": "1.1.0",
+     "timestamp": "2014-08-11T03:19:02.076Z"
+    },
+    {
+     "version": "1.1.1",
+     "timestamp": "2015-03-11T02:27:22.649Z"
+    },
+    {
+     "version": "1.1.2",
+     "timestamp": "2015-07-22T19:52:35.381Z"
+    },
+    {
+     "version": "1.1.3",
+     "timestamp": "2015-08-06T23:08:45.09Z"
+    },
+    {
+     "version": "1.2.0",
+     "timestamp": "2015-08-24T13:56:27.64Z"
+    },
+    {
+     "version": "1.2.1",
+     "timestamp": "2020-03-10T18:06:04.936Z"
+    },
+    {
+     "version": "1.2.2",
+     "timestamp": "2020-03-10T18:37:15.747Z"
+    },
+    {
+     "version": "1.2.3",
+     "timestamp": "2020-03-10T19:08:24.657Z"
+    },
+    {
+     "version": "1.2.4",
+     "timestamp": "2020-03-11T19:25:14.17Z"
+    },
+    {
+     "version": "1.2.5",
+     "timestamp": "2020-03-12T22:16:19.463Z"
+    },
+    {
+     "version": "1.2.6",
+     "timestamp": "2022-03-22T02:50:30.352Z"
+    },
+    {
+     "version": "1.2.7",
+     "timestamp": "2022-10-11T01:21:52.31Z"
+    },
+    {
+     "version": "1.2.8",
+     "timestamp": "2023-02-09T20:59:49.233Z"
+    }
+   ],
+   "sourceUrl": "git://github.com/minimistjs/minimist"
+  },
+  "packagist\u0000monolog/monolog\u0000": {
+   "packageName": "monolog/monolog",
+   "datasource": "packagist",
+   "registryUrl": "https://repo.packagist.org",
+   "releases": [
+    {
+     "version": "3.12.0",
+     "timestamp": "2026-09-09T08:34:20Z"
+    },
+    {
+     "version": "3.11.0",
+     "timestamp": "2026-09-02T12:39:56Z"
+    },
+    {
+     "version": "3.10.0",
+     "timestamp": "2026-01-02T08:56:05Z"
+    },
+    {
+     "version": "3.9.0",
+     "timestamp": "2025-03-24T10:02:05Z"
+    },
+    {
+     "version": "3.8.1",
+     "timestamp": "2024-12-05T17:15:07Z"
+    },
+    {
+     "version": "3.8.0",
+     "timestamp": "2024-11-12T13:57:08Z"
+    },
+    {
+     "version": "3.7.0",
+     "timestamp": "2024-06-28T09:40:51Z"
+    },
+    {
+     "version": "3.6.0",
+     "timestamp": "2024-04-12T21:02:21Z"
+    },
+    {
+     "version": "3.5.0",
+     "timestamp": "2023-10-27T15:32:31Z"
+    },
+    {
+     "version": "3.4.0",
+     "timestamp": "2023-06-21T08:46:11Z"
+    },
+    {
+     "version": "3.3.1",
+     "timestamp": "2023-02-06T13:46:10Z"
+    },
+    {
+     "version": "3.3.0",
+     "timestamp": "2023-02-06T13:12:20Z"
+    },
+    {
+     "version": "3.2.0",
+     "timestamp": "2022-07-24T12:00:55Z"
+    },
+    {
+     "version": "3.1.0",
+     "timestamp": "2022-06-09T09:09:00Z"
+    },
+    {
+     "version": "3.0.0",
+     "timestamp": "2022-05-10T10:39:55Z"
+    },
+    {
+     "version": "3.0.0-RC1",
+     "timestamp": "2022-05-08T21:50:49Z"
+    },
+    {
+     "version": "2.11.1",
+     "timestamp": "2026-09-02T07:57:24Z"
+    },
+    {
+     "version": "2.11.0",
+     "timestamp": "2026-01-01T13:05:00Z"
+    },
+    {
+     "version": "2.10.0",
+     "timestamp": "2024-11-12T12:43:37Z"
+    },
+    {
+     "version": "2.9.3",
+     "timestamp": "2024-04-12T20:52:51Z"
+    },
+    {
+     "version": "2.9.2",
+     "timestamp": "2023-10-27T15:25:26Z"
+    },
+    {
+     "version": "2.9.1",
+     "timestamp": "2023-02-06T13:44:46Z"
+    },
+    {
+     "version": "2.9.0",
+     "timestamp": "2023-02-05T13:07:32Z"
+    },
+    {
+     "version": "2.8.0",
+     "timestamp": "2022-07-24T11:55:47Z"
+    },
+    {
+     "version": "2.7.0",
+     "timestamp": "2022-06-09T08:59:12Z"
+    },
+    {
+     "version": "2.6.0",
+     "timestamp": "2022-05-10T09:36:00Z"
+    },
+    {
+     "version": "2.5.0",
+     "timestamp": "2022-04-08T15:43:54Z"
+    },
+    {
+     "version": "2.4.0",
+     "timestamp": "2022-03-14T12:44:37Z"
+    },
+    {
+     "version": "2.3.5",
+     "timestamp": "2021-10-01T21:08:31Z"
+    },
+    {
+     "version": "2.3.4",
+     "timestamp": "2021-09-15T11:27:21Z"
+    },
+    {
+     "version": "2.3.3",
+     "timestamp": "2021-09-14T18:40:13Z"
+    },
+    {
+     "version": "2.3.2",
+     "timestamp": "2021-07-23T07:42:52Z"
+    },
+    {
+     "version": "2.3.1",
+     "timestamp": "2021-07-14T11:56:39Z"
+    },
+    {
+     "version": "2.3.0",
+     "timestamp": "2021-07-05T11:34:13Z"
+    },
+    {
+     "version": "2.2.0",
+     "timestamp": "2020-12-14T13:15:25Z"
+    },
+    {
+     "version": "2.1.1",
+     "timestamp": "2020-07-23T08:41:23Z"
+    },
+    {
+     "version": "2.1.0",
+     "timestamp": "2020-05-22T08:12:19Z"
+    },
+    {
+     "version": "2.0.2",
+     "timestamp": "2019-12-20T14:22:59Z"
+    },
+    {
+     "version": "2.0.1",
+     "timestamp": "2019-11-13T10:27:43Z"
+    },
+    {
+     "version": "2.0.0",
+     "timestamp": "2019-08-30T09:56:44Z"
+    },
+    {
+     "version": "2.0.0-beta2",
+     "timestamp": "2019-07-06T13:17:41Z"
+    },
+    {
+     "version": "2.0.0-beta1",
+     "timestamp": "2018-12-08T17:16:32Z"
+    },
+    {
+     "version": "1.27.1",
+     "timestamp": "2022-06-09T08:53:42Z"
+    },
+    {
+     "version": "1.27.0",
+     "timestamp": "2022-03-13T20:29:46Z"
+    },
+    {
+     "version": "1.26.1",
+     "timestamp": "2021-05-28T08:32:12Z"
+    },
+    {
+     "version": "1.26.0",
+     "timestamp": "2020-12-14T12:56:38Z"
+    },
+    {
+     "version": "1.25.5",
+     "timestamp": "2020-07-23T08:35:51Z"
+    },
+    {
+     "version": "1.25.4",
+     "timestamp": "2020-05-22T07:31:27Z"
+    },
+    {
+     "version": "1.25.3",
+     "timestamp": "2019-12-20T14:15:16Z"
+    },
+    {
+     "version": "1.25.2",
+     "timestamp": "2019-11-13T10:00:05Z"
+    },
+    {
+     "version": "1.25.1",
+     "timestamp": "2019-09-06T13:49:17Z"
+    },
+    {
+     "version": "1.25.0",
+     "timestamp": "2019-09-06T12:21:24Z"
+    },
+    {
+     "version": "1.24.0",
+     "timestamp": "2018-11-05T09:00:11Z"
+    },
+    {
+     "version": "1.23.0",
+     "timestamp": "2017-06-19T01:22:40Z"
+    },
+    {
+     "version": "1.22.1",
+     "timestamp": "2017-03-13T07:08:03Z"
+    },
+    {
+     "version": "1.22.0",
+     "timestamp": "2016-11-26T00:15:39Z"
+    },
+    {
+     "version": "1.21.0",
+     "timestamp": "2016-07-29T03:23:52Z"
+    },
+    {
+     "version": "1.20.0",
+     "timestamp": "2016-07-02T14:02:10Z"
+    },
+    {
+     "version": "1.19.0",
+     "timestamp": "2016-04-12T18:29:35Z"
+    },
+    {
+     "version": "1.18.2",
+     "timestamp": "2016-04-02T13:12:58Z"
+    },
+    {
+     "version": "1.18.1",
+     "timestamp": "2016-03-13T16:08:35Z"
+    },
+    {
+     "version": "1.18.0",
+     "timestamp": "2016-03-01T18:00:40Z"
+    },
+    {
+     "version": "1.17.2",
+     "timestamp": "2015-10-14T12:51:02Z"
+    },
+    {
+     "version": "1.17.1",
+     "timestamp": "2015-08-31T09:17:37Z"
+    },
+    {
+     "version": "1.17.0",
+     "timestamp": "2015-08-30T11:40:25Z"
+    },
+    {
+     "version": "1.16.0",
+     "timestamp": "2015-08-09T17:44:44Z"
+    },
+    {
+     "version": "1.15.0",
+     "timestamp": "2015-07-12T13:54:09Z"
+    },
+    {
+     "version": "1.14.0",
+     "timestamp": "2015-06-19T13:29:54Z"
+    },
+    {
+     "version": "1.13.1",
+     "timestamp": "2015-03-09T09:58:04Z"
+    },
+    {
+     "version": "1.13.0",
+     "timestamp": "2015-03-05T01:12:12Z"
+    },
+    {
+     "version": "1.12.0",
+     "timestamp": "2014-12-29T21:29:35Z"
+    },
+    {
+     "version": "1.11.0",
+     "timestamp": "2014-09-30T13:30:58Z"
+    },
+    {
+     "version": "1.10.0",
+     "timestamp": "2014-06-04T16:30:04Z"
+    },
+    {
+     "version": "1.9.1",
+     "timestamp": "2014-04-24T13:29:03Z"
+    },
+    {
+     "version": "1.9.0",
+     "timestamp": "2014-04-20T16:41:26Z"
+    },
+    {
+     "version": "1.8.0",
+     "timestamp": "2014-03-23T19:50:26Z"
+    },
+    {
+     "version": "1.7.0",
+     "timestamp": "2013-11-14T19:48:31Z"
+    },
+    {
+     "version": "1.6.0",
+     "timestamp": "2013-07-28T22:38:30Z"
+    },
+    {
+     "version": "1.5.0",
+     "timestamp": "2013-04-23T10:09:48Z"
+    },
+    {
+     "version": "1.4.1",
+     "timestamp": "2013-04-01T10:04:58Z"
+    },
+    {
+     "version": "1.4.0",
+     "timestamp": "2013-02-13T18:06:51Z"
+    },
+    {
+     "version": "1.3.1",
+     "timestamp": "2013-01-11T10:23:20Z"
+    },
+    {
+     "version": "1.3.0",
+     "timestamp": "2013-01-07T20:26:46Z"
+    },
+    {
+     "version": "1.2.1",
+     "timestamp": "2012-08-29T11:53:20Z"
+    },
+    {
+     "version": "1.2.0",
+     "timestamp": "2012-08-18T17:27:13Z"
+    },
+    {
+     "version": "1.1.0",
+     "timestamp": "2012-04-23T16:27:40Z"
+    },
+    {
+     "version": "1.0.2",
+     "timestamp": "2011-10-24T09:39:02Z"
+    },
+    {
+     "version": "1.0.1",
+     "timestamp": "2011-08-25T20:42:58Z"
+    },
+    {
+     "version": "1.0.0",
+     "timestamp": "2011-07-07T16:21:02Z"
+    },
+    {
+     "version": "1.0.0-RC1",
+     "timestamp": "2011-07-01T19:29:40Z"
+    }
+   ],
+   "sourceUrl": "https://github.com/Seldaek/monolog.git"
+  },
+  "packagist\u0000psr/log\u0000": {
+   "packageName": "psr/log",
+   "datasource": "packagist",
+   "registryUrl": "https://repo.packagist.org",
+   "releases": [
+    {
+     "version": "3.0.2",
+     "timestamp": "2024-09-11T13:17:53Z"
+    },
+    {
+     "version": "3.0.1",
+     "timestamp": "2024-08-21T13:31:24Z"
+    },
+    {
+     "version": "3.0.0",
+     "timestamp": "2021-07-14T16:46:02Z"
+    },
+    {
+     "version": "2.0.0",
+     "timestamp": "2021-07-14T16:41:46Z"
+    },
+    {
+     "version": "1.1.4",
+     "timestamp": "2021-05-03T11:20:27Z"
+    },
+    {
+     "version": "1.1.3",
+     "timestamp": "2020-03-23T09:12:05Z"
+    },
+    {
+     "version": "1.1.2",
+     "timestamp": "2019-11-01T11:05:21Z"
+    },
+    {
+     "version": "1.1.1",
+     "timestamp": "2019-10-25T08:06:51Z"
+    },
+    {
+     "version": "1.1.0",
+     "timestamp": "2018-11-20T15:27:04Z"
+    },
+    {
+     "version": "1.0.2",
+     "timestamp": "2016-10-10T12:19:37Z"
+    },
+    {
+     "version": "1.0.1",
+     "timestamp": "2016-09-19T16:02:08Z"
+    },
+    {
+     "version": "1.0.0",
+     "timestamp": "2012-12-21T11:40:51Z"
+    }
+   ],
+   "sourceUrl": "https://github.com/php-fig/log.git"
+  }
+ },
+ "digests": {},
+ "advisories": {
+  "npm\u0000js-tokens\u00004.0.0": {
+   "Query": {
+    "Datasource": "npm",
+    "PackageName": "js-tokens",
+    "Version": "4.0.0",
+    "Versioning": "npm"
+   },
+   "Ecosystem": "npm",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "npm\u0000minimist\u00001.2.7": {
+   "Query": {
+    "Datasource": "npm",
+    "PackageName": "minimist",
+    "Version": "1.2.7",
+    "Versioning": "npm"
+   },
+   "Ecosystem": "npm",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "packagist\u0000monolog/monolog\u00003.5.0": {
+   "Query": {
+    "Datasource": "packagist",
+    "PackageName": "monolog/monolog",
+    "Version": "3.5.0",
+    "Versioning": "composer"
+   },
+   "Ecosystem": "Packagist",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "packagist\u0000psr/log\u00003.0.0": {
+   "Query": {
+    "Datasource": "packagist",
+    "PackageName": "psr/log",
+    "Version": "3.0.0",
+    "Versioning": "composer"
+   },
+   "Ecosystem": "Packagist",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  }
+ }
+}

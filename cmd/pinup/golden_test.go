@@ -248,6 +248,16 @@ func TestGoldenRepositories(t *testing.T) {
 			}
 			opts := goldenOptions(t, dir, meta, ds, now)
 			opts.Advisories = cannedAdvisories{answers}
+			// The configuration's own datasources answer from the same
+			// record - a custom index that was unreachable when recorded
+			// stays unreachable, in the same words.
+			opts.CustomDatasources = func(defs map[string]model.CustomDatasource) lookup.Registry {
+				r := lookup.Registry{}
+				for n, live := range wire.CustomDatasources(nil, defs) {
+					r[n] = cannedRegistry{name: n, scheme: live.DefaultVersioning(), answers: answers}
+				}
+				return r
+			}
 			plan, err := whatif(context.Background(), opts)
 			if err != nil {
 				t.Fatal(err)

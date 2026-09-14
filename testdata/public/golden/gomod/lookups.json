@@ -1,0 +1,2202 @@
+{
+ "releases": {
+  "go\u0000github.com/aws/aws-sdk-go-v2\u0000": {
+   "packageName": "github.com/aws/aws-sdk-go-v2",
+   "datasource": "go",
+   "registryUrl": "https://proxy.golang.org",
+   "releases": [
+    {
+     "version": "v1.16.1"
+    },
+    {
+     "version": "v1.9.0"
+    },
+    {
+     "version": "v1.16.2"
+    },
+    {
+     "version": "v0.26.0"
+    },
+    {
+     "version": "v1.26.1"
+    },
+    {
+     "version": "v1.3.0"
+    },
+    {
+     "version": "v0.15.0"
+    },
+    {
+     "version": "v1.36.1"
+    },
+    {
+     "version": "v1.41.11"
+    },
+    {
+     "version": "v1.41.3"
+    },
+    {
+     "version": "v1.16.9"
+    },
+    {
+     "version": "v1.7.0"
+    },
+    {
+     "version": "v1.25.3"
+    },
+    {
+     "version": "v1.19.0"
+    },
+    {
+     "version": "v1.18.1"
+    },
+    {
+     "version": "v1.30.2"
+    },
+    {
+     "version": "v1.17.0"
+    },
+    {
+     "version": "v2.0.0-preview.3+incompatible"
+    },
+    {
+     "version": "v1.43.6"
+    },
+    {
+     "version": "v1.16.16"
+    },
+    {
+     "version": "v0.7.0"
+    },
+    {
+     "version": "v1.32.2"
+    },
+    {
+     "version": "v1.23.4"
+    },
+    {
+     "version": "v1.45.0"
+    },
+    {
+     "version": "v1.37.1"
+    },
+    {
+     "version": "v1.16.11"
+    },
+    {
+     "version": "v1.16.3"
+    },
+    {
+     "version": "v1.32.4"
+    },
+    {
+     "version": "v1.39.4"
+    },
+    {
+     "version": "v1.8.0"
+    },
+    {
+     "version": "v1.19.1"
+    },
+    {
+     "version": "v1.41.4"
+    },
+    {
+     "version": "v1.17.5"
+    },
+    {
+     "version": "v1.16.15"
+    },
+    {
+     "version": "v1.39.0"
+    },
+    {
+     "version": "v0.3.0"
+    },
+    {
+     "version": "v1.20.0"
+    },
+    {
+     "version": "v1.6.0"
+    },
+    {
+     "version": "v1.41.1"
+    },
+    {
+     "version": "v1.17.7"
+    },
+    {
+     "version": "v1.16.7"
+    },
+    {
+     "version": "v1.25.1"
+    },
+    {
+     "version": "v1.30.0"
+    },
+    {
+     "version": "v1.11.2"
+    },
+    {
+     "version": "v1.43.8"
+    },
+    {
+     "version": "v1.20.1"
+    },
+    {
+     "version": "v1.38.1"
+    },
+    {
+     "version": "v1.17.2"
+    },
+    {
+     "version": "v1.0.0"
+    },
+    {
+     "version": "v1.14.0"
+    },
+    {
+     "version": "v1.16.8"
+    },
+    {
+     "version": "v0.8.0"
+    },
+    {
+     "version": "v1.24.1"
+    },
+    {
+     "version": "v1.37.2"
+    },
+    {
+     "version": "v1.34.0"
+    },
+    {
+     "version": "v1.18.0"
+    },
+    {
+     "version": "v1.28.0"
+    },
+    {
+     "version": "v1.12.0"
+    },
+    {
+     "version": "v1.16.4"
+    },
+    {
+     "version": "v0.6.0"
+    },
+    {
+     "version": "v1.33.0"
+    },
+    {
+     "version": "v1.23.2"
+    },
+    {
+     "version": "v1.27.0"
+    },
+    {
+     "version": "v1.3.3"
+    },
+    {
+     "version": "v1.42.0"
+    },
+    {
+     "version": "v1.36.4"
+    },
+    {
+     "version": "v1.42.1"
+    },
+    {
+     "version": "v0.10.0"
+    },
+    {
+     "version": "v1.30.5"
+    },
+    {
+     "version": "v1.46.0"
+    },
+    {
+     "version": "v1.39.2"
+    },
+    {
+     "version": "v0.20.0"
+    },
+    {
+     "version": "v0.24.0"
+    },
+    {
+     "version": "v0.23.0"
+    },
+    {
+     "version": "v2.0.0-preview.4+incompatible",
+     "timestamp": "2018-05-26T01:14:17Z"
+    },
+    {
+     "version": "v1.20.2"
+    },
+    {
+     "version": "v0.5.0"
+    },
+    {
+     "version": "v1.17.4"
+    },
+    {
+     "version": "v0.22.0"
+    },
+    {
+     "version": "v1.27.1"
+    },
+    {
+     "version": "v1.32.7"
+    },
+    {
+     "version": "v0.18.0"
+    },
+    {
+     "version": "v1.37.0"
+    },
+    {
+     "version": "v1.3.1"
+    },
+    {
+     "version": "v0.21.0"
+    },
+    {
+     "version": "v1.21.2"
+    },
+    {
+     "version": "v1.5.0"
+    },
+    {
+     "version": "v1.22.2"
+    },
+    {
+     "version": "v1.41.10"
+    },
+    {
+     "version": "v1.41.8"
+    },
+    {
+     "version": "v1.3.4"
+    },
+    {
+     "version": "v0.12.0"
+    },
+    {
+     "version": "v1.39.3"
+    },
+    {
+     "version": "v1.36.0"
+    },
+    {
+     "version": "v0.19.0"
+    },
+    {
+     "version": "v1.35.0"
+    },
+    {
+     "version": "v1.7.1"
+    },
+    {
+     "version": "v1.36.2"
+    },
+    {
+     "version": "v1.25.2"
+    },
+    {
+     "version": "v1.43.0"
+    },
+    {
+     "version": "v1.30.3"
+    },
+    {
+     "version": "v1.21.0"
+    },
+    {
+     "version": "v1.41.6"
+    },
+    {
+     "version": "v1.39.1"
+    },
+    {
+     "version": "v1.16.10"
+    },
+    {
+     "version": "v1.9.1"
+    },
+    {
+     "version": "v1.16.13"
+    },
+    {
+     "version": "v1.40.0"
+    },
+    {
+     "version": "v1.32.0"
+    },
+    {
+     "version": "v1.38.2"
+    },
+    {
+     "version": "v1.17.3"
+    },
+    {
+     "version": "v1.10.0"
+    },
+    {
+     "version": "v1.24.0"
+    },
+    {
+     "version": "v1.43.4"
+    },
+    {
+     "version": "v1.45.1"
+    },
+    {
+     "version": "v0.25.0"
+    },
+    {
+     "version": "v0.9.0"
+    },
+    {
+     "version": "v0.27.0"
+    },
+    {
+     "version": "v0.4.0"
+    },
+    {
+     "version": "v1.22.0"
+    },
+    {
+     "version": "v1.22.1"
+    },
+    {
+     "version": "v1.21.1"
+    },
+    {
+     "version": "v1.31.0"
+    },
+    {
+     "version": "v1.11.0"
+    },
+    {
+     "version": "v1.17.8"
+    },
+    {
+     "version": "v1.25.0"
+    },
+    {
+     "version": "v1.41.12"
+    },
+    {
+     "version": "v1.36.5"
+    },
+    {
+     "version": "v1.40.1"
+    },
+    {
+     "version": "v0.14.0"
+    },
+    {
+     "version": "v1.44.0"
+    },
+    {
+     "version": "v1.3.2"
+    },
+    {
+     "version": "v1.2.1"
+    },
+    {
+     "version": "v1.38.0"
+    },
+    {
+     "version": "v1.17.1"
+    },
+    {
+     "version": "v2.0.0-preview.1+incompatible"
+    },
+    {
+     "version": "v1.47.0",
+     "timestamp": "2026-09-09T18:16:59Z"
+    },
+    {
+     "version": "v1.43.2"
+    },
+    {
+     "version": "v1.27.2"
+    },
+    {
+     "version": "v1.36.3"
+    },
+    {
+     "version": "v2.0.0-preview.2+incompatible"
+    },
+    {
+     "version": "v0.11.0"
+    },
+    {
+     "version": "v0.1.0"
+    },
+    {
+     "version": "v1.16.14"
+    },
+    {
+     "version": "v1.41.9"
+    },
+    {
+     "version": "v1.4.0"
+    },
+    {
+     "version": "v1.32.8"
+    },
+    {
+     "version": "v1.39.5"
+    },
+    {
+     "version": "v1.2.0"
+    },
+    {
+     "version": "v1.30.1"
+    },
+    {
+     "version": "v1.17.6"
+    },
+    {
+     "version": "v1.23.1"
+    },
+    {
+     "version": "v1.43.7"
+    },
+    {
+     "version": "v0.31.0",
+     "timestamp": "2020-12-24T01:30:18Z"
+    },
+    {
+     "version": "v1.32.5"
+    },
+    {
+     "version": "v1.32.1"
+    },
+    {
+     "version": "v1.23.3"
+    },
+    {
+     "version": "v1.41.7"
+    },
+    {
+     "version": "v1.26.2"
+    },
+    {
+     "version": "v1.41.2"
+    },
+    {
+     "version": "v0.28.0"
+    },
+    {
+     "version": "v1.39.6"
+    },
+    {
+     "version": "v1.41.0"
+    },
+    {
+     "version": "v1.16.12"
+    },
+    {
+     "version": "v1.32.6"
+    },
+    {
+     "version": "v0.13.0"
+    },
+    {
+     "version": "v1.16.6"
+    },
+    {
+     "version": "v1.9.2"
+    },
+    {
+     "version": "v1.38.3"
+    },
+    {
+     "version": "v0.17.0"
+    },
+    {
+     "version": "v1.29.0"
+    },
+    {
+     "version": "v1.43.3"
+    },
+    {
+     "version": "v1.23.5"
+    },
+    {
+     "version": "v1.43.5"
+    },
+    {
+     "version": "v1.36.6"
+    },
+    {
+     "version": "v1.13.0"
+    },
+    {
+     "version": "v1.23.0"
+    },
+    {
+     "version": "v1.32.3"
+    },
+    {
+     "version": "v1.8.1"
+    },
+    {
+     "version": "v1.20.3"
+    },
+    {
+     "version": "v0.29.0"
+    },
+    {
+     "version": "v0.30.0"
+    },
+    {
+     "version": "v1.16.0"
+    },
+    {
+     "version": "v1.41.5"
+    },
+    {
+     "version": "v1.15.0"
+    },
+    {
+     "version": "v1.26.0"
+    },
+    {
+     "version": "v1.1.0"
+    },
+    {
+     "version": "v1.30.4"
+    },
+    {
+     "version": "v1.11.1"
+    },
+    {
+     "version": "v0.2.0"
+    },
+    {
+     "version": "v0.16.0"
+    },
+    {
+     "version": "v1.16.5"
+    },
+    {
+     "version": "v1.43.1"
+    }
+   ],
+   "sourceUrl": "https://github.com/aws/aws-sdk-go-v2"
+  },
+  "go\u0000github.com/spf13/cobra\u0000": {
+   "packageName": "github.com/spf13/cobra",
+   "datasource": "go",
+   "registryUrl": "https://proxy.golang.org",
+   "releases": [
+    {
+     "version": "v1.9.0"
+    },
+    {
+     "version": "v1.3.0"
+    },
+    {
+     "version": "v1.7.0"
+    },
+    {
+     "version": "v1.8.0"
+    },
+    {
+     "version": "v1.6.0"
+    },
+    {
+     "version": "v1.0.0"
+    },
+    {
+     "version": "v0.0.1"
+    },
+    {
+     "version": "v1.1.1"
+    },
+    {
+     "version": "v1.5.0"
+    },
+    {
+     "version": "v0.0.5"
+    },
+    {
+     "version": "v1.1.3"
+    },
+    {
+     "version": "v1.1.2"
+    },
+    {
+     "version": "v1.9.1"
+    },
+    {
+     "version": "v1.10.0"
+    },
+    {
+     "version": "v0.0.3"
+    },
+    {
+     "version": "v0.0.4"
+    },
+    {
+     "version": "v1.10.2",
+     "timestamp": "2025-12-03T23:51:15Z"
+    },
+    {
+     "version": "v1.2.1"
+    },
+    {
+     "version": "v1.4.0"
+    },
+    {
+     "version": "v0.0.2"
+    },
+    {
+     "version": "v1.2.0"
+    },
+    {
+     "version": "v1.6.1"
+    },
+    {
+     "version": "v1.10.1"
+    },
+    {
+     "version": "v1.8.1"
+    },
+    {
+     "version": "v1.1.0"
+    },
+    {
+     "version": "v0.0.6"
+    },
+    {
+     "version": "v0.0.7",
+     "timestamp": "2020-03-27T20:38:32Z"
+    }
+   ],
+   "sourceUrl": "https://github.com/spf13/cobra"
+  },
+  "go\u0000go.etcd.io/bbolt\u0000": {
+   "packageName": "go.etcd.io/bbolt",
+   "datasource": "go",
+   "registryUrl": "https://proxy.golang.org",
+   "releases": [
+    {
+     "version": "v1.3.0"
+    },
+    {
+     "version": "v1.4.0-alpha.1"
+    },
+    {
+     "version": "v1.3.1-coreos.3"
+    },
+    {
+     "version": "v1.3.1-coreos.5"
+    },
+    {
+     "version": "v1.3.10"
+    },
+    {
+     "version": "v1.4.2"
+    },
+    {
+     "version": "v1.3.11"
+    },
+    {
+     "version": "v1.4.3"
+    },
+    {
+     "version": "v1.3.3"
+    },
+    {
+     "version": "v1.3.6"
+    },
+    {
+     "version": "v1.3.1-coreos.6"
+    },
+    {
+     "version": "v1.5.0",
+     "timestamp": "2026-06-03T16:37:36Z"
+    },
+    {
+     "version": "v1.3.4"
+    },
+    {
+     "version": "v1.4.1"
+    },
+    {
+     "version": "v1.5.0-rc.0"
+    },
+    {
+     "version": "v1.5.0-beta.0"
+    },
+    {
+     "version": "v1.3.1-coreos.0"
+    },
+    {
+     "version": "v1.3.1-etcd.8"
+    },
+    {
+     "version": "v1.3.2"
+    },
+    {
+     "version": "v1.2.1"
+    },
+    {
+     "version": "v1.4.0-alpha.0"
+    },
+    {
+     "version": "v1.3.1-etcd.7"
+    },
+    {
+     "version": "v1.3.1-coreos.1"
+    },
+    {
+     "version": "v1.4.0"
+    },
+    {
+     "version": "v1.2.0"
+    },
+    {
+     "version": "v1.3.9"
+    },
+    {
+     "version": "v1.3.1-coreos.4"
+    },
+    {
+     "version": "v1.4.0-beta.0"
+    },
+    {
+     "version": "v1.3.5"
+    },
+    {
+     "version": "v1.3.8"
+    },
+    {
+     "version": "v1.3.1-coreos.2"
+    },
+    {
+     "version": "v1.1.0"
+    },
+    {
+     "version": "v1.3.7"
+    },
+    {
+     "version": "v1.3.12"
+    }
+   ]
+  },
+  "go\u0000golang.org/x/mobile\u0000": {
+   "packageName": "golang.org/x/mobile",
+   "datasource": "go",
+   "registryUrl": "https://proxy.golang.org",
+   "releases": [
+    {
+     "version": "v0.0.0-20260908204917-8b95e45f8d3e",
+     "digest": "8b95e45f8d3e",
+     "timestamp": "2026-09-08T20:49:17Z"
+    }
+   ]
+  },
+  "go\u0000golang.org/x/mod\u0000": {
+   "packageName": "golang.org/x/mod",
+   "datasource": "go",
+   "registryUrl": "https://proxy.golang.org",
+   "releases": [
+    {
+     "version": "v0.26.0"
+    },
+    {
+     "version": "v0.36.0"
+    },
+    {
+     "version": "v0.15.0"
+    },
+    {
+     "version": "v0.7.0"
+    },
+    {
+     "version": "v0.40.0"
+    },
+    {
+     "version": "v0.3.0"
+    },
+    {
+     "version": "v0.37.0"
+    },
+    {
+     "version": "v0.8.0"
+    },
+    {
+     "version": "v0.6.0"
+    },
+    {
+     "version": "v0.33.0"
+    },
+    {
+     "version": "v0.10.0"
+    },
+    {
+     "version": "v0.20.0"
+    },
+    {
+     "version": "v0.24.0"
+    },
+    {
+     "version": "v0.23.0"
+    },
+    {
+     "version": "v0.5.0"
+    },
+    {
+     "version": "v0.41.0",
+     "timestamp": "2026-08-24T20:56:42Z"
+    },
+    {
+     "version": "v0.22.0"
+    },
+    {
+     "version": "v0.18.0"
+    },
+    {
+     "version": "v0.21.0"
+    },
+    {
+     "version": "v0.12.0"
+    },
+    {
+     "version": "v0.19.0"
+    },
+    {
+     "version": "v0.25.0"
+    },
+    {
+     "version": "v0.9.0"
+    },
+    {
+     "version": "v0.27.0"
+    },
+    {
+     "version": "v0.4.0"
+    },
+    {
+     "version": "v0.4.1"
+    },
+    {
+     "version": "v0.34.0"
+    },
+    {
+     "version": "v0.5.1"
+    },
+    {
+     "version": "v0.14.0"
+    },
+    {
+     "version": "v0.11.0"
+    },
+    {
+     "version": "v0.1.0"
+    },
+    {
+     "version": "v0.31.0"
+    },
+    {
+     "version": "v0.32.0"
+    },
+    {
+     "version": "v0.6.0-dev"
+    },
+    {
+     "version": "v0.28.0"
+    },
+    {
+     "version": "v0.35.0"
+    },
+    {
+     "version": "v0.13.0"
+    },
+    {
+     "version": "v0.17.0"
+    },
+    {
+     "version": "v0.29.0"
+    },
+    {
+     "version": "v0.30.0"
+    },
+    {
+     "version": "v0.39.0"
+    },
+    {
+     "version": "v0.38.0"
+    },
+    {
+     "version": "v0.2.0"
+    },
+    {
+     "version": "v0.4.2"
+    },
+    {
+     "version": "v0.16.0"
+    }
+   ]
+  },
+  "go\u0000gopkg.in/yaml.v3\u0000": {
+   "packageName": "gopkg.in/yaml.v3",
+   "datasource": "go",
+   "registryUrl": "https://proxy.golang.org",
+   "releases": [
+    {
+     "version": "v3.0.1",
+     "timestamp": "2022-05-27T08:35:30Z"
+    },
+    {
+     "version": "v3.0.0"
+    }
+   ]
+  },
+  "golang-version\u0000go\u0000": {
+   "packageName": "go",
+   "datasource": "golang-version",
+   "registryUrl": "https://go.dev",
+   "releases": [
+    {
+     "version": "1.27.1"
+    },
+    {
+     "version": "1.27.0"
+    },
+    {
+     "version": "1.27rc3"
+    },
+    {
+     "version": "1.27rc2"
+    },
+    {
+     "version": "1.27rc1"
+    },
+    {
+     "version": "1.26.8"
+    },
+    {
+     "version": "1.26.7"
+    },
+    {
+     "version": "1.26.6"
+    },
+    {
+     "version": "1.26.5"
+    },
+    {
+     "version": "1.26.4"
+    },
+    {
+     "version": "1.26.3"
+    },
+    {
+     "version": "1.26.2"
+    },
+    {
+     "version": "1.26.1"
+    },
+    {
+     "version": "1.26.0"
+    },
+    {
+     "version": "1.26rc3"
+    },
+    {
+     "version": "1.26rc2"
+    },
+    {
+     "version": "1.26rc1"
+    },
+    {
+     "version": "1.25.14"
+    },
+    {
+     "version": "1.25.13"
+    },
+    {
+     "version": "1.25.12"
+    },
+    {
+     "version": "1.25.11"
+    },
+    {
+     "version": "1.25.10"
+    },
+    {
+     "version": "1.25.9"
+    },
+    {
+     "version": "1.25.8"
+    },
+    {
+     "version": "1.25.7"
+    },
+    {
+     "version": "1.25.6"
+    },
+    {
+     "version": "1.25.5"
+    },
+    {
+     "version": "1.25.4"
+    },
+    {
+     "version": "1.25.3"
+    },
+    {
+     "version": "1.25.2"
+    },
+    {
+     "version": "1.25.1"
+    },
+    {
+     "version": "1.25.0"
+    },
+    {
+     "version": "1.25rc3"
+    },
+    {
+     "version": "1.25rc2"
+    },
+    {
+     "version": "1.25rc1"
+    },
+    {
+     "version": "1.24.13"
+    },
+    {
+     "version": "1.24.12"
+    },
+    {
+     "version": "1.24.11"
+    },
+    {
+     "version": "1.24.10"
+    },
+    {
+     "version": "1.24.9"
+    },
+    {
+     "version": "1.24.8"
+    },
+    {
+     "version": "1.24.7"
+    },
+    {
+     "version": "1.24.6"
+    },
+    {
+     "version": "1.24.5"
+    },
+    {
+     "version": "1.24.4"
+    },
+    {
+     "version": "1.24.3"
+    },
+    {
+     "version": "1.24.2"
+    },
+    {
+     "version": "1.24.1"
+    },
+    {
+     "version": "1.24.0"
+    },
+    {
+     "version": "1.24rc3"
+    },
+    {
+     "version": "1.24rc2"
+    },
+    {
+     "version": "1.24rc1"
+    },
+    {
+     "version": "1.23.12"
+    },
+    {
+     "version": "1.23.11"
+    },
+    {
+     "version": "1.23.10"
+    },
+    {
+     "version": "1.23.9"
+    },
+    {
+     "version": "1.23.8"
+    },
+    {
+     "version": "1.23.7"
+    },
+    {
+     "version": "1.23.6"
+    },
+    {
+     "version": "1.23.5"
+    },
+    {
+     "version": "1.23.4"
+    },
+    {
+     "version": "1.23.3"
+    },
+    {
+     "version": "1.23.2"
+    },
+    {
+     "version": "1.23.1"
+    },
+    {
+     "version": "1.23.0"
+    },
+    {
+     "version": "1.23rc2"
+    },
+    {
+     "version": "1.23rc1"
+    },
+    {
+     "version": "1.22.12"
+    },
+    {
+     "version": "1.22.11"
+    },
+    {
+     "version": "1.22.10"
+    },
+    {
+     "version": "1.22.9"
+    },
+    {
+     "version": "1.22.8"
+    },
+    {
+     "version": "1.22.7"
+    },
+    {
+     "version": "1.22.6"
+    },
+    {
+     "version": "1.22.5"
+    },
+    {
+     "version": "1.22.4"
+    },
+    {
+     "version": "1.22.3"
+    },
+    {
+     "version": "1.22.2"
+    },
+    {
+     "version": "1.22.1"
+    },
+    {
+     "version": "1.22.0"
+    },
+    {
+     "version": "1.22rc2"
+    },
+    {
+     "version": "1.22rc1"
+    },
+    {
+     "version": "1.21.13"
+    },
+    {
+     "version": "1.21.12"
+    },
+    {
+     "version": "1.21.11"
+    },
+    {
+     "version": "1.21.10"
+    },
+    {
+     "version": "1.21.9"
+    },
+    {
+     "version": "1.21.8"
+    },
+    {
+     "version": "1.21.7"
+    },
+    {
+     "version": "1.21.6"
+    },
+    {
+     "version": "1.21.5"
+    },
+    {
+     "version": "1.21.4"
+    },
+    {
+     "version": "1.21.3"
+    },
+    {
+     "version": "1.21.2"
+    },
+    {
+     "version": "1.21.1"
+    },
+    {
+     "version": "1.21.0"
+    },
+    {
+     "version": "1.21rc4"
+    },
+    {
+     "version": "1.21rc3"
+    },
+    {
+     "version": "1.21rc2"
+    },
+    {
+     "version": "1.20.14"
+    },
+    {
+     "version": "1.20.13"
+    },
+    {
+     "version": "1.20.12"
+    },
+    {
+     "version": "1.20.11"
+    },
+    {
+     "version": "1.20.10"
+    },
+    {
+     "version": "1.20.9"
+    },
+    {
+     "version": "1.20.8"
+    },
+    {
+     "version": "1.20.7"
+    },
+    {
+     "version": "1.20.6"
+    },
+    {
+     "version": "1.20.5"
+    },
+    {
+     "version": "1.20.4"
+    },
+    {
+     "version": "1.20.3"
+    },
+    {
+     "version": "1.20.2"
+    },
+    {
+     "version": "1.20.1"
+    },
+    {
+     "version": "1.20"
+    },
+    {
+     "version": "1.20rc3"
+    },
+    {
+     "version": "1.20rc2"
+    },
+    {
+     "version": "1.20rc1"
+    },
+    {
+     "version": "1.19.13"
+    },
+    {
+     "version": "1.19.12"
+    },
+    {
+     "version": "1.19.11"
+    },
+    {
+     "version": "1.19.10"
+    },
+    {
+     "version": "1.19.9"
+    },
+    {
+     "version": "1.19.8"
+    },
+    {
+     "version": "1.19.7"
+    },
+    {
+     "version": "1.19.6"
+    },
+    {
+     "version": "1.19.5"
+    },
+    {
+     "version": "1.19.4"
+    },
+    {
+     "version": "1.19.3"
+    },
+    {
+     "version": "1.19.2"
+    },
+    {
+     "version": "1.19.1"
+    },
+    {
+     "version": "1.19"
+    },
+    {
+     "version": "1.19rc2"
+    },
+    {
+     "version": "1.19rc1"
+    },
+    {
+     "version": "1.19beta1"
+    },
+    {
+     "version": "1.18.10"
+    },
+    {
+     "version": "1.18.9"
+    },
+    {
+     "version": "1.18.8"
+    },
+    {
+     "version": "1.18.7"
+    },
+    {
+     "version": "1.18.6"
+    },
+    {
+     "version": "1.18.5"
+    },
+    {
+     "version": "1.18.4"
+    },
+    {
+     "version": "1.18.3"
+    },
+    {
+     "version": "1.18.2"
+    },
+    {
+     "version": "1.18.1"
+    },
+    {
+     "version": "1.18"
+    },
+    {
+     "version": "1.18rc1"
+    },
+    {
+     "version": "1.18beta2"
+    },
+    {
+     "version": "1.18beta1"
+    },
+    {
+     "version": "1.17.13"
+    },
+    {
+     "version": "1.17.12"
+    },
+    {
+     "version": "1.17.11"
+    },
+    {
+     "version": "1.17.10"
+    },
+    {
+     "version": "1.17.9"
+    },
+    {
+     "version": "1.17.8"
+    },
+    {
+     "version": "1.17.7"
+    },
+    {
+     "version": "1.17.6"
+    },
+    {
+     "version": "1.17.5"
+    },
+    {
+     "version": "1.17.4"
+    },
+    {
+     "version": "1.17.3"
+    },
+    {
+     "version": "1.17.2"
+    },
+    {
+     "version": "1.17.1"
+    },
+    {
+     "version": "1.17"
+    },
+    {
+     "version": "1.17rc2"
+    },
+    {
+     "version": "1.17rc1"
+    },
+    {
+     "version": "1.17beta1"
+    },
+    {
+     "version": "1.16.15"
+    },
+    {
+     "version": "1.16.14"
+    },
+    {
+     "version": "1.16.13"
+    },
+    {
+     "version": "1.16.12"
+    },
+    {
+     "version": "1.16.11"
+    },
+    {
+     "version": "1.16.10"
+    },
+    {
+     "version": "1.16.9"
+    },
+    {
+     "version": "1.16.8"
+    },
+    {
+     "version": "1.16.7"
+    },
+    {
+     "version": "1.16.6"
+    },
+    {
+     "version": "1.16.5"
+    },
+    {
+     "version": "1.16.4"
+    },
+    {
+     "version": "1.16.3"
+    },
+    {
+     "version": "1.16.2"
+    },
+    {
+     "version": "1.16.1"
+    },
+    {
+     "version": "1.16"
+    },
+    {
+     "version": "1.16rc1"
+    },
+    {
+     "version": "1.16beta1"
+    },
+    {
+     "version": "1.15.15"
+    },
+    {
+     "version": "1.15.14"
+    },
+    {
+     "version": "1.15.13"
+    },
+    {
+     "version": "1.15.12"
+    },
+    {
+     "version": "1.15.11"
+    },
+    {
+     "version": "1.15.10"
+    },
+    {
+     "version": "1.15.9"
+    },
+    {
+     "version": "1.15.8"
+    },
+    {
+     "version": "1.15.7"
+    },
+    {
+     "version": "1.15.6"
+    },
+    {
+     "version": "1.15.5"
+    },
+    {
+     "version": "1.15.4"
+    },
+    {
+     "version": "1.15.3"
+    },
+    {
+     "version": "1.15.2"
+    },
+    {
+     "version": "1.15.1"
+    },
+    {
+     "version": "1.15"
+    },
+    {
+     "version": "1.15rc2"
+    },
+    {
+     "version": "1.15rc1"
+    },
+    {
+     "version": "1.15beta1"
+    },
+    {
+     "version": "1.14.15"
+    },
+    {
+     "version": "1.14.14"
+    },
+    {
+     "version": "1.14.13"
+    },
+    {
+     "version": "1.14.12"
+    },
+    {
+     "version": "1.14.11"
+    },
+    {
+     "version": "1.14.10"
+    },
+    {
+     "version": "1.14.9"
+    },
+    {
+     "version": "1.14.8"
+    },
+    {
+     "version": "1.14.7"
+    },
+    {
+     "version": "1.14.6"
+    },
+    {
+     "version": "1.14.5"
+    },
+    {
+     "version": "1.14.4"
+    },
+    {
+     "version": "1.14.3"
+    },
+    {
+     "version": "1.14.2"
+    },
+    {
+     "version": "1.14.1"
+    },
+    {
+     "version": "1.14"
+    },
+    {
+     "version": "1.14rc1"
+    },
+    {
+     "version": "1.14beta1"
+    },
+    {
+     "version": "1.13.15"
+    },
+    {
+     "version": "1.13.14"
+    },
+    {
+     "version": "1.13.13"
+    },
+    {
+     "version": "1.13.12"
+    },
+    {
+     "version": "1.13.11"
+    },
+    {
+     "version": "1.13.10"
+    },
+    {
+     "version": "1.13.9"
+    },
+    {
+     "version": "1.13.8"
+    },
+    {
+     "version": "1.13.7"
+    },
+    {
+     "version": "1.13.6"
+    },
+    {
+     "version": "1.13.5"
+    },
+    {
+     "version": "1.13.4"
+    },
+    {
+     "version": "1.13.3"
+    },
+    {
+     "version": "1.13.2"
+    },
+    {
+     "version": "1.13.1"
+    },
+    {
+     "version": "1.13"
+    },
+    {
+     "version": "1.13rc2"
+    },
+    {
+     "version": "1.13rc1"
+    },
+    {
+     "version": "1.13beta1"
+    },
+    {
+     "version": "1.12.17"
+    },
+    {
+     "version": "1.12.16"
+    },
+    {
+     "version": "1.12.15"
+    },
+    {
+     "version": "1.12.14"
+    },
+    {
+     "version": "1.12.13"
+    },
+    {
+     "version": "1.12.12"
+    },
+    {
+     "version": "1.12.11"
+    },
+    {
+     "version": "1.12.10"
+    },
+    {
+     "version": "1.12.9"
+    },
+    {
+     "version": "1.12.8"
+    },
+    {
+     "version": "1.12.7"
+    },
+    {
+     "version": "1.12.6"
+    },
+    {
+     "version": "1.12.5"
+    },
+    {
+     "version": "1.12.4"
+    },
+    {
+     "version": "1.12.3"
+    },
+    {
+     "version": "1.12.2"
+    },
+    {
+     "version": "1.12.1"
+    },
+    {
+     "version": "1.12"
+    },
+    {
+     "version": "1.12rc1"
+    },
+    {
+     "version": "1.12beta2"
+    },
+    {
+     "version": "1.12beta1"
+    },
+    {
+     "version": "1.11.13"
+    },
+    {
+     "version": "1.11.12"
+    },
+    {
+     "version": "1.11.11"
+    },
+    {
+     "version": "1.11.10"
+    },
+    {
+     "version": "1.11.9"
+    },
+    {
+     "version": "1.11.8"
+    },
+    {
+     "version": "1.11.7"
+    },
+    {
+     "version": "1.11.6"
+    },
+    {
+     "version": "1.11.5"
+    },
+    {
+     "version": "1.11.4"
+    },
+    {
+     "version": "1.11.3"
+    },
+    {
+     "version": "1.11.2"
+    },
+    {
+     "version": "1.11.1"
+    },
+    {
+     "version": "1.11"
+    },
+    {
+     "version": "1.11rc2"
+    },
+    {
+     "version": "1.11rc1"
+    },
+    {
+     "version": "1.11beta3"
+    },
+    {
+     "version": "1.11beta2"
+    },
+    {
+     "version": "1.11beta1"
+    },
+    {
+     "version": "1.10.8"
+    },
+    {
+     "version": "1.10.7"
+    },
+    {
+     "version": "1.10.6"
+    },
+    {
+     "version": "1.10.5"
+    },
+    {
+     "version": "1.10.4"
+    },
+    {
+     "version": "1.10.3"
+    },
+    {
+     "version": "1.10.2"
+    },
+    {
+     "version": "1.10.1"
+    },
+    {
+     "version": "1.10"
+    },
+    {
+     "version": "1.10rc2"
+    },
+    {
+     "version": "1.10rc1"
+    },
+    {
+     "version": "1.10beta2"
+    },
+    {
+     "version": "1.10beta1"
+    },
+    {
+     "version": "1.9.7"
+    },
+    {
+     "version": "1.9.6"
+    },
+    {
+     "version": "1.9.5"
+    },
+    {
+     "version": "1.9.4"
+    },
+    {
+     "version": "1.9.3"
+    },
+    {
+     "version": "1.9.2"
+    },
+    {
+     "version": "1.9.1"
+    },
+    {
+     "version": "1.9"
+    },
+    {
+     "version": "1.9rc2"
+    },
+    {
+     "version": "1.9rc1"
+    },
+    {
+     "version": "1.9beta2"
+    },
+    {
+     "version": "1.9beta1"
+    },
+    {
+     "version": "1.8.7"
+    },
+    {
+     "version": "1.8.6"
+    },
+    {
+     "version": "1.8.5"
+    },
+    {
+     "version": "1.8.4"
+    },
+    {
+     "version": "1.8.3"
+    },
+    {
+     "version": "1.8.2"
+    },
+    {
+     "version": "1.8.1"
+    },
+    {
+     "version": "1.8"
+    },
+    {
+     "version": "1.8rc3"
+    },
+    {
+     "version": "1.8rc2"
+    },
+    {
+     "version": "1.8rc1"
+    },
+    {
+     "version": "1.8beta2"
+    },
+    {
+     "version": "1.8beta1"
+    },
+    {
+     "version": "1.7.6"
+    },
+    {
+     "version": "1.7.5"
+    },
+    {
+     "version": "1.7.4"
+    },
+    {
+     "version": "1.7.3"
+    },
+    {
+     "version": "1.7.1"
+    },
+    {
+     "version": "1.7"
+    },
+    {
+     "version": "1.7rc6"
+    },
+    {
+     "version": "1.7rc5"
+    },
+    {
+     "version": "1.7rc4"
+    },
+    {
+     "version": "1.7rc3"
+    },
+    {
+     "version": "1.7rc2"
+    },
+    {
+     "version": "1.7rc1"
+    },
+    {
+     "version": "1.7beta2"
+    },
+    {
+     "version": "1.7beta1"
+    },
+    {
+     "version": "1.6.4"
+    },
+    {
+     "version": "1.6.3"
+    },
+    {
+     "version": "1.6.2"
+    },
+    {
+     "version": "1.6.1"
+    },
+    {
+     "version": "1.6"
+    },
+    {
+     "version": "1.6rc2"
+    },
+    {
+     "version": "1.6rc1"
+    },
+    {
+     "version": "1.6beta2"
+    },
+    {
+     "version": "1.6beta1"
+    },
+    {
+     "version": "1.5.4"
+    },
+    {
+     "version": "1.5.3"
+    },
+    {
+     "version": "1.5.2"
+    },
+    {
+     "version": "1.5.1"
+    },
+    {
+     "version": "1.5"
+    },
+    {
+     "version": "1.5rc1"
+    },
+    {
+     "version": "1.5beta3"
+    },
+    {
+     "version": "1.5beta2"
+    },
+    {
+     "version": "1.5beta1"
+    },
+    {
+     "version": "1.4.3"
+    },
+    {
+     "version": "1.4.2"
+    },
+    {
+     "version": "1.4.1"
+    },
+    {
+     "version": "1.4"
+    },
+    {
+     "version": "1.4rc2"
+    },
+    {
+     "version": "1.4rc1"
+    },
+    {
+     "version": "1.4beta1"
+    },
+    {
+     "version": "1.3.3"
+    },
+    {
+     "version": "1.3.2"
+    },
+    {
+     "version": "1.3.1"
+    },
+    {
+     "version": "1.3"
+    },
+    {
+     "version": "1.3rc2"
+    },
+    {
+     "version": "1.3rc1"
+    },
+    {
+     "version": "1.2.2"
+    },
+    {
+     "version": "1"
+    },
+    {
+     "version": "1.9.2rc2"
+    }
+   ]
+  }
+ },
+ "digests": {},
+ "advisories": {
+  "go\u0000github.com/aws/aws-sdk-go-v2\u0000v1.43.7": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "github.com/aws/aws-sdk-go-v2",
+    "Version": "v1.43.7",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000github.com/aws/aws-sdk-go-v2\u0000v1.43.8": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "github.com/aws/aws-sdk-go-v2",
+    "Version": "v1.43.8",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000github.com/spf13/cobra\u0000v1.9.1": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "github.com/spf13/cobra",
+    "Version": "v1.9.1",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000go.etcd.io/bbolt\u0000v1.5.0": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "go.etcd.io/bbolt",
+    "Version": "v1.5.0",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000golang.org/x/mobile\u0000v0.0.0-20260821190718-4776eadac327": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "golang.org/x/mobile",
+    "Version": "v0.0.0-20260821190718-4776eadac327",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000golang.org/x/mod\u0000v0.39.0": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "golang.org/x/mod",
+    "Version": "v0.39.0",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": [
+    {
+     "ID": "GO-2026-6179",
+     "Aliases": [
+      "BIT-golang-2026-56865",
+      "CVE-2026-56865"
+     ],
+     "Summary": "Fix transparency log tile verification bypass in golang.org/x/mod/sumdb/tlog",
+     "Severity": "",
+     "Published": "2026-08-13T21:43:54Z",
+     "Modified": "2026-08-19T12:25:40.780492871Z",
+     "Fixed": "0.40.0"
+    },
+    {
+     "ID": "GO-2026-6180",
+     "Aliases": [
+      "BIT-golang-2026-56864",
+      "CVE-2026-56864"
+     ],
+     "Summary": "Ignore unrelated, unauthenticated hashes in Lookup in golang.org/x/mod/sumdb",
+     "Severity": "",
+     "Published": "2026-08-13T21:43:54Z",
+     "Modified": "2026-08-19T12:25:49.995487491Z",
+     "Fixed": "0.40.0"
+    }
+   ],
+   "Bound": "0.40.0",
+   "Warnings": null
+  },
+  "go\u0000golang.org/x/sys\u0000v0.45.0": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "golang.org/x/sys",
+    "Version": "v0.45.0",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000golang.org/x/tools\u0000v0.30.0": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "golang.org/x/tools",
+    "Version": "v0.30.0",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "go\u0000gopkg.in/yaml.v3\u0000v3.0.1": {
+   "Query": {
+    "Datasource": "go",
+    "PackageName": "gopkg.in/yaml.v3",
+    "Version": "v3.0.1",
+    "Versioning": "semver"
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  }
+ }
+}

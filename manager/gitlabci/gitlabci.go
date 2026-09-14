@@ -271,7 +271,9 @@ func unresolvable(ref string) string {
 		return "value is a component input placeholder, resolved by GitLab at include time"
 	case strings.HasPrefix(ref, "$"):
 		return "value is a CI variable, resolved at pipeline time"
-	case strings.Contains(ref, "${"):
+	case strings.Contains(ref, "$"):
+		// Measured (public root, ci-image): a tag like 3.2.1-$PHP_VERSION
+		// is "contains-variable" to Renovate, the brace form or not.
 		return "value contains a CI variable, resolved at pipeline time"
 	}
 	return ""

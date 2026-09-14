@@ -1,0 +1,5 @@
+tenant: client-a
+website:
+  image:
+    # renovate: datasource=docker depName=registry.acme.test/development/client-a/website registryUrl=https://registry.acme.test
+    tag: "3.2.0"

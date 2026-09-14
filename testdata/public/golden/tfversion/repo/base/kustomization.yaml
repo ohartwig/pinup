@@ -1,0 +1,5 @@
+resources:
+  - deployment.yaml
+images:
+  - name: registry.acme.test/devops/images/wolfi-base
+    newTag: "2"

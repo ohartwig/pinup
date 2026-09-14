@@ -1,0 +1,799 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "golden",
+  "generatedAt": "2026-09-14T08:00:00Z",
+  "repo": {
+    "path": "golden/osv"
+  },
+  "limits": {
+    "prHourlyLimit": 20,
+    "prConcurrentLimit": 10
+  },
+  "dashboard": {
+    "enabled": true,
+    "title": "Dependency Dashboard"
+  },
+  "deps": [
+    {
+      "manager": "composer",
+      "file": "composer.json",
+      "customManager": -1,
+      "depName": "guzzlehttp/guzzle",
+      "depType": "require",
+      "currentValue": "7.4.4",
+      "datasource": "packagist",
+      "versioning": "composer",
+      "sourceUrl": "https://github.com/guzzle/guzzle.git",
+      "rangeStrategy": "bump",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "advisories": [
+        {
+          "id": "GHSA-25mq-v84q-4j7r",
+          "aliases": [
+            "CVE-2022-31090"
+          ],
+          "summary": "CURLOPT_HTTPAUTH option not cleared on change of origin",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N",
+          "fixed": "7.4.5",
+          "published": "2022-06-21T16:57:10Z"
+        },
+        {
+          "id": "GHSA-94pj-82f3-465w",
+          "aliases": [
+            "CVE-2026-67339"
+          ],
+          "summary": "Guzzle: Proxy-Authorization headers can be sent to origin servers",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+          "fixed": "7.14.2",
+          "published": "2026-07-20T21:46:02Z"
+        },
+        {
+          "id": "GHSA-cwxw-98qj-8qjx",
+          "aliases": [
+            "CVE-2026-55767"
+          ],
+          "summary": "guzzlehttp/guzzle: Dot-Only Cookie Domains Match All Hosts",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:N/I:L/A:N",
+          "fixed": "7.12.1",
+          "published": "2026-06-19T14:37:29Z"
+        },
+        {
+          "id": "GHSA-f283-ghqc-fg79",
+          "aliases": [
+            "CVE-2026-67353"
+          ],
+          "summary": "Guzzle: Unbounded response cookies risk denial of service",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+          "fixed": "7.15.1",
+          "published": "2026-07-20T23:27:02Z"
+        },
+        {
+          "id": "GHSA-f7vp-7xgx-4w4r",
+          "aliases": [
+            "CVE-2026-69245"
+          ],
+          "summary": "Guzzle: Noncanonical cookie domain keeps subdomain scope",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+          "fixed": "7.15.2",
+          "published": "2026-08-03T21:05:26Z"
+        },
+        {
+          "id": "GHSA-g446-98w2-8p5w",
+          "aliases": [
+            "CVE-2026-59883"
+          ],
+          "summary": "Guzzle: Cookie Disclosure and Injection via IP-Address Domains",
+          "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:L/I:L/A:N",
+          "fixed": "7.12.3",
+          "published": "2026-07-20T22:00:09Z"
+        },
+        {
+          "id": "GHSA-h95v-h523-3mw8",
+          "aliases": [
+            "CVE-2026-67354"
+          ],
+          "summary": "Guzzle: URI fragments disclosed in redirect Referer headers",
+          "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "fixed": "7.15.1",
+          "published": "2026-07-20T23:28:36Z"
+        },
+        {
+          "id": "GHSA-q559-8m2m-g699",
+          "aliases": [
+            "CVE-2022-31091"
+          ],
+          "summary": "Change in port should be considered a change in origin",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N",
+          "fixed": "7.4.5",
+          "published": "2022-06-21T20:07:16Z"
+        },
+        {
+          "id": "GHSA-v5mv-p594-2x33",
+          "aliases": [
+            "CVE-2026-69246"
+          ],
+          "summary": "Guzzle: Noncanonical host can bypass host-based checks",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:N",
+          "fixed": "7.15.2",
+          "published": "2026-08-03T21:07:26Z"
+        },
+        {
+          "id": "GHSA-wm3w-8rrp-j577",
+          "aliases": [
+            "CVE-2026-67355"
+          ],
+          "summary": "Guzzle: Host-only cookie scope is not preserved",
+          "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "fixed": "7.15.1",
+          "published": "2026-07-20T23:27:49Z"
+        },
+        {
+          "id": "GHSA-wpwq-4j6v-78m3",
+          "aliases": [
+            "CVE-2026-55568"
+          ],
+          "summary": "guzzlehttp/guzzle: Silent HTTPS-Proxy Downgrade to Cleartext",
+          "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "fixed": "7.12.1",
+          "published": "2026-06-19T14:17:59Z"
+        }
+      ],
+      "vulnerabilityBound": "7.15.2",
+      "locus": {
+        "valueStart": 43,
+        "valueEnd": 48,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 3
+      },
+      "lockFiles": [
+        "composer.lock"
+      ]
+    },
+    {
+      "manager": "composer",
+      "file": "composer.json",
+      "customManager": -1,
+      "depName": "symfony/http-kernel",
+      "depType": "require",
+      "currentValue": "6.0.0",
+      "datasource": "packagist",
+      "versioning": "composer",
+      "sourceUrl": "https://github.com/symfony/http-kernel.git",
+      "rangeStrategy": "bump",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "advisories": [
+        {
+          "id": "GHSA-h7vf-5wrv-9fhv",
+          "aliases": [
+            "BIT-symfony-2022-24894",
+            "CVE-2022-24894"
+          ],
+          "summary": "Symfony storing cookie headers in HttpCache",
+          "severity": "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:L/A:L",
+          "fixed": "6.0.20",
+          "published": "2023-02-01T18:48:09Z"
+        }
+      ],
+      "vulnerabilityBound": "6.0.20",
+      "locus": {
+        "valueStart": 79,
+        "valueEnd": 84,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 4
+      },
+      "lockFiles": [
+        "composer.lock"
+      ]
+    },
+    {
+      "manager": "npm",
+      "file": "package.json",
+      "customManager": -1,
+      "depName": "lodash",
+      "depType": "dependencies",
+      "currentValue": "4.17.20",
+      "datasource": "npm",
+      "versioning": "npm",
+      "sourceUrl": "https://github.com/lodash/lodash",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "3 days",
+      "internalChecksFilter": "strict",
+      "advisories": [
+        {
+          "id": "GHSA-29mw-wpgm-hmr9",
+          "aliases": [
+            "CVE-2020-28500"
+          ],
+          "summary": "Regular Expression Denial of Service (ReDoS) in lodash",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+          "fixed": "4.17.21",
+          "published": "2022-01-06T20:30:46Z"
+        },
+        {
+          "id": "GHSA-35jh-r3h4-6jhm",
+          "aliases": [
+            "CVE-2021-23337",
+            "CVE-2026-4800",
+            "GHSA-r5fr-rjxr-66jc"
+          ],
+          "summary": "Command Injection in lodash",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H",
+          "fixed": "4.17.21",
+          "published": "2021-05-06T16:05:51Z"
+        },
+        {
+          "id": "GHSA-f23m-r3pf-42rh",
+          "aliases": [
+            "CVE-2025-13465",
+            "CVE-2026-2950",
+            "GHSA-xxjr-mmjv-4gpg"
+          ],
+          "summary": "lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L",
+          "fixed": "4.18.0",
+          "published": "2026-04-01T23:50:27Z"
+        },
+        {
+          "id": "GHSA-r5fr-rjxr-66jc",
+          "aliases": [
+            "CVE-2021-23337",
+            "CVE-2026-4800",
+            "GHSA-35jh-r3h4-6jhm"
+          ],
+          "summary": "lodash vulnerable to Code Injection via `_.template` imports key names",
+          "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "fixed": "4.18.0",
+          "published": "2026-04-01T23:51:12Z"
+        },
+        {
+          "id": "GHSA-xxjr-mmjv-4gpg",
+          "aliases": [
+            "CVE-2025-13465",
+            "CVE-2026-2950",
+            "GHSA-f23m-r3pf-42rh"
+          ],
+          "summary": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L",
+          "fixed": "4.17.23",
+          "published": "2026-01-21T23:01:22Z"
+        }
+      ],
+      "vulnerabilityBound": "4.18.0",
+      "locus": {
+        "valueStart": 82,
+        "valueEnd": 89,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 5
+      },
+      "lockFiles": [
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "yarn.lock"
+      ]
+    },
+    {
+      "manager": "npm",
+      "file": "package.json",
+      "customManager": -1,
+      "depName": "minimist",
+      "depType": "dependencies",
+      "currentValue": "^1.2.5",
+      "datasource": "npm",
+      "versioning": "npm",
+      "sourceUrl": "git://github.com/minimistjs/minimist",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "3 days",
+      "internalChecksFilter": "strict",
+      "advisories": [
+        {
+          "id": "GHSA-xvch-5gv4-984h",
+          "aliases": [
+            "CVE-2021-44906"
+          ],
+          "summary": "Prototype Pollution in minimist",
+          "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+          "fixed": "1.2.6",
+          "published": "2022-03-18T00:01:09Z"
+        }
+      ],
+      "vulnerabilityBound": "1.2.6",
+      "locus": {
+        "valueStart": 109,
+        "valueEnd": 115,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 6
+      },
+      "lockFiles": [
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "yarn.lock"
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "depKey": "composer.json|composer|guzzlehttp/guzzle|7.4.4|43",
+      "dep": {
+        "manager": "composer",
+        "file": "composer.json",
+        "customManager": -1,
+        "depName": "guzzlehttp/guzzle",
+        "depType": "require",
+        "currentValue": "7.4.4",
+        "datasource": "packagist",
+        "versioning": "composer",
+        "sourceUrl": "https://github.com/guzzle/guzzle.git",
+        "rangeStrategy": "bump",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "advisories": [
+          {
+            "id": "GHSA-25mq-v84q-4j7r",
+            "aliases": [
+              "CVE-2022-31090"
+            ],
+            "summary": "CURLOPT_HTTPAUTH option not cleared on change of origin",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N",
+            "fixed": "7.4.5",
+            "published": "2022-06-21T16:57:10Z"
+          },
+          {
+            "id": "GHSA-94pj-82f3-465w",
+            "aliases": [
+              "CVE-2026-67339"
+            ],
+            "summary": "Guzzle: Proxy-Authorization headers can be sent to origin servers",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N",
+            "fixed": "7.14.2",
+            "published": "2026-07-20T21:46:02Z"
+          },
+          {
+            "id": "GHSA-cwxw-98qj-8qjx",
+            "aliases": [
+              "CVE-2026-55767"
+            ],
+            "summary": "guzzlehttp/guzzle: Dot-Only Cookie Domains Match All Hosts",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:N/I:L/A:N",
+            "fixed": "7.12.1",
+            "published": "2026-06-19T14:37:29Z"
+          },
+          {
+            "id": "GHSA-f283-ghqc-fg79",
+            "aliases": [
+              "CVE-2026-67353"
+            ],
+            "summary": "Guzzle: Unbounded response cookies risk denial of service",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+            "fixed": "7.15.1",
+            "published": "2026-07-20T23:27:02Z"
+          },
+          {
+            "id": "GHSA-f7vp-7xgx-4w4r",
+            "aliases": [
+              "CVE-2026-69245"
+            ],
+            "summary": "Guzzle: Noncanonical cookie domain keeps subdomain scope",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N",
+            "fixed": "7.15.2",
+            "published": "2026-08-03T21:05:26Z"
+          },
+          {
+            "id": "GHSA-g446-98w2-8p5w",
+            "aliases": [
+              "CVE-2026-59883"
+            ],
+            "summary": "Guzzle: Cookie Disclosure and Injection via IP-Address Domains",
+            "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:L/I:L/A:N",
+            "fixed": "7.12.3",
+            "published": "2026-07-20T22:00:09Z"
+          },
+          {
+            "id": "GHSA-h95v-h523-3mw8",
+            "aliases": [
+              "CVE-2026-67354"
+            ],
+            "summary": "Guzzle: URI fragments disclosed in redirect Referer headers",
+            "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+            "fixed": "7.15.1",
+            "published": "2026-07-20T23:28:36Z"
+          },
+          {
+            "id": "GHSA-q559-8m2m-g699",
+            "aliases": [
+              "CVE-2022-31091"
+            ],
+            "summary": "Change in port should be considered a change in origin",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:C/C:H/I:N/A:N",
+            "fixed": "7.4.5",
+            "published": "2022-06-21T20:07:16Z"
+          },
+          {
+            "id": "GHSA-v5mv-p594-2x33",
+            "aliases": [
+              "CVE-2026-69246"
+            ],
+            "summary": "Guzzle: Noncanonical host can bypass host-based checks",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:L/I:L/A:N",
+            "fixed": "7.15.2",
+            "published": "2026-08-03T21:07:26Z"
+          },
+          {
+            "id": "GHSA-wm3w-8rrp-j577",
+            "aliases": [
+              "CVE-2026-67355"
+            ],
+            "summary": "Guzzle: Host-only cookie scope is not preserved",
+            "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+            "fixed": "7.15.1",
+            "published": "2026-07-20T23:27:49Z"
+          },
+          {
+            "id": "GHSA-wpwq-4j6v-78m3",
+            "aliases": [
+              "CVE-2026-55568"
+            ],
+            "summary": "guzzlehttp/guzzle: Silent HTTPS-Proxy Downgrade to Cleartext",
+            "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N",
+            "fixed": "7.12.1",
+            "published": "2026-06-19T14:17:59Z"
+          }
+        ],
+        "vulnerabilityBound": "7.15.2",
+        "locus": {
+          "valueStart": 43,
+          "valueEnd": 48,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 3
+        },
+        "lockFiles": [
+          "composer.lock"
+        ]
+      },
+      "newValue": "7.15.2",
+      "newVersion": "7.15.2",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-07-26T23:23:20Z",
+      "timeSource": "datasource",
+      "securityFix": true
+    },
+    {
+      "depKey": "composer.json|composer|symfony/http-kernel|6.0.0|79",
+      "dep": {
+        "manager": "composer",
+        "file": "composer.json",
+        "customManager": -1,
+        "depName": "symfony/http-kernel",
+        "depType": "require",
+        "currentValue": "6.0.0",
+        "datasource": "packagist",
+        "versioning": "composer",
+        "sourceUrl": "https://github.com/symfony/http-kernel.git",
+        "rangeStrategy": "bump",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "advisories": [
+          {
+            "id": "GHSA-h7vf-5wrv-9fhv",
+            "aliases": [
+              "BIT-symfony-2022-24894",
+              "CVE-2022-24894"
+            ],
+            "summary": "Symfony storing cookie headers in HttpCache",
+            "severity": "CVSS:3.1/AV:N/AC:H/PR:L/UI:R/S:U/C:H/I:L/A:L",
+            "fixed": "6.0.20",
+            "published": "2023-02-01T18:48:09Z"
+          }
+        ],
+        "vulnerabilityBound": "6.0.20",
+        "locus": {
+          "valueStart": 79,
+          "valueEnd": 84,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 4
+        },
+        "lockFiles": [
+          "composer.lock"
+        ]
+      },
+      "newValue": "6.0.20",
+      "newVersion": "v6.0.20",
+      "updateType": "patch",
+      "declared": "patch",
+      "effective": "unknown",
+      "releaseTime": "2023-02-01T08:22:55Z",
+      "timeSource": "datasource",
+      "securityFix": true
+    },
+    {
+      "depKey": "package.json|npm|lodash|4.17.20|82",
+      "dep": {
+        "manager": "npm",
+        "file": "package.json",
+        "customManager": -1,
+        "depName": "lodash",
+        "depType": "dependencies",
+        "currentValue": "4.17.20",
+        "datasource": "npm",
+        "versioning": "npm",
+        "sourceUrl": "https://github.com/lodash/lodash",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "3 days",
+        "internalChecksFilter": "strict",
+        "advisories": [
+          {
+            "id": "GHSA-29mw-wpgm-hmr9",
+            "aliases": [
+              "CVE-2020-28500"
+            ],
+            "summary": "Regular Expression Denial of Service (ReDoS) in lodash",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L",
+            "fixed": "4.17.21",
+            "published": "2022-01-06T20:30:46Z"
+          },
+          {
+            "id": "GHSA-35jh-r3h4-6jhm",
+            "aliases": [
+              "CVE-2021-23337",
+              "CVE-2026-4800",
+              "GHSA-r5fr-rjxr-66jc"
+            ],
+            "summary": "Command Injection in lodash",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:H/I:H/A:H",
+            "fixed": "4.17.21",
+            "published": "2021-05-06T16:05:51Z"
+          },
+          {
+            "id": "GHSA-f23m-r3pf-42rh",
+            "aliases": [
+              "CVE-2025-13465",
+              "CVE-2026-2950",
+              "GHSA-xxjr-mmjv-4gpg"
+            ],
+            "summary": "lodash vulnerable to Prototype Pollution via array path bypass in `_.unset` and `_.omit`",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L",
+            "fixed": "4.18.0",
+            "published": "2026-04-01T23:50:27Z"
+          },
+          {
+            "id": "GHSA-r5fr-rjxr-66jc",
+            "aliases": [
+              "CVE-2021-23337",
+              "CVE-2026-4800",
+              "GHSA-35jh-r3h4-6jhm"
+            ],
+            "summary": "lodash vulnerable to Code Injection via `_.template` imports key names",
+            "severity": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            "fixed": "4.18.0",
+            "published": "2026-04-01T23:51:12Z"
+          },
+          {
+            "id": "GHSA-xxjr-mmjv-4gpg",
+            "aliases": [
+              "CVE-2025-13465",
+              "CVE-2026-2950",
+              "GHSA-f23m-r3pf-42rh"
+            ],
+            "summary": "Lodash has Prototype Pollution Vulnerability in `_.unset` and `_.omit` functions",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:L/A:L",
+            "fixed": "4.17.23",
+            "published": "2026-01-21T23:01:22Z"
+          }
+        ],
+        "vulnerabilityBound": "4.18.0",
+        "locus": {
+          "valueStart": 82,
+          "valueEnd": 89,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 5
+        },
+        "lockFiles": [
+          "package-lock.json",
+          "npm-shrinkwrap.json",
+          "yarn.lock"
+        ]
+      },
+      "newValue": "4.18.1",
+      "newVersion": "4.18.1",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-04-01T21:01:20.458Z",
+      "timeSource": "datasource",
+      "securityFix": true
+    },
+    {
+      "depKey": "package.json|npm|minimist|^1.2.5|109",
+      "dep": {
+        "manager": "npm",
+        "file": "package.json",
+        "customManager": -1,
+        "depName": "minimist",
+        "depType": "dependencies",
+        "currentValue": "^1.2.5",
+        "datasource": "npm",
+        "versioning": "npm",
+        "sourceUrl": "git://github.com/minimistjs/minimist",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "3 days",
+        "internalChecksFilter": "strict",
+        "advisories": [
+          {
+            "id": "GHSA-xvch-5gv4-984h",
+            "aliases": [
+              "CVE-2021-44906"
+            ],
+            "summary": "Prototype Pollution in minimist",
+            "severity": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+            "fixed": "1.2.6",
+            "published": "2022-03-18T00:01:09Z"
+          }
+        ],
+        "vulnerabilityBound": "1.2.6",
+        "locus": {
+          "valueStart": 109,
+          "valueEnd": 115,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 6
+        },
+        "lockFiles": [
+          "package-lock.json",
+          "npm-shrinkwrap.json",
+          "yarn.lock"
+        ]
+      },
+      "newValue": "^1.2.6",
+      "newVersion": "1.2.6",
+      "updateType": "patch",
+      "declared": "patch",
+      "effective": "unknown",
+      "releaseTime": "2022-03-22T02:50:30.352Z",
+      "timeSource": "datasource",
+      "securityFix": true
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/npm-lodash-vulnerability",
+      "slug": "npm-lodash-vulnerability",
+      "title": "fix(deps): update dependency lodash to v4.18.1 [security]",
+      "updateKeys": [
+        "package.json|npm|lodash|4.17.20|82>4.18.1"
+      ],
+      "edits": [
+        {
+          "file": "package.json",
+          "start": 82,
+          "end": 89,
+          "old": "4.17.20",
+          "new": "4.18.1",
+          "manager": "npm"
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "security"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/npm-minimist-vulnerability",
+      "slug": "npm-minimist-vulnerability",
+      "title": "fix(deps): update dependency minimist to ^1.2.6 [security]",
+      "updateKeys": [
+        "package.json|npm|minimist|^1.2.5|109>^1.2.6"
+      ],
+      "edits": [
+        {
+          "file": "package.json",
+          "start": 109,
+          "end": 115,
+          "old": "^1.2.5",
+          "new": "^1.2.6",
+          "manager": "npm"
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "security"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/packagist-guzzlehttp-guzzle-vulnerability",
+      "slug": "packagist-guzzlehttp-guzzle-vulnerability",
+      "title": "fix(deps): update dependency guzzlehttp/guzzle to v7.15.2 [security]",
+      "updateKeys": [
+        "composer.json|composer|guzzlehttp/guzzle|7.4.4|43>7.15.2"
+      ],
+      "edits": [
+        {
+          "file": "composer.json",
+          "start": 43,
+          "end": 48,
+          "old": "7.4.4",
+          "new": "7.15.2",
+          "manager": "composer"
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "security"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/packagist-symfony-http-kernel-vulnerability",
+      "slug": "packagist-symfony-http-kernel-vulnerability",
+      "title": "fix(deps): update dependency symfony/http-kernel to v6.0.20 [security]",
+      "updateKeys": [
+        "composer.json|composer|symfony/http-kernel|6.0.0|79>6.0.20"
+      ],
+      "edits": [
+        {
+          "file": "composer.json",
+          "start": 79,
+          "end": 84,
+          "old": "6.0.0",
+          "new": "6.0.20",
+          "manager": "composer"
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "security"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 2,
+    "depsExtracted": 4,
+    "lookupsIssued": 4,
+    "lookupsFromCache": 0,
+    "updatesFound": 4,
+    "updatesBlocked": 0,
+    "branchesPlanned": 4
+  }
+}

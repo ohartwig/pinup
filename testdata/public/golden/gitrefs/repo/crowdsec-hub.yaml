@@ -1,0 +1,12 @@
+package:
+  name: crowdsec-hub
+  version: 0
+  epoch: 3
+  description: CrowdSec hub - parsers, scenarios and collections, tracked by commit
+
+pipeline:
+  - uses: git-checkout
+    with:
+      repository: https://github.com/crowdsecurity/hub
+      # renovate: datasource=git-refs depName=https://github.com/crowdsecurity/hub currentValue=master
+      expected-commit: 6359f3c81f253cddf075afae75e5355e2be1eef0

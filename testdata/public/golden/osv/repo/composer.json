@@ -1,0 +1,6 @@
+{
+  "require": {
+    "guzzlehttp/guzzle": "7.4.4",
+    "symfony/http-kernel": "6.0.0"
+  }
+}

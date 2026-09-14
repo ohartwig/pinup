@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: prod
+resources:
+  - ../../base
+  - github.com/kubernetes-sigs/kustomize/examples/multibases/dev/?ref=v3.3.1
+  - https://github.com/argoproj/argo-cd/manifests/cluster-install?ref=v2.12.3
+  - git::https://git.acme.test/platform/gitops/manifests.git//apps?ref=1.4.0
+  - ssh://git@git.acme.test/platform/gitops/manifests.git//monitoring?ref=v0.9.1
+components:
+  - github.com/kubernetes-sigs/kustomize/examples/components/example?ref=v5.0.0
+images:
+  - name: registry.acme.test/devops/images/golang
+    newTag: 1.27.0
+  - name: nginx
+    newName: registry.acme.test/devops/ci-mirrors/nginx
+    newTag: 1.27.2
+  - name: alpine
+    digest: sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04
+  - name: busybox
+    newTag: "1.36"
+    digest: sha256:8f0e5ce5f4c2b0c3f6c4fd0f0b6d9e2f8c7a6b5d4e3f2a1b0c9d8e7f6a5b4c3d
+helmCharts:
+  - name: grafana
+    repo: https://grafana.github.io/helm-charts
+    version: 8.5.1
+  - name: prometheus
+    repo: oci://registry.acme.test/devops/charts
+    version: 25.8.0

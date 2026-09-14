@@ -1,0 +1,35 @@
+{
+  "repo": "golden/estate",
+  "now": "2026-09-14T08:00:00Z",
+  "covers": {
+    "managers": [
+      "custom.regex",
+      "dockerfile",
+      "gitlabci",
+      "terraform",
+      "composer"
+    ],
+    "datasources": [
+      "docker",
+      "custom.wolfi",
+      "custom.corp-apk",
+      "gitlab-tags",
+      "gitlab-releases",
+      "gitlab-packages",
+      "terraform-provider",
+      "terraform-module",
+      "github-releases",
+      "packagist"
+    ],
+    "versionings": [
+      "docker",
+      "apk",
+      "semver",
+      "semver-partial",
+      "loose",
+      "composer",
+      "hashicorp",
+      "regex:^alpine(?<major>[0-9]+)\\.(?<minor>[0-9]+)"
+    ]
+  }
+}

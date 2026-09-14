@@ -1,0 +1,16 @@
+{
+  "merged": [],
+  "unmerged": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    ":configMigration",
+    "abandonments:recommended",
+    ":pinDevDependencies",
+    ":automergeDigest",
+    "customManagers:dockerfileVersions",
+    "customManagers:gitlabPipelineVersions",
+    "workarounds:typesNodeVersioning",
+    "mergeConfidence:all-badges"
+  ]
+}

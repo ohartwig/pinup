@@ -1,0 +1,12 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+spec:
+  source:
+    repoURL: https://argoproj.github.io/argo-helm
+    chart: argo-cd
+    # renovate: datasource=helm depName=argo-cd registryUrl=https://argoproj.github.io/argo-helm
+    targetRevision: "8.3.5"
+  # renovate: datasource=docker depName=quay.io/argoproj/argocd
+  image: quay.io/argoproj/argocd:v3.1.5

@@ -1,0 +1,5937 @@
+{
+ "releases": {
+  "custom.wolfi\u0000git\u0000": {
+   "packageName": "git",
+   "datasource": "custom.wolfi",
+   "registryUrl": "https://packages.wolfi.dev/os",
+   "releases": [
+    {
+     "version": "2.39.0-r0"
+    },
+    {
+     "version": "2.48.1-r1"
+    },
+    {
+     "version": "2.49.0-r0"
+    },
+    {
+     "version": "2.50.1-r0"
+    },
+    {
+     "version": "2.50.1-r1"
+    },
+    {
+     "version": "2.51.0-r0"
+    },
+    {
+     "version": "2.51.0-r1"
+    },
+    {
+     "version": "2.51.1-r1"
+    },
+    {
+     "version": "2.51.2-r0"
+    },
+    {
+     "version": "2.52.0-r0"
+    },
+    {
+     "version": "2.52.0-r1"
+    },
+    {
+     "version": "2.52.0-r2"
+    },
+    {
+     "version": "2.53.0-r0"
+    },
+    {
+     "version": "2.53.0-r1"
+    },
+    {
+     "version": "2.53.0-r2"
+    },
+    {
+     "version": "2.54.0-r0"
+    },
+    {
+     "version": "2.54.0-r1"
+    },
+    {
+     "version": "2.54.0-r2"
+    },
+    {
+     "version": "2.55.0-r0"
+    },
+    {
+     "version": "2.55.0-r1"
+    },
+    {
+     "version": "2.55.0-r2"
+    },
+    {
+     "version": "2.55.0-r3"
+    },
+    {
+     "version": "2.55.0-r4"
+    },
+    {
+     "version": "2.55.0-r5"
+    },
+    {
+     "version": "2.55.0-r6"
+    },
+    {
+     "version": "2.55.0-r7"
+    }
+   ]
+  },
+  "docker\u0000bash\u0000": {
+   "packageName": "bash",
+   "datasource": "docker",
+   "registryUrl": "https://registry-1.docker.io",
+   "releases": [
+    {
+     "version": "3"
+    },
+    {
+     "version": "3-alpine3.12"
+    },
+    {
+     "version": "3-alpine3.14"
+    },
+    {
+     "version": "3-alpine3.15"
+    },
+    {
+     "version": "3-alpine3.16"
+    },
+    {
+     "version": "3-alpine3.17"
+    },
+    {
+     "version": "3-alpine3.18"
+    },
+    {
+     "version": "3-alpine3.19"
+    },
+    {
+     "version": "3-alpine3.20"
+    },
+    {
+     "version": "3-alpine3.21"
+    },
+    {
+     "version": "3-alpine3.22"
+    },
+    {
+     "version": "3.0"
+    },
+    {
+     "version": "3.0-alpine3.12"
+    },
+    {
+     "version": "3.0-alpine3.14"
+    },
+    {
+     "version": "3.0-alpine3.15"
+    },
+    {
+     "version": "3.0-alpine3.16"
+    },
+    {
+     "version": "3.0-alpine3.17"
+    },
+    {
+     "version": "3.0-alpine3.18"
+    },
+    {
+     "version": "3.0-alpine3.19"
+    },
+    {
+     "version": "3.0-alpine3.20"
+    },
+    {
+     "version": "3.0-alpine3.21"
+    },
+    {
+     "version": "3.0-alpine3.22"
+    },
+    {
+     "version": "3.0.22"
+    },
+    {
+     "version": "3.0.22-alpine3.12"
+    },
+    {
+     "version": "3.0.22-alpine3.14"
+    },
+    {
+     "version": "3.0.22-alpine3.15"
+    },
+    {
+     "version": "3.0.22-alpine3.16"
+    },
+    {
+     "version": "3.0.22-alpine3.17"
+    },
+    {
+     "version": "3.0.22-alpine3.18"
+    },
+    {
+     "version": "3.0.22-alpine3.19"
+    },
+    {
+     "version": "3.0.22-alpine3.20"
+    },
+    {
+     "version": "3.0.22-alpine3.21"
+    },
+    {
+     "version": "3.0.22-alpine3.22"
+    },
+    {
+     "version": "3.1"
+    },
+    {
+     "version": "3.1-alpine3.12"
+    },
+    {
+     "version": "3.1-alpine3.14"
+    },
+    {
+     "version": "3.1-alpine3.15"
+    },
+    {
+     "version": "3.1-alpine3.16"
+    },
+    {
+     "version": "3.1-alpine3.17"
+    },
+    {
+     "version": "3.1-alpine3.18"
+    },
+    {
+     "version": "3.1-alpine3.19"
+    },
+    {
+     "version": "3.1-alpine3.20"
+    },
+    {
+     "version": "3.1-alpine3.21"
+    },
+    {
+     "version": "3.1-alpine3.22"
+    },
+    {
+     "version": "3.1.23"
+    },
+    {
+     "version": "3.1.23-alpine3.12"
+    },
+    {
+     "version": "3.1.23-alpine3.14"
+    },
+    {
+     "version": "3.1.23-alpine3.15"
+    },
+    {
+     "version": "3.1.23-alpine3.16"
+    },
+    {
+     "version": "3.1.23-alpine3.17"
+    },
+    {
+     "version": "3.1.23-alpine3.18"
+    },
+    {
+     "version": "3.1.23-alpine3.19"
+    },
+    {
+     "version": "3.1.23-alpine3.20"
+    },
+    {
+     "version": "3.1.23-alpine3.21"
+    },
+    {
+     "version": "3.1.23-alpine3.22"
+    },
+    {
+     "version": "3.2"
+    },
+    {
+     "version": "3.2-alpine3.12"
+    },
+    {
+     "version": "3.2-alpine3.14"
+    },
+    {
+     "version": "3.2-alpine3.15"
+    },
+    {
+     "version": "3.2-alpine3.16"
+    },
+    {
+     "version": "3.2-alpine3.17"
+    },
+    {
+     "version": "3.2-alpine3.18"
+    },
+    {
+     "version": "3.2-alpine3.19"
+    },
+    {
+     "version": "3.2-alpine3.20"
+    },
+    {
+     "version": "3.2-alpine3.21"
+    },
+    {
+     "version": "3.2-alpine3.22"
+    },
+    {
+     "version": "3.2.57"
+    },
+    {
+     "version": "3.2.57-alpine3.12"
+    },
+    {
+     "version": "3.2.57-alpine3.14"
+    },
+    {
+     "version": "3.2.57-alpine3.15"
+    },
+    {
+     "version": "3.2.57-alpine3.16"
+    },
+    {
+     "version": "3.2.57-alpine3.17"
+    },
+    {
+     "version": "3.2.57-alpine3.18"
+    },
+    {
+     "version": "3.2.57-alpine3.19"
+    },
+    {
+     "version": "3.2.57-alpine3.20"
+    },
+    {
+     "version": "3.2.57-alpine3.21"
+    },
+    {
+     "version": "3.2.57-alpine3.22"
+    },
+    {
+     "version": "4"
+    },
+    {
+     "version": "4-alpine3.12"
+    },
+    {
+     "version": "4-alpine3.14"
+    },
+    {
+     "version": "4-alpine3.15"
+    },
+    {
+     "version": "4-alpine3.16"
+    },
+    {
+     "version": "4-alpine3.17"
+    },
+    {
+     "version": "4-alpine3.18"
+    },
+    {
+     "version": "4-alpine3.19"
+    },
+    {
+     "version": "4-alpine3.20"
+    },
+    {
+     "version": "4-alpine3.21"
+    },
+    {
+     "version": "4-alpine3.22"
+    },
+    {
+     "version": "4.0"
+    },
+    {
+     "version": "4.0-alpine3.12"
+    },
+    {
+     "version": "4.0-alpine3.14"
+    },
+    {
+     "version": "4.0-alpine3.15"
+    },
+    {
+     "version": "4.0-alpine3.16"
+    },
+    {
+     "version": "4.0-alpine3.17"
+    },
+    {
+     "version": "4.0-alpine3.18"
+    },
+    {
+     "version": "4.0-alpine3.19"
+    },
+    {
+     "version": "4.0-alpine3.20"
+    },
+    {
+     "version": "4.0-alpine3.21"
+    },
+    {
+     "version": "4.0-alpine3.22"
+    },
+    {
+     "version": "4.0.44"
+    },
+    {
+     "version": "4.0.44-alpine3.12"
+    },
+    {
+     "version": "4.0.44-alpine3.14"
+    },
+    {
+     "version": "4.0.44-alpine3.15"
+    },
+    {
+     "version": "4.0.44-alpine3.16"
+    },
+    {
+     "version": "4.0.44-alpine3.17"
+    },
+    {
+     "version": "4.0.44-alpine3.18"
+    },
+    {
+     "version": "4.0.44-alpine3.19"
+    },
+    {
+     "version": "4.0.44-alpine3.20"
+    },
+    {
+     "version": "4.0.44-alpine3.21"
+    },
+    {
+     "version": "4.0.44-alpine3.22"
+    },
+    {
+     "version": "4.1"
+    },
+    {
+     "version": "4.1-alpine3.12"
+    },
+    {
+     "version": "4.1-alpine3.14"
+    },
+    {
+     "version": "4.1-alpine3.15"
+    },
+    {
+     "version": "4.1-alpine3.16"
+    },
+    {
+     "version": "4.1-alpine3.17"
+    },
+    {
+     "version": "4.1-alpine3.18"
+    },
+    {
+     "version": "4.1-alpine3.19"
+    },
+    {
+     "version": "4.1-alpine3.20"
+    },
+    {
+     "version": "4.1-alpine3.21"
+    },
+    {
+     "version": "4.1-alpine3.22"
+    },
+    {
+     "version": "4.1.17"
+    },
+    {
+     "version": "4.1.17-alpine3.12"
+    },
+    {
+     "version": "4.1.17-alpine3.14"
+    },
+    {
+     "version": "4.1.17-alpine3.15"
+    },
+    {
+     "version": "4.1.17-alpine3.16"
+    },
+    {
+     "version": "4.1.17-alpine3.17"
+    },
+    {
+     "version": "4.1.17-alpine3.18"
+    },
+    {
+     "version": "4.1.17-alpine3.19"
+    },
+    {
+     "version": "4.1.17-alpine3.20"
+    },
+    {
+     "version": "4.1.17-alpine3.21"
+    },
+    {
+     "version": "4.1.17-alpine3.22"
+    },
+    {
+     "version": "4.2"
+    },
+    {
+     "version": "4.2-alpine3.12"
+    },
+    {
+     "version": "4.2-alpine3.14"
+    },
+    {
+     "version": "4.2-alpine3.15"
+    },
+    {
+     "version": "4.2-alpine3.16"
+    },
+    {
+     "version": "4.2-alpine3.17"
+    },
+    {
+     "version": "4.2-alpine3.18"
+    },
+    {
+     "version": "4.2-alpine3.19"
+    },
+    {
+     "version": "4.2-alpine3.20"
+    },
+    {
+     "version": "4.2-alpine3.21"
+    },
+    {
+     "version": "4.2-alpine3.22"
+    },
+    {
+     "version": "4.2.53"
+    },
+    {
+     "version": "4.2.53-alpine3.12"
+    },
+    {
+     "version": "4.2.53-alpine3.14"
+    },
+    {
+     "version": "4.2.53-alpine3.15"
+    },
+    {
+     "version": "4.2.53-alpine3.16"
+    },
+    {
+     "version": "4.2.53-alpine3.17"
+    },
+    {
+     "version": "4.2.53-alpine3.18"
+    },
+    {
+     "version": "4.2.53-alpine3.19"
+    },
+    {
+     "version": "4.2.53-alpine3.20"
+    },
+    {
+     "version": "4.2.53-alpine3.21"
+    },
+    {
+     "version": "4.2.53-alpine3.22"
+    },
+    {
+     "version": "4.3"
+    },
+    {
+     "version": "4.3-alpine3.12"
+    },
+    {
+     "version": "4.3-alpine3.14"
+    },
+    {
+     "version": "4.3-alpine3.15"
+    },
+    {
+     "version": "4.3-alpine3.16"
+    },
+    {
+     "version": "4.3-alpine3.17"
+    },
+    {
+     "version": "4.3-alpine3.18"
+    },
+    {
+     "version": "4.3-alpine3.19"
+    },
+    {
+     "version": "4.3-alpine3.20"
+    },
+    {
+     "version": "4.3-alpine3.21"
+    },
+    {
+     "version": "4.3-alpine3.22"
+    },
+    {
+     "version": "4.3.48"
+    },
+    {
+     "version": "4.3.48-alpine3.12"
+    },
+    {
+     "version": "4.3.48-alpine3.14"
+    },
+    {
+     "version": "4.3.48-alpine3.15"
+    },
+    {
+     "version": "4.3.48-alpine3.16"
+    },
+    {
+     "version": "4.3.48-alpine3.17"
+    },
+    {
+     "version": "4.3.48-alpine3.18"
+    },
+    {
+     "version": "4.3.48-alpine3.19"
+    },
+    {
+     "version": "4.3.48-alpine3.20"
+    },
+    {
+     "version": "4.3.48-alpine3.21"
+    },
+    {
+     "version": "4.3.48-alpine3.22"
+    },
+    {
+     "version": "4.4"
+    },
+    {
+     "version": "4.4-alpine3.12"
+    },
+    {
+     "version": "4.4-alpine3.14"
+    },
+    {
+     "version": "4.4-alpine3.15"
+    },
+    {
+     "version": "4.4-alpine3.16"
+    },
+    {
+     "version": "4.4-alpine3.17"
+    },
+    {
+     "version": "4.4-alpine3.18"
+    },
+    {
+     "version": "4.4-alpine3.19"
+    },
+    {
+     "version": "4.4-alpine3.20"
+    },
+    {
+     "version": "4.4-alpine3.21"
+    },
+    {
+     "version": "4.4-alpine3.22"
+    },
+    {
+     "version": "4.4.0"
+    },
+    {
+     "version": "4.4.11"
+    },
+    {
+     "version": "4.4.12"
+    },
+    {
+     "version": "4.4.18"
+    },
+    {
+     "version": "4.4.19"
+    },
+    {
+     "version": "4.4.23"
+    },
+    {
+     "version": "4.4.23-alpine3.12"
+    },
+    {
+     "version": "4.4.23-alpine3.14"
+    },
+    {
+     "version": "4.4.23-alpine3.15"
+    },
+    {
+     "version": "4.4.23-alpine3.16"
+    },
+    {
+     "version": "4.4.23-alpine3.17"
+    },
+    {
+     "version": "4.4.23-alpine3.18"
+    },
+    {
+     "version": "4.4.23-alpine3.19"
+    },
+    {
+     "version": "4.4.23-alpine3.20"
+    },
+    {
+     "version": "4.4.23-alpine3.21"
+    },
+    {
+     "version": "4.4.23-alpine3.22"
+    },
+    {
+     "version": "4.4.5"
+    },
+    {
+     "version": "4.4.7"
+    },
+    {
+     "version": "5"
+    },
+    {
+     "version": "5-alpine3.12"
+    },
+    {
+     "version": "5-alpine3.14"
+    },
+    {
+     "version": "5-alpine3.15"
+    },
+    {
+     "version": "5-alpine3.16"
+    },
+    {
+     "version": "5-alpine3.17"
+    },
+    {
+     "version": "5-alpine3.18"
+    },
+    {
+     "version": "5-alpine3.19"
+    },
+    {
+     "version": "5-alpine3.20"
+    },
+    {
+     "version": "5-alpine3.21"
+    },
+    {
+     "version": "5-alpine3.22"
+    },
+    {
+     "version": "5-alpine3.23"
+    },
+    {
+     "version": "5-alpine3.24"
+    },
+    {
+     "version": "5.0"
+    },
+    {
+     "version": "5.0-alpine3.12"
+    },
+    {
+     "version": "5.0-alpine3.14"
+    },
+    {
+     "version": "5.0-alpine3.15"
+    },
+    {
+     "version": "5.0-alpine3.16"
+    },
+    {
+     "version": "5.0-alpine3.17"
+    },
+    {
+     "version": "5.0-alpine3.18"
+    },
+    {
+     "version": "5.0-alpine3.19"
+    },
+    {
+     "version": "5.0-alpine3.20"
+    },
+    {
+     "version": "5.0-alpine3.21"
+    },
+    {
+     "version": "5.0-alpine3.22"
+    },
+    {
+     "version": "5.0-beta"
+    },
+    {
+     "version": "5.0-beta2"
+    },
+    {
+     "version": "5.0-rc"
+    },
+    {
+     "version": "5.0-rc1"
+    },
+    {
+     "version": "5.0.0"
+    },
+    {
+     "version": "5.0.11"
+    },
+    {
+     "version": "5.0.16"
+    },
+    {
+     "version": "5.0.17"
+    },
+    {
+     "version": "5.0.18"
+    },
+    {
+     "version": "5.0.18-alpine3.12"
+    },
+    {
+     "version": "5.0.18-alpine3.14"
+    },
+    {
+     "version": "5.0.18-alpine3.15"
+    },
+    {
+     "version": "5.0.18-alpine3.16"
+    },
+    {
+     "version": "5.0.18-alpine3.17"
+    },
+    {
+     "version": "5.0.18-alpine3.18"
+    },
+    {
+     "version": "5.0.18-alpine3.19"
+    },
+    {
+     "version": "5.0.18-alpine3.20"
+    },
+    {
+     "version": "5.0.18-alpine3.21"
+    },
+    {
+     "version": "5.0.18-alpine3.22"
+    },
+    {
+     "version": "5.0.2"
+    },
+    {
+     "version": "5.0.3"
+    },
+    {
+     "version": "5.0.7"
+    },
+    {
+     "version": "5.0.9"
+    },
+    {
+     "version": "5.1"
+    },
+    {
+     "version": "5.1-alpha"
+    },
+    {
+     "version": "5.1-alpine3.12"
+    },
+    {
+     "version": "5.1-alpine3.14"
+    },
+    {
+     "version": "5.1-alpine3.15"
+    },
+    {
+     "version": "5.1-alpine3.16"
+    },
+    {
+     "version": "5.1-alpine3.17"
+    },
+    {
+     "version": "5.1-alpine3.18"
+    },
+    {
+     "version": "5.1-alpine3.19"
+    },
+    {
+     "version": "5.1-alpine3.20"
+    },
+    {
+     "version": "5.1-alpine3.21"
+    },
+    {
+     "version": "5.1-alpine3.22"
+    },
+    {
+     "version": "5.1-beta"
+    },
+    {
+     "version": "5.1-rc"
+    },
+    {
+     "version": "5.1-rc1"
+    },
+    {
+     "version": "5.1-rc2"
+    },
+    {
+     "version": "5.1-rc3"
+    },
+    {
+     "version": "5.1.0"
+    },
+    {
+     "version": "5.1.12"
+    },
+    {
+     "version": "5.1.12-alpine3.14"
+    },
+    {
+     "version": "5.1.16"
+    },
+    {
+     "version": "5.1.16-alpine3.14"
+    },
+    {
+     "version": "5.1.16-alpine3.15"
+    },
+    {
+     "version": "5.1.16-alpine3.16"
+    },
+    {
+     "version": "5.1.16-alpine3.17"
+    },
+    {
+     "version": "5.1.16-alpine3.18"
+    },
+    {
+     "version": "5.1.16-alpine3.19"
+    },
+    {
+     "version": "5.1.16-alpine3.20"
+    },
+    {
+     "version": "5.1.16-alpine3.21"
+    },
+    {
+     "version": "5.1.16-alpine3.22"
+    },
+    {
+     "version": "5.1.4"
+    },
+    {
+     "version": "5.1.8"
+    },
+    {
+     "version": "5.1.8-alpine3.12"
+    },
+    {
+     "version": "5.1.8-alpine3.14"
+    },
+    {
+     "version": "5.2"
+    },
+    {
+     "version": "5.2-alpha"
+    },
+    {
+     "version": "5.2-alpha-alpine3.15"
+    },
+    {
+     "version": "5.2-alpine3.15"
+    },
+    {
+     "version": "5.2-alpine3.16"
+    },
+    {
+     "version": "5.2-alpine3.17"
+    },
+    {
+     "version": "5.2-alpine3.18"
+    },
+    {
+     "version": "5.2-alpine3.19"
+    },
+    {
+     "version": "5.2-alpine3.20"
+    },
+    {
+     "version": "5.2-alpine3.21"
+    },
+    {
+     "version": "5.2-alpine3.22"
+    },
+    {
+     "version": "5.2-beta"
+    },
+    {
+     "version": "5.2-beta-alpine3.15"
+    },
+    {
+     "version": "5.2-rc"
+    },
+    {
+     "version": "5.2-rc-alpine3.15"
+    },
+    {
+     "version": "5.2-rc1"
+    },
+    {
+     "version": "5.2-rc1-alpine3.15"
+    },
+    {
+     "version": "5.2-rc2"
+    },
+    {
+     "version": "5.2-rc2-alpine3.15"
+    },
+    {
+     "version": "5.2-rc3"
+    },
+    {
+     "version": "5.2-rc3-alpine3.15"
+    },
+    {
+     "version": "5.2-rc4"
+    },
+    {
+     "version": "5.2-rc4-alpine3.15"
+    },
+    {
+     "version": "5.2.0"
+    },
+    {
+     "version": "5.2.0-alpine3.15"
+    },
+    {
+     "version": "5.2.12"
+    },
+    {
+     "version": "5.2.12-alpine3.16"
+    },
+    {
+     "version": "5.2.15"
+    },
+    {
+     "version": "5.2.15-alpine3.16"
+    },
+    {
+     "version": "5.2.15-alpine3.17"
+    },
+    {
+     "version": "5.2.15-alpine3.18"
+    },
+    {
+     "version": "5.2.2"
+    },
+    {
+     "version": "5.2.2-alpine3.15"
+    },
+    {
+     "version": "5.2.21"
+    },
+    {
+     "version": "5.2.21-alpine3.18"
+    },
+    {
+     "version": "5.2.21-alpine3.19"
+    },
+    {
+     "version": "5.2.26"
+    },
+    {
+     "version": "5.2.26-alpine3.19"
+    },
+    {
+     "version": "5.2.26-alpine3.20"
+    },
+    {
+     "version": "5.2.32"
+    },
+    {
+     "version": "5.2.32-alpine3.20"
+    },
+    {
+     "version": "5.2.37"
+    },
+    {
+     "version": "5.2.37-alpine3.20"
+    },
+    {
+     "version": "5.2.37-alpine3.21"
+    },
+    {
+     "version": "5.2.37-alpine3.22"
+    },
+    {
+     "version": "5.2.9"
+    },
+    {
+     "version": "5.2.9-alpine3.15"
+    },
+    {
+     "version": "5.2.9-alpine3.16"
+    },
+    {
+     "version": "5.3"
+    },
+    {
+     "version": "5.3-alpha"
+    },
+    {
+     "version": "5.3-alpha-alpine3.19"
+    },
+    {
+     "version": "5.3-alpha-alpine3.20"
+    },
+    {
+     "version": "5.3-alpha-alpine3.21"
+    },
+    {
+     "version": "5.3-alpine3.22"
+    },
+    {
+     "version": "5.3-alpine3.23"
+    },
+    {
+     "version": "5.3-alpine3.24"
+    },
+    {
+     "version": "5.3-beta"
+    },
+    {
+     "version": "5.3-beta-alpine3.21"
+    },
+    {
+     "version": "5.3-rc"
+    },
+    {
+     "version": "5.3-rc-alpine3.19"
+    },
+    {
+     "version": "5.3-rc-alpine3.20"
+    },
+    {
+     "version": "5.3-rc-alpine3.21"
+    },
+    {
+     "version": "5.3-rc-alpine3.22"
+    },
+    {
+     "version": "5.3-rc1"
+    },
+    {
+     "version": "5.3-rc1-alpine3.21"
+    },
+    {
+     "version": "5.3-rc1-alpine3.22"
+    },
+    {
+     "version": "5.3-rc2"
+    },
+    {
+     "version": "5.3-rc2-alpine3.22"
+    },
+    {
+     "version": "5.3.0"
+    },
+    {
+     "version": "5.3.0-alpine3.22"
+    },
+    {
+     "version": "5.3.12"
+    },
+    {
+     "version": "5.3.12-alpine3.23"
+    },
+    {
+     "version": "5.3.15"
+    },
+    {
+     "version": "5.3.15-alpine3.23"
+    },
+    {
+     "version": "5.3.15-alpine3.24"
+    },
+    {
+     "version": "5.3.3"
+    },
+    {
+     "version": "5.3.3-alpine3.22"
+    },
+    {
+     "version": "5.3.8"
+    },
+    {
+     "version": "5.3.8-alpine3.22"
+    },
+    {
+     "version": "5.3.8-alpine3.23"
+    },
+    {
+     "version": "5.3.9"
+    },
+    {
+     "version": "5.3.9-alpine3.23"
+    },
+    {
+     "version": "alpine3.12"
+    },
+    {
+     "version": "alpine3.14"
+    },
+    {
+     "version": "alpine3.15"
+    },
+    {
+     "version": "alpine3.16"
+    },
+    {
+     "version": "alpine3.17"
+    },
+    {
+     "version": "alpine3.18"
+    },
+    {
+     "version": "alpine3.19"
+    },
+    {
+     "version": "alpine3.20"
+    },
+    {
+     "version": "alpine3.21"
+    },
+    {
+     "version": "alpine3.22"
+    },
+    {
+     "version": "alpine3.23"
+    },
+    {
+     "version": "alpine3.24"
+    },
+    {
+     "version": "devel"
+    },
+    {
+     "version": "devel-20190705"
+    },
+    {
+     "version": "devel-20190712"
+    },
+    {
+     "version": "devel-20190719"
+    },
+    {
+     "version": "devel-20190725"
+    },
+    {
+     "version": "devel-20190731"
+    },
+    {
+     "version": "devel-20190802"
+    },
+    {
+     "version": "devel-20190809"
+    },
+    {
+     "version": "devel-20190816"
+    },
+    {
+     "version": "devel-20190822"
+    },
+    {
+     "version": "devel-20190823"
+    },
+    {
+     "version": "devel-20190906"
+    },
+    {
+     "version": "devel-20190913"
+    },
+    {
+     "version": "devel-20190923"
+    },
+    {
+     "version": "devel-20190927"
+    },
+    {
+     "version": "devel-20191004"
+    },
+    {
+     "version": "devel-20191009"
+    },
+    {
+     "version": "devel-20191011"
+    },
+    {
+     "version": "devel-20191108"
+    },
+    {
+     "version": "devel-20191115"
+    },
+    {
+     "version": "devel-20191122"
+    },
+    {
+     "version": "devel-20191127"
+    },
+    {
+     "version": "devel-20191206"
+    },
+    {
+     "version": "devel-20191213"
+    },
+    {
+     "version": "devel-20191219"
+    },
+    {
+     "version": "devel-20200117"
+    },
+    {
+     "version": "devel-20200124"
+    },
+    {
+     "version": "devel-20200131"
+    },
+    {
+     "version": "devel-20200207"
+    },
+    {
+     "version": "devel-20200214"
+    },
+    {
+     "version": "devel-20200221"
+    },
+    {
+     "version": "devel-20200228"
+    },
+    {
+     "version": "devel-20200306"
+    },
+    {
+     "version": "devel-20200313"
+    },
+    {
+     "version": "devel-20200319"
+    },
+    {
+     "version": "devel-20200327"
+    },
+    {
+     "version": "devel-20200403"
+    },
+    {
+     "version": "devel-20200406"
+    },
+    {
+     "version": "devel-20200410"
+    },
+    {
+     "version": "devel-20200417"
+    },
+    {
+     "version": "devel-20200420"
+    },
+    {
+     "version": "devel-20200427"
+    },
+    {
+     "version": "devel-20200501"
+    },
+    {
+     "version": "devel-20200508"
+    },
+    {
+     "version": "devel-20200512"
+    },
+    {
+     "version": "devel-20200515"
+    },
+    {
+     "version": "devel-20200518"
+    },
+    {
+     "version": "devel-20200520"
+    },
+    {
+     "version": "devel-20200527"
+    },
+    {
+     "version": "devel-20200605"
+    },
+    {
+     "version": "devel-20200609"
+    },
+    {
+     "version": "devel-20200615"
+    },
+    {
+     "version": "devel-20200622"
+    },
+    {
+     "version": "devel-20200630"
+    },
+    {
+     "version": "devel-20200706"
+    },
+    {
+     "version": "devel-20200707"
+    },
+    {
+     "version": "devel-20200714"
+    },
+    {
+     "version": "devel-20200720"
+    },
+    {
+     "version": "devel-20200731"
+    },
+    {
+     "version": "devel-20200805"
+    },
+    {
+     "version": "devel-20200812"
+    },
+    {
+     "version": "devel-20200819"
+    },
+    {
+     "version": "devel-20200825"
+    },
+    {
+     "version": "devel-20200901"
+    },
+    {
+     "version": "devel-20200914"
+    },
+    {
+     "version": "devel-20200921"
+    },
+    {
+     "version": "devel-20200924"
+    },
+    {
+     "version": "devel-20201012"
+    },
+    {
+     "version": "devel-20201019"
+    },
+    {
+     "version": "devel-20201026"
+    },
+    {
+     "version": "devel-20201103"
+    },
+    {
+     "version": "devel-20201116"
+    },
+    {
+     "version": "devel-20201118"
+    },
+    {
+     "version": "devel-20201128"
+    },
+    {
+     "version": "devel-20201214"
+    },
+    {
+     "version": "devel-20201218"
+    },
+    {
+     "version": "devel-20201226"
+    },
+    {
+     "version": "devel-20210104"
+    },
+    {
+     "version": "devel-20210112"
+    },
+    {
+     "version": "devel-20210121"
+    },
+    {
+     "version": "devel-20210127"
+    },
+    {
+     "version": "devel-20210203"
+    },
+    {
+     "version": "devel-20210209"
+    },
+    {
+     "version": "devel-20210215"
+    },
+    {
+     "version": "devel-20210224"
+    },
+    {
+     "version": "devel-20210301"
+    },
+    {
+     "version": "devel-20210315"
+    },
+    {
+     "version": "devel-20210322"
+    },
+    {
+     "version": "devel-20210329"
+    },
+    {
+     "version": "devel-20210401"
+    },
+    {
+     "version": "devel-20210412"
+    },
+    {
+     "version": "devel-20210419"
+    },
+    {
+     "version": "devel-20210426"
+    },
+    {
+     "version": "devel-20210430"
+    },
+    {
+     "version": "devel-20210510"
+    },
+    {
+     "version": "devel-20210517"
+    },
+    {
+     "version": "devel-20210524"
+    },
+    {
+     "version": "devel-20210601"
+    },
+    {
+     "version": "devel-20210621"
+    },
+    {
+     "version": "devel-20210628"
+    },
+    {
+     "version": "devel-20210712"
+    },
+    {
+     "version": "devel-20210719"
+    },
+    {
+     "version": "devel-20210802"
+    },
+    {
+     "version": "devel-20210808"
+    },
+    {
+     "version": "devel-20210813"
+    },
+    {
+     "version": "devel-20210813-alpine3.12"
+    },
+    {
+     "version": "devel-20210823"
+    },
+    {
+     "version": "devel-20210823-alpine3.14"
+    },
+    {
+     "version": "devel-20210830"
+    },
+    {
+     "version": "devel-20210830-alpine3.14"
+    },
+    {
+     "version": "devel-20210902"
+    },
+    {
+     "version": "devel-20210902-alpine3.14"
+    },
+    {
+     "version": "devel-20210913"
+    },
+    {
+     "version": "devel-20210913-alpine3.14"
+    },
+    {
+     "version": "devel-20210920"
+    },
+    {
+     "version": "devel-20210920-alpine3.14"
+    },
+    {
+     "version": "devel-20210927"
+    },
+    {
+     "version": "devel-20210927-alpine3.14"
+    },
+    {
+     "version": "devel-20211004"
+    },
+    {
+     "version": "devel-20211004-alpine3.14"
+    },
+    {
+     "version": "devel-20211011"
+    },
+    {
+     "version": "devel-20211011-alpine3.14"
+    },
+    {
+     "version": "devel-20211018"
+    },
+    {
+     "version": "devel-20211018-alpine3.14"
+    },
+    {
+     "version": "devel-20211025"
+    },
+    {
+     "version": "devel-20211025-alpine3.14"
+    },
+    {
+     "version": "devel-20211101"
+    },
+    {
+     "version": "devel-20211101-alpine3.14"
+    },
+    {
+     "version": "devel-20211108"
+    },
+    {
+     "version": "devel-20211108-alpine3.14"
+    },
+    {
+     "version": "devel-20211122"
+    },
+    {
+     "version": "devel-20211122-alpine3.14"
+    },
+    {
+     "version": "devel-20211206"
+    },
+    {
+     "version": "devel-20211206-alpine3.14"
+    },
+    {
+     "version": "devel-20211213"
+    },
+    {
+     "version": "devel-20211213-alpine3.14"
+    },
+    {
+     "version": "devel-20211214"
+    },
+    {
+     "version": "devel-20211214-alpine3.14"
+    },
+    {
+     "version": "devel-20211222"
+    },
+    {
+     "version": "devel-20211222-alpine3.14"
+    },
+    {
+     "version": "devel-20220104"
+    },
+    {
+     "version": "devel-20220104-alpine3.14"
+    },
+    {
+     "version": "devel-20220111"
+    },
+    {
+     "version": "devel-20220111-alpine3.14"
+    },
+    {
+     "version": "devel-20220111-alpine3.15"
+    },
+    {
+     "version": "devel-20220124"
+    },
+    {
+     "version": "devel-20220124-alpine3.15"
+    },
+    {
+     "version": "devel-20220131"
+    },
+    {
+     "version": "devel-20220131-alpine3.15"
+    },
+    {
+     "version": "devel-20220221"
+    },
+    {
+     "version": "devel-20220221-alpine3.15"
+    },
+    {
+     "version": "devel-20220307"
+    },
+    {
+     "version": "devel-20220307-alpine3.15"
+    },
+    {
+     "version": "devel-20220311"
+    },
+    {
+     "version": "devel-20220311-alpine3.15"
+    },
+    {
+     "version": "devel-20220321"
+    },
+    {
+     "version": "devel-20220321-alpine3.15"
+    },
+    {
+     "version": "devel-20220325"
+    },
+    {
+     "version": "devel-20220325-alpine3.15"
+    },
+    {
+     "version": "devel-20220404"
+    },
+    {
+     "version": "devel-20220404-alpine3.15"
+    },
+    {
+     "version": "devel-20220408"
+    },
+    {
+     "version": "devel-20220408-alpine3.15"
+    },
+    {
+     "version": "devel-20220412"
+    },
+    {
+     "version": "devel-20220412-alpine3.15"
+    },
+    {
+     "version": "devel-20220419"
+    },
+    {
+     "version": "devel-20220419-alpine3.15"
+    },
+    {
+     "version": "devel-20220427"
+    },
+    {
+     "version": "devel-20220427-alpine3.15"
+    },
+    {
+     "version": "devel-20220503"
+    },
+    {
+     "version": "devel-20220503-alpine3.15"
+    },
+    {
+     "version": "devel-20220518"
+    },
+    {
+     "version": "devel-20220518-alpine3.15"
+    },
+    {
+     "version": "devel-20220603"
+    },
+    {
+     "version": "devel-20220603-alpine3.15"
+    },
+    {
+     "version": "devel-20220607"
+    },
+    {
+     "version": "devel-20220607-alpine3.15"
+    },
+    {
+     "version": "devel-20220614"
+    },
+    {
+     "version": "devel-20220614-alpine3.15"
+    },
+    {
+     "version": "devel-20220622"
+    },
+    {
+     "version": "devel-20220622-alpine3.15"
+    },
+    {
+     "version": "devel-20220628"
+    },
+    {
+     "version": "devel-20220628-alpine3.15"
+    },
+    {
+     "version": "devel-20220706"
+    },
+    {
+     "version": "devel-20220706-alpine3.15"
+    },
+    {
+     "version": "devel-20220712"
+    },
+    {
+     "version": "devel-20220712-alpine3.15"
+    },
+    {
+     "version": "devel-20220719"
+    },
+    {
+     "version": "devel-20220719-alpine3.15"
+    },
+    {
+     "version": "devel-20220726"
+    },
+    {
+     "version": "devel-20220726-alpine3.15"
+    },
+    {
+     "version": "devel-20220802"
+    },
+    {
+     "version": "devel-20220802-alpine3.15"
+    },
+    {
+     "version": "devel-20220815"
+    },
+    {
+     "version": "devel-20220815-alpine3.15"
+    },
+    {
+     "version": "devel-20220823"
+    },
+    {
+     "version": "devel-20220823-alpine3.15"
+    },
+    {
+     "version": "devel-20220901"
+    },
+    {
+     "version": "devel-20220901-alpine3.15"
+    },
+    {
+     "version": "devel-20220923"
+    },
+    {
+     "version": "devel-20220923-alpine3.15"
+    },
+    {
+     "version": "devel-20220928"
+    },
+    {
+     "version": "devel-20220928-alpine3.15"
+    },
+    {
+     "version": "devel-20221007"
+    },
+    {
+     "version": "devel-20221007-alpine3.15"
+    },
+    {
+     "version": "devel-20221015"
+    },
+    {
+     "version": "devel-20221015-alpine3.15"
+    },
+    {
+     "version": "devel-20221024"
+    },
+    {
+     "version": "devel-20221024-alpine3.15"
+    },
+    {
+     "version": "devel-20221031"
+    },
+    {
+     "version": "devel-20221031-alpine3.15"
+    },
+    {
+     "version": "devel-20221107"
+    },
+    {
+     "version": "devel-20221107-alpine3.15"
+    },
+    {
+     "version": "devel-20221107-alpine3.16"
+    },
+    {
+     "version": "devel-20221114"
+    },
+    {
+     "version": "devel-20221114-alpine3.16"
+    },
+    {
+     "version": "devel-20221121"
+    },
+    {
+     "version": "devel-20221121-alpine3.16"
+    },
+    {
+     "version": "devel-20221123"
+    },
+    {
+     "version": "devel-20221123-alpine3.16"
+    },
+    {
+     "version": "devel-20221202"
+    },
+    {
+     "version": "devel-20221202-alpine3.16"
+    },
+    {
+     "version": "devel-20221206"
+    },
+    {
+     "version": "devel-20221206-alpine3.16"
+    },
+    {
+     "version": "devel-20221219"
+    },
+    {
+     "version": "devel-20221219-alpine3.16"
+    },
+    {
+     "version": "devel-20221221"
+    },
+    {
+     "version": "devel-20221221-alpine3.16"
+    },
+    {
+     "version": "devel-20230107"
+    },
+    {
+     "version": "devel-20230107-alpine3.16"
+    },
+    {
+     "version": "devel-20230110"
+    },
+    {
+     "version": "devel-20230110-alpine3.16"
+    },
+    {
+     "version": "devel-20230120"
+    },
+    {
+     "version": "devel-20230120-alpine3.16"
+    },
+    {
+     "version": "devel-20230124"
+    },
+    {
+     "version": "devel-20230124-alpine3.16"
+    },
+    {
+     "version": "devel-20230206"
+    },
+    {
+     "version": "devel-20230206-alpine3.16"
+    },
+    {
+     "version": "devel-20230213"
+    },
+    {
+     "version": "devel-20230213-alpine3.16"
+    },
+    {
+     "version": "devel-20230220"
+    },
+    {
+     "version": "devel-20230220-alpine3.16"
+    },
+    {
+     "version": "devel-20230227"
+    },
+    {
+     "version": "devel-20230227-alpine3.16"
+    },
+    {
+     "version": "devel-20230306"
+    },
+    {
+     "version": "devel-20230306-alpine3.16"
+    },
+    {
+     "version": "devel-20230313"
+    },
+    {
+     "version": "devel-20230313-alpine3.16"
+    },
+    {
+     "version": "devel-20230320"
+    },
+    {
+     "version": "devel-20230320-alpine3.16"
+    },
+    {
+     "version": "devel-20230327"
+    },
+    {
+     "version": "devel-20230327-alpine3.16"
+    },
+    {
+     "version": "devel-20230327-alpine3.17"
+    },
+    {
+     "version": "devel-20230403"
+    },
+    {
+     "version": "devel-20230403-alpine3.17"
+    },
+    {
+     "version": "devel-20230405"
+    },
+    {
+     "version": "devel-20230405-alpine3.17"
+    },
+    {
+     "version": "devel-20230501"
+    },
+    {
+     "version": "devel-20230501-alpine3.17"
+    },
+    {
+     "version": "devel-20230504"
+    },
+    {
+     "version": "devel-20230504-alpine3.18"
+    },
+    {
+     "version": "devel-20230515"
+    },
+    {
+     "version": "devel-20230515-alpine3.18"
+    },
+    {
+     "version": "devel-20230522"
+    },
+    {
+     "version": "devel-20230522-alpine3.18"
+    },
+    {
+     "version": "devel-20230526"
+    },
+    {
+     "version": "devel-20230526-alpine3.18"
+    },
+    {
+     "version": "devel-20230603"
+    },
+    {
+     "version": "devel-20230603-alpine3.18"
+    },
+    {
+     "version": "devel-20230612"
+    },
+    {
+     "version": "devel-20230612-alpine3.18"
+    },
+    {
+     "version": "devel-20230616"
+    },
+    {
+     "version": "devel-20230616-alpine3.18"
+    },
+    {
+     "version": "devel-20230626"
+    },
+    {
+     "version": "devel-20230626-alpine3.18"
+    },
+    {
+     "version": "devel-20230703"
+    },
+    {
+     "version": "devel-20230703-alpine3.18"
+    },
+    {
+     "version": "devel-20230710"
+    },
+    {
+     "version": "devel-20230710-alpine3.18"
+    },
+    {
+     "version": "devel-20230717"
+    },
+    {
+     "version": "devel-20230717-alpine3.18"
+    },
+    {
+     "version": "devel-20230719"
+    },
+    {
+     "version": "devel-20230719-alpine3.18"
+    },
+    {
+     "version": "devel-20230728"
+    },
+    {
+     "version": "devel-20230728-alpine3.18"
+    },
+    {
+     "version": "devel-20230804"
+    },
+    {
+     "version": "devel-20230804-alpine3.18"
+    },
+    {
+     "version": "devel-20230814"
+    },
+    {
+     "version": "devel-20230814-alpine3.18"
+    },
+    {
+     "version": "devel-20230818"
+    },
+    {
+     "version": "devel-20230818-alpine3.18"
+    },
+    {
+     "version": "devel-20230828"
+    },
+    {
+     "version": "devel-20230828-alpine3.18"
+    },
+    {
+     "version": "devel-20230911"
+    },
+    {
+     "version": "devel-20230911-alpine3.18"
+    },
+    {
+     "version": "devel-20230913"
+    },
+    {
+     "version": "devel-20230913-alpine3.18"
+    },
+    {
+     "version": "devel-20230925"
+    },
+    {
+     "version": "devel-20230925-alpine3.18"
+    },
+    {
+     "version": "devel-20230928"
+    },
+    {
+     "version": "devel-20230928-alpine3.18"
+    },
+    {
+     "version": "devel-20231005"
+    },
+    {
+     "version": "devel-20231005-alpine3.18"
+    },
+    {
+     "version": "devel-20231011"
+    },
+    {
+     "version": "devel-20231011-alpine3.18"
+    },
+    {
+     "version": "devel-20231023"
+    },
+    {
+     "version": "devel-20231023-alpine3.18"
+    },
+    {
+     "version": "devel-20231030"
+    },
+    {
+     "version": "devel-20231030-alpine3.18"
+    },
+    {
+     "version": "devel-20231106"
+    },
+    {
+     "version": "devel-20231106-alpine3.18"
+    },
+    {
+     "version": "devel-20231124"
+    },
+    {
+     "version": "devel-20231124-alpine3.18"
+    },
+    {
+     "version": "devel-20231125"
+    },
+    {
+     "version": "devel-20231125-alpine3.18"
+    },
+    {
+     "version": "devel-20231204"
+    },
+    {
+     "version": "devel-20231204-alpine3.18"
+    },
+    {
+     "version": "devel-20231204-alpine3.19"
+    },
+    {
+     "version": "devel-20231205"
+    },
+    {
+     "version": "devel-20231205-alpine3.19"
+    },
+    {
+     "version": "devel-20231213"
+    },
+    {
+     "version": "devel-20231213-alpine3.19"
+    },
+    {
+     "version": "devel-20231219"
+    },
+    {
+     "version": "devel-20231219-alpine3.19"
+    },
+    {
+     "version": "devel-20240102"
+    },
+    {
+     "version": "devel-20240102-alpine3.19"
+    },
+    {
+     "version": "devel-20240114"
+    },
+    {
+     "version": "devel-20240114-alpine3.19"
+    },
+    {
+     "version": "devel-20240119"
+    },
+    {
+     "version": "devel-20240119-alpine3.19"
+    },
+    {
+     "version": "devel-20240127"
+    },
+    {
+     "version": "devel-20240127-alpine3.19"
+    },
+    {
+     "version": "devel-20240202"
+    },
+    {
+     "version": "devel-20240202-alpine3.19"
+    },
+    {
+     "version": "devel-20240209"
+    },
+    {
+     "version": "devel-20240209-alpine3.19"
+    },
+    {
+     "version": "devel-20240216"
+    },
+    {
+     "version": "devel-20240216-alpine3.19"
+    },
+    {
+     "version": "devel-20240221"
+    },
+    {
+     "version": "devel-20240221-alpine3.19"
+    },
+    {
+     "version": "devel-20240304"
+    },
+    {
+     "version": "devel-20240304-alpine3.19"
+    },
+    {
+     "version": "devel-20240318"
+    },
+    {
+     "version": "devel-20240318-alpine3.19"
+    },
+    {
+     "version": "devel-20240325"
+    },
+    {
+     "version": "devel-20240325-alpine3.19"
+    },
+    {
+     "version": "devel-20240401"
+    },
+    {
+     "version": "devel-20240401-alpine3.19"
+    },
+    {
+     "version": "devel-20240406"
+    },
+    {
+     "version": "devel-20240406-alpine3.19"
+    },
+    {
+     "version": "devel-20240415"
+    },
+    {
+     "version": "devel-20240415-alpine3.19"
+    },
+    {
+     "version": "devel-20240422"
+    },
+    {
+     "version": "devel-20240422-alpine3.19"
+    },
+    {
+     "version": "devel-20240426"
+    },
+    {
+     "version": "devel-20240426-alpine3.19"
+    },
+    {
+     "version": "devel-20240506"
+    },
+    {
+     "version": "devel-20240506-alpine3.19"
+    },
+    {
+     "version": "devel-20240513"
+    },
+    {
+     "version": "devel-20240513-alpine3.19"
+    },
+    {
+     "version": "devel-20240520"
+    },
+    {
+     "version": "devel-20240520-alpine3.19"
+    },
+    {
+     "version": "devel-20240520-alpine3.20"
+    },
+    {
+     "version": "devel-20240603"
+    },
+    {
+     "version": "devel-20240603-alpine3.20"
+    },
+    {
+     "version": "devel-20240604"
+    },
+    {
+     "version": "devel-20240604-alpine3.20"
+    },
+    {
+     "version": "devel-20240621"
+    },
+    {
+     "version": "devel-20240621-alpine3.20"
+    },
+    {
+     "version": "devel-20240628"
+    },
+    {
+     "version": "devel-20240628-alpine3.20"
+    },
+    {
+     "version": "devel-20240706"
+    },
+    {
+     "version": "devel-20240706-alpine3.20"
+    },
+    {
+     "version": "devel-20240711"
+    },
+    {
+     "version": "devel-20240711-alpine3.20"
+    },
+    {
+     "version": "devel-20240718"
+    },
+    {
+     "version": "devel-20240718-alpine3.20"
+    },
+    {
+     "version": "devel-20240726"
+    },
+    {
+     "version": "devel-20240726-alpine3.20"
+    },
+    {
+     "version": "devel-20240730"
+    },
+    {
+     "version": "devel-20240730-alpine3.20"
+    },
+    {
+     "version": "devel-20240809"
+    },
+    {
+     "version": "devel-20240809-alpine3.20"
+    },
+    {
+     "version": "devel-20240815"
+    },
+    {
+     "version": "devel-20240815-alpine3.20"
+    },
+    {
+     "version": "devel-20240823"
+    },
+    {
+     "version": "devel-20240823-alpine3.20"
+    },
+    {
+     "version": "devel-20240828"
+    },
+    {
+     "version": "devel-20240828-alpine3.20"
+    },
+    {
+     "version": "devel-20240904"
+    },
+    {
+     "version": "devel-20240904-alpine3.20"
+    },
+    {
+     "version": "devel-20240911"
+    },
+    {
+     "version": "devel-20240911-alpine3.20"
+    },
+    {
+     "version": "devel-20240920"
+    },
+    {
+     "version": "devel-20240920-alpine3.20"
+    },
+    {
+     "version": "devel-20240927"
+    },
+    {
+     "version": "devel-20240927-alpine3.20"
+    },
+    {
+     "version": "devel-20241012"
+    },
+    {
+     "version": "devel-20241012-alpine3.20"
+    },
+    {
+     "version": "devel-20241018"
+    },
+    {
+     "version": "devel-20241018-alpine3.20"
+    },
+    {
+     "version": "devel-20241028"
+    },
+    {
+     "version": "devel-20241028-alpine3.20"
+    },
+    {
+     "version": "devel-20241104"
+    },
+    {
+     "version": "devel-20241104-alpine3.20"
+    },
+    {
+     "version": "devel-20241108"
+    },
+    {
+     "version": "devel-20241108-alpine3.20"
+    },
+    {
+     "version": "devel-20241115"
+    },
+    {
+     "version": "devel-20241115-alpine3.20"
+    },
+    {
+     "version": "devel-20241121"
+    },
+    {
+     "version": "devel-20241121-alpine3.20"
+    },
+    {
+     "version": "devel-20241126"
+    },
+    {
+     "version": "devel-20241126-alpine3.20"
+    },
+    {
+     "version": "devel-20241126-alpine3.21"
+    },
+    {
+     "version": "devel-20241213"
+    },
+    {
+     "version": "devel-20241213-alpine3.21"
+    },
+    {
+     "version": "devel-20241230"
+    },
+    {
+     "version": "devel-20241230-alpine3.21"
+    },
+    {
+     "version": "devel-20250109"
+    },
+    {
+     "version": "devel-20250109-alpine3.21"
+    },
+    {
+     "version": "devel-20250117"
+    },
+    {
+     "version": "devel-20250117-alpine3.21"
+    },
+    {
+     "version": "devel-20250124"
+    },
+    {
+     "version": "devel-20250124-alpine3.21"
+    },
+    {
+     "version": "devel-20250128"
+    },
+    {
+     "version": "devel-20250128-alpine3.21"
+    },
+    {
+     "version": "devel-20250210"
+    },
+    {
+     "version": "devel-20250210-alpine3.21"
+    },
+    {
+     "version": "devel-20250212"
+    },
+    {
+     "version": "devel-20250212-alpine3.21"
+    },
+    {
+     "version": "devel-20250224"
+    },
+    {
+     "version": "devel-20250224-alpine3.21"
+    },
+    {
+     "version": "devel-20250307"
+    },
+    {
+     "version": "devel-20250307-alpine3.21"
+    },
+    {
+     "version": "devel-20250324"
+    },
+    {
+     "version": "devel-20250324-alpine3.21"
+    },
+    {
+     "version": "devel-20250331"
+    },
+    {
+     "version": "devel-20250331-alpine3.21"
+    },
+    {
+     "version": "devel-20250404"
+    },
+    {
+     "version": "devel-20250404-alpine3.21"
+    },
+    {
+     "version": "devel-20250409"
+    },
+    {
+     "version": "devel-20250409-alpine3.21"
+    },
+    {
+     "version": "devel-20250418"
+    },
+    {
+     "version": "devel-20250418-alpine3.21"
+    },
+    {
+     "version": "devel-20250422"
+    },
+    {
+     "version": "devel-20250422-alpine3.21"
+    },
+    {
+     "version": "devel-20250504"
+    },
+    {
+     "version": "devel-20250504-alpine3.21"
+    },
+    {
+     "version": "devel-20250519"
+    },
+    {
+     "version": "devel-20250519-alpine3.21"
+    },
+    {
+     "version": "devel-20250519-alpine3.22"
+    },
+    {
+     "version": "devel-20250530"
+    },
+    {
+     "version": "devel-20250530-alpine3.22"
+    },
+    {
+     "version": "devel-20250606"
+    },
+    {
+     "version": "devel-20250606-alpine3.22"
+    },
+    {
+     "version": "devel-20250616"
+    },
+    {
+     "version": "devel-20250616-alpine3.22"
+    },
+    {
+     "version": "devel-20250627"
+    },
+    {
+     "version": "devel-20250627-alpine3.22"
+    },
+    {
+     "version": "devel-20250711"
+    },
+    {
+     "version": "devel-20250711-alpine3.22"
+    },
+    {
+     "version": "devel-20250718"
+    },
+    {
+     "version": "devel-20250718-alpine3.22"
+    },
+    {
+     "version": "devel-20250804"
+    },
+    {
+     "version": "devel-20250804-alpine3.22"
+    },
+    {
+     "version": "devel-20250808"
+    },
+    {
+     "version": "devel-20250808-alpine3.22"
+    },
+    {
+     "version": "devel-20250814"
+    },
+    {
+     "version": "devel-20250814-alpine3.22"
+    },
+    {
+     "version": "devel-20250822"
+    },
+    {
+     "version": "devel-20250822-alpine3.22"
+    },
+    {
+     "version": "devel-20250904"
+    },
+    {
+     "version": "devel-20250904-alpine3.22"
+    },
+    {
+     "version": "devel-20250918"
+    },
+    {
+     "version": "devel-20250918-alpine3.22"
+    },
+    {
+     "version": "devel-20251006"
+    },
+    {
+     "version": "devel-20251006-alpine3.22"
+    },
+    {
+     "version": "devel-20251017"
+    },
+    {
+     "version": "devel-20251017-alpine3.22"
+    },
+    {
+     "version": "devel-20251027"
+    },
+    {
+     "version": "devel-20251027-alpine3.22"
+    },
+    {
+     "version": "devel-20251124"
+    },
+    {
+     "version": "devel-20251124-alpine3.22"
+    },
+    {
+     "version": "devel-20251124-alpine3.23"
+    },
+    {
+     "version": "devel-20251205"
+    },
+    {
+     "version": "devel-20251205-alpine3.23"
+    },
+    {
+     "version": "devel-20251217"
+    },
+    {
+     "version": "devel-20251217-alpine3.23"
+    },
+    {
+     "version": "devel-20260105"
+    },
+    {
+     "version": "devel-20260105-alpine3.23"
+    },
+    {
+     "version": "devel-20260106"
+    },
+    {
+     "version": "devel-20260106-alpine3.23"
+    },
+    {
+     "version": "devel-20260118"
+    },
+    {
+     "version": "devel-20260118-alpine3.23"
+    },
+    {
+     "version": "devel-20260123"
+    },
+    {
+     "version": "devel-20260123-alpine3.23"
+    },
+    {
+     "version": "devel-20260130"
+    },
+    {
+     "version": "devel-20260130-alpine3.23"
+    },
+    {
+     "version": "devel-20260209"
+    },
+    {
+     "version": "devel-20260209-alpine3.23"
+    },
+    {
+     "version": "devel-20260217"
+    },
+    {
+     "version": "devel-20260217-alpine3.23"
+    },
+    {
+     "version": "devel-20260309"
+    },
+    {
+     "version": "devel-20260309-alpine3.23"
+    },
+    {
+     "version": "devel-20260324"
+    },
+    {
+     "version": "devel-20260324-alpine3.23"
+    },
+    {
+     "version": "devel-20260402"
+    },
+    {
+     "version": "devel-20260402-alpine3.23"
+    },
+    {
+     "version": "devel-20260428"
+    },
+    {
+     "version": "devel-20260428-alpine3.23"
+    },
+    {
+     "version": "devel-20260508"
+    },
+    {
+     "version": "devel-20260508-alpine3.23"
+    },
+    {
+     "version": "devel-20260520"
+    },
+    {
+     "version": "devel-20260520-alpine3.23"
+    },
+    {
+     "version": "devel-20260608"
+    },
+    {
+     "version": "devel-20260608-alpine3.23"
+    },
+    {
+     "version": "devel-20260608-alpine3.24"
+    },
+    {
+     "version": "devel-20260701"
+    },
+    {
+     "version": "devel-20260701-alpine3.24"
+    },
+    {
+     "version": "devel-20260817"
+    },
+    {
+     "version": "devel-20260817-alpine3.24"
+    },
+    {
+     "version": "devel-20260821"
+    },
+    {
+     "version": "devel-20260821-alpine3.24"
+    },
+    {
+     "version": "devel-20260828"
+    },
+    {
+     "version": "devel-20260828-alpine3.24"
+    },
+    {
+     "version": "devel-alpine3.12"
+    },
+    {
+     "version": "devel-alpine3.14"
+    },
+    {
+     "version": "devel-alpine3.15"
+    },
+    {
+     "version": "devel-alpine3.16"
+    },
+    {
+     "version": "devel-alpine3.17"
+    },
+    {
+     "version": "devel-alpine3.18"
+    },
+    {
+     "version": "devel-alpine3.19"
+    },
+    {
+     "version": "devel-alpine3.20"
+    },
+    {
+     "version": "devel-alpine3.21"
+    },
+    {
+     "version": "devel-alpine3.22"
+    },
+    {
+     "version": "devel-alpine3.23"
+    },
+    {
+     "version": "devel-alpine3.24"
+    },
+    {
+     "version": "latest"
+    },
+    {
+     "version": "rc"
+    },
+    {
+     "version": "rc-alpine3.15"
+    },
+    {
+     "version": "rc-alpine3.19"
+    },
+    {
+     "version": "rc-alpine3.20"
+    },
+    {
+     "version": "rc-alpine3.21"
+    },
+    {
+     "version": "rc-alpine3.22"
+    }
+   ]
+  },
+  "github-releases\u0000hashicorp/terraform\u0000": {
+   "packageName": "hashicorp/terraform",
+   "datasource": "github-releases",
+   "registryUrl": "https://api.github.com",
+   "releases": [
+    {
+     "version": "v1.17.0-beta1",
+     "timestamp": "2026-09-09T17:13:24Z"
+    },
+    {
+     "version": "v1.16.2",
+     "timestamp": "2026-09-09T13:22:31Z"
+    },
+    {
+     "version": "v1.16.1",
+     "timestamp": "2026-09-02T14:49:32Z"
+    },
+    {
+     "version": "v1.17.0-alpha20260827",
+     "timestamp": "2026-08-27T10:30:11Z"
+    },
+    {
+     "version": "v1.16.0",
+     "timestamp": "2026-08-26T13:05:28Z"
+    },
+    {
+     "version": "v1.16.0-rc2",
+     "timestamp": "2026-08-19T12:08:45Z"
+    },
+    {
+     "version": "v1.15.9",
+     "timestamp": "2026-08-19T14:29:32Z"
+    },
+    {
+     "version": "v1.17.0-alpha20260812",
+     "timestamp": "2026-08-12T12:01:24Z"
+    },
+    {
+     "version": "v1.16.0-rc1",
+     "timestamp": "2026-08-12T15:22:32Z"
+    },
+    {
+     "version": "v1.16.0-beta2",
+     "timestamp": "2026-08-05T18:07:50Z"
+    },
+    {
+     "version": "v1.17.0-alpha20260729",
+     "timestamp": "2026-07-29T19:38:27Z"
+    },
+    {
+     "version": "v1.16.0-beta1",
+     "timestamp": "2026-07-23T16:51:01Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260715",
+     "timestamp": "2026-07-15T12:44:36Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260708",
+     "timestamp": "2026-07-08T09:19:38Z"
+    },
+    {
+     "version": "v1.15.8",
+     "timestamp": "2026-07-08T17:45:09Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260706",
+     "timestamp": "2026-07-06T14:49:07Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260701",
+     "timestamp": "2026-07-01T19:49:44Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260626",
+     "timestamp": "2026-06-26T09:03:31Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260624",
+     "timestamp": "2026-06-24T14:07:22Z"
+    },
+    {
+     "version": "v1.15.7",
+     "timestamp": "2026-06-24T16:47:12Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260617",
+     "timestamp": "2026-06-17T14:07:50Z"
+    },
+    {
+     "version": "v1.15.6",
+     "timestamp": "2026-06-10T11:52:20Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260603",
+     "timestamp": "2026-06-03T13:24:07Z"
+    },
+    {
+     "version": "v1.15.5",
+     "timestamp": "2026-05-27T14:52:52Z"
+    },
+    {
+     "version": "v1.15.4",
+     "timestamp": "2026-05-20T16:52:18Z"
+    },
+    {
+     "version": "v1.16.0-alpha20260513",
+     "timestamp": "2026-05-13T12:10:09Z"
+    },
+    {
+     "version": "v1.15.3",
+     "timestamp": "2026-05-13T09:58:43Z"
+    },
+    {
+     "version": "v1.15.2",
+     "timestamp": "2026-05-06T13:56:22Z"
+    },
+    {
+     "version": "v1.15.1",
+     "timestamp": "2026-05-01T16:43:30Z"
+    },
+    {
+     "version": "v1.15.0",
+     "timestamp": "2026-04-29T14:05:34Z"
+    },
+    {
+     "version": "v1.15.0-rc4",
+     "timestamp": "2026-04-28T17:58:50Z"
+    },
+    {
+     "version": "v1.15.0-rc3",
+     "timestamp": "2026-04-22T13:59:48Z"
+    },
+    {
+     "version": "v1.14.9",
+     "timestamp": "2026-04-20T18:46:26Z"
+    },
+    {
+     "version": "v1.15.0-rc2",
+     "timestamp": "2026-04-15T12:30:45Z"
+    },
+    {
+     "version": "v1.15.0-rc1",
+     "timestamp": "2026-04-09T13:59:34Z"
+    },
+    {
+     "version": "v1.15.0-beta2",
+     "timestamp": "2026-04-01T13:26:31Z"
+    },
+    {
+     "version": "v1.14.8",
+     "timestamp": "2026-03-25T07:56:42Z"
+    },
+    {
+     "version": "v1.15.0-beta1",
+     "timestamp": "2026-03-18T17:26:18Z"
+    },
+    {
+     "version": "v1.14.7",
+     "timestamp": "2026-03-11T14:14:31Z"
+    },
+    {
+     "version": "v1.15.0-alpha20260304",
+     "timestamp": "2026-03-04T13:01:42Z"
+    },
+    {
+     "version": "v1.14.6",
+     "timestamp": "2026-02-25T14:16:02Z"
+    },
+    {
+     "version": "v1.15.0-alpha20260218",
+     "timestamp": "2026-02-18T15:05:59Z"
+    },
+    {
+     "version": "v1.14.5",
+     "timestamp": "2026-02-11T15:57:11Z"
+    },
+    {
+     "version": "v1.15.0-alpha20260204",
+     "timestamp": "2026-02-04T11:09:29Z"
+    },
+    {
+     "version": "v1.14.4",
+     "timestamp": "2026-01-28T11:07:12Z"
+    },
+    {
+     "version": "v1.14.3",
+     "timestamp": "2025-12-17T11:53:08Z"
+    },
+    {
+     "version": "v1.14.2",
+     "timestamp": "2025-12-11T12:47:33Z"
+    },
+    {
+     "version": "v1.15.0-alpha20251203",
+     "timestamp": "2025-12-03T15:05:36Z"
+    },
+    {
+     "version": "v1.14.1",
+     "timestamp": "2025-12-03T11:58:24Z"
+    },
+    {
+     "version": "v1.15.0-alpha20251119",
+     "timestamp": "2025-11-19T19:06:41Z"
+    },
+    {
+     "version": "v1.14.0",
+     "timestamp": "2025-11-19T14:17:22Z"
+    },
+    {
+     "version": "v1.14.0-rc2",
+     "timestamp": "2025-11-05T13:51:00Z"
+    },
+    {
+     "version": "v1.13.5",
+     "timestamp": "2025-11-05T11:42:10Z"
+    },
+    {
+     "version": "v1.14.0-rc1",
+     "timestamp": "2025-10-23T07:36:28Z"
+    },
+    {
+     "version": "v1.14.0-beta3",
+     "timestamp": "2025-10-15T13:22:08Z"
+    },
+    {
+     "version": "v1.13.4",
+     "timestamp": "2025-10-15T10:43:39Z"
+    },
+    {
+     "version": "v1.14.0-beta2",
+     "timestamp": "2025-09-25T14:04:09Z"
+    },
+    {
+     "version": "v1.14.0-beta1",
+     "timestamp": "2025-09-18T12:16:52Z"
+    },
+    {
+     "version": "v1.13.3",
+     "timestamp": "2025-09-17T13:40:26Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250911",
+     "timestamp": "2025-09-11T08:23:44Z"
+    },
+    {
+     "version": "v1.13.2",
+     "timestamp": "2025-09-10T14:10:50Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250903",
+     "timestamp": "2025-09-03T11:07:03Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250827",
+     "timestamp": "2025-08-27T13:20:07Z"
+    },
+    {
+     "version": "v1.13.1",
+     "timestamp": "2025-08-27T11:50:42Z"
+    },
+    {
+     "version": "v1.13.0",
+     "timestamp": "2025-08-20T16:22:54Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250813",
+     "timestamp": "2025-08-13T13:03:50Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250806",
+     "timestamp": "2025-08-06T15:38:49Z"
+    },
+    {
+     "version": "v1.13.0-rc1",
+     "timestamp": "2025-08-06T13:25:15Z"
+    },
+    {
+     "version": "v1.13.0-beta3",
+     "timestamp": "2025-07-30T13:09:06Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250724",
+     "timestamp": "2025-07-24T11:50:39Z"
+    },
+    {
+     "version": "v1.13.0-beta2",
+     "timestamp": "2025-07-23T13:05:03Z"
+    },
+    {
+     "version": "v1.14.0-alpha20250716",
+     "timestamp": "2025-07-16T10:51:43Z"
+    },
+    {
+     "version": "v1.13.0-beta1",
+     "timestamp": "2025-07-09T14:03:35Z"
+    },
+    {
+     "version": "v1.13.0-alpha20250708",
+     "timestamp": "2025-07-08T12:30:08Z"
+    },
+    {
+     "version": "v1.13.0-alpha20250702",
+     "timestamp": "2025-07-02T08:27:29Z"
+    },
+    {
+     "version": "v1.13.0-alpha20250623",
+     "timestamp": "2025-06-23T08:39:18Z"
+    },
+    {
+     "version": "v1.12.2",
+     "timestamp": "2025-06-11T11:02:09Z"
+    },
+    {
+     "version": "v1.13.0-alpha20250604",
+     "timestamp": "2025-06-04T10:15:29Z"
+    },
+    {
+     "version": "v1.13.0-alpha20250521",
+     "timestamp": "2025-05-21T13:50:55Z"
+    },
+    {
+     "version": "v1.12.1",
+     "timestamp": "2025-05-21T13:02:01Z"
+    },
+    {
+     "version": "v1.12.0",
+     "timestamp": "2025-05-14T15:15:45Z"
+    },
+    {
+     "version": "v1.12.0-rc2",
+     "timestamp": "2025-05-07T16:17:11Z"
+    },
+    {
+     "version": "v1.12.0-rc1",
+     "timestamp": "2025-04-30T14:37:17Z"
+    },
+    {
+     "version": "v1.12.0-beta3",
+     "timestamp": "2025-04-23T11:21:01Z"
+    },
+    {
+     "version": "v1.12.0-beta2",
+     "timestamp": "2025-04-16T09:21:34Z"
+    },
+    {
+     "version": "v1.11.4",
+     "timestamp": "2025-04-09T14:06:49Z"
+    },
+    {
+     "version": "v1.12.0-beta1",
+     "timestamp": "2025-04-02T13:46:54Z"
+    },
+    {
+     "version": "v1.11.3",
+     "timestamp": "2025-03-26T14:22:41Z"
+    },
+    {
+     "version": "v1.12.0-alpha20250319",
+     "timestamp": "2025-03-19T19:55:59Z"
+    },
+    {
+     "version": "v1.12.0-alpha20250312",
+     "timestamp": "2025-03-12T16:28:46Z"
+    },
+    {
+     "version": "v1.11.2",
+     "timestamp": "2025-03-12T13:16:03Z"
+    },
+    {
+     "version": "v1.11.1",
+     "timestamp": "2025-03-05T13:03:49Z"
+    },
+    {
+     "version": "v1.11.0",
+     "timestamp": "2025-02-27T13:26:05Z"
+    },
+    {
+     "version": "v1.11.0-rc3",
+     "timestamp": "2025-02-21T08:48:47Z"
+    },
+    {
+     "version": "v1.11.0-rc2",
+     "timestamp": "2025-02-19T13:26:38Z"
+    },
+    {
+     "version": "v1.12.0-alpha20250213",
+     "timestamp": "2025-02-13T12:27:16Z"
+    },
+    {
+     "version": "v1.11.0-rc1",
+     "timestamp": "2025-02-12T13:15:06Z"
+    },
+    {
+     "version": "v1.11.0-beta2",
+     "timestamp": "2025-02-05T11:07:24Z"
+    },
+    {
+     "version": "v1.10.5",
+     "timestamp": "2025-01-22T18:40:46Z"
+    },
+    {
+     "version": "v1.11.0-beta1",
+     "timestamp": "2025-01-16T15:36:33Z"
+    },
+    {
+     "version": "v1.10.4",
+     "timestamp": "2025-01-08T11:24:22Z"
+    },
+    {
+     "version": "v1.11.0-alpha20250107",
+     "timestamp": "2025-01-07T12:23:28Z"
+    },
+    {
+     "version": "v1.11.0-alpha20241218",
+     "timestamp": "2024-12-18T13:42:58Z"
+    },
+    {
+     "version": "v1.10.3",
+     "timestamp": "2024-12-18T12:34:50Z"
+    },
+    {
+     "version": "v1.11.0-alpha20241211",
+     "timestamp": "2024-12-11T11:55:32Z"
+    },
+    {
+     "version": "v1.10.2",
+     "timestamp": "2024-12-11T12:34:24Z"
+    },
+    {
+     "version": "v1.10.1",
+     "timestamp": "2024-12-04T11:25:33Z"
+    },
+    {
+     "version": "v1.10.0",
+     "timestamp": "2024-11-27T09:49:03Z"
+    },
+    {
+     "version": "v1.10.0-rc3",
+     "timestamp": "2024-11-25T17:12:41Z"
+    },
+    {
+     "version": "v1.10.0-rc2",
+     "timestamp": "2024-11-20T19:47:08Z"
+    },
+    {
+     "version": "v1.10.0-rc1",
+     "timestamp": "2024-11-13T17:30:21Z"
+    },
+    {
+     "version": "v1.11.0-alpha20241106",
+     "timestamp": "2024-11-06T13:50:33Z"
+    },
+    {
+     "version": "v1.10.0-beta1",
+     "timestamp": "2024-10-31T16:41:47Z"
+    },
+    {
+     "version": "v1.10.0-alpha20241023",
+     "timestamp": "2024-10-23T13:11:54Z"
+    },
+    {
+     "version": "v1.9.8",
+     "timestamp": "2024-10-16T14:25:20Z"
+    },
+    {
+     "version": "v1.10.0-alpha20241009",
+     "timestamp": "2024-10-09T16:31:11Z"
+    },
+    {
+     "version": "v1.9.7",
+     "timestamp": "2024-10-02T17:50:03Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240926",
+     "timestamp": "2024-09-26T10:52:31Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240918",
+     "timestamp": "2024-09-18T13:19:46Z"
+    },
+    {
+     "version": "v1.9.6",
+     "timestamp": "2024-09-18T08:34:32Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240911",
+     "timestamp": "2024-09-11T13:16:36Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240828",
+     "timestamp": "2024-08-28T12:53:26Z"
+    },
+    {
+     "version": "v1.9.5",
+     "timestamp": "2024-08-20T18:07:19Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240814",
+     "timestamp": "2024-08-14T11:48:30Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240807",
+     "timestamp": "2024-08-07T07:56:52Z"
+    },
+    {
+     "version": "v1.9.4",
+     "timestamp": "2024-08-07T07:27:54Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240730",
+     "timestamp": "2024-07-30T14:36:12Z"
+    },
+    {
+     "version": "v1.9.3",
+     "timestamp": "2024-07-24T19:08:29Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240717",
+     "timestamp": "2024-07-17T09:35:16Z"
+    },
+    {
+     "version": "v1.9.2",
+     "timestamp": "2024-07-10T11:18:15Z"
+    },
+    {
+     "version": "v1.9.1",
+     "timestamp": "2024-07-03T13:18:59Z"
+    },
+    {
+     "version": "v1.9.0",
+     "timestamp": "2024-06-26T16:55:38Z"
+    },
+    {
+     "version": "v1.9.0-rc3",
+     "timestamp": "2024-06-21T19:00:13Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240619",
+     "timestamp": "2024-06-19T06:58:26Z"
+    },
+    {
+     "version": "v1.9.0-rc2",
+     "timestamp": "2024-06-19T14:49:37Z"
+    },
+    {
+     "version": "v1.9.0-rc1",
+     "timestamp": "2024-06-12T09:23:29Z"
+    },
+    {
+     "version": "v1.10.0-alpha20240606",
+     "timestamp": "2024-06-06T17:34:15Z"
+    },
+    {
+     "version": "v1.8.5",
+     "timestamp": "2024-06-05T09:32:59Z"
+    },
+    {
+     "version": "v1.9.0-beta1",
+     "timestamp": "2024-05-31T12:27:17Z"
+    },
+    {
+     "version": "v1.8.4",
+     "timestamp": "2024-05-22T16:40:25Z"
+    },
+    {
+     "version": "v1.9.0-alpha20240516",
+     "timestamp": "2024-05-16T13:49:33Z"
+    },
+    {
+     "version": "v1.8.3",
+     "timestamp": "2024-05-08T09:09:52Z"
+    },
+    {
+     "version": "v1.9.0-alpha20240501",
+     "timestamp": "2024-05-02T00:05:32Z"
+    },
+    {
+     "version": "v1.8.2",
+     "timestamp": "2024-04-24T10:26:24Z"
+    },
+    {
+     "version": "v1.8.1",
+     "timestamp": "2024-04-17T10:13:43Z"
+    },
+    {
+     "version": "v1.8.0",
+     "timestamp": "2024-04-10T19:02:51Z"
+    },
+    {
+     "version": "v1.9.0-alpha20240404",
+     "timestamp": "2024-04-04T22:52:47Z"
+    },
+    {
+     "version": "v1.8.0-rc2",
+     "timestamp": "2024-04-04T08:02:21Z"
+    },
+    {
+     "version": "v1.8.0-rc1",
+     "timestamp": "2024-03-20T20:54:19Z"
+    },
+    {
+     "version": "v1.7.5",
+     "timestamp": "2024-03-13T22:46:42Z"
+    },
+    {
+     "version": "v1.8.0-beta1",
+     "timestamp": "2024-03-06T19:08:23Z"
+    },
+    {
+     "version": "v1.8.0-alpha20240228",
+     "timestamp": "2024-02-28T13:46:52Z"
+    },
+    {
+     "version": "v1.7.4",
+     "timestamp": "2024-02-21T20:19:23Z"
+    },
+    {
+     "version": "v1.8.0-alpha20240216",
+     "timestamp": "2024-02-16T23:13:44Z"
+    },
+    {
+     "version": "v1.8.0-alpha20240214",
+     "timestamp": "2024-02-14T18:07:30Z"
+    },
+    {
+     "version": "v1.7.3",
+     "timestamp": "2024-02-08T01:43:04Z"
+    },
+    {
+     "version": "v1.8.0-alpha20240131",
+     "timestamp": "2024-01-31T15:55:07Z"
+    },
+    {
+     "version": "v1.7.2",
+     "timestamp": "2024-01-31T14:49:39Z"
+    },
+    {
+     "version": "v1.7.1",
+     "timestamp": "2024-01-24T12:36:42Z"
+    },
+    {
+     "version": "v1.7.0",
+     "timestamp": "2024-01-17T19:59:32Z"
+    },
+    {
+     "version": "v1.7.0-rc2",
+     "timestamp": "2024-01-11T19:01:37Z"
+    },
+    {
+     "version": "v1.7.0-rc1",
+     "timestamp": "2023-12-20T19:29:37Z"
+    },
+    {
+     "version": "v1.7.0-beta2",
+     "timestamp": "2023-12-13T15:52:38Z"
+    },
+    {
+     "version": "v1.6.6",
+     "timestamp": "2023-12-13T18:40:01Z"
+    },
+    {
+     "version": "v1.7.0-beta1",
+     "timestamp": "2023-12-06T19:51:27Z"
+    },
+    {
+     "version": "v1.7.0-alpha20231130",
+     "timestamp": "2023-11-30T16:36:10Z"
+    },
+    {
+     "version": "v1.6.5",
+     "timestamp": "2023-11-29T10:22:48Z"
+    },
+    {
+     "version": "v1.6.4",
+     "timestamp": "2023-11-15T16:01:27Z"
+    },
+    {
+     "version": "v1.7.0-alpha20231108",
+     "timestamp": "2023-11-08T20:36:08Z"
+    },
+    {
+     "version": "v1.6.3",
+     "timestamp": "2023-11-01T15:32:57Z"
+    },
+    {
+     "version": "v1.7.0-alpha20231025",
+     "timestamp": "2023-10-25T11:57:58Z"
+    },
+    {
+     "version": "v1.6.2",
+     "timestamp": "2023-10-18T18:34:17Z"
+    },
+    {
+     "version": "v1.6.1",
+     "timestamp": "2023-10-10T17:27:44Z"
+    },
+    {
+     "version": "v1.6.0",
+     "timestamp": "2023-10-04T17:11:35Z"
+    },
+    {
+     "version": "v1.6.0-rc1",
+     "timestamp": "2023-09-27T20:55:20Z"
+    },
+    {
+     "version": "v1.6.0-beta3",
+     "timestamp": "2023-09-20T14:29:09Z"
+    },
+    {
+     "version": "v1.6.0-beta2",
+     "timestamp": "2023-09-14T12:17:34Z"
+    },
+    {
+     "version": "v1.4.7",
+     "timestamp": "2023-09-13T17:46:35Z"
+    },
+    {
+     "version": "v1.3.10",
+     "timestamp": "2023-09-13T15:37:50Z"
+    },
+    {
+     "version": "v1.5.7",
+     "timestamp": "2023-09-07T20:25:40Z"
+    },
+    {
+     "version": "v1.6.0-beta1",
+     "timestamp": "2023-08-31T13:58:34Z"
+    },
+    {
+     "version": "v1.5.6",
+     "timestamp": "2023-08-23T16:02:52Z"
+    },
+    {
+     "version": "v1.6.0-alpha20230816",
+     "timestamp": "2023-08-16T20:39:31Z"
+    },
+    {
+     "version": "v1.5.5",
+     "timestamp": "2023-08-09T13:37:04Z"
+    },
+    {
+     "version": "v1.6.0-alpha20230802",
+     "timestamp": "2023-08-02T10:54:41Z"
+    },
+    {
+     "version": "v1.5.4",
+     "timestamp": "2023-07-26T18:52:30Z"
+    },
+    {
+     "version": "v1.6.0-alpha20230719",
+     "timestamp": "2023-07-19T17:23:15Z"
+    },
+    {
+     "version": "v1.5.3",
+     "timestamp": "2023-07-12T14:32:47Z"
+    },
+    {
+     "version": "v1.5.2",
+     "timestamp": "2023-06-28T15:29:48Z"
+    },
+    {
+     "version": "v1.5.1",
+     "timestamp": "2023-06-21T10:44:56Z"
+    },
+    {
+     "version": "v1.5.0",
+     "timestamp": "2023-06-12T10:13:09Z"
+    },
+    {
+     "version": "v1.5.0-rc2",
+     "timestamp": "2023-06-05T18:12:05Z"
+    },
+    {
+     "version": "v1.5.0-rc1",
+     "timestamp": "2023-05-31T20:50:54Z"
+    },
+    {
+     "version": "v1.5.0-beta2",
+     "timestamp": "2023-05-24T12:43:58Z"
+    },
+    {
+     "version": "v1.5.0-beta1",
+     "timestamp": "2023-05-15T15:32:10Z"
+    },
+    {
+     "version": "v1.5.0-alpha20230504",
+     "timestamp": "2023-05-04T17:16:59Z"
+    },
+    {
+     "version": "v1.4.6",
+     "timestamp": "2023-04-26T18:26:24Z"
+    },
+    {
+     "version": "v1.4.5",
+     "timestamp": "2023-04-12T18:20:24Z"
+    },
+    {
+     "version": "v1.5.0-alpha20230405",
+     "timestamp": "2023-04-05T17:00:23Z"
+    },
+    {
+     "version": "v1.4.4",
+     "timestamp": "2023-03-30T19:52:41Z"
+    },
+    {
+     "version": "v1.4.3",
+     "timestamp": "2023-03-30T16:12:33Z"
+    },
+    {
+     "version": "v1.4.2",
+     "timestamp": "2023-03-16T13:42:45Z"
+    },
+    {
+     "version": "v1.4.1",
+     "timestamp": "2023-03-15T14:51:45Z"
+    },
+    {
+     "version": "v1.4.0",
+     "timestamp": "2023-03-08T18:13:32Z"
+    },
+    {
+     "version": "v1.4.0-rc1",
+     "timestamp": "2023-02-24T19:20:17Z"
+    },
+    {
+     "version": "v1.4.0-beta2",
+     "timestamp": "2023-02-15T15:34:43Z"
+    },
+    {
+     "version": "v1.3.9",
+     "timestamp": "2023-02-15T17:31:10Z"
+    },
+    {
+     "version": "v1.4.0-beta1",
+     "timestamp": "2023-02-09T18:59:35Z"
+    },
+    {
+     "version": "v1.3.8",
+     "timestamp": "2023-02-09T19:50:56Z"
+    },
+    {
+     "version": "v1.3.7",
+     "timestamp": "2023-01-04T15:34:30Z"
+    },
+    {
+     "version": "v1.4.0-alpha20221207",
+     "timestamp": "2022-12-07T15:08:57Z"
+    },
+    {
+     "version": "v1.3.6",
+     "timestamp": "2022-11-30T20:57:05Z"
+    },
+    {
+     "version": "v1.3.5",
+     "timestamp": "2022-11-17T20:01:51Z"
+    },
+    {
+     "version": "v1.4.0-alpha20221109",
+     "timestamp": "2022-11-09T18:28:01Z"
+    },
+    {
+     "version": "v1.3.4",
+     "timestamp": "2022-11-02T16:31:35Z"
+    },
+    {
+     "version": "v1.3.3",
+     "timestamp": "2022-10-19T17:54:32Z"
+    },
+    {
+     "version": "v1.3.2",
+     "timestamp": "2022-10-06T16:57:42Z"
+    },
+    {
+     "version": "v1.3.1",
+     "timestamp": "2022-09-28T14:00:34Z"
+    },
+    {
+     "version": "v1.3.0",
+     "timestamp": "2022-09-21T13:59:25Z"
+    },
+    {
+     "version": "v1.3.0-rc1",
+     "timestamp": "2022-09-14T18:00:43Z"
+    },
+    {
+     "version": "v1.2.9",
+     "timestamp": "2022-09-07T21:03:38Z"
+    },
+    {
+     "version": "v1.3.0-beta1",
+     "timestamp": "2022-08-31T13:18:24Z"
+    },
+    {
+     "version": "v1.2.8",
+     "timestamp": "2022-08-24T14:34:16Z"
+    },
+    {
+     "version": "v1.3.0-alpha20220817",
+     "timestamp": "2022-08-17T15:37:53Z"
+    },
+    {
+     "version": "v1.2.7",
+     "timestamp": "2022-08-10T17:57:17Z"
+    },
+    {
+     "version": "v1.3.0-alpha20220803",
+     "timestamp": "2022-08-03T17:26:17Z"
+    },
+    {
+     "version": "v1.2.6",
+     "timestamp": "2022-07-27T15:34:30Z"
+    },
+    {
+     "version": "v1.2.5",
+     "timestamp": "2022-07-13T10:34:48Z"
+    },
+    {
+     "version": "v1.3.0-alpha20220706",
+     "timestamp": "2022-07-06T18:26:37Z"
+    },
+    {
+     "version": "v1.2.4",
+     "timestamp": "2022-06-29T18:00:06Z"
+    },
+    {
+     "version": "v1.3.0-alpha20220622",
+     "timestamp": "2022-06-22T19:34:47Z"
+    },
+    {
+     "version": "v1.2.3",
+     "timestamp": "2022-06-15T17:56:33Z"
+    },
+    {
+     "version": "v1.3.0-alpha20220608",
+     "timestamp": "2022-06-08T17:31:07Z"
+    },
+    {
+     "version": "v1.2.2",
+     "timestamp": "2022-06-01T16:59:11Z"
+    },
+    {
+     "version": "v1.2.1",
+     "timestamp": "2022-05-23T23:07:15Z"
+    },
+    {
+     "version": "v1.2.0",
+     "timestamp": "2022-05-18T21:47:47Z"
+    },
+    {
+     "version": "v1.2.0-rc2",
+     "timestamp": "2022-05-11T19:33:55Z"
+    },
+    {
+     "version": "v1.2.0-rc1",
+     "timestamp": "2022-05-04T17:01:02Z"
+    },
+    {
+     "version": "v1.2.0-beta1",
+     "timestamp": "2022-04-27T19:29:31Z"
+    },
+    {
+     "version": "v1.1.9",
+     "timestamp": "2022-04-20T13:46:32Z"
+    },
+    {
+     "version": "v1.2.0-alpha20220413",
+     "timestamp": "2022-04-13T18:30:46Z"
+    },
+    {
+     "version": "v1.1.8",
+     "timestamp": "2022-04-07T17:05:32Z"
+    },
+    {
+     "version": "v1.2.0-alpha-20220328",
+     "timestamp": "2022-03-28T10:27:27Z"
+    },
+    {
+     "version": "v1.1.7",
+     "timestamp": "2022-03-02T19:33:12Z"
+    },
+    {
+     "version": "v1.1.6",
+     "timestamp": "2022-02-16T18:44:21Z"
+    },
+    {
+     "version": "v1.1.5",
+     "timestamp": "2022-02-02T20:46:31Z"
+    },
+    {
+     "version": "v1.1.4",
+     "timestamp": "2022-01-19T18:40:36Z"
+    },
+    {
+     "version": "v1.1.3",
+     "timestamp": "2022-01-06T21:41:09Z"
+    },
+    {
+     "version": "v1.1.2",
+     "timestamp": "2021-12-17T21:53:24Z"
+    },
+    {
+     "version": "v1.1.1",
+     "timestamp": "2021-12-15T21:33:31Z"
+    },
+    {
+     "version": "v1.1.0",
+     "timestamp": "2021-12-08T21:25:33Z"
+    },
+    {
+     "version": "v1.1.0-rc1",
+     "timestamp": "2021-12-01T22:32:32Z"
+    },
+    {
+     "version": "v1.1.0-beta2",
+     "timestamp": "2021-11-17T23:29:49Z"
+    },
+    {
+     "version": "v1.0.11",
+     "timestamp": "2021-11-10T21:51:47Z"
+    },
+    {
+     "version": "v1.1.0-beta1",
+     "timestamp": "2021-11-04T00:31:37Z"
+    },
+    {
+     "version": "v1.1.0-alpha20211029",
+     "timestamp": "2021-10-29T19:20:29Z"
+    },
+    {
+     "version": "v1.0.10",
+     "timestamp": "2021-10-28T14:29:51Z"
+    },
+    {
+     "version": "v1.1.0-alpha20211020",
+     "timestamp": "2021-10-20T17:42:49Z"
+    },
+    {
+     "version": "v1.0.9",
+     "timestamp": "2021-10-13T17:59:46Z"
+    },
+    {
+     "version": "v1.1.0-alpha20211006",
+     "timestamp": "2021-10-06T16:52:27Z"
+    },
+    {
+     "version": "v1.0.8",
+     "timestamp": "2021-09-29T17:40:45Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210922",
+     "timestamp": "2021-09-22T18:12:02Z"
+    },
+    {
+     "version": "v1.0.7",
+     "timestamp": "2021-09-15T18:48:48Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210908",
+     "timestamp": "2021-09-08T19:21:43Z"
+    },
+    {
+     "version": "v1.0.6",
+     "timestamp": "2021-09-03T14:51:59Z"
+    },
+    {
+     "version": "v1.0.5",
+     "timestamp": "2021-08-18T19:44:52Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210811",
+     "timestamp": "2021-08-11T15:13:05Z"
+    },
+    {
+     "version": "v1.0.4",
+     "timestamp": "2021-08-04T21:22:21Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210728",
+     "timestamp": "2021-07-28T17:45:45Z"
+    },
+    {
+     "version": "v1.0.3",
+     "timestamp": "2021-07-21T18:50:06Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210714",
+     "timestamp": "2021-07-14T17:18:47Z"
+    },
+    {
+     "version": "v1.0.2",
+     "timestamp": "2021-07-07T18:08:13Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210630",
+     "timestamp": "2021-06-30T16:07:58Z"
+    },
+    {
+     "version": "v1.0.1",
+     "timestamp": "2021-06-24T15:49:53Z"
+    },
+    {
+     "version": "v1.1.0-alpha20210616",
+     "timestamp": "2021-06-16T13:42:38Z"
+    },
+    {
+     "version": "v1.0.0",
+     "timestamp": "2021-06-08T11:27:21Z"
+    },
+    {
+     "version": "v0.15.5",
+     "timestamp": "2021-06-02T18:01:35Z"
+    },
+    {
+     "version": "v0.15.4",
+     "timestamp": "2021-05-19T19:15:54Z"
+    },
+    {
+     "version": "v0.15.3",
+     "timestamp": "2021-05-06T18:50:58Z"
+    },
+    {
+     "version": "v0.15.2",
+     "timestamp": "2021-05-05T21:46:46Z"
+    },
+    {
+     "version": "v0.15.1",
+     "timestamp": "2021-04-26T20:18:28Z"
+    },
+    {
+     "version": "v0.14.11",
+     "timestamp": "2021-04-26T20:32:20Z"
+    },
+    {
+     "version": "v0.13.7",
+     "timestamp": "2021-04-26T20:33:39Z"
+    },
+    {
+     "version": "v0.12.31",
+     "timestamp": "2021-04-26T21:19:43Z"
+    },
+    {
+     "version": "v0.11.15",
+     "timestamp": "2021-04-26T21:57:59Z"
+    },
+    {
+     "version": "v0.15.0",
+     "timestamp": "2021-04-14T15:46:12Z"
+    },
+    {
+     "version": "v0.15.0-rc2",
+     "timestamp": "2021-04-07T17:50:38Z"
+    },
+    {
+     "version": "v0.14.10",
+     "timestamp": "2021-04-07T18:19:52Z"
+    },
+    {
+     "version": "v0.15.0-rc1",
+     "timestamp": "2021-03-31T14:55:08Z"
+    },
+    {
+     "version": "v0.14.9",
+     "timestamp": "2021-03-24T18:57:42Z"
+    },
+    {
+     "version": "v0.15.0-beta2",
+     "timestamp": "2021-03-17T17:55:01Z"
+    },
+    {
+     "version": "v0.14.8",
+     "timestamp": "2021-03-10T18:05:28Z"
+    },
+    {
+     "version": "v0.15.0-beta1",
+     "timestamp": "2021-02-24T20:23:35Z"
+    },
+    {
+     "version": "v0.14.7",
+     "timestamp": "2021-02-17T18:20:03Z"
+    },
+    {
+     "version": "v0.15.0-alpha20210210",
+     "timestamp": "2021-02-10T18:00:31Z"
+    },
+    {
+     "version": "v0.14.6",
+     "timestamp": "2021-02-04T17:51:08Z"
+    },
+    {
+     "version": "v0.15.0-alpha20210127",
+     "timestamp": "2021-01-27T19:11:42Z"
+    },
+    {
+     "version": "v0.14.5",
+     "timestamp": "2021-01-20T18:28:39Z"
+    },
+    {
+     "version": "v0.15.0-alpha20210107",
+     "timestamp": "2021-01-07T22:07:59Z"
+    },
+    {
+     "version": "v0.14.4",
+     "timestamp": "2021-01-06T19:34:10Z"
+    },
+    {
+     "version": "v0.13.6",
+     "timestamp": "2021-01-06T19:17:32Z"
+    },
+    {
+     "version": "v0.12.30",
+     "timestamp": "2021-01-06T18:51:43Z"
+    },
+    {
+     "version": "v0.14.3",
+     "timestamp": "2020-12-17T21:29:10Z"
+    },
+    {
+     "version": "v0.14.2",
+     "timestamp": "2020-12-08T21:19:59Z"
+    },
+    {
+     "version": "v0.14.1",
+     "timestamp": "2020-12-08T18:06:26Z"
+    },
+    {
+     "version": "v0.14.0",
+     "timestamp": "2020-12-02T21:29:57Z"
+    },
+    {
+     "version": "v0.14.0-rc1",
+     "timestamp": "2020-11-11T16:45:32Z"
+    },
+    {
+     "version": "v0.14.0-beta2",
+     "timestamp": "2020-10-28T21:33:19Z"
+    },
+    {
+     "version": "v0.13.5",
+     "timestamp": "2020-10-21T19:33:54Z"
+    },
+    {
+     "version": "v0.14.0-beta1",
+     "timestamp": "2020-10-15T14:19:39Z"
+    },
+    {
+     "version": "v0.14.0-alpha20201007",
+     "timestamp": "2020-10-07T17:36:01Z"
+    },
+    {
+     "version": "v0.13.4",
+     "timestamp": "2020-09-30T18:20:57Z"
+    },
+    {
+     "version": "v0.14.0-alpha20200923",
+     "timestamp": "2020-09-23T18:19:52Z"
+    },
+    {
+     "version": "v0.13.3",
+     "timestamp": "2020-09-16T19:56:30Z"
+    },
+    {
+     "version": "v0.14.0-alpha20200910",
+     "timestamp": "2020-09-10T15:36:18Z"
+    },
+    {
+     "version": "v0.13.2",
+     "timestamp": "2020-09-02T14:51:01Z"
+    },
+    {
+     "version": "v0.13.1",
+     "timestamp": "2020-08-26T18:16:58Z"
+    },
+    {
+     "version": "v0.13.0",
+     "timestamp": "2020-08-10T18:03:34Z"
+    },
+    {
+     "version": "v0.13.0-rc1",
+     "timestamp": "2020-07-22T14:21:10Z"
+    },
+    {
+     "version": "v0.12.29",
+     "timestamp": "2020-07-22T16:21:36Z"
+    },
+    {
+     "version": "v0.13.0-beta3",
+     "timestamp": "2020-07-01T18:47:35Z"
+    },
+    {
+     "version": "v0.12.28",
+     "timestamp": "2020-06-25T13:44:12Z"
+    },
+    {
+     "version": "v0.12.27",
+     "timestamp": "2020-06-24T20:22:53Z"
+    },
+    {
+     "version": "v0.13.0-beta2",
+     "timestamp": "2020-06-17T18:36:14Z"
+    },
+    {
+     "version": "v0.13.0-beta1",
+     "timestamp": "2020-06-03T18:34:46Z"
+    },
+    {
+     "version": "v0.12.26",
+     "timestamp": "2020-05-27T17:12:23Z"
+    },
+    {
+     "version": "v0.12.25",
+     "timestamp": "2020-05-13T16:57:31Z"
+    },
+    {
+     "version": "v0.12.24",
+     "timestamp": "2020-03-19T15:24:50Z"
+    },
+    {
+     "version": "v0.12.23",
+     "timestamp": "2020-03-05T21:21:08Z"
+    },
+    {
+     "version": "v0.12.22",
+     "timestamp": "2020-03-05T20:32:04Z"
+    },
+    {
+     "version": "v0.12.21",
+     "timestamp": "2020-02-19T18:16:56Z"
+    },
+    {
+     "version": "v0.12.20",
+     "timestamp": "2020-01-22T22:23:23Z"
+    },
+    {
+     "version": "v0.12.19",
+     "timestamp": "2020-01-08T22:53:00Z"
+    },
+    {
+     "version": "v0.12.18",
+     "timestamp": "2019-12-11T16:45:06Z"
+    },
+    {
+     "version": "v0.12.17",
+     "timestamp": "2019-12-02T18:38:06Z"
+    },
+    {
+     "version": "v0.12.16",
+     "timestamp": "2019-11-18T23:39:33Z"
+    },
+    {
+     "version": "v0.12.15",
+     "timestamp": "2019-11-14T23:11:56Z"
+    },
+    {
+     "version": "v0.12.14",
+     "timestamp": "2019-11-13T22:36:39Z"
+    },
+    {
+     "version": "v0.12.13",
+     "timestamp": "2019-10-31T19:34:24Z"
+    },
+    {
+     "version": "v0.12.12",
+     "timestamp": "2019-10-18T18:45:33Z"
+    },
+    {
+     "version": "v0.12.11",
+     "timestamp": "2019-10-17T20:49:25Z"
+    },
+    {
+     "version": "v0.12.10",
+     "timestamp": "2019-10-07T16:23:39Z"
+    },
+    {
+     "version": "v0.12.9",
+     "timestamp": "2019-09-17T19:47:10Z"
+    },
+    {
+     "version": "v0.12.8",
+     "timestamp": "2019-09-04T18:26:01Z"
+    },
+    {
+     "version": "v0.12.7",
+     "timestamp": "2019-08-22T20:19:24Z"
+    },
+    {
+     "version": "v0.12.6",
+     "timestamp": "2019-07-31T19:39:55Z"
+    },
+    {
+     "version": "v0.12.5",
+     "timestamp": "2019-07-18T17:14:48Z"
+    },
+    {
+     "version": "v0.12.4",
+     "timestamp": "2019-07-11T18:12:00Z"
+    },
+    {
+     "version": "v0.12.3",
+     "timestamp": "2019-06-24T20:15:28Z"
+    },
+    {
+     "version": "v0.12.2",
+     "timestamp": "2019-06-12T20:19:24Z"
+    },
+    {
+     "version": "v0.12.1",
+     "timestamp": "2019-06-04T17:31:19Z"
+    },
+    {
+     "version": "v0.12.0",
+     "timestamp": "2019-05-22T20:24:00Z"
+    },
+    {
+     "version": "v0.11.14",
+     "timestamp": "2019-05-16T20:49:01Z"
+    },
+    {
+     "version": "v0.12.0-rc1",
+     "timestamp": "2019-05-07T18:43:26Z"
+    },
+    {
+     "version": "v0.12.0-beta2",
+     "timestamp": "2019-04-18T17:47:44Z"
+    },
+    {
+     "version": "v0.11.13",
+     "timestamp": "2019-03-11T18:51:43Z"
+    },
+    {
+     "version": "v0.11.12",
+     "timestamp": "2019-03-08T20:09:11Z"
+    },
+    {
+     "version": "v0.12.0-beta1",
+     "timestamp": "2019-02-28T22:59:41Z"
+    },
+    {
+     "version": "v0.11.12-beta1",
+     "timestamp": "2019-01-28T12:39:21Z"
+    },
+    {
+     "version": "v0.11.11",
+     "timestamp": "2018-12-14T22:33:58Z"
+    },
+    {
+     "version": "v0.11.10",
+     "timestamp": "2018-10-23T15:06:04Z"
+    },
+    {
+     "version": "v0.12.0-alpha1",
+     "timestamp": "2018-10-20T00:49:09Z"
+    },
+    {
+     "version": "v0.11.9",
+     "timestamp": "2018-10-19T18:19:23Z"
+    },
+    {
+     "version": "v0.11.9-beta1",
+     "timestamp": "2018-10-15T20:24:38Z"
+    },
+    {
+     "version": "v0.11.8",
+     "timestamp": "2018-08-15T22:20:42Z"
+    },
+    {
+     "version": "v0.11.7",
+     "timestamp": "2018-04-10T16:56:12Z"
+    },
+    {
+     "version": "v0.11.6",
+     "timestamp": "2018-04-05T19:40:34Z"
+    },
+    {
+     "version": "v0.11.5",
+     "timestamp": "2018-03-21T21:22:03Z"
+    },
+    {
+     "version": "v0.11.4",
+     "timestamp": "2018-03-15T20:47:12Z"
+    },
+    {
+     "version": "v0.11.3",
+     "timestamp": "2018-01-31T20:55:15Z"
+    },
+    {
+     "version": "v0.11.2",
+     "timestamp": "2018-01-09T23:27:28Z"
+    },
+    {
+     "version": "v0.11.1",
+     "timestamp": "2017-11-30T19:06:39Z"
+    },
+    {
+     "version": "v0.11.0",
+     "timestamp": "2017-11-16T19:34:52Z"
+    },
+    {
+     "version": "v0.11.0-rc1",
+     "timestamp": "2017-11-09T19:59:50Z"
+    },
+    {
+     "version": "v0.11.0-beta1",
+     "timestamp": "2017-11-03T23:48:26Z"
+    },
+    {
+     "version": "v0.10.8",
+     "timestamp": "2017-11-02T21:47:58Z"
+    },
+    {
+     "version": "v0.10.7",
+     "timestamp": "2017-10-02T18:52:29Z"
+    },
+    {
+     "version": "v0.10.6",
+     "timestamp": "2017-10-02T18:52:19Z"
+    },
+    {
+     "version": "v0.10.5",
+     "timestamp": "2017-09-14T21:38:46Z"
+    },
+    {
+     "version": "v0.10.4",
+     "timestamp": "2017-09-06T20:27:11Z"
+    },
+    {
+     "version": "v0.10.3",
+     "timestamp": "2017-08-30T21:53:59Z"
+    },
+    {
+     "version": "v0.10.2",
+     "timestamp": "2017-08-16T17:34:38Z"
+    },
+    {
+     "version": "v0.10.1",
+     "timestamp": "2017-08-15T22:01:01Z"
+    },
+    {
+     "version": "v0.10.0",
+     "timestamp": "2017-08-02T18:38:33Z"
+    },
+    {
+     "version": "v0.10.0-rc1",
+     "timestamp": "2017-07-19T21:08:33Z"
+    },
+    {
+     "version": "v0.10.0-beta2",
+     "timestamp": "2017-07-06T16:44:35Z"
+    },
+    {
+     "version": "v0.9.11",
+     "timestamp": "2017-07-03T20:42:17Z"
+    },
+    {
+     "version": "v0.9.10",
+     "timestamp": "2017-06-29T16:10:37Z"
+    },
+    {
+     "version": "v0.9.9",
+     "timestamp": "2017-06-26T23:05:44Z"
+    },
+    {
+     "version": "v0.10.0-beta1",
+     "timestamp": "2017-06-22T22:18:51Z"
+    },
+    {
+     "version": "v0.9.8",
+     "timestamp": "2017-06-08T00:23:31Z"
+    },
+    {
+     "version": "v0.9.7",
+     "timestamp": "2017-06-07T14:49:58Z"
+    },
+    {
+     "version": "v0.9.6",
+     "timestamp": "2017-05-25T16:04:19Z"
+    },
+    {
+     "version": "v0.9.5",
+     "timestamp": "2017-05-11T09:29:40Z"
+    },
+    {
+     "version": "v0.9.4",
+     "timestamp": "2017-04-26T12:46:44Z"
+    },
+    {
+     "version": "v0.9.3",
+     "timestamp": "2017-04-12T20:36:00Z"
+    },
+    {
+     "version": "v0.9.2",
+     "timestamp": "2017-03-28T10:02:27Z"
+    },
+    {
+     "version": "v0.9.1",
+     "timestamp": "2017-03-17T22:53:20Z"
+    },
+    {
+     "version": "v0.9.0",
+     "timestamp": "2017-03-15T16:38:14Z"
+    },
+    {
+     "version": "v0.8.8",
+     "timestamp": "2017-03-02T18:50:46Z"
+    },
+    {
+     "version": "v0.8.7",
+     "timestamp": "2017-02-15T19:37:32Z"
+    },
+    {
+     "version": "v0.8.6",
+     "timestamp": "2017-02-07T17:32:25Z"
+    },
+    {
+     "version": "v0.8.5",
+     "timestamp": "2017-01-26T16:11:53Z"
+    },
+    {
+     "version": "v0.8.4",
+     "timestamp": "2017-01-11T17:15:05Z"
+    },
+    {
+     "version": "v0.8.3",
+     "timestamp": "2017-01-10T09:09:09Z"
+    },
+    {
+     "version": "v0.8.2",
+     "timestamp": "2016-12-21T20:14:44Z"
+    },
+    {
+     "version": "v0.8.1",
+     "timestamp": "2016-12-15T06:14:06Z"
+    },
+    {
+     "version": "v0.8.0",
+     "timestamp": "2016-12-13T18:20:52Z"
+    },
+    {
+     "version": "v0.7.13",
+     "timestamp": "2016-11-25T20:39:50Z"
+    },
+    {
+     "version": "v0.7.12",
+     "timestamp": "2016-11-22T21:02:38Z"
+    },
+    {
+     "version": "v0.7.11",
+     "timestamp": "2016-11-15T22:20:06Z"
+    },
+    {
+     "version": "v0.7.9",
+     "timestamp": "2016-11-04T16:36:22Z"
+    },
+    {
+     "version": "v0.7.8",
+     "timestamp": "2016-11-01T19:03:55Z"
+    },
+    {
+     "version": "0.7.7",
+     "timestamp": "2016-10-18T13:43:24Z"
+    },
+    {
+     "version": "v0.7.6",
+     "timestamp": "2016-10-14T16:41:03Z"
+    },
+    {
+     "version": "v0.7.5",
+     "timestamp": "2016-10-06T17:52:10Z"
+    },
+    {
+     "version": "v0.7.4",
+     "timestamp": "2016-09-19T19:34:46Z"
+    },
+    {
+     "version": "v0.7.3",
+     "timestamp": "2016-09-05T12:08:12Z"
+    },
+    {
+     "version": "v0.7.2",
+     "timestamp": "2016-08-25T15:07:15Z"
+    },
+    {
+     "version": "v0.7.1",
+     "timestamp": "2016-08-19T20:14:41Z"
+    },
+    {
+     "version": "v0.7.0",
+     "timestamp": "2016-08-02T18:11:56Z"
+    },
+    {
+     "version": "v0.7.0-rc4",
+     "timestamp": "2016-07-30T00:52:30Z"
+    },
+    {
+     "version": "v0.7.0-rc3",
+     "timestamp": "2016-07-30T00:52:13Z"
+    },
+    {
+     "version": "v0.7.0-rc2",
+     "timestamp": "2016-06-12T19:20:14Z"
+    },
+    {
+     "version": "v0.7.0-rc1",
+     "timestamp": "2016-05-31T21:15:07Z"
+    },
+    {
+     "version": "v0.6.16",
+     "timestamp": "2016-05-09T21:08:21Z"
+    },
+    {
+     "version": "v0.6.15",
+     "timestamp": "2016-04-22T19:00:17Z"
+    },
+    {
+     "version": "v0.6.14",
+     "timestamp": "2016-03-22T00:25:11Z"
+    },
+    {
+     "version": "v0.6.13",
+     "timestamp": "2016-03-16T11:50:36Z"
+    },
+    {
+     "version": "v0.6.12",
+     "timestamp": "2016-02-25T08:50:46Z"
+    },
+    {
+     "version": "v0.6.11",
+     "timestamp": "2016-02-01T20:14:49Z"
+    },
+    {
+     "version": "v0.6.10",
+     "timestamp": "2016-01-27T22:59:51Z"
+    },
+    {
+     "version": "v0.6.9",
+     "timestamp": "2016-01-08T18:52:30Z"
+    },
+    {
+     "version": "v0.6.8",
+     "timestamp": "2015-12-02T15:55:10Z"
+    },
+    {
+     "version": "v0.6.7",
+     "timestamp": "2015-11-23T21:00:46Z"
+    },
+    {
+     "version": "v0.6.6",
+     "timestamp": "2015-10-23T15:49:27Z"
+    },
+    {
+     "version": "v0.6.5",
+     "timestamp": "2015-10-21T16:36:12Z"
+    },
+    {
+     "version": "v0.6.4",
+     "timestamp": "2015-10-15T17:47:27Z"
+    },
+    {
+     "version": "v0.6.3",
+     "timestamp": "2015-08-11T16:22:34Z"
+    },
+    {
+     "version": "v0.6.2",
+     "timestamp": "2015-08-06T19:36:17Z"
+    },
+    {
+     "version": "v0.6.1",
+     "timestamp": "2015-07-20T20:57:55Z"
+    },
+    {
+     "version": "v0.6.0",
+     "timestamp": "2015-06-30T22:05:19Z"
+    }
+   ],
+   "sourceUrl": "https://github.com/hashicorp/terraform"
+  },
+  "terraform-module\u0000terraform-aws-modules/vpc/aws\u0000": {
+   "packageName": "terraform-aws-modules/vpc/aws",
+   "datasource": "terraform-module",
+   "registryUrl": "https://registry.terraform.io",
+   "releases": [
+    {
+     "version": "1.0.0"
+    },
+    {
+     "version": "1.0.1"
+    },
+    {
+     "version": "1.0.2"
+    },
+    {
+     "version": "1.0.3"
+    },
+    {
+     "version": "1.0.4"
+    },
+    {
+     "version": "1.1.0"
+    },
+    {
+     "version": "1.2.0"
+    },
+    {
+     "version": "1.3.0"
+    },
+    {
+     "version": "1.4.0"
+    },
+    {
+     "version": "1.4.1"
+    },
+    {
+     "version": "1.5.0"
+    },
+    {
+     "version": "1.5.1"
+    },
+    {
+     "version": "1.6.0"
+    },
+    {
+     "version": "1.7.0"
+    },
+    {
+     "version": "1.8.0"
+    },
+    {
+     "version": "1.9.0"
+    },
+    {
+     "version": "1.9.1"
+    },
+    {
+     "version": "1.10.0"
+    },
+    {
+     "version": "1.11.0"
+    },
+    {
+     "version": "1.12.0"
+    },
+    {
+     "version": "1.13.0"
+    },
+    {
+     "version": "1.14.0"
+    },
+    {
+     "version": "1.15.0"
+    },
+    {
+     "version": "1.16.0"
+    },
+    {
+     "version": "1.17.0"
+    },
+    {
+     "version": "1.18.0"
+    },
+    {
+     "version": "1.19.0"
+    },
+    {
+     "version": "1.20.0"
+    },
+    {
+     "version": "1.21.0"
+    },
+    {
+     "version": "1.22.0"
+    },
+    {
+     "version": "1.22.1"
+    },
+    {
+     "version": "1.23.0"
+    },
+    {
+     "version": "1.24.0-pre"
+    },
+    {
+     "version": "1.25.0"
+    },
+    {
+     "version": "1.26.0"
+    },
+    {
+     "version": "1.27.0"
+    },
+    {
+     "version": "1.28.0"
+    },
+    {
+     "version": "1.29.0"
+    },
+    {
+     "version": "1.30.0"
+    },
+    {
+     "version": "1.31.0"
+    },
+    {
+     "version": "1.32.0"
+    },
+    {
+     "version": "1.33.0"
+    },
+    {
+     "version": "1.34.0"
+    },
+    {
+     "version": "1.35.0"
+    },
+    {
+     "version": "1.36.0"
+    },
+    {
+     "version": "1.37.0"
+    },
+    {
+     "version": "1.38.0"
+    },
+    {
+     "version": "1.39.0"
+    },
+    {
+     "version": "1.40.0"
+    },
+    {
+     "version": "1.41.0"
+    },
+    {
+     "version": "1.42.0"
+    },
+    {
+     "version": "1.43.0"
+    },
+    {
+     "version": "1.43.1"
+    },
+    {
+     "version": "1.43.2"
+    },
+    {
+     "version": "1.44.0"
+    },
+    {
+     "version": "1.45.0"
+    },
+    {
+     "version": "1.46.0"
+    },
+    {
+     "version": "1.47.0"
+    },
+    {
+     "version": "1.48.0"
+    },
+    {
+     "version": "1.49.0"
+    },
+    {
+     "version": "1.50.0"
+    },
+    {
+     "version": "1.51.0"
+    },
+    {
+     "version": "1.52.0"
+    },
+    {
+     "version": "1.53.0"
+    },
+    {
+     "version": "1.54.0"
+    },
+    {
+     "version": "1.55.0"
+    },
+    {
+     "version": "1.56.0"
+    },
+    {
+     "version": "1.57.0"
+    },
+    {
+     "version": "1.58.0"
+    },
+    {
+     "version": "1.59.0"
+    },
+    {
+     "version": "1.60.0"
+    },
+    {
+     "version": "1.61.0"
+    },
+    {
+     "version": "1.62.0"
+    },
+    {
+     "version": "1.63.0"
+    },
+    {
+     "version": "1.64.0"
+    },
+    {
+     "version": "1.65.0"
+    },
+    {
+     "version": "1.66.0"
+    },
+    {
+     "version": "1.67.0"
+    },
+    {
+     "version": "1.68.0"
+    },
+    {
+     "version": "1.69.0"
+    },
+    {
+     "version": "1.70.0"
+    },
+    {
+     "version": "1.71.0"
+    },
+    {
+     "version": "1.72.0"
+    },
+    {
+     "version": "1.73.0"
+    },
+    {
+     "version": "2.0.0"
+    },
+    {
+     "version": "2.1.0"
+    },
+    {
+     "version": "2.2.0"
+    },
+    {
+     "version": "2.3.0"
+    },
+    {
+     "version": "2.4.0"
+    },
+    {
+     "version": "2.5.0"
+    },
+    {
+     "version": "2.6.0"
+    },
+    {
+     "version": "2.7.0"
+    },
+    {
+     "version": "2.8.0"
+    },
+    {
+     "version": "2.9.0"
+    },
+    {
+     "version": "2.10.0"
+    },
+    {
+     "version": "2.11.0"
+    },
+    {
+     "version": "2.12.0"
+    },
+    {
+     "version": "2.13.0"
+    },
+    {
+     "version": "2.14.0"
+    },
+    {
+     "version": "2.15.0"
+    },
+    {
+     "version": "2.16.0"
+    },
+    {
+     "version": "2.17.0"
+    },
+    {
+     "version": "2.18.0"
+    },
+    {
+     "version": "2.19.0"
+    },
+    {
+     "version": "2.20.0"
+    },
+    {
+     "version": "2.21.0"
+    },
+    {
+     "version": "2.22.0"
+    },
+    {
+     "version": "2.23.0"
+    },
+    {
+     "version": "2.24.0"
+    },
+    {
+     "version": "2.25.0"
+    },
+    {
+     "version": "2.26.0"
+    },
+    {
+     "version": "2.27.0"
+    },
+    {
+     "version": "2.28.0"
+    },
+    {
+     "version": "2.29.0"
+    },
+    {
+     "version": "2.30.0"
+    },
+    {
+     "version": "2.31.0"
+    },
+    {
+     "version": "2.32.0"
+    },
+    {
+     "version": "2.33.0"
+    },
+    {
+     "version": "2.34.0"
+    },
+    {
+     "version": "2.35.0"
+    },
+    {
+     "version": "2.36.0"
+    },
+    {
+     "version": "2.37.0"
+    },
+    {
+     "version": "2.38.0"
+    },
+    {
+     "version": "2.39.0"
+    },
+    {
+     "version": "2.40.0"
+    },
+    {
+     "version": "2.41.0"
+    },
+    {
+     "version": "2.42.0"
+    },
+    {
+     "version": "2.43.0"
+    },
+    {
+     "version": "2.44.0"
+    },
+    {
+     "version": "2.45.0"
+    },
+    {
+     "version": "2.46.0"
+    },
+    {
+     "version": "2.47.0"
+    },
+    {
+     "version": "2.48.0"
+    },
+    {
+     "version": "2.49.0"
+    },
+    {
+     "version": "2.50.0"
+    },
+    {
+     "version": "2.51.0"
+    },
+    {
+     "version": "2.52.0"
+    },
+    {
+     "version": "2.53.0"
+    },
+    {
+     "version": "2.54.0"
+    },
+    {
+     "version": "2.55.0"
+    },
+    {
+     "version": "2.56.0"
+    },
+    {
+     "version": "2.57.0"
+    },
+    {
+     "version": "2.58.0"
+    },
+    {
+     "version": "2.59.0"
+    },
+    {
+     "version": "2.60.0"
+    },
+    {
+     "version": "2.61.0"
+    },
+    {
+     "version": "2.62.0"
+    },
+    {
+     "version": "2.63.0"
+    },
+    {
+     "version": "2.64.0"
+    },
+    {
+     "version": "2.65.0"
+    },
+    {
+     "version": "2.66.0"
+    },
+    {
+     "version": "2.67.0"
+    },
+    {
+     "version": "2.68.0"
+    },
+    {
+     "version": "2.69.0"
+    },
+    {
+     "version": "2.70.0"
+    },
+    {
+     "version": "2.71.0"
+    },
+    {
+     "version": "2.72.0"
+    },
+    {
+     "version": "2.73.0"
+    },
+    {
+     "version": "2.74.0"
+    },
+    {
+     "version": "2.75.0"
+    },
+    {
+     "version": "2.76.0"
+    },
+    {
+     "version": "2.77.0"
+    },
+    {
+     "version": "2.78.0"
+    },
+    {
+     "version": "3.0.0"
+    },
+    {
+     "version": "3.1.0"
+    },
+    {
+     "version": "3.2.0"
+    },
+    {
+     "version": "3.3.0"
+    },
+    {
+     "version": "3.4.0"
+    },
+    {
+     "version": "3.5.0"
+    },
+    {
+     "version": "3.6.0"
+    },
+    {
+     "version": "3.7.0"
+    },
+    {
+     "version": "3.8.0"
+    },
+    {
+     "version": "3.9.0"
+    },
+    {
+     "version": "3.10.0"
+    },
+    {
+     "version": "3.11.0"
+    },
+    {
+     "version": "3.11.1"
+    },
+    {
+     "version": "3.11.2"
+    },
+    {
+     "version": "3.11.3"
+    },
+    {
+     "version": "3.11.4"
+    },
+    {
+     "version": "3.11.5"
+    },
+    {
+     "version": "3.12.0"
+    },
+    {
+     "version": "3.13.0"
+    },
+    {
+     "version": "3.14.0"
+    },
+    {
+     "version": "3.14.1"
+    },
+    {
+     "version": "3.14.2"
+    },
+    {
+     "version": "3.14.3"
+    },
+    {
+     "version": "3.14.4"
+    },
+    {
+     "version": "3.15.0"
+    },
+    {
+     "version": "3.16.0"
+    },
+    {
+     "version": "3.16.1"
+    },
+    {
+     "version": "3.17.0"
+    },
+    {
+     "version": "3.18.0"
+    },
+    {
+     "version": "3.18.1"
+    },
+    {
+     "version": "3.19.0"
+    },
+    {
+     "version": "4.0.0"
+    },
+    {
+     "version": "4.0.1"
+    },
+    {
+     "version": "4.0.2"
+    },
+    {
+     "version": "5.0.0"
+    },
+    {
+     "version": "5.1.0"
+    },
+    {
+     "version": "5.1.1"
+    },
+    {
+     "version": "5.1.2"
+    },
+    {
+     "version": "5.2.0"
+    },
+    {
+     "version": "5.3.0"
+    },
+    {
+     "version": "5.4.0"
+    },
+    {
+     "version": "5.5.0"
+    },
+    {
+     "version": "5.5.1"
+    },
+    {
+     "version": "5.5.2"
+    },
+    {
+     "version": "5.5.3"
+    },
+    {
+     "version": "5.6.0"
+    },
+    {
+     "version": "5.7.0"
+    },
+    {
+     "version": "5.7.1"
+    },
+    {
+     "version": "5.7.2"
+    },
+    {
+     "version": "5.8.0"
+    },
+    {
+     "version": "5.8.1"
+    },
+    {
+     "version": "5.9.0"
+    },
+    {
+     "version": "5.10.0"
+    },
+    {
+     "version": "5.11.0"
+    },
+    {
+     "version": "5.12.0"
+    },
+    {
+     "version": "5.12.1"
+    },
+    {
+     "version": "5.13.0"
+    },
+    {
+     "version": "5.14.0"
+    },
+    {
+     "version": "5.15.0"
+    },
+    {
+     "version": "5.16.0"
+    },
+    {
+     "version": "5.17.0"
+    },
+    {
+     "version": "5.18.0"
+    },
+    {
+     "version": "5.18.1"
+    },
+    {
+     "version": "5.19.0"
+    },
+    {
+     "version": "5.20.0"
+    },
+    {
+     "version": "5.21.0"
+    },
+    {
+     "version": "6.0.0"
+    },
+    {
+     "version": "6.0.1"
+    },
+    {
+     "version": "6.1.0"
+    },
+    {
+     "version": "6.2.0"
+    },
+    {
+     "version": "6.3.0"
+    },
+    {
+     "version": "6.4.0"
+    },
+    {
+     "version": "6.4.1"
+    },
+    {
+     "version": "6.5.0"
+    },
+    {
+     "version": "6.5.1"
+    },
+    {
+     "version": "6.6.0"
+    },
+    {
+     "version": "6.6.1"
+    },
+    {
+     "version": "6.7.0"
+    },
+    {
+     "version": "6.7.1"
+    },
+    {
+     "version": "6.7.2"
+    }
+   ],
+   "sourceUrl": "https://github.com/terraform-aws-modules/terraform-aws-vpc"
+  },
+  "terraform-provider\u0000cloudflare/cloudflare\u0000": {
+   "packageName": "cloudflare/cloudflare",
+   "datasource": "terraform-provider",
+   "registryUrl": "https://registry.terraform.io",
+   "releases": [
+    {
+     "version": "4.8.0"
+    },
+    {
+     "version": "4.42.0"
+    },
+    {
+     "version": "3.1.0"
+    },
+    {
+     "version": "4.37.0"
+    },
+    {
+     "version": "4.22.0"
+    },
+    {
+     "version": "5.25.0"
+    },
+    {
+     "version": "5.10.0"
+    },
+    {
+     "version": "3.19.0"
+    },
+    {
+     "version": "4.7.1"
+    },
+    {
+     "version": "5.16.0"
+    },
+    {
+     "version": "3.32.0"
+    },
+    {
+     "version": "4.16.0"
+    },
+    {
+     "version": "2.10.0"
+    },
+    {
+     "version": "4.25.0"
+    },
+    {
+     "version": "4.0.0-rc2"
+    },
+    {
+     "version": "5.13.0"
+    },
+    {
+     "version": "4.40.0"
+    },
+    {
+     "version": "3.10.0"
+    },
+    {
+     "version": "2.13.0"
+    },
+    {
+     "version": "3.28.0"
+    },
+    {
+     "version": "3.9.0"
+    },
+    {
+     "version": "5.23.0"
+    },
+    {
+     "version": "3.15.0"
+    },
+    {
+     "version": "5.18.0"
+    },
+    {
+     "version": "4.17.0"
+    },
+    {
+     "version": "2.24.0"
+    },
+    {
+     "version": "4.52.0"
+    },
+    {
+     "version": "2.9.0"
+    },
+    {
+     "version": "4.38.0"
+    },
+    {
+     "version": "4.45.0"
+    },
+    {
+     "version": "5.8.2"
+    },
+    {
+     "version": "2.18.0"
+    },
+    {
+     "version": "4.7.0"
+    },
+    {
+     "version": "2.11.0"
+    },
+    {
+     "version": "4.31.0"
+    },
+    {
+     "version": "3.31.0"
+    },
+    {
+     "version": "4.27.0"
+    },
+    {
+     "version": "2.26.0"
+    },
+    {
+     "version": "3.16.0"
+    },
+    {
+     "version": "4.1.0"
+    },
+    {
+     "version": "5.12.0"
+    },
+    {
+     "version": "5.10.1"
+    },
+    {
+     "version": "5.19.0-beta.4"
+    },
+    {
+     "version": "5.6.0"
+    },
+    {
+     "version": "3.30.0"
+    },
+    {
+     "version": "5.15.0"
+    },
+    {
+     "version": "4.3.0"
+    },
+    {
+     "version": "4.14.0"
+    },
+    {
+     "version": "5.17.0"
+    },
+    {
+     "version": "3.35.0"
+    },
+    {
+     "version": "4.10.0"
+    },
+    {
+     "version": "5.24.0"
+    },
+    {
+     "version": "4.52.1"
+    },
+    {
+     "version": "4.26.0"
+    },
+    {
+     "version": "2.27.0"
+    },
+    {
+     "version": "5.3.0"
+    },
+    {
+     "version": "4.13.0"
+    },
+    {
+     "version": "5.5.0"
+    },
+    {
+     "version": "5.7.1"
+    },
+    {
+     "version": "3.9.1"
+    },
+    {
+     "version": "4.29.0"
+    },
+    {
+     "version": "4.52.9"
+    },
+    {
+     "version": "4.34.0"
+    },
+    {
+     "version": "4.24.0"
+    },
+    {
+     "version": "4.5.0"
+    },
+    {
+     "version": "4.35.0"
+    },
+    {
+     "version": "5.0.0-alpha1"
+    },
+    {
+     "version": "2.19.0"
+    },
+    {
+     "version": "3.27.0"
+    },
+    {
+     "version": "3.14.0"
+    },
+    {
+     "version": "4.21.0"
+    },
+    {
+     "version": "4.32.0"
+    },
+    {
+     "version": "4.33.0"
+    },
+    {
+     "version": "5.19.0-beta.1"
+    },
+    {
+     "version": "4.50.0"
+    },
+    {
+     "version": "3.7.0"
+    },
+    {
+     "version": "3.10.1"
+    },
+    {
+     "version": "5.20.0"
+    },
+    {
+     "version": "4.30.0"
+    },
+    {
+     "version": "5.19.1"
+    },
+    {
+     "version": "4.52.6"
+    },
+    {
+     "version": "5.22.0"
+    },
+    {
+     "version": "3.34.0"
+    },
+    {
+     "version": "5.19.0"
+    },
+    {
+     "version": "4.0.0-rc1"
+    },
+    {
+     "version": "5.19.0-beta.5"
+    },
+    {
+     "version": "4.47.0"
+    },
+    {
+     "version": "4.52.7"
+    },
+    {
+     "version": "4.18.0"
+    },
+    {
+     "version": "3.3.0"
+    },
+    {
+     "version": "3.8.0"
+    },
+    {
+     "version": "4.52.2"
+    },
+    {
+     "version": "4.0.0"
+    },
+    {
+     "version": "2.15.0"
+    },
+    {
+     "version": "4.9.0"
+    },
+    {
+     "version": "5.0.0-rc1"
+    },
+    {
+     "version": "4.49.1"
+    },
+    {
+     "version": "2.10.1"
+    },
+    {
+     "version": "5.9.0"
+    },
+    {
+     "version": "2.17.0"
+    },
+    {
+     "version": "5.2.0"
+    },
+    {
+     "version": "2.13.2"
+    },
+    {
+     "version": "3.26.0"
+    },
+    {
+     "version": "3.5.0"
+    },
+    {
+     "version": "4.15.0"
+    },
+    {
+     "version": "4.49.0"
+    },
+    {
+     "version": "5.14.0"
+    },
+    {
+     "version": "5.1.0"
+    },
+    {
+     "version": "4.46.0"
+    },
+    {
+     "version": "3.12.1"
+    },
+    {
+     "version": "2.21.0"
+    },
+    {
+     "version": "3.29.0"
+    },
+    {
+     "version": "5.21.1"
+    },
+    {
+     "version": "3.6.0"
+    },
+    {
+     "version": "5.7.0"
+    },
+    {
+     "version": "5.11.0"
+    },
+    {
+     "version": "4.11.0"
+    },
+    {
+     "version": "2.14.0"
+    },
+    {
+     "version": "5.21.0"
+    },
+    {
+     "version": "3.25.0"
+    },
+    {
+     "version": "2.12.0"
+    },
+    {
+     "version": "3.12.0"
+    },
+    {
+     "version": "5.0.0"
+    },
+    {
+     "version": "3.18.0"
+    },
+    {
+     "version": "4.51.0"
+    },
+    {
+     "version": "4.2.0"
+    },
+    {
+     "version": "4.36.0"
+    },
+    {
+     "version": "5.8.4"
+    },
+    {
+     "version": "4.48.0"
+    },
+    {
+     "version": "2.20.0"
+    },
+    {
+     "version": "4.28.0"
+    },
+    {
+     "version": "2.23.0"
+    },
+    {
+     "version": "4.23.0"
+    },
+    {
+     "version": "4.12.0"
+    },
+    {
+     "version": "4.44.0"
+    },
+    {
+     "version": "4.52.5"
+    },
+    {
+     "version": "4.52.3"
+    },
+    {
+     "version": "5.19.0-beta.2"
+    },
+    {
+     "version": "3.11.0"
+    },
+    {
+     "version": "3.13.0"
+    },
+    {
+     "version": "2.19.1"
+    },
+    {
+     "version": "2.19.2"
+    },
+    {
+     "version": "4.6.0"
+    },
+    {
+     "version": "2.13.1"
+    },
+    {
+     "version": "3.21.0"
+    },
+    {
+     "version": "4.39.0"
+    },
+    {
+     "version": "5.4.0"
+    },
+    {
+     "version": "3.23.0"
+    },
+    {
+     "version": "4.19.0"
+    },
+    {
+     "version": "2.16.0"
+    },
+    {
+     "version": "3.2.0"
+    },
+    {
+     "version": "2.25.0"
+    },
+    {
+     "version": "4.52.4"
+    },
+    {
+     "version": "4.4.0"
+    },
+    {
+     "version": "3.24.0"
+    },
+    {
+     "version": "4.52.8"
+    },
+    {
+     "version": "3.0.0"
+    },
+    {
+     "version": "3.12.2"
+    },
+    {
+     "version": "3.22.0"
+    },
+    {
+     "version": "3.4.0"
+    },
+    {
+     "version": "3.33.0"
+    },
+    {
+     "version": "4.43.0"
+    },
+    {
+     "version": "3.20.0"
+    },
+    {
+     "version": "4.20.0"
+    },
+    {
+     "version": "3.17.0"
+    },
+    {
+     "version": "2.26.1"
+    },
+    {
+     "version": "2.22.0"
+    },
+    {
+     "version": "3.33.1"
+    },
+    {
+     "version": "3.0.1"
+    },
+    {
+     "version": "4.41.0"
+    },
+    {
+     "version": "5.19.0-beta.3"
+    }
+   ],
+   "sourceUrl": "https://github.com/cloudflare/terraform-provider-cloudflare"
+  }
+ },
+ "digests": {
+  "docker\u0000bash\u0000\u0000alpine3.22": "sha256:84e9597a44c52678823f5292b595004b0bccc722092b0764cb4269e2859f540a"
+ },
+ "failures": {
+  "custom.corp-apk\u0000php-frankenphp-8.5\u0000": {
+   "msg": "custom.corp-apk: php-frankenphp-8.5: httpx: request failed: Get \"http://127.0.0.1:8099/corp/php-frankenphp-8.5.json\": dial tcp 127.0.0.1:8099: connect: connection refused"
+  },
+  "docker\u0000registry.acme.test/devops/ci-mirrors/alpine\u0000": {
+   "msg": "docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/ci-mirrors/alpine/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+  },
+  "docker\u0000registry.acme.test/devops/images/wolfi-base\u0000": {
+   "msg": "docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/wolfi-base/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+  },
+  "gitlab-packages\u0000development/acme/sitepackage:acme/sitepackage\u0000https://git.acme.test/": {
+   "msg": "gitlab-packages: development/acme/sitepackage: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/development%2Facme%2Fsitepackage/packages?package_name=acme%2Fsitepackage\u0026per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  },
+  "gitlab-releases\u0000devops/ci-cd-components/lint-tools\u0000https://git.acme.test/": {
+   "msg": "gitlab-releases: devops/ci-cd-components/lint-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/releases?per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  },
+  "gitlab-releases\u0000devops/ci-cd-components/release-tools\u0000https://git.acme.test/": {
+   "msg": "gitlab-releases: devops/ci-cd-components/release-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Frelease-tools/releases?per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  },
+  "gitlab-releases\u0000devops/ci-cd-components/supply-chain-verify\u0000https://git.acme.test/": {
+   "msg": "gitlab-releases: devops/ci-cd-components/supply-chain-verify: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Fsupply-chain-verify/releases?per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  },
+  "gitlab-tags\u0000devops/ci-cd-components/lint-tools\u0000https://git.acme.test/": {
+   "msg": "gitlab-tags: devops/ci-cd-components/lint-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/repository/tags?per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  },
+  "gitlab-tags\u0000devops/ci-cd-components/release-tools\u0000https://git.acme.test/": {
+   "msg": "gitlab-tags: devops/ci-cd-components/release-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Frelease-tools/repository/tags?per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  },
+  "gitlab-tags\u0000devops/ci-cd-components/supply-chain-verify\u0000https://git.acme.test/": {
+   "msg": "gitlab-tags: devops/ci-cd-components/supply-chain-verify: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Fsupply-chain-verify/repository/tags?per_page=100\u0026page=1\": dial tcp: lookup git.acme.test: no such host"
+  }
+ }
+}

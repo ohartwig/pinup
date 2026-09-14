@@ -1,0 +1,128 @@
+{
+  "gomod": [
+    {
+      "constraintsVersioning": {
+        "%goMod": "semver-coerced"
+      },
+      "deps": [
+        {
+          "commitMessageTopic": "go module directive",
+          "currentValue": "1.27.0",
+          "datasource": "golang-version",
+          "depName": "go",
+          "depType": "golang",
+          "managerData": {
+            "lineNumber": 2
+          },
+          "versioning": "go-mod-directive"
+        },
+        {
+          "commitMessageTopic": "go toolchain directive",
+          "currentValue": "1.27.1",
+          "datasource": "golang-version",
+          "depName": "go",
+          "depType": "toolchain",
+          "managerData": {
+            "lineNumber": 4
+          }
+        },
+        {
+          "currentValue": "v1.5.0",
+          "datasource": "go",
+          "depName": "go.etcd.io/bbolt",
+          "depType": "require",
+          "managerData": {
+            "lineNumber": 7,
+            "multiLine": true
+          }
+        },
+        {
+          "currentValue": "v3.0.1",
+          "datasource": "go",
+          "depName": "gopkg.in/yaml.v3",
+          "depType": "require",
+          "managerData": {
+            "lineNumber": 8,
+            "multiLine": true
+          }
+        },
+        {
+          "currentValue": "v0.45.0",
+          "datasource": "go",
+          "depName": "golang.org/x/sys",
+          "depType": "indirect",
+          "enabled": false,
+          "managerData": {
+            "lineNumber": 11
+          }
+        },
+        {
+          "currentValue": "v1.43.8",
+          "datasource": "go",
+          "depName": "github.com/aws/aws-sdk-go-v2",
+          "depType": "require",
+          "managerData": {
+            "lineNumber": 13
+          }
+        },
+        {
+          "currentValue": "v1.43.7",
+          "datasource": "go",
+          "depName": "github.com/aws/aws-sdk-go-v2",
+          "depType": "replace",
+          "managerData": {
+            "lineNumber": 15
+          }
+        }
+      ],
+      "extractedConstraints": {
+        "%goMod": "~1.27.x",
+        "golang": "1.27.1"
+      },
+      "packageFile": "go.mod"
+    },
+    {
+      "constraintsVersioning": {
+        "%goMod": "semver-coerced"
+      },
+      "deps": [
+        {
+          "commitMessageTopic": "go module directive",
+          "currentValue": "1.26",
+          "datasource": "golang-version",
+          "depName": "go",
+          "depType": "golang",
+          "managerData": {
+            "lineNumber": 2
+          },
+          "versioning": "go-mod-directive"
+        },
+        {
+          "currentValue": "v1.9.1",
+          "datasource": "go",
+          "depName": "github.com/spf13/cobra",
+          "depType": "require",
+          "managerData": {
+            "lineNumber": 5,
+            "multiLine": true
+          }
+        },
+        {
+          "currentValue": "v0.30.0",
+          "datasource": "go",
+          "depName": "golang.org/x/tools",
+          "depType": "indirect",
+          "enabled": false,
+          "managerData": {
+            "lineNumber": 6,
+            "multiLine": true
+          }
+        }
+      ],
+      "extractedConstraints": {
+        "%goMod": "~1.26.x"
+      },
+      "packageFile": "tools/go.mod"
+    }
+  ]
+}

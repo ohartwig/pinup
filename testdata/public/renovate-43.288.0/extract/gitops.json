@@ -1,0 +1,472 @@
+{
+  "gitlabci": [
+    {
+      "deps": [
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "3.22",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/alpine",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/alpine",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/alpine:3.22"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "0.7.0",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/kubeconform",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/kubeconform",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/kubeconform:0.7.0"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentDigest": "sha256:718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2",
+          "currentValue": "3.19.0",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/helm",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/helm",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/helm:3.19.0@sha256:718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2"
+        },
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "0.8.0",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/deploy-tools",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "2",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/supply-chain-verify",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        }
+      ],
+      "packageFile": ".gitlab-ci.yml"
+    }
+  ],
+  "regex": [
+    {
+      "datasourceTemplate": "github-tags",
+      "depNameTemplate": "argoproj/argo-cd",
+      "deps": [
+        {
+          "currentValue": "3.1.5",
+          "datasource": "github-tags",
+          "depName": "argoproj/argo-cd",
+          "replaceString": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.5/manifests/install.yaml",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "3.1.5",
+          "datasource": "github-tags",
+          "depName": "argoproj/argo-cd",
+          "replaceString": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.5/examples/k8s-rbac/argocd-server-applications/argocd-server-rbac-clusterrole.yaml",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "3.1.5",
+          "datasource": "github-tags",
+          "depName": "argoproj/argo-cd",
+          "replaceString": "https://raw.githubusercontent.com/argoproj/argo-cd/v3.1.5/examples/k8s-rbac/argocd-server-applications/argocd-server-rbac-clusterrolebinding.yaml",
+          "versioning": "semver"
+        }
+      ],
+      "matchStrings": [
+        "https:\\/\\/raw\\.githubusercontent\\.com\\/argoproj\\/argo-cd\\/v(?<currentValue>\\S+)\\/manifests\\/install.yaml",
+        "https:\\/\\/raw\\.githubusercontent\\.com\\/argoproj\\/argo-cd\\/v(?<currentValue>\\S+)\\/examples\\/k8s-rbac\\/argocd-server-applications\\/argocd-server-rbac-clusterrole\\.yaml",
+        "https:\\/\\/raw\\.githubusercontent\\.com\\/argoproj\\/argo-cd\\/v(?<currentValue>\\S+)\\/examples\\/k8s-rbac\\/argocd-server-applications\\/argocd-server-rbac-clusterrolebinding\\.yaml"
+      ],
+      "packageFile": "argocd-install/kustomization.yml",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/yaml@2.14.3",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "0.8.0",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/deploy-tools",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/deploy-tools/argocd-sync@0.8.0",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentDigest": "sha256:93a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4",
+          "currentValue": "3.5.5",
+          "datasource": "docker",
+          "depName": "grafana/loki",
+          "extractVersion": "^v?(?<version>.+)$",
+          "registryUrls": [
+            "https://index.docker.io/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=grafana/loki registryUrl=https://**redacted**@sha256:93a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "packageFile": "charts/monitoring/values.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "5.18.2",
+          "datasource": "docker",
+          "depName": "registry.acme.test/development/acme/website",
+          "extractVersion": "^v?(?<version>.+)$",
+          "registryUrls": [
+            "https://registry.acme.test/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/development/acme/website registryUrl=https://registry.acme.test\n  tag: \"5.18.2\"",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "5.18.2",
+          "datasource": "docker",
+          "depName": "registry.acme.test/development/acme/website/sources",
+          "extractVersion": "^v?(?<version>.+)$",
+          "registryUrls": [
+            "https://registry.acme.test/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/development/acme/website/sources registryUrl=https://registry.acme.test\n  tag: \"5.18.2\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "packageFile": "charts/webapp/values.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "3.2.0",
+          "datasource": "docker",
+          "depName": "registry.acme.test/development/client-a/website",
+          "extractVersion": "^v?(?<version>.+)$",
+          "registryUrls": [
+            "https://registry.acme.test/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/development/client-a/website registryUrl=https://registry.acme.test\n    tag: \"3.2.0\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "packageFile": "tenants/client-a.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "12.1.1",
+          "datasource": "docker",
+          "depName": "grafana/grafana",
+          "extractVersion": "^v?(?<version>.+)$",
+          "replaceString": "# renovate: datasource=docker depName=grafana/grafana\n    tag: \"12.1.1\"",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "v2.14.0",
+          "datasource": "docker",
+          "depName": "binwiederhier/ntfy",
+          "extractVersion": "^v?(?<version>.+)$",
+          "replaceString": "# renovate: datasource=docker depName=binwiederhier/ntfy\n    tag: \"v2.14.0\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "packageFile": "charts/monitoring/values.yaml",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "1.0.4",
+          "datasource": "docker",
+          "depName": "registry.acme.test/development/client-b/website",
+          "extractVersion": "^v?(?<version>.+)$",
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/development/client-b/website\n    tag: \"1.0.4\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "packageFile": "tenants/client-b.yaml",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentDigest": "sha256:8293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3",
+          "currentValue": "0.6.1",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/images/clamav-exporter",
+          "registryUrls": [
+            "https://registry.acme.test/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/devops/images/clamav-exporter registryUrl=https://registry.acme.test\n          image: \"registry.acme.test/devops/images/clamav-exporter:0.6.1@sha256:8293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3\"\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "bootstrap/platform/clamav.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "v0.27.0",
+          "datasource": "docker",
+          "depName": "prom/blackbox-exporter",
+          "registryUrls": [
+            "https://index.docker.io/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=prom/blackbox-exporter registryUrl=https://index.docker.io\n  image: \"prom/blackbox-exporter:v0.27.0\"\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "charts/monitoring/values.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "2.1.0",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/images/log-shipper",
+          "registryUrls": [
+            "https://registry.acme.test/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/devops/images/log-shipper registryUrl=https://registry.acme.test\n  logShipper: registry.acme.test/devops/images/log-shipper:2.1.0\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "charts/webapp/values.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "v3.1.5",
+          "datasource": "docker",
+          "depName": "quay.io/argoproj/argocd",
+          "replaceString": "# renovate: datasource=docker depName=quay.io/argoproj/argocd\n  image: quay.io/argoproj/argocd:v3.1.5\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "bootstrap/platform/argocd-app.yaml",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "1.4.3",
+          "datasource": "docker",
+          "depName": "clamav/clamav",
+          "replaceString": "# renovate: datasource=docker depName=clamav/clamav\n          image: clamav/clamav:1.4.3\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "bootstrap/platform/clamav.yaml",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "v1.33.4-k3s1",
+          "datasource": "docker",
+          "depName": "rancher/k3s-upgrade",
+          "replaceString": "# renovate: datasource=docker depName=rancher/k3s-upgrade\n    image: rancher/k3s-upgrade:v1.33.4-k3s1\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "bootstrap/platform/upgrade-plan.yaml",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "v1.10.2",
+          "datasource": "docker",
+          "depName": "grafana/alloy",
+          "replaceString": "# renovate: datasource=docker depName=grafana/alloy\n  image: grafana/alloy:v1.10.2\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "charts/monitoring/values.yaml",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "8.1.3-alpine",
+          "datasource": "docker",
+          "depName": "valkey/valkey",
+          "replaceString": "# renovate: datasource=docker depName=valkey/valkey\n  cache: valkey/valkey:8.1.3-alpine\n",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "packageFile": "charts/webapp/values.yaml",
+      "versioningTemplate": "docker"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "12.1.1",
+          "datasource": "docker",
+          "depName": "grafana/grafana",
+          "extractVersion": "^v?(?<version>.+)$",
+          "registryUrls": [
+            "https://index.docker.io/"
+          ],
+          "replaceString": "# renovate: datasource=docker depName=grafana/grafana registryUrl=https://index.docker.io\nappVersion: \"12.1.1\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+appVersion:\\s*\"(?<currentValue>[^\"]+?)\""
+      ],
+      "packageFile": "charts/monitoring/Chart.yaml",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "5.18.2",
+          "datasource": "docker",
+          "depName": "registry.acme.test/development/acme/website",
+          "extractVersion": "^v?(?<version>.+)$",
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/development/acme/website\nappVersion: \"5.18.2\"",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+appVersion:\\s*\"(?<currentValue>[^\"]+?)\""
+      ],
+      "packageFile": "charts/webapp/Chart.yaml",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "2",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/supply-chain-verify",
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/supply-chain-verify/base-image-pins@2\n",
+          "versioning": "loose"
+        }
+      ],
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+)[\\r\\n]"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "versioningTemplate": "loose"
+    }
+  ]
+}

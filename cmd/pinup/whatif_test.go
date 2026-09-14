@@ -7,8 +7,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/ohartwig/pinup/report"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -19,6 +21,7 @@ import (
 	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/report"
 	"github.com/ohartwig/pinup/wire"
 )
 
@@ -80,9 +83,23 @@ func canned() lookup.Registry {
 func ciToolsOptions(t *testing.T, at time.Time) whatifOptions {
 	t.Helper()
 	return whatifOptions{
-		Root: ciToolsRepo, ConfigPath: fixture.Config(t),
+		Root: ciTools(t), ConfigPath: fixture.Config(t),
 		RepoName: "devops/images/ci-tools", Now: at, Datasources: canned(),
 	}
+}
+
+// ciTools is the estate's ci-tools checkout, the repository the canned
+// answers above were written for; the test skips where the estate root
+// does not name it or the checkout is not on this machine.
+func ciTools(t *testing.T) string {
+	t.Helper()
+	for _, c := range fixture.Corpora(t) {
+		if c.Name == "ci-tools" && c.Tree != "" {
+			return c.Tree
+		}
+	}
+	t.Skip("the ci-tools checkout is not present")
+	return ""
 }
 
 // The first end-to-end check: run the real configuration over a real
@@ -97,36 +114,74 @@ func ciToolsOptions(t *testing.T, at time.Time) whatifOptions {
 // Rules are always reported in the resolved numbering, which is Renovate's.
 func fileRule(i int) int { return 722 + i }
 
-const ciToolsRepo = "/Volumes/Samsung_X5/Projects/moselwal/devops/images/ci-tools"
-
-func TestWhatifAgainstARealRepository(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
+// TestWhatifAgreesWithTheCorpus runs the whole extraction over every
+// repository the fixture root has a capture for - the run's discovery, the
+// resolved managers, the custom regex managers, the lock files - and
+// compares what comes out against what the pinned Renovate container
+// extracted from the same files. A capture whose checkout is not on this
+// machine is skipped; the public root's repositories are in the tree, so
+// there every capture is compared.
+func TestWhatifAgreesWithTheCorpus(t *testing.T) {
+	ran := 0
+	for _, c := range fixture.Corpora(t) {
+		if c.Tree == "" {
+			t.Logf("%s: checkout not present; skipped", c.Name)
+			continue
+		}
+		ran++
+		t.Run(c.Name, func(t *testing.T) {
+			root := c.Tree
+			if _, err := os.Stat(filepath.Join(c.Tree, ".git")); err == nil {
+				// The capture archived a commit; a working tree may carry
+				// uncommitted changes the capture knows nothing about.
+				root = archiveAt(t, c)
+			}
+			at := time.Date(2026, 9, 14, 8, 0, 0, 0, time.UTC)
+			plan, err := whatif(context.Background(), whatifOptions{
+				Root: root, ConfigPath: c.Config, RepoName: "corpus/" + c.Name, Now: at, Datasources: canned(),
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			// A plan that found nothing would pass every comparison below.
+			if plan.Stats.DepsExtracted == 0 {
+				t.Fatal("the run extracted nothing; the pipeline is not connected")
+			}
+			t.Logf("%d dependencies in %d files", plan.Stats.DepsExtracted, plan.Stats.FilesDiscovered)
+			compareWithCorpus(t, plan, c)
+		})
 	}
-
-	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
-	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
-	if err != nil {
-		t.Fatal(err)
+	if ran == 0 {
+		t.Skip("no capture with its files on this machine")
 	}
+}
 
-	// A plan that found nothing would pass every comparison below.
-	if plan.Stats.DepsExtracted == 0 {
-		t.Fatal("the run extracted nothing; the pipeline is not connected")
+// archiveAt materialises the commit a capture archived from a checkout.
+func archiveAt(t *testing.T, c fixture.Corpus) string {
+	t.Helper()
+	dir := t.TempDir()
+	cmd := exec.Command("sh", "-c", "git -C \"$1\" archive \"$2\" | tar -x -C \"$3\"", "sh", c.Tree, c.Commit, dir)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("archiving %s at %s: %v\n%s", c.Name, c.Commit, err, out)
 	}
-	t.Logf("%d dependencies in %d files", plan.Stats.DepsExtracted, plan.Stats.FilesDiscovered)
+	return dir
+}
 
-	// Keyed by file, name, value AND manager: the component pins are
-	// legitimately reported twice, by gitlabci (gitlab-tags) and by the
-	// estate's custom regex manager (gitlab-releases), and the rules tell
-	// the two apart by manager.
+// compareWithCorpus holds a plan's extraction against a capture, keyed by
+// file, name, value AND manager: the component pins are legitimately
+// reported twice, by gitlabci (gitlab-tags) and by a custom regex manager
+// (gitlab-releases), and the rules tell the two apart by manager.
+func compareWithCorpus(t *testing.T, plan *model.Plan, c fixture.Corpus) {
+	t.Helper()
 	mine := map[string]bool{}
 	for _, d := range plan.Deps {
-		// A dependency extraction skipped is a recorded decision Renovate
-		// emits nothing for. One skipped later - by lookup or by the
-		// planner - was extracted just as Renovate extracted it, and stays
+		// A dependency extraction skipped in pinup's own words is a recorded
+		// decision Renovate emits nothing for (a stage reference, a tag with
+		// a variable in it). One skipped in Renovate's words - "local",
+		// "unspecified-version" - or later, by the rules, the lookup or the
+		// planner, was extracted just as Renovate extracted it, and stays
 		// comparable.
-		if d.SkipReason != "" && !skippedAfterExtraction(d.SkipReason) {
+		if d.SkipReason != "" && d.Disabled == "" && !skippedAfterExtraction(d.SkipReason) && !renovateSkipReason(d.SkipReason) {
 			continue
 		}
 		mgr := d.Manager
@@ -136,7 +191,7 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 		mine[d.File+"|"+d.DepName+"|"+d.CurrentValue+"|"+mgr] = true
 	}
 
-	raw, err := os.ReadFile(fixture.Captured(t, "extract", "ci-tools.json"))
+	raw, err := os.ReadFile(c.Path)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,16 +200,19 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 		Deps        []struct {
 			DepName      string `json:"depName"`
 			CurrentValue string `json:"currentValue"`
+			SkipReason   string `json:"skipReason"`
 		} `json:"deps"`
 	}
 	if err := json.Unmarshal(raw, &corpus); err != nil {
 		t.Fatal(err)
 	}
-
 	theirs := map[string]string{} // key -> the manager Renovate used
 	for mgr, files := range corpus {
 		for _, f := range files {
 			for _, d := range f.Deps {
+				if d.DepName == "" {
+					continue // skipped before it had a name: nothing to compare
+				}
 				theirs[f.PackageFile+"|"+d.DepName+"|"+d.CurrentValue+"|"+mgr] = mgr
 			}
 		}
@@ -168,32 +226,33 @@ func TestWhatifAgainstARealRepository(t *testing.T) {
 			invented = append(invented, k)
 		}
 	}
+	sort.Strings(invented)
 	if len(invented) != 0 {
 		t.Errorf("pinup produced %d dependencies Renovate does not: %v", len(invented), invented)
 	}
 
 	// The other direction: everything Renovate found, pinup must find too.
-	// This expectation started life as "exactly 3 gitlabci dependencies still
-	// missing" and was deleted when manager/gitlabci landed - which is how a
-	// known gap is meant to behave.
 	missingByManager := map[string]int{}
+	var missing []string
 	for k, mgr := range theirs {
 		if _, ok := mine[k]; !ok {
 			missingByManager[mgr]++
+			missing = append(missing, k)
 		}
 	}
-	t.Logf("agreed on %d of %d; missing by manager: %v", len(mine), len(theirs), missingByManager)
+	sort.Strings(missing)
+	t.Logf("agreed on %d of %d; missing by manager: %v", len(mine)-len(invented), len(theirs), missingByManager)
 	for mgr, n := range missingByManager {
 		t.Errorf("%d dependencies Renovate found via %q are missing", n, mgr)
+	}
+	if len(missing) > 0 {
+		t.Logf("missing: %v", missing)
 	}
 }
 
 // The plan a run produces must satisfy its own schema, including the rule that
 // every dependency either becomes an update or says why not.
 func TestWhatifProducesAValidPlan(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
 	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
@@ -207,13 +266,15 @@ func TestWhatifProducesAValidPlan(t *testing.T) {
 	}
 }
 
-// skippedAfterExtraction recognises the skip reasons lookup and planner
-// write. Listed here rather than matched loosely, so a new stage that skips
-// with a new phrasing shows up as a test failure and gets added deliberately.
+// skippedAfterExtraction recognises the skip reasons the rules, lookup and
+// planner write. Listed here rather than matched loosely, so a new stage
+// that skips with a new phrasing shows up as a test failure and gets added
+// deliberately.
 func skippedAfterExtraction(reason string) bool {
 	for _, prefix := range []string{
 		"lookup failed:", "no lookup was made", "up to date:", "the registry lists no releases",
 		"current value", "none of the", "versioning:", "cannot write",
+		"disabled by packageRules", "listed in ignoreDeps", "not the released package",
 	} {
 		if strings.HasPrefix(reason, prefix) {
 			return true
@@ -222,13 +283,21 @@ func skippedAfterExtraction(reason string) bool {
 	return false
 }
 
+// renovateSkipReason recognises the extraction skip reasons pinup records
+// in Renovate's own words, for parity: the capture carries the dependency
+// with its name and that reason, and so must the plan.
+func renovateSkipReason(reason string) bool {
+	switch reason {
+	case "local", "unspecified-version", "invalid-dependency-specification", "unsupported-source":
+		return true
+	}
+	return false
+}
+
 // The plan must carry real updates for the canned releases, each with a
 // locus whose bytes are exactly the current value - the edit that apply will
 // make is derived from nothing else.
 func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC)
 	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
@@ -246,7 +315,7 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 		byDep[u.Dep.DepName] = append(byDep[u.Dep.DepName], u)
 		body, ok := files[u.Dep.File]
 		if !ok {
-			body, err = os.ReadFile(ciToolsRepo + "/" + u.Dep.File)
+			body, err = os.ReadFile(ciTools(t) + "/" + u.Dep.File)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -331,9 +400,6 @@ func TestWhatifProposesUpdatesWithExactLoci(t *testing.T) {
 // Every held update in the plan names its reason, its origin, and - for a
 // time-based hold - when it thaws. A nearly empty cache is warned about.
 func TestWhatifHoldsExplainThemselves(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	at := time.Date(2026, 9, 11, 12, 0, 0, 0, time.UTC) // 14:00 in Berlin: the cron window is closed
 	opts := ciToolsOptions(t, at)
 	opts.Cache = newEmptyCache(t)
@@ -390,9 +456,6 @@ func newEmptyCache(t *testing.T) lookup.Cache {
 // The edits a plan carries apply to a copy of the repository and change
 // exactly the bytes of the values - nothing else in either file.
 func TestWhatifEditsApplyByteExact(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC) // window open, holds thawed
 	plan, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {
@@ -439,7 +502,7 @@ func TestWhatifEditsApplyByteExact(t *testing.T) {
 		if _, ok := files[e.File]; ok {
 			continue
 		}
-		body, err := os.ReadFile(ciToolsRepo + "/" + e.File)
+		body, err := os.ReadFile(ciTools(t) + "/" + e.File)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -478,12 +541,9 @@ func TestWhatifEditsApplyByteExact(t *testing.T) {
 // A repository's own renovate.json is what runs, with the runner's file
 // answering the local> alias: its rules come last and decide.
 func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	root := t.TempDir()
 	for _, f := range []string{".gitlab-ci.yml", "Containerfile"} {
-		body, err := os.ReadFile(ciToolsRepo + "/" + f)
+		body, err := os.ReadFile(ciTools(t) + "/" + f)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -530,9 +590,6 @@ func skipReasons(p *model.Plan) []string {
 // The fast lane plans one dependency: everything else is skipped by name,
 // and the released package's lookups bypass the cache.
 func TestWhatifReleasedNarrowsToTheReleasedPackage(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
 	opts := ciToolsOptions(t, at)
 	opts.Released = "devops/ci-cd-components/lint-tools"
@@ -658,9 +715,6 @@ func TestARepositoryWithoutConfigIgnoresNodeModules(t *testing.T) {
 // the members, the branch is actionable, the plan records the dashboard as
 // the origin. A hold the box does not name stays.
 func TestADashboardBoxLiftsTheHoldItNames(t *testing.T) {
-	if _, err := os.Stat(ciToolsRepo); err != nil {
-		t.Skipf("the ci-tools checkout is not present: %v", err)
-	}
 	at := time.Date(2026, 9, 13, 3, 5, 0, 0, time.UTC) // outside the 4-hourly window
 	base, err := whatif(context.Background(), ciToolsOptions(t, at))
 	if err != nil {

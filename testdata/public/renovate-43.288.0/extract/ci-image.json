@@ -1,0 +1,426 @@
+{
+  "dockerfile": [
+    {
+      "deps": [
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentDigest": "sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04",
+          "currentValue": "2",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/images/wolfi-base",
+          "depType": "stage",
+          "packageName": "registry.acme.test/devops/images/wolfi-base",
+          "replaceString": "registry.acme.test/devops/images/wolfi-base:2@sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "alpine3.22",
+          "datasource": "docker",
+          "depName": "bash",
+          "depType": "stage",
+          "packageName": "bash",
+          "replaceString": "bash:alpine3.22"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentDigest": "sha256:2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7",
+          "currentValue": "0.8.14",
+          "datasource": "docker",
+          "depName": "ghcr.io/astral-sh/uv",
+          "depType": "final",
+          "packageName": "ghcr.io/astral-sh/uv",
+          "replaceString": "ghcr.io/astral-sh/uv:0.8.14@sha256:2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7"
+        }
+      ],
+      "packageFile": "Containerfile"
+    }
+  ],
+  "gitlabci": [
+    {
+      "deps": [
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "3.22",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/alpine",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/alpine",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/alpine:3.22"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "28.3.3",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/docker",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/docker",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/docker:28.3.3"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentDigest": "sha256:1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6",
+          "currentValue": "28.3.3-dind",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/docker",
+          "depType": "service-image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/docker",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/docker:28.3.3-dind@sha256:1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "datasource": "docker",
+          "depType": "image",
+          "replaceString": "registry.acme.test/devops/images/php-ci:3.2.1-$PHP_VERSION",
+          "skipReason": "contains-variable"
+        },
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "1.2.0",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/golden-image",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "1",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/lint-tools",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "3.4.1",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/release-tools",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "2",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/supply-chain-verify",
+          "depType": "repository",
+          "registryUrls": [
+            "https://$CI_SERVER_HOST"
+          ],
+          "versioning": "semver-partial"
+        }
+      ],
+      "packageFile": ".gitlab-ci.yml"
+    }
+  ],
+  "regex": [
+    {
+      "datasourceTemplate": "docker",
+      "deps": [
+        {
+          "currentDigest": "sha256:3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8",
+          "currentValue": "1.25.0",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/kaniko",
+          "replaceString": "name: registry.acme.test/devops/ci-mirrors/kaniko:1.25.0@sha256:3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8"
+        }
+      ],
+      "matchStrings": [
+        "name:\\s*(?<depName>[a-z0-9][a-z0-9._/-]*[a-z0-9]):(?<currentValue>[a-zA-Z0-9][a-zA-Z0-9._-]*)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+      ],
+      "packageFile": "templates/build.yml"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "2.12.3",
+          "datasource": "github-releases",
+          "depName": "goreleaser/goreleaser",
+          "replaceString": "# renovate: datasource=github-releases depName=goreleaser/goreleaser versioning=semver\n    GORELEASER_VERSION: \"2.12.3\"",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "24.8.0-alpine3.22",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/node",
+          "replaceString": "# renovate: datasource=docker depName=registry.acme.test/devops/ci-mirrors/node versioning=docker\n    NODE_IMAGE_TAG: \"24.8.0-alpine3.22\"",
+          "versioning": "docker"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+[A-Z][A-Z0-9_]*:\\s*[\"'](?<currentValue>[^\"']+)[\"']"
+      ],
+      "packageFile": "templates/build.yml",
+      "versioningTemplate": "{{{versioning}}}"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "1.8.2",
+          "datasource": "gitlab-tags",
+          "depName": "platform/registry-proxy",
+          "extractVersion": "^v?(?<version>.+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "# renovate: datasource=gitlab-tags depName=platform/registry-proxy versioning=semver\n    image: registry.acme.test/platform/registry-proxy:1.8.2",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>.+)$",
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+image:\\s*\\S+:(?<currentValue>[^\\s:]+)"
+      ],
+      "packageFile": "compose.yaml",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "{{{versioning}}}"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "2.79.0",
+          "datasource": "github-releases",
+          "depName": "cli/cli",
+          "replaceString": "# renovate: datasource=github-releases depName=cli/cli\nGH_VERSION=2.79.0\n"
+        },
+        {
+          "currentValue": "8.28.0",
+          "datasource": "github-releases",
+          "depName": "gitleaks/gitleaks",
+          "packageName": "gitleaks/gitleaks",
+          "replaceString": "# renovate: datasource=github-releases depName=gitleaks/gitleaks packageName=gitleaks/gitleaks versioning=semver\nGITLEAKS_VERSION=8.28.0\n",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "24.2.7",
+          "datasource": "npm",
+          "depName": "semantic-release",
+          "replaceString": "# renovate: datasource=npm depName=semantic-release\nSEMANTIC_RELEASE_VERSION=24.2.7\n"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>.+?)(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[a-z-]+?))?\\s+[A-Z_]+?_VERSION=(?<currentValue>.+?)\\s"
+      ],
+      "packageFile": "scripts/setup.sh"
+    },
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@2.14.3",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "1.2.0",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/golden-image",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/golden-image/build@1.2.0",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "3.4.1",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/release-tools",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@3.4.1",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "custom.protonpass",
+      "deps": [
+        {
+          "currentValue": "1.4.0",
+          "datasource": "custom.protonpass",
+          "depName": "pass-cli",
+          "replaceString": "# renovate: datasource=custom.protonpass depName=pass-cli\nARG PASS_CLI_VERSION=1.4.0",
+          "versioning": "semver"
+        }
+      ],
+      "matchStrings": [
+        "# renovate:\\s*datasource=custom\\.protonpass\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>[a-z-]+))?\\s+ARG PASS_CLI_VERSION=(?<currentValue>\\S+)"
+      ],
+      "packageFile": "Containerfile",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "2.6.1",
+          "datasource": "github-releases",
+          "depName": "golangci/golangci-lint",
+          "replaceString": "# renovate: datasource=github-releases depName=golangci/golangci-lint\n  GOLANGCI_LINT_VERSION: \"2.6.1\"",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "0.11.0",
+          "datasource": "github-releases",
+          "depName": "koalaman/shellcheck",
+          "replaceString": "# renovate: datasource=github-releases depName=koalaman/shellcheck\n  SHELLCHECK_VERSION: \"0.11.0\"",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "3.2.1",
+          "datasource": "gitlab-releases",
+          "depName": "images/php-ci",
+          "replaceString": "# renovate: datasource=gitlab-releases depName=images/php-ci\n  PHP_CI_VERSION: \"3.2.1\"",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "2.5.3",
+          "datasource": "github-releases",
+          "depName": "sigstore/cosign",
+          "replaceString": "# renovate: datasource=github-releases depName=sigstore/cosign\n    - install-tool cosign 2.5.3",
+          "versioning": "semver"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+[A-Z_]+:\\s*\"(?<currentValue>[0-9][^\"]+)\"",
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+-\\s*install-tool\\s+\\S+\\s+(?<currentValue>[0-9]\\S*)"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "go",
+      "deps": [
+        {
+          "currentValue": "v2.5.3",
+          "datasource": "go",
+          "depName": "github.com/sigstore/cosign/v2",
+          "replaceString": "--with github.com/sigstore/cosign/v2@v2.5.3",
+          "versioning": "semver"
+        },
+        {
+          "currentValue": "v1.32.0",
+          "datasource": "go",
+          "depName": "github.com/anchore/syft",
+          "replaceString": "--with github.com/anchore/syft@v1.32.0",
+          "versioning": "semver"
+        }
+      ],
+      "matchStrings": [
+        "--with\\s+(?<depName>[a-zA-Z0-9._/-]+)@(?<currentValue>v[0-9][^\\s\\\\]*)"
+      ],
+      "packageFile": "Containerfile",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "1",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/lint-tools",
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-ci-yaml@1\n",
+          "versioning": "loose"
+        },
+        {
+          "currentValue": "2",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/supply-chain-verify",
+          "replaceString": "$CI_SERVER_HOST/devops/ci-cd-components/supply-chain-verify/base-image-pins@2\n",
+          "versioning": "loose"
+        }
+      ],
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+)[\\r\\n]"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "versioningTemplate": "loose"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "2.51.0-r0",
+          "datasource": "custom.wolfi",
+          "depName": "git",
+          "replaceString": "# renovate: datasource=custom.wolfi depName=git versioning=apk\nARG GIT_APK_VERSION=2.51.0-r0\n",
+          "versioning": "apk"
+        },
+        {
+          "currentValue": "8.5.1-r0",
+          "datasource": "custom.corp-apk",
+          "depName": "php-frankenphp-8.5",
+          "replaceString": "# renovate: datasource=custom.corp-apk depName=php-frankenphp-8.5 versioning=apk\nARG PHP_FRANKENPHP_VERSION=8.5.1-r0\n",
+          "versioning": "apk"
+        },
+        {
+          "currentValue": "1.4.0",
+          "datasource": "custom.protonpass",
+          "depName": "pass-cli",
+          "replaceString": "# renovate: datasource=custom.protonpass depName=pass-cli\nARG PASS_CLI_VERSION=1.4.0\n"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-zA-Z0-9-._]+?) depName=(?<depName>[^\\s]+?)(?: (lookupName|packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?(?: registryUrl=(?<registryUrl>[^\\s]+?))?\\s(?:ENV|ARG)\\s+[A-Za-z0-9_]+?_VERSION[ =][\"']?(?<currentValue>.+?)[\"']?\\s"
+      ],
+      "packageFile": "Containerfile"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "2.6.1",
+          "datasource": "github-releases",
+          "depName": "golangci/golangci-lint",
+          "replaceString": "# renovate: datasource=github-releases depName=golangci/golangci-lint\n  GOLANGCI_LINT_VERSION: \"2.6.1\"\n"
+        },
+        {
+          "currentValue": "0.11.0",
+          "datasource": "github-releases",
+          "depName": "koalaman/shellcheck",
+          "replaceString": "# renovate: datasource=github-releases depName=koalaman/shellcheck\n  SHELLCHECK_VERSION: \"0.11.0\"\n"
+        },
+        {
+          "currentValue": "3.2.1",
+          "datasource": "gitlab-releases",
+          "depName": "images/php-ci",
+          "replaceString": "# renovate: datasource=gitlab-releases depName=images/php-ci\n  PHP_CI_VERSION: \"3.2.1\"\n"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-zA-Z0-9-._]+?) depName=(?<depName>[^\\s]+?)(?: (?:packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?(?: registryUrl=(?<registryUrl>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VERSION\\s*:\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
+      ],
+      "packageFile": ".gitlab-ci.yml"
+    }
+  ]
+}

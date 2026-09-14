@@ -1,0 +1,5 @@
+services:
+  registry:
+    # renovate: datasource=gitlab-tags depName=platform/registry-proxy versioning=semver
+    image: registry.acme.test/platform/registry-proxy:1.8.2
+    ports: ["5000:5000"]

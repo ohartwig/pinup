@@ -15,7 +15,8 @@
 //	}
 //	                                       depType required_provider
 //	                                       datasource terraform-provider
-//	                                       registryUrls [registry.opentofu.org]
+//	                                       registryUrls: the lock file's
+//	                                       registry when it is not the default
 //
 //	terraform { required_version = ">= 1.6" }
 //	                                       depType required_version
@@ -32,19 +33,27 @@
 //	module "x" { source = "./network" }    depType module
 //	                                       skipReason local
 //
-// The estate mirrors every provider through the OpenTofu registry rather than
-// HashiCorp's - .tofurc excludes registry.opentofu.org's upstream fallback, so
-// an unmirrored provider fails init with nothing to fall back to. That is why
-// every terraform-provider dependency here carries exactly one registry URL,
-// https://registry.opentofu.org, rather than the datasource's own default.
+//	module "vpc" {                         depType module
+//	  source  = "terraform-aws-modules/vpc/aws"
+//	  version = "6.0.1"                    depName is the source, no packageName
+//	}                                      datasource terraform-module
 //
-// A required_providers entry with no version attribute, and a registry module
-// source (`namespace/name/provider` with a version constraint), are not in
-// the corpus; they are extrapolated from the wording the corpus does record
-// for a versionless legacy provider block and are marked unmeasured where
-// they are built, below. A git or HTTP module source is not in the corpus
-// either and is reported with skipReason "unsupported-source" rather than
-// guessed at.
+// Where a provider is looked up is the lock file's business, not the
+// manifest's. The estate mirrors every provider through the OpenTofu registry
+// - .tofurc excludes registry.opentofu.org's upstream fallback - and its lock
+// files say so, and every provider Renovate extracted there carried
+// https://registry.opentofu.org; the public fixture root's lock names
+// registry.terraform.io, the default, and Renovate recorded no registry at
+// all (measured 2026-09-14). Extract sees the manifest only, so it records
+// none; LockedRegistries reads the lock for the caller that has both files,
+// the same division LockedVersions follows. A provider absent from the lock
+// keeps the datasource's default - not measured either way.
+//
+// A required_providers entry with no version attribute is extrapolated from
+// the wording the corpus records for a versionless legacy provider block and
+// is marked unmeasured where it is built, below. A git or HTTP module source
+// is not in either corpus and is reported with skipReason "unsupported-source"
+// rather than guessed at.
 //
 // No HCL library exists in this estate and none may be added: this package
 // hand-rolls a small recursive-descent scanner over the HCL subset Terraform
@@ -74,10 +83,9 @@ import (
 // name is both the registry key (extract.Registry) and model.Dependency.Manager.
 const name = "terraform"
 
-// openTofuRegistry is the only provider registry this estate's mirrors serve.
-// Measured: every terraform-provider dependency in the corpus carries exactly
-// this URL, not the datasource's own hashicorp/registry.terraform.io default.
-const openTofuRegistry = "https://registry.opentofu.org"
+// defaultRegistryHost is the provider registry the datasource looks up
+// without being told: a lock that names it says nothing new.
+const defaultRegistryHost = "registry.terraform.io"
 
 // lockFileName is the OpenTofu/Terraform provider lock file. It sits next to
 // the .tf files it locks (or above them, at the nearest ancestor that ran
@@ -237,7 +245,6 @@ func requiredProviderDep(file string, src []byte, it node) model.Dependency {
 		DepType:       "required_provider",
 		PackageName:   packageName,
 		Datasource:    "terraform-provider",
-		RegistryURLs:  []string{openTofuRegistry},
 	}
 
 	if version, span, ok := findStringAttr(src, it.body, "version"); ok {
@@ -319,12 +326,11 @@ func moduleDep(file string, src []byte, blk node) (model.Dependency, bool) {
 		dep.Locus = pointLocus(sourceSpan.line)
 
 	case moduleSourceRegistry:
-		// Unmeasured: no registry module source appears in the corpus. This
-		// is the natural reading of Terraform's own registry module
-		// convention (source is "namespace/name/provider", version is a
-		// constraint on it), built the same way a required_provider entry is.
+		// Measured (public root, infra/main.tf): the registry source is the
+		// dependency's name, the block's label is not recorded, and no
+		// packageName is set.
+		dep.DepName = source
 		dep.Datasource = "terraform-module"
-		dep.PackageName = source
 		if version, span, ok := findStringAttr(src, blk.body, "version"); ok {
 			dep.CurrentValue = version
 			dep.Locus = valueLocus(span)
@@ -447,6 +453,28 @@ func (m *Manager) Edit(_ context.Context, f extract.File, up model.Update) (mode
 		File: f.Path, Start: l.ValueStart, End: l.ValueEnd,
 		Old: got, New: up.NewValue, Manager: name,
 	}, nil
+}
+
+// LockedRegistries reads a .terraform.lock.hcl and returns, keyed like
+// LockedVersions, the registry URL of every provider the lock resolves
+// somewhere other than the default registry - https://registry.opentofu.org
+// for "registry.opentofu.org/cloudflare/cloudflare". A provider locked from
+// the default registry, or with no registry host in its address, is absent.
+func LockedRegistries(lock []byte) map[string]string {
+	out := make(map[string]string)
+	for _, it := range parseBody(lock) {
+		if !it.isBlock || it.blockType != "provider" || len(it.labels) != 1 {
+			continue
+		}
+		addr := it.labels[0].raw(lock)
+		key := lastTwoSegments(addr)
+		host, _, ok := strings.Cut(addr, "/")
+		if key == "" || !ok || !strings.Contains(host, ".") || host == defaultRegistryHost {
+			continue
+		}
+		out[key] = "https://" + host
+	}
+	return out
 }
 
 // LockedVersions reads a .terraform.lock.hcl and returns the version tofu

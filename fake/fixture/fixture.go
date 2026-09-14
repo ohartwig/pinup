@@ -18,6 +18,7 @@ package fixture
 import (
 	"encoding/json"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -42,8 +43,93 @@ type Expectations struct {
 	PatternEntries int `json:"patternEntries"`
 	// RuleVectors is the number of vectors rules/vectors.ndjson carries.
 	RuleVectors int `json:"ruleVectors"`
-	// CorpusDeps is the number of dependencies across extract/*.json.
-	CorpusDeps int `json:"corpusDeps"`
+	// CorpusDeps is the number of dependencies across extract/*.json;
+	// TemplatedNames how many of them carry a templated "<project>:<name>"
+	// packageName; SuggestOverMatches how many are composer `suggest`
+	// descriptions read as constraints.
+	CorpusDeps         int `json:"corpusDeps"`
+	TemplatedNames     int `json:"templatedNames"`
+	SuggestOverMatches int `json:"suggestOverMatches"`
+	// Corpora says, per extraction capture, where its files are and which
+	// configuration it was extracted under, where the defaults (see Corpus)
+	// do not hold.
+	Corpora map[string]CorpusSpec `json:"corpora"`
+}
+
+// CorpusSpec is one entry of Expectations.Corpora.
+type CorpusSpec struct {
+	// Tree is the directory holding the repository's files: absolute, or
+	// relative to the root. A checkout that is not on this machine leaves
+	// the corpus without a tree, and the tests that need one skip.
+	Tree string `json:"tree"`
+	// Config is the configuration the capture ran under, relative to the
+	// root; empty means the root's default.
+	Config string `json:"config"`
+	// Commit is the checkout's commit the capture archived, when HEAD has
+	// moved on since; empty means HEAD.
+	Commit string `json:"commit"`
+}
+
+// Corpus is one repository's extraction capture: what the pinned Renovate
+// extracted from its files, and where the files are.
+type Corpus struct {
+	Name string // the capture's file stem
+	Path string // <root>/<Version>/extract/<Name>.json
+	// Tree holds the repository's files, or is "" when they are not on this
+	// machine (a private checkout the estate root names).
+	Tree string
+	// Config is the configuration the capture ran under.
+	Config string
+	// Commit is the checkout revision the capture archived; "HEAD" unless
+	// expect.json says otherwise.
+	Commit string
+}
+
+// Corpora lists the root's extraction captures, by name. A capture's tree
+// is the one expect.json names, else <root>/repos/<name>, else the shared
+// synthetic tree of that name; a tree that does not exist is "".
+func Corpora(t testing.TB) []Corpus {
+	t.Helper()
+	dir := Captured(t, "extract")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("no extraction corpus under %s: %v", dir, err)
+	}
+	e := Expect(t)
+	var out []Corpus
+	for _, ent := range entries {
+		name, ok := strings.CutSuffix(ent.Name(), ".json")
+		if !ok || ent.IsDir() {
+			continue
+		}
+		c := Corpus{Name: name, Path: filepath.Join(dir, ent.Name()), Config: Config(t), Commit: "HEAD"}
+		spec := e.Corpora[name]
+		if spec.Config != "" {
+			c.Config = Path(t, spec.Config)
+		}
+		if spec.Commit != "" {
+			c.Commit = spec.Commit
+		}
+		candidates := []string{Path(t, "repos", name), Shared(t, "synthetic", name)}
+		if spec.Tree != "" {
+			tree := spec.Tree
+			if !filepath.IsAbs(tree) {
+				tree = Path(t, tree)
+			}
+			candidates = append([]string{tree}, candidates...)
+		}
+		for _, cand := range candidates {
+			if st, err := os.Stat(cand); err == nil && st.IsDir() {
+				c.Tree = cand
+				break
+			}
+		}
+		out = append(out, c)
+	}
+	if len(out) == 0 {
+		t.Fatalf("no extraction corpus under %s", dir)
+	}
+	return out
 }
 
 // Version is the pinned Renovate whose behaviour the captures record, as
@@ -139,4 +225,63 @@ func moduleRoot(t testing.TB) string {
 		}
 		dir = parent
 	}
+}
+
+// Entry is one package file of a capture under one of Renovate's manager
+// keys, its dependencies left as JSON for the caller to decode into the
+// fields it compares.
+type Entry struct {
+	PackageFile string
+	Deps        json.RawMessage
+}
+
+// Entries reads the capture's entries for one manager key ("composer",
+// "regex", "gitlabci", ...), in the order Renovate listed them.
+func (c Corpus) Entries(t testing.TB, manager string) []Entry {
+	t.Helper()
+	raw, err := os.ReadFile(c.Path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string][]struct {
+		PackageFile string          `json:"packageFile"`
+		Deps        json.RawMessage `json:"deps"`
+	}
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatalf("%s: %v", c.Path, err)
+	}
+	var out []Entry
+	for _, e := range doc[manager] {
+		out = append(out, Entry{PackageFile: e.PackageFile, Deps: e.Deps})
+	}
+	return out
+}
+
+// Read returns a package file's bytes from the capture's tree: the committed
+// revision of a checkout (HEAD, or the commit expect.json names), which is
+// what the capture archived and what a working tree with uncommitted changes
+// is not; the file itself otherwise. A capture
+// without a tree fails the test; check Tree first and skip.
+func (c Corpus) Read(t testing.TB, packageFile string) []byte {
+	t.Helper()
+	raw, ok := c.Lookup(t, packageFile)
+	if !ok {
+		t.Fatalf("%s: %s is not in the tree", c.Name, packageFile)
+	}
+	return raw
+}
+
+// Lookup is Read for a file that may be absent: a lock file beside a
+// manifest, or above it.
+func (c Corpus) Lookup(t testing.TB, rel string) ([]byte, bool) {
+	t.Helper()
+	if c.Tree == "" {
+		t.Fatalf("corpus %s has no tree on this machine", c.Name)
+	}
+	if _, err := os.Stat(filepath.Join(c.Tree, ".git")); err == nil {
+		raw, err := exec.Command("git", "-C", c.Tree, "show", c.Commit+":"+rel).Output()
+		return raw, err == nil
+	}
+	raw, err := os.ReadFile(filepath.Join(c.Tree, filepath.FromSlash(rel)))
+	return raw, err == nil
 }

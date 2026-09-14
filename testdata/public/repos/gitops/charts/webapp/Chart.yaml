@@ -1,0 +1,5 @@
+apiVersion: v2
+name: webapp
+version: 1.12.0
+# renovate: datasource=docker depName=registry.acme.test/development/acme/website
+appVersion: "5.18.2"

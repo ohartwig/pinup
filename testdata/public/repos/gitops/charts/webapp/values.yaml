@@ -1,0 +1,14 @@
+image:
+  repository: registry.acme.test/development/acme/website
+  # renovate: datasource=docker depName=registry.acme.test/development/acme/website registryUrl=https://registry.acme.test
+  tag: "5.18.2"
+sidecars:
+  # renovate: datasource=docker depName=registry.acme.test/devops/images/log-shipper registryUrl=https://registry.acme.test
+  logShipper: registry.acme.test/devops/images/log-shipper:2.1.0
+  # renovate: datasource=docker depName=valkey/valkey
+  cache: valkey/valkey:8.1.3-alpine
+  # renovate: datasource=docker depName=mariadb
+  database: "mariadb:11.8.3@sha256:a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5"
+sources:
+  # renovate: datasource=docker depName=registry.acme.test/development/acme/website/sources registryUrl=https://registry.acme.test
+  tag: "5.18.2"

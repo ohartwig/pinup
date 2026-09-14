@@ -18,10 +18,19 @@ two compatible here. See `docs/tech-spec.md` §0.1 and `NOTICE`.
 
 ## What is captured
 
-| Script | Produces | Used by |
+| Script | Produces | Root |
 |---|---|---|
-| `print-config.sh` | the resolved configuration per partition | `P0.11` preset rebuild, `P0.14` parity diff |
-| `versioning-tables.sh` | input/output pairs per versioning module | `P1b.*` |
+| `print-config.sh` | `full-resolved.json`, `host-rules.json`, `visited-presets.json`, `provenance.json`: `--print-config` over the root's `default.json` | `PINUP_FIXTURES` |
+| `resolve-config.sh` | `presets/default-resolved.json` (the direct resolution) and `presets/runner-and-repo-resolved.json` (the file as global config and as the repository's own) | `PINUP_FIXTURES` |
+| `extract-corpus.sh <tree>...` | `extract/<name>.json`: what Renovate extracts from each repository, a checkout's HEAD or a plain tree such as `testdata/public/repos/*` | `PINUP_FIXTURES` |
+| `rules.sh` | `rules/vectors.ndjson`: `packageRules` resolution over the corpus | `PINUP_FIXTURES` |
+| `presets.sh` | `presets/closure.json`: every preset the root's `extends` reaches, then `config/preset/library.json` | `testdata/renovate` |
+| `sourceurls.sh` | `rules/source-urls.ndjson`: `matchSourceUrls` over synthetic inputs | `testdata/renovate` |
+| `versioning-probe.cjs` | input/output pairs per versioning module | `testdata/renovate` |
+
+A root is captured in the order listed: the configuration first, the corpus
+next, the vectors last (they need both). The public root was captured that
+way on 2026-09-14 with `PINUP_FIXTURES=testdata/public`.
 
 ## Rules for every capture
 

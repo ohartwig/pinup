@@ -1,0 +1,14 @@
+# A golden image in the estate's own shape: a digest-pinned base, annotated
+# apk pins from the public Wolfi index and from the estate's own index, a
+# Go tool installed by `go install ... --with`, and a bash image tag that
+# the runner configuration versions by its alpine suffix.
+FROM registry.acme.test/devops/images/wolfi-base:2@sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04
+
+# renovate: datasource=custom.wolfi depName=git versioning=apk
+ARG GIT_APK_VERSION=2.55.0-r7
+# renovate: datasource=custom.corp-apk depName=php-frankenphp-8.5 versioning=apk
+ARG PHP_FRANKENPHP_VERSION=8.5.10-r0
+
+RUN apk add --no-cache "git=${GIT_APK_VERSION}" "php-frankenphp-8.5=${PHP_FRANKENPHP_VERSION}"
+
+FROM bash:alpine3.22 AS shell

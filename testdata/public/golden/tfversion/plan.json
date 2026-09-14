@@ -1,0 +1,835 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "golden",
+  "generatedAt": "2026-09-14T08:00:00Z",
+  "repo": {
+    "path": "golden/tfversion"
+  },
+  "limits": {
+    "prHourlyLimit": 20,
+    "prConcurrentLimit": 10
+  },
+  "dashboard": {
+    "enabled": true,
+    "title": "Dependency Dashboard"
+  },
+  "deps": [
+    {
+      "manager": "terraform-version",
+      "file": ".terraform-version",
+      "customManager": -1,
+      "depName": "hashicorp/terraform",
+      "currentValue": "1.9.8",
+      "datasource": "github-releases",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/hashicorp/terraform",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 0,
+        "valueEnd": 5,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 1
+      }
+    },
+    {
+      "manager": "kustomize",
+      "file": "base/kustomization.yaml",
+      "customManager": -1,
+      "depName": "registry.acme.test/devops/images/wolfi-base",
+      "packageName": "registry.acme.test/devops/images/wolfi-base",
+      "depType": "Kustomization",
+      "currentValue": "2",
+      "datasource": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 106,
+        "valueEnd": 107,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 4
+      },
+      "skipReason": "lookup failed: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/wolfi-base/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "manager": "terraform-version",
+      "file": "infra/.terraform-version",
+      "customManager": -1,
+      "depName": "hashicorp/terraform",
+      "currentValue": "v1.7.0",
+      "datasource": "github-releases",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/hashicorp/terraform",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 0,
+        "valueEnd": 6,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 1
+      }
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "kubernetes-sigs/kustomize",
+      "depType": "Kustomization",
+      "currentValue": "v3.3.1",
+      "datasource": "github-tags",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/kubernetes-sigs/kustomize",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 176,
+        "valueEnd": 182,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 6
+      },
+      "skipReason": "up to date: none of 25 releases is newer than v3.3.1"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "argoproj/argo-cd",
+      "depType": "Kustomization",
+      "currentValue": "v2.12.3",
+      "datasource": "github-tags",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/argoproj/argo-cd",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 253,
+        "valueEnd": 260,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 7
+      }
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "git.acme.test/platform/gitops/manifests",
+      "packageName": "https://git.acme.test/platform/gitops/manifests.git",
+      "depType": "Kustomization",
+      "currentValue": "1.4.0",
+      "datasource": "git-tags",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 332,
+        "valueEnd": 337,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 8
+      },
+      "skipReason": "lookup failed: git-tags: ls-remote https://git.acme.test/platform/gitops/manifests.git: exit status 128: fatal: unable to access 'https://git.acme.test/platform/gitops/manifests.git/': Could not resolve host: git.acme.test"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "git.acme.test/platform/gitops/manifests",
+      "packageName": "ssh://**redacted**@git.acme.test/platform/gitops/manifests.git",
+      "depType": "Kustomization",
+      "currentValue": "v0.9.1",
+      "datasource": "git-tags",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 412,
+        "valueEnd": 418,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 9
+      },
+      "skipReason": "lookup failed: git-tags: ssh://***@git.acme.test/platform/gitops/manifests.git is an ssh:// URL; only an unauthenticated public repository is supported"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "kubernetes-sigs/kustomize",
+      "depType": "Kustomization",
+      "currentValue": "v5.0.0",
+      "datasource": "github-tags",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/kubernetes-sigs/kustomize",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 504,
+        "valueEnd": 510,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 11
+      },
+      "skipReason": "up to date: none of 25 releases is newer than v5.0.0"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "registry.acme.test/devops/images/golang",
+      "packageName": "registry.acme.test/devops/images/golang",
+      "depType": "Kustomization",
+      "currentValue": "1.27.0",
+      "datasource": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 581,
+        "valueEnd": 587,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 13
+      },
+      "skipReason": "lookup failed: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/golang/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "registry.acme.test/devops/ci-mirrors/nginx",
+      "packageName": "registry.acme.test/devops/ci-mirrors/nginx",
+      "depType": "Kustomization",
+      "currentValue": "1.27.2",
+      "datasource": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 672,
+        "valueEnd": 678,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 15
+      },
+      "skipReason": "lookup failed: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/ci-mirrors/nginx/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "alpine",
+      "packageName": "alpine",
+      "depType": "Kustomization",
+      "currentValue": "",
+      "currentDigest": "sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04",
+      "datasource": "docker",
+      "versioning": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 708,
+        "valueEnd": 779,
+        "digestStart": 708,
+        "digestEnd": 779,
+        "line": 18
+      }
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "busybox",
+      "depType": "Kustomization",
+      "currentValue": "1.36",
+      "currentDigest": "sha256:8f0e5ce5f4c2b0c3f6c4fd0f0b6d9e2f8c7a6b5d4e3f2a1b0c9d8e7f6a5b4c3d",
+      "datasource": "",
+      "locus": {
+        "valueStart": 811,
+        "valueEnd": 815,
+        "digestStart": 829,
+        "digestEnd": 900,
+        "line": 20
+      },
+      "skipReason": "invalid-dependency-specification"
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "grafana",
+      "depType": "HelmChart",
+      "currentValue": "8.5.1",
+      "datasource": "helm",
+      "versioning": "semver",
+      "registryUrls": [
+        "https://grafana.github.io/helm-charts"
+      ],
+      "sourceUrl": "https://github.com/grafana/grafana",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 992,
+        "valueEnd": 997,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 26
+      }
+    },
+    {
+      "manager": "kustomize",
+      "file": "overlays/prod/kustomization.yaml",
+      "customManager": -1,
+      "depName": "prometheus",
+      "packageName": "registry.acme.test/devops/charts/prometheus",
+      "depType": "HelmChart",
+      "currentValue": "25.8.0",
+      "datasource": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 1081,
+        "valueEnd": 1087,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 29
+      },
+      "skipReason": "lookup failed: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/charts/prometheus/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    }
+  ],
+  "updates": [
+    {
+      "depKey": ".terraform-version|terraform-version|hashicorp/terraform|1.9.8|0",
+      "dep": {
+        "manager": "terraform-version",
+        "file": ".terraform-version",
+        "customManager": -1,
+        "depName": "hashicorp/terraform",
+        "currentValue": "1.9.8",
+        "datasource": "github-releases",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/hashicorp/terraform",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 0,
+          "valueEnd": 5,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 1
+        }
+      },
+      "newValue": "1.16.2",
+      "newVersion": "v1.16.2",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-09T13:22:31Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "infra/.terraform-version|terraform-version|hashicorp/terraform|v1.7.0|0",
+      "dep": {
+        "manager": "terraform-version",
+        "file": "infra/.terraform-version",
+        "customManager": -1,
+        "depName": "hashicorp/terraform",
+        "currentValue": "v1.7.0",
+        "datasource": "github-releases",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/hashicorp/terraform",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 0,
+          "valueEnd": 6,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 1
+        }
+      },
+      "newValue": "v1.16.2",
+      "newVersion": "v1.16.2",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-09T13:22:31Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "overlays/prod/kustomization.yaml|kustomize|alpine||708",
+      "dep": {
+        "manager": "kustomize",
+        "file": "overlays/prod/kustomization.yaml",
+        "customManager": -1,
+        "depName": "alpine",
+        "packageName": "alpine",
+        "depType": "Kustomization",
+        "currentValue": "",
+        "currentDigest": "sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04",
+        "datasource": "docker",
+        "versioning": "docker",
+        "rangeStrategy": "replace",
+        "pinDigests": true,
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "timestampOptional": true,
+        "locus": {
+          "valueStart": 708,
+          "valueEnd": 779,
+          "digestStart": 708,
+          "digestEnd": 779,
+          "line": 18
+        }
+      },
+      "newValue": "",
+      "newDigest": "sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b",
+      "updateType": "digest",
+      "declared": "unknown",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "overlays/prod/kustomization.yaml|kustomize|argoproj/argo-cd|v2.12.3|253",
+      "dep": {
+        "manager": "kustomize",
+        "file": "overlays/prod/kustomization.yaml",
+        "customManager": -1,
+        "depName": "argoproj/argo-cd",
+        "depType": "Kustomization",
+        "currentValue": "v2.12.3",
+        "datasource": "github-tags",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/argoproj/argo-cd",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 253,
+          "valueEnd": 260,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 7
+        }
+      },
+      "newValue": "v2.14.21",
+      "newVersion": "v2.14.21",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "minimumReleaseAge",
+          "origin": {
+            "source": "config",
+            "rule": -1,
+            "order": 0
+          },
+          "note": "the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional"
+        },
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "minimumReleaseAge"
+    },
+    {
+      "depKey": "overlays/prod/kustomization.yaml|kustomize|argoproj/argo-cd|v2.12.3|253",
+      "dep": {
+        "manager": "kustomize",
+        "file": "overlays/prod/kustomization.yaml",
+        "customManager": -1,
+        "depName": "argoproj/argo-cd",
+        "depType": "Kustomization",
+        "currentValue": "v2.12.3",
+        "datasource": "github-tags",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/argoproj/argo-cd",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 253,
+          "valueEnd": 260,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 7
+        }
+      },
+      "newValue": "v3.5.3",
+      "newVersion": "v3.5.3",
+      "updateType": "major",
+      "declared": "major",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "dependencyDashboardApproval",
+          "origin": {
+            "source": "packageRules",
+            "rule": 740,
+            "order": 0
+          }
+        },
+        {
+          "reason": "minimumReleaseAge",
+          "origin": {
+            "source": "packageRules",
+            "rule": 740,
+            "order": 0
+          },
+          "note": "the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional"
+        },
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "dependencyDashboardApproval"
+    },
+    {
+      "depKey": "overlays/prod/kustomization.yaml|kustomize|grafana|8.5.1|992",
+      "dep": {
+        "manager": "kustomize",
+        "file": "overlays/prod/kustomization.yaml",
+        "customManager": -1,
+        "depName": "grafana",
+        "depType": "HelmChart",
+        "currentValue": "8.5.1",
+        "datasource": "helm",
+        "versioning": "semver",
+        "registryUrls": [
+          "https://grafana.github.io/helm-charts"
+        ],
+        "sourceUrl": "https://github.com/grafana/grafana",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 992,
+          "valueEnd": 997,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 26
+        }
+      },
+      "newValue": "10.5.15",
+      "newVersion": "10.5.15",
+      "newDigest": "c08c87969270402e7d5227edb8385af67cc32ee34817bff89773ad02303b5d79",
+      "updateType": "major",
+      "declared": "major",
+      "effective": "unknown",
+      "releaseTime": "2026-01-30T07:10:18.070791735Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "dependencyDashboardApproval",
+          "origin": {
+            "source": "packageRules",
+            "rule": 740,
+            "order": 0
+          }
+        },
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "dependencyDashboardApproval"
+    },
+    {
+      "depKey": "overlays/prod/kustomization.yaml|kustomize|grafana|8.5.1|992",
+      "dep": {
+        "manager": "kustomize",
+        "file": "overlays/prod/kustomization.yaml",
+        "customManager": -1,
+        "depName": "grafana",
+        "depType": "HelmChart",
+        "currentValue": "8.5.1",
+        "datasource": "helm",
+        "versioning": "semver",
+        "registryUrls": [
+          "https://grafana.github.io/helm-charts"
+        ],
+        "sourceUrl": "https://github.com/grafana/grafana",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 992,
+          "valueEnd": 997,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 26
+        }
+      },
+      "newValue": "8.15.0",
+      "newVersion": "8.15.0",
+      "newDigest": "6c0e8435a5b3192caa76e56e144908dced3be5e03cab1de9efb7f83b91886b9b",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2025-05-05T19:26:09.256252162Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/alpine",
+      "slug": "alpine",
+      "title": "chore(deps): update alpine docker digest to 28bd5fe",
+      "updateKeys": [
+        "overlays/prod/kustomization.yaml|kustomize|alpine||708>@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/argoproj-argo-cd-2.x",
+      "slug": "argoproj-argo-cd-2.x",
+      "title": "chore(deps): update dependency argoproj/argo-cd to v2.14.21",
+      "updateKeys": [
+        "overlays/prod/kustomization.yaml|kustomize|argoproj/argo-cd|v2.12.3|253>v2.14.21"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "minimumReleaseAge",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/argoproj-argo-cd-3.x",
+      "slug": "argoproj-argo-cd-3.x",
+      "title": "chore(deps): update dependency argoproj/argo-cd to v3",
+      "updateKeys": [
+        "overlays/prod/kustomization.yaml|kustomize|argoproj/argo-cd|v2.12.3|253>v3.5.3"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "dependencyDashboardApproval",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/grafana-monorepo",
+      "slug": "grafana-monorepo",
+      "title": "chore(deps): update dependency grafana to v8.15.0",
+      "groupName": "grafana monorepo",
+      "updateKeys": [
+        "overlays/prod/kustomization.yaml|kustomize|grafana|8.5.1|992>8.15.0@6c0e8435a5b3192caa76e56e144908dced3be5e03cab1de9efb7f83b91886b9b"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/major-grafana-monorepo",
+      "slug": "major-grafana-monorepo",
+      "title": "chore(deps): update dependency grafana to v10",
+      "groupName": "grafana monorepo",
+      "updateKeys": [
+        "overlays/prod/kustomization.yaml|kustomize|grafana|8.5.1|992>10.5.15@c08c87969270402e7d5227edb8385af67cc32ee34817bff89773ad02303b5d79"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "dependencyDashboardApproval",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/terraform-monorepo",
+      "slug": "terraform-monorepo",
+      "title": "chore(deps): update terraform monorepo to v1.16.2",
+      "groupName": "terraform monorepo",
+      "updateKeys": [
+        ".terraform-version|terraform-version|hashicorp/terraform|1.9.8|0>1.16.2",
+        "infra/.terraform-version|terraform-version|hashicorp/terraform|v1.7.0|0>v1.16.2"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "lookup",
+      "msg": "https://git.acme.test/platform/gitops/manifests.git via git-tags: git-tags: ls-remote https://git.acme.test/platform/gitops/manifests.git: exit status 128: fatal: unable to access 'https://git.acme.test/platform/gitops/manifests.git/': Could not resolve host: git.acme.test"
+    },
+    {
+      "stage": "lookup",
+      "msg": "registry.acme.test/devops/charts/prometheus via docker: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/charts/prometheus/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "registry.acme.test/devops/ci-mirrors/nginx via docker: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/ci-mirrors/nginx/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "registry.acme.test/devops/images/golang via docker: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/golang/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "registry.acme.test/devops/images/wolfi-base via docker: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/wolfi-base/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 4,
+    "depsExtracted": 14,
+    "lookupsIssued": 12,
+    "lookupsFromCache": 0,
+    "updatesFound": 7,
+    "updatesBlocked": 7,
+    "branchesPlanned": 0
+  }
+}

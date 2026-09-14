@@ -5,11 +5,12 @@ package dockerfile
 
 import (
 	"context"
-	"os"
+	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -230,6 +231,79 @@ func TestSkipUnresolvableBuildArgTag(t *testing.T) {
 	}
 }
 
+// A FROM through global ARGs is the image the ARGs name, and the edit lands
+// on the ARG line that carries the tag - measured on a customer repository's
+// scheduler Containerfile, where Renovate's replaceString is the ARG line.
+func TestFromThroughGlobalArgsEditsTheArgLine(t *testing.T) {
+	src := "# renovate: datasource=gitlab-tags depName=devops/images/php-runtime\n" +
+		"ARG PHP_RUNTIME_IMAGE_TAG=1.0.5\n" +
+		"ARG PHP_RUNTIME_IMAGE=registry.example.test/devops/images/php-runtime\n" +
+		"FROM ${PHP_RUNTIME_IMAGE}:${PHP_RUNTIME_IMAGE_TAG}\n" +
+		"ARG LATE=9.9.9\n" +
+		"FROM $PHP_RUNTIME_IMAGE:$LATE AS late\n" +
+		"FROM ${PHP_RUNTIME_IMAGE}:${MISSING:-1.0}\n"
+	f := extract.File{Path: "Containerfile", Content: []byte(src)}
+	res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resolved, unresolved []model.Dependency
+	for _, d := range res.Deps {
+		if d.SkipReason == "" {
+			resolved = append(resolved, d)
+		} else {
+			unresolved = append(unresolved, d)
+		}
+	}
+	if len(resolved) != 1 || len(unresolved) != 2 {
+		t.Fatalf("resolved %d, unresolved %d, want 1 and 2: %+v", len(resolved), len(unresolved), res.Deps)
+	}
+	d := resolved[0]
+	if d.DepName != "registry.example.test/devops/images/php-runtime" || d.CurrentValue != "1.0.5" || d.Datasource != "docker" {
+		t.Errorf("resolved to %s:%s (%s)", d.DepName, d.CurrentValue, d.Datasource)
+	}
+	if got := src[d.Locus.ValueStart:d.Locus.ValueEnd]; got != "1.0.5" || !strings.HasSuffix(src[:d.Locus.ValueStart], "ARG PHP_RUNTIME_IMAGE_TAG=") {
+		t.Errorf("the locus brackets %q at %d, want the ARG line's value", got, d.Locus.ValueStart)
+	}
+	up := model.Update{DepKey: d.Key(), Dep: d, NewValue: "1.0.6"}
+	edit, err := (&Manager{}).Edit(context.Background(), f, up)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if edited := src[:edit.Start] + edit.New + src[edit.End:]; !strings.Contains(edited, "ARG PHP_RUNTIME_IMAGE_TAG=1.0.6\n") || strings.Count(edited, "1.0.6") != 1 {
+		t.Errorf("edited file = %q", edited)
+	}
+	// An ARG declared after the first FROM is not one a FROM may use, and an
+	// inline default is unmeasured: both stay held with the literal text.
+	for _, u := range unresolved {
+		if !strings.Contains(u.CurrentValue, "$") {
+			t.Errorf("unresolved reference lost its literal text: %q", u.CurrentValue)
+		}
+	}
+}
+
+// The BuildKit syntax directive names the frontend image and is a
+// dependency of depType "syntax", read before the first instruction only.
+func TestSyntaxDirectiveIsADependency(t *testing.T) {
+	src := "# syntax=docker.io/docker/dockerfile-upstream:1.24.0@sha256:87999aa3d42bdc6bea60565083ee17e86d1f3339802f543c0d03998580f9cb89\n" +
+		"FROM alpine:3.22\n" +
+		"# syntax=docker/dockerfile:1\n"
+	_, deps := extractAll(t, src)
+	if len(deps) != 2 {
+		t.Fatalf("%d deps, want the directive and the FROM: %+v", len(deps), deps)
+	}
+	d := depNamed(t, deps, "docker.io/docker/dockerfile-upstream")
+	if d.DepType != "syntax" || d.CurrentValue != "1.24.0" || !strings.HasPrefix(d.CurrentDigest, "sha256:87999") || d.SkipReason != "" {
+		t.Errorf("directive = %+v", d)
+	}
+	if got := src[d.Locus.ValueStart:d.Locus.ValueEnd]; got != "1.24.0" {
+		t.Errorf("locus brackets %q", got)
+	}
+	if got := src[d.Locus.DigestStart:d.Locus.DigestEnd]; got != d.CurrentDigest {
+		t.Errorf("digest locus brackets %q", got)
+	}
+}
+
 func TestSkipCopyFromStageIndex(t *testing.T) {
 	src := "FROM golang:1.27\nFROM alpine:3.19\nCOPY --from=0 /a /b\n"
 	_, deps := extractAll(t, src)
@@ -348,60 +422,73 @@ func TestNameAndFilePatterns(t *testing.T) {
 
 // --- the real fixture -------------------------------------------------------
 
-// The estate's own golang-image Containerfile, read directly rather than
-// copied into testdata - the fixture this manager must actually handle. The
-// file moves with that repository, so the expectations are derived from its
-// FROM lines rather than pinned: every FROM that names a tag and a digest
-// must come out as exactly one digest-pinned, unskipped dependency.
-func TestRealGolangImageContainerfile(t *testing.T) {
-	path := "/Volumes/Samsung_X5/Projects/golang-image/Containerfile"
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Skipf("real fixture not available: %v", err)
+// TestAgreesWithTheCorpus compares this manager's extraction of every
+// Containerfile and Dockerfile in the fixture root's corpus against what
+// the pinned Renovate container extracted from the same file: name, tag,
+// digest, datasource, and whether the line was skipped. A capture whose
+// checkout is not on this machine is skipped; the public root's
+// repositories are in the tree.
+func TestAgreesWithTheCorpus(t *testing.T) {
+	type key struct{ depName, value, digest, datasource string }
+	ran := 0
+	for _, c := range fixture.Corpora(t) {
+		for _, e := range c.Entries(t, "dockerfile") {
+			if c.Tree == "" {
+				t.Logf("%s: checkout not present; %s skipped", c.Name, e.PackageFile)
+				continue
+			}
+			ran++
+			t.Run(c.Name+"/"+e.PackageFile, func(t *testing.T) {
+				var deps []struct {
+					DepName       string `json:"depName"`
+					CurrentValue  string `json:"currentValue"`
+					CurrentDigest string `json:"currentDigest"`
+					Datasource    string `json:"datasource"`
+					SkipReason    string `json:"skipReason"`
+				}
+				if err := json.Unmarshal(e.Deps, &deps); err != nil {
+					t.Fatal(err)
+				}
+				want := map[key]int{}
+				for _, d := range deps {
+					if d.SkipReason != "" {
+						continue
+					}
+					want[key{d.DepName, d.CurrentValue, d.CurrentDigest, d.Datasource}]++
+				}
+				if len(want) == 0 {
+					t.Fatalf("the capture records nothing actionable in %s; the test would check nothing", e.PackageFile)
+				}
+				content := c.Read(t, e.PackageFile)
+				res, err := (&Manager{}).Extract(context.Background(), extract.File{Path: e.PackageFile, Content: content}, extract.ManagerConfig{})
+				if err != nil {
+					t.Fatal(err)
+				}
+				got := map[key]int{}
+				for _, d := range res.Deps {
+					if d.SkipReason != "" {
+						continue
+					}
+					got[key{d.DepName, d.CurrentValue, d.CurrentDigest, d.Datasource}]++
+					if slice := string(content[d.Locus.ValueStart:d.Locus.ValueEnd]); slice != d.CurrentValue {
+						t.Errorf("%s: offsets point at %q, not at %q", d.DepName, slice, d.CurrentValue)
+					}
+				}
+				for k, n := range want {
+					if got[k] != n {
+						t.Errorf("%s %s@%s (%s): the capture has %d, pinup %d", k.depName, k.value, k.digest, k.datasource, n, got[k])
+					}
+				}
+				for k, n := range got {
+					if want[k] == 0 {
+						t.Errorf("pinup extracted %s %s@%s (%s) x%d, which the capture does not record", k.depName, k.value, k.digest, k.datasource, n)
+					}
+				}
+				t.Logf("%d actionable dependencies compared", len(want))
+			})
+		}
 	}
-	f := extract.File{Path: path, Content: content}
-	res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	froms := 0
-	for _, line := range strings.Split(string(content), "\n") {
-		fields := strings.Fields(line)
-		if len(fields) < 2 || !strings.EqualFold(fields[0], "FROM") {
-			continue
-		}
-		ref := fields[1]
-		if strings.HasPrefix(ref, "--") && len(fields) > 2 {
-			ref = fields[2]
-		}
-		name, rest, hasTag := strings.Cut(ref, ":")
-		if !hasTag {
-			continue
-		}
-		tag, digest, hasDigest := strings.Cut(rest, "@")
-		if !hasDigest {
-			continue
-		}
-		froms++
-		d := depNamed(t, res.Deps, name)
-		if d.CurrentValue != tag || d.CurrentDigest != digest {
-			t.Errorf("%s: extracted %s@%s, the line says %s@%s", name, d.CurrentValue, d.CurrentDigest, tag, digest)
-		}
-		if d.SkipReason != "" {
-			t.Errorf("%s is digest-pinned with a tag; it must not be skipped, got %q", name, d.SkipReason)
-		}
-	}
-	// The denominator: a Containerfile without a pinned FROM would make
-	// this test pass by looking at nothing.
-	if froms == 0 {
-		t.Fatal("no digest-pinned FROM line in the real fixture; the test checked nothing")
-	}
-
-	// Re-confirm the offset invariant against real, unmodified bytes.
-	for _, d := range res.Deps {
-		if got := string(content[d.Locus.ValueStart:d.Locus.ValueEnd]); got != d.CurrentValue {
-			t.Errorf("%s: real-file offsets do not match CurrentValue: got %q, want %q", d.DepName, got, d.CurrentValue)
-		}
+	if ran == 0 {
+		t.Skip("no dockerfile capture with its files on this machine")
 	}
 }

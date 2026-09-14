@@ -1,0 +1,14 @@
+{
+  "versioning:go": {
+    "owner": "pinup",
+    "reason": "No dependency of the synthetic twin is versioned `go`: gomod dependencies resolve as `semver` (measured), and the corpus carries no `versioning=go` annotation. The scheme conforms to its captured table; a golden repository follows the first use."
+  },
+  "versioning:semver-coerced": {
+    "owner": "pinup",
+    "reason": "Set only by preset rules for upstream packages the twin does not depend on. The scheme conforms to its captured table; a golden repository follows the first use."
+  },
+  "datasource:custom.koh-apk": {
+    "owner": "pinup",
+    "reason": "The apk view of the author's own package index, served natively by wire.ApkViews. The synthetic twin's index is custom.corp-apk, declared in its configuration and unreachable when recorded; the view's behaviour is measured in datasource/apkds. Making the native views configuration-driven is the open item that removes this entry."
+  }
+}

@@ -1,0 +1,9 @@
+include:
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-ci-yaml@1
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@1.17.59
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/supply-chain-verify/base-image-pins@2
+
+build:
+  image: registry.acme.test/devops/ci-mirrors/alpine:3.22
+  script:
+    - echo build

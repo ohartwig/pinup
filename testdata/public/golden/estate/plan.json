@@ -1,0 +1,701 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "golden",
+  "generatedAt": "2026-09-14T08:00:00Z",
+  "repo": {
+    "path": "golden/estate"
+  },
+  "limits": {
+    "prHourlyLimit": 20,
+    "prConcurrentLimit": 10
+  },
+  "dashboard": {
+    "enabled": true,
+    "title": "Dependency Dashboard"
+  },
+  "deps": [
+    {
+      "manager": "custom.regex",
+      "file": ".gitlab-ci.yml",
+      "customManager": 28,
+      "depName": "devops/ci-cd-components/lint-tools",
+      "currentValue": "1",
+      "datasource": "gitlab-releases",
+      "versioning": "loose",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "captures": {
+        "currentValue": "1",
+        "depName": "devops/ci-cd-components/lint-tools"
+      },
+      "locus": {
+        "valueStart": 90,
+        "valueEnd": 91,
+        "digestStart": -1,
+        "digestEnd": -1
+      },
+      "skipReason": "lookup failed: gitlab-releases: devops/ci-cd-components/lint-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/releases?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "gitlabci",
+      "file": ".gitlab-ci.yml",
+      "customManager": -1,
+      "depName": "devops/ci-cd-components/lint-tools",
+      "packageName": "devops/ci-cd-components/lint-tools",
+      "depType": "repository",
+      "currentValue": "1",
+      "datasource": "gitlab-tags",
+      "versioning": "semver-partial",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 90,
+        "valueEnd": 91,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 2
+      },
+      "skipReason": "lookup failed: gitlab-tags: devops/ci-cd-components/lint-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/repository/tags?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "custom.regex",
+      "file": ".gitlab-ci.yml",
+      "customManager": 17,
+      "depName": "devops/ci-cd-components/release-tools",
+      "currentValue": "1.17.59",
+      "datasource": "gitlab-releases",
+      "versioning": "semver",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "captures": {
+        "currentValue": "1.17.59",
+        "depName": "devops/ci-cd-components/release-tools"
+      },
+      "locus": {
+        "valueStart": 180,
+        "valueEnd": 187,
+        "digestStart": -1,
+        "digestEnd": -1
+      },
+      "skipReason": "lookup failed: gitlab-releases: devops/ci-cd-components/release-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Frelease-tools/releases?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "gitlabci",
+      "file": ".gitlab-ci.yml",
+      "customManager": -1,
+      "depName": "devops/ci-cd-components/release-tools",
+      "packageName": "devops/ci-cd-components/release-tools",
+      "depType": "repository",
+      "currentValue": "1.17.59",
+      "datasource": "gitlab-tags",
+      "versioning": "semver-partial",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 180,
+        "valueEnd": 187,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 3
+      },
+      "skipReason": "lookup failed: gitlab-tags: devops/ci-cd-components/release-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Frelease-tools/repository/tags?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "custom.regex",
+      "file": ".gitlab-ci.yml",
+      "customManager": 28,
+      "depName": "devops/ci-cd-components/supply-chain-verify",
+      "currentValue": "2",
+      "datasource": "gitlab-releases",
+      "versioning": "loose",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "captures": {
+        "currentValue": "2",
+        "depName": "devops/ci-cd-components/supply-chain-verify"
+      },
+      "locus": {
+        "valueStart": 281,
+        "valueEnd": 282,
+        "digestStart": -1,
+        "digestEnd": -1
+      },
+      "skipReason": "lookup failed: gitlab-releases: devops/ci-cd-components/supply-chain-verify: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Fsupply-chain-verify/releases?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "gitlabci",
+      "file": ".gitlab-ci.yml",
+      "customManager": -1,
+      "depName": "devops/ci-cd-components/supply-chain-verify",
+      "packageName": "devops/ci-cd-components/supply-chain-verify",
+      "depType": "repository",
+      "currentValue": "2",
+      "datasource": "gitlab-tags",
+      "versioning": "semver-partial",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 281,
+        "valueEnd": 282,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 4
+      },
+      "skipReason": "lookup failed: gitlab-tags: devops/ci-cd-components/supply-chain-verify: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Fsupply-chain-verify/repository/tags?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "gitlabci",
+      "file": ".gitlab-ci.yml",
+      "customManager": -1,
+      "depName": "registry.acme.test/devops/ci-mirrors/alpine",
+      "depType": "image",
+      "currentValue": "3.22",
+      "datasource": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 344,
+        "valueEnd": 348,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 7
+      },
+      "skipReason": "lookup failed: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/ci-mirrors/alpine/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "manager": "dockerfile",
+      "file": "Containerfile",
+      "customManager": -1,
+      "depName": "registry.acme.test/devops/images/wolfi-base",
+      "currentValue": "2",
+      "currentDigest": "sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04",
+      "datasource": "docker",
+      "versioning": "docker",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 331,
+        "valueEnd": 332,
+        "digestStart": 333,
+        "digestEnd": 404,
+        "line": 5
+      },
+      "skipReason": "lookup failed: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/wolfi-base/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "manager": "custom.regex",
+      "file": "Containerfile",
+      "customManager": 2,
+      "depName": "git",
+      "currentValue": "2.55.0-r7",
+      "datasource": "custom.wolfi",
+      "versioning": "apk",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "captures": {
+        "currentValue": "2.55.0-r7",
+        "datasource": "custom.wolfi",
+        "depName": "git",
+        "versioning": "apk"
+      },
+      "absent": {
+        "extractVersion": true,
+        "packageName": true,
+        "registryUrl": true
+      },
+      "locus": {
+        "valueStart": 489,
+        "valueEnd": 498,
+        "digestStart": -1,
+        "digestEnd": -1
+      },
+      "skipReason": "up to date: none of 26 releases is newer than 2.55.0-r7"
+    },
+    {
+      "manager": "custom.regex",
+      "file": "Containerfile",
+      "customManager": 2,
+      "depName": "php-frankenphp-8.5",
+      "currentValue": "8.5.10-r0",
+      "datasource": "custom.corp-apk",
+      "versioning": "apk",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "captures": {
+        "currentValue": "8.5.10-r0",
+        "datasource": "custom.corp-apk",
+        "depName": "php-frankenphp-8.5",
+        "versioning": "apk"
+      },
+      "absent": {
+        "extractVersion": true,
+        "packageName": true,
+        "registryUrl": true
+      },
+      "locus": {
+        "valueStart": 607,
+        "valueEnd": 616,
+        "digestStart": -1,
+        "digestEnd": -1
+      },
+      "skipReason": "lookup failed: custom.corp-apk: php-frankenphp-8.5: httpx: request failed: Get \"http://127.0.0.1:8099/corp/php-frankenphp-8.5.json\": dial tcp 127.0.0.1:8099: connect: connection refused"
+    },
+    {
+      "manager": "dockerfile",
+      "file": "Containerfile",
+      "customManager": -1,
+      "depName": "bash",
+      "currentValue": "alpine3.22",
+      "datasource": "docker",
+      "versioning": "regex:^alpine(?<major>[0-9]+)\\.(?<minor>[0-9]+)",
+      "rangeStrategy": "replace",
+      "pinDigests": true,
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "timestampOptional": true,
+      "locus": {
+        "valueStart": 724,
+        "valueEnd": 734,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 14
+      }
+    },
+    {
+      "manager": "composer",
+      "file": "composer.json",
+      "customManager": -1,
+      "depName": "acme/sitepackage",
+      "depType": "require",
+      "currentValue": "^5.0",
+      "datasource": "packagist",
+      "locus": {
+        "valueStart": 69,
+        "valueEnd": 73,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 4
+      },
+      "skipReason": "disabled by packageRules[734]",
+      "disabled": "disabled by packageRules[734]",
+      "lockFiles": [
+        "composer.lock"
+      ]
+    },
+    {
+      "manager": "custom.regex",
+      "file": "composer.json",
+      "customManager": 14,
+      "depName": "acme/sitepackage",
+      "packageName": "development/acme/sitepackage:acme/sitepackage",
+      "currentValue": "^5.0",
+      "datasource": "gitlab-packages",
+      "versioning": "composer",
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "extractVersion": "^v?(?<version>.+)$",
+      "captures": {
+        "currentValue": "^5.0",
+        "depName": "acme/sitepackage"
+      },
+      "locus": {
+        "valueStart": 69,
+        "valueEnd": 73,
+        "digestStart": -1,
+        "digestEnd": -1
+      },
+      "skipReason": "lookup failed: gitlab-packages: development/acme/sitepackage: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/development%2Facme%2Fsitepackage/packages?package_name=acme%2Fsitepackage&per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "manager": "terraform",
+      "file": "infra/versions.tf",
+      "customManager": -1,
+      "depName": "hashicorp/terraform",
+      "depType": "required_version",
+      "currentValue": ">= 1.6",
+      "datasource": "github-releases",
+      "versioning": "hashicorp",
+      "sourceUrl": "https://github.com/hashicorp/terraform",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "extractVersion": "v(?<version>.*)$",
+      "locus": {
+        "valueStart": 34,
+        "valueEnd": 40,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 2
+      },
+      "skipReason": "up to date: \">= 1.6\" admits 1.16.2, and none of 441 releases is newer",
+      "lockFiles": [
+        ".terraform.lock.hcl"
+      ]
+    },
+    {
+      "manager": "terraform",
+      "file": "infra/versions.tf",
+      "customManager": -1,
+      "depName": "cloudflare",
+      "packageName": "cloudflare/cloudflare",
+      "depType": "required_provider",
+      "currentValue": ">= 5.22",
+      "datasource": "terraform-provider",
+      "versioning": "hashicorp",
+      "sourceUrl": "https://github.com/cloudflare/terraform-provider-cloudflare",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 141,
+        "valueEnd": 148,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 6
+      },
+      "skipReason": "up to date: \">= 5.22\" admits 5.25.0, and none of 171 releases is newer",
+      "lockFiles": [
+        ".terraform.lock.hcl"
+      ]
+    },
+    {
+      "manager": "terraform",
+      "file": "infra/versions.tf",
+      "customManager": -1,
+      "depName": "terraform-aws-modules/vpc/aws",
+      "depType": "module",
+      "currentValue": "5.0.0",
+      "datasource": "terraform-module",
+      "versioning": "hashicorp",
+      "sourceUrl": "https://github.com/terraform-aws-modules/terraform-aws-vpc",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 235,
+        "valueEnd": 240,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 13
+      },
+      "lockFiles": [
+        ".terraform.lock.hcl"
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "depKey": "Containerfile|dockerfile|bash|alpine3.22|724",
+      "dep": {
+        "manager": "dockerfile",
+        "file": "Containerfile",
+        "customManager": -1,
+        "depName": "bash",
+        "currentValue": "alpine3.22",
+        "datasource": "docker",
+        "versioning": "regex:^alpine(?<major>[0-9]+)\\.(?<minor>[0-9]+)",
+        "rangeStrategy": "replace",
+        "pinDigests": true,
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "timestampOptional": true,
+        "locus": {
+          "valueStart": 724,
+          "valueEnd": 734,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 14
+        }
+      },
+      "newValue": "alpine3.22",
+      "newVersion": "alpine3.22",
+      "newDigest": "sha256:84e9597a44c52678823f5292b595004b0bccc722092b0764cb4269e2859f540a",
+      "updateType": "pinDigest",
+      "declared": "unknown",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "infra/versions.tf|terraform|terraform-aws-modules/vpc/aws|5.0.0|235",
+      "dep": {
+        "manager": "terraform",
+        "file": "infra/versions.tf",
+        "customManager": -1,
+        "depName": "terraform-aws-modules/vpc/aws",
+        "depType": "module",
+        "currentValue": "5.0.0",
+        "datasource": "terraform-module",
+        "versioning": "hashicorp",
+        "sourceUrl": "https://github.com/terraform-aws-modules/terraform-aws-vpc",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 235,
+          "valueEnd": 240,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 13
+        },
+        "lockFiles": [
+          ".terraform.lock.hcl"
+        ]
+      },
+      "newValue": "5.21.0",
+      "newVersion": "5.21.0",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "minimumReleaseAge",
+          "origin": {
+            "source": "config",
+            "rule": -1,
+            "order": 0
+          },
+          "note": "the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional"
+        },
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "minimumReleaseAge"
+    },
+    {
+      "depKey": "infra/versions.tf|terraform|terraform-aws-modules/vpc/aws|5.0.0|235",
+      "dep": {
+        "manager": "terraform",
+        "file": "infra/versions.tf",
+        "customManager": -1,
+        "depName": "terraform-aws-modules/vpc/aws",
+        "depType": "module",
+        "currentValue": "5.0.0",
+        "datasource": "terraform-module",
+        "versioning": "hashicorp",
+        "sourceUrl": "https://github.com/terraform-aws-modules/terraform-aws-vpc",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 235,
+          "valueEnd": 240,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 13
+        },
+        "lockFiles": [
+          ".terraform.lock.hcl"
+        ]
+      },
+      "newValue": "6.7.2",
+      "newVersion": "6.7.2",
+      "updateType": "major",
+      "declared": "major",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "dependencyDashboardApproval",
+          "origin": {
+            "source": "packageRules",
+            "rule": 740,
+            "order": 0
+          }
+        },
+        {
+          "reason": "minimumReleaseAge",
+          "origin": {
+            "source": "packageRules",
+            "rule": 740,
+            "order": 0
+          },
+          "note": "the release's age is unknown and minimumReleaseAgeBehaviour is not timestamp-optional"
+        },
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "dependencyDashboardApproval"
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/pin-dependencies",
+      "slug": "pin-dependencies",
+      "title": "chore(deps): pin bash docker tag to 84e9597",
+      "groupName": "Pin Dependencies",
+      "updateKeys": [
+        "Containerfile|dockerfile|bash|alpine3.22|724>alpine3.22@sha256:84e9597a44c52678823f5292b595004b0bccc722092b0764cb4269e2859f540a"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/terraform-aws-modules-vpc-aws-5.x",
+      "slug": "terraform-aws-modules-vpc-aws-5.x",
+      "title": "chore(deps): update dependency terraform-aws-modules/vpc/aws to v5.21.0",
+      "updateKeys": [
+        "infra/versions.tf|terraform|terraform-aws-modules/vpc/aws|5.0.0|235>5.21.0"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "minimumReleaseAge",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/terraform-aws-modules-vpc-aws-6.x",
+      "slug": "terraform-aws-modules-vpc-aws-6.x",
+      "title": "chore(deps): update dependency terraform-aws-modules/vpc/aws to v6",
+      "updateKeys": [
+        "infra/versions.tf|terraform|terraform-aws-modules/vpc/aws|5.0.0|235>6.7.2"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "dependencyDashboardApproval",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "lookup",
+      "msg": "development/acme/sitepackage:acme/sitepackage via gitlab-packages: gitlab-packages: development/acme/sitepackage: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/development%2Facme%2Fsitepackage/packages?package_name=acme%2Fsitepackage&per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "devops/ci-cd-components/lint-tools via gitlab-releases: gitlab-releases: devops/ci-cd-components/lint-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/releases?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "devops/ci-cd-components/lint-tools via gitlab-tags: gitlab-tags: devops/ci-cd-components/lint-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/repository/tags?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "devops/ci-cd-components/release-tools via gitlab-releases: gitlab-releases: devops/ci-cd-components/release-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Frelease-tools/releases?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "devops/ci-cd-components/release-tools via gitlab-tags: gitlab-tags: devops/ci-cd-components/release-tools: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Frelease-tools/repository/tags?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "devops/ci-cd-components/supply-chain-verify via gitlab-releases: gitlab-releases: devops/ci-cd-components/supply-chain-verify: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Fsupply-chain-verify/releases?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "devops/ci-cd-components/supply-chain-verify via gitlab-tags: gitlab-tags: devops/ci-cd-components/supply-chain-verify: httpx: request failed: Get \"https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Fsupply-chain-verify/repository/tags?per_page=100&page=1\": dial tcp: lookup git.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "php-frankenphp-8.5 via custom.corp-apk: custom.corp-apk: php-frankenphp-8.5: httpx: request failed: Get \"http://127.0.0.1:8099/corp/php-frankenphp-8.5.json\": dial tcp 127.0.0.1:8099: connect: connection refused"
+    },
+    {
+      "stage": "lookup",
+      "msg": "registry.acme.test/devops/ci-mirrors/alpine via docker: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/ci-mirrors/alpine/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    },
+    {
+      "stage": "lookup",
+      "msg": "registry.acme.test/devops/images/wolfi-base via docker: docker: request to registry.acme.test failed: Get \"https://registry.acme.test/v2/devops/images/wolfi-base/tags/list?n=1000\": dial tcp: lookup registry.acme.test: no such host"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 4,
+    "depsExtracted": 16,
+    "lookupsIssued": 16,
+    "lookupsFromCache": 0,
+    "updatesFound": 3,
+    "updatesBlocked": 3,
+    "branchesPlanned": 0
+  }
+}

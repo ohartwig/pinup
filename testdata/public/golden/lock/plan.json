@@ -1,0 +1,602 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "golden",
+  "generatedAt": "2026-09-14T08:00:00Z",
+  "repo": {
+    "path": "golden/lock"
+  },
+  "limits": {
+    "prHourlyLimit": 20,
+    "prConcurrentLimit": 10
+  },
+  "dashboard": {
+    "enabled": true,
+    "title": "Dependency Dashboard"
+  },
+  "deps": [
+    {
+      "manager": "composer",
+      "file": "composer.json",
+      "customManager": -1,
+      "depName": "psr/log",
+      "depType": "require",
+      "currentValue": "3.0.0",
+      "lockedVersion": "3.0.0",
+      "datasource": "packagist",
+      "versioning": "composer",
+      "sourceUrl": "https://github.com/php-fig/log.git",
+      "rangeStrategy": "bump",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 63,
+        "valueEnd": 68,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 4
+      },
+      "lockFiles": [
+        "composer.lock"
+      ]
+    },
+    {
+      "manager": "composer",
+      "file": "composer.json",
+      "customManager": -1,
+      "depName": "monolog/monolog",
+      "depType": "require",
+      "currentValue": "3.5.0",
+      "lockedVersion": "3.5.0",
+      "datasource": "packagist",
+      "versioning": "composer",
+      "sourceUrl": "https://github.com/Seldaek/monolog.git",
+      "rangeStrategy": "bump",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 95,
+        "valueEnd": 100,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 5
+      },
+      "lockFiles": [
+        "composer.lock"
+      ]
+    },
+    {
+      "manager": "npm",
+      "file": "package.json",
+      "customManager": -1,
+      "depName": "minimist",
+      "depType": "dependencies",
+      "currentValue": "1.2.7",
+      "lockedVersion": "1.2.7",
+      "datasource": "npm",
+      "versioning": "npm",
+      "sourceUrl": "git://github.com/minimistjs/minimist",
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 75,
+        "valueEnd": 80,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 1
+      },
+      "lockFiles": [
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "yarn.lock"
+      ]
+    },
+    {
+      "manager": "npm",
+      "file": "yarn/package.json",
+      "customManager": -1,
+      "depName": "js-tokens",
+      "depType": "dependencies",
+      "currentValue": "^4.0.0",
+      "lockedVersion": "4.0.0",
+      "datasource": "npm",
+      "versioning": "npm",
+      "sourceUrl": "https://github.com/lydell/js-tokens",
+      "rangeStrategy": "replace",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 105,
+        "valueEnd": 111,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 6
+      },
+      "lockFiles": [
+        "package-lock.json",
+        "npm-shrinkwrap.json",
+        "yarn.lock"
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "depKey": "composer.json|composer|monolog/monolog|3.5.0|95",
+      "dep": {
+        "manager": "composer",
+        "file": "composer.json",
+        "customManager": -1,
+        "depName": "monolog/monolog",
+        "depType": "require",
+        "currentValue": "3.5.0",
+        "lockedVersion": "3.5.0",
+        "datasource": "packagist",
+        "versioning": "composer",
+        "sourceUrl": "https://github.com/Seldaek/monolog.git",
+        "rangeStrategy": "bump",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 95,
+          "valueEnd": 100,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 5
+        },
+        "lockFiles": [
+          "composer.lock"
+        ]
+      },
+      "newValue": "3.12.0",
+      "newVersion": "3.12.0",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-09T08:34:20Z",
+      "timeSource": "datasource"
+    },
+    {
+      "depKey": "composer.json|composer|psr/log|3.0.0|63",
+      "dep": {
+        "manager": "composer",
+        "file": "composer.json",
+        "customManager": -1,
+        "depName": "psr/log",
+        "depType": "require",
+        "currentValue": "3.0.0",
+        "lockedVersion": "3.0.0",
+        "datasource": "packagist",
+        "versioning": "composer",
+        "sourceUrl": "https://github.com/php-fig/log.git",
+        "rangeStrategy": "bump",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 63,
+          "valueEnd": 68,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 4
+        },
+        "lockFiles": [
+          "composer.lock"
+        ]
+      },
+      "newValue": "3.0.2",
+      "newVersion": "3.0.2",
+      "updateType": "patch",
+      "declared": "patch",
+      "effective": "unknown",
+      "releaseTime": "2024-09-11T13:17:53Z",
+      "timeSource": "datasource"
+    },
+    {
+      "depKey": "lockFileMaintenance|composer|composer.lock",
+      "dep": {
+        "manager": "composer",
+        "file": "composer.lock",
+        "customManager": -1,
+        "depName": "lock file",
+        "currentValue": "",
+        "datasource": "",
+        "locus": {
+          "valueStart": 0,
+          "valueEnd": 0,
+          "digestStart": -1,
+          "digestEnd": -1
+        }
+      },
+      "newValue": "",
+      "updateType": "lockFileMaintenance",
+      "declared": "unknown",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T23:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 771,
+            "order": 0
+          },
+          "note": "outside after 1am and before 6am (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "lockFileMaintenance|npm|package-lock.json",
+      "dep": {
+        "manager": "npm",
+        "file": "package-lock.json",
+        "customManager": -1,
+        "depName": "lock file",
+        "currentValue": "",
+        "datasource": "",
+        "locus": {
+          "valueStart": 0,
+          "valueEnd": 0,
+          "digestStart": -1,
+          "digestEnd": -1
+        }
+      },
+      "newValue": "",
+      "updateType": "lockFileMaintenance",
+      "declared": "unknown",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T23:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 771,
+            "order": 0
+          },
+          "note": "outside after 1am and before 6am (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "lockFileMaintenance|npm|yarn/yarn.lock",
+      "dep": {
+        "manager": "npm",
+        "file": "yarn/yarn.lock",
+        "customManager": -1,
+        "depName": "lock file",
+        "currentValue": "",
+        "datasource": "",
+        "locus": {
+          "valueStart": 0,
+          "valueEnd": 0,
+          "digestStart": -1,
+          "digestEnd": -1
+        }
+      },
+      "newValue": "",
+      "updateType": "lockFileMaintenance",
+      "declared": "unknown",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T23:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 771,
+            "order": 0
+          },
+          "note": "outside after 1am and before 6am (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "package.json|npm|minimist|1.2.7|75",
+      "dep": {
+        "manager": "npm",
+        "file": "package.json",
+        "customManager": -1,
+        "depName": "minimist",
+        "depType": "dependencies",
+        "currentValue": "1.2.7",
+        "lockedVersion": "1.2.7",
+        "datasource": "npm",
+        "versioning": "npm",
+        "sourceUrl": "git://github.com/minimistjs/minimist",
+        "rangeStrategy": "replace",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 75,
+          "valueEnd": 80,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 1
+        },
+        "lockFiles": [
+          "package-lock.json",
+          "npm-shrinkwrap.json",
+          "yarn.lock"
+        ]
+      },
+      "newValue": "1.2.8",
+      "newVersion": "1.2.8",
+      "updateType": "patch",
+      "declared": "patch",
+      "effective": "unknown",
+      "releaseTime": "2023-02-09T20:59:49.233Z",
+      "timeSource": "datasource"
+    },
+    {
+      "depKey": "yarn/package.json|npm|js-tokens|^4.0.0|105",
+      "dep": {
+        "manager": "npm",
+        "file": "yarn/package.json",
+        "customManager": -1,
+        "depName": "js-tokens",
+        "depType": "dependencies",
+        "currentValue": "^4.0.0",
+        "lockedVersion": "4.0.0",
+        "datasource": "npm",
+        "versioning": "npm",
+        "sourceUrl": "https://github.com/lydell/js-tokens",
+        "rangeStrategy": "replace",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 105,
+          "valueEnd": 111,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 6
+        },
+        "lockFiles": [
+          "package-lock.json",
+          "npm-shrinkwrap.json",
+          "yarn.lock"
+        ]
+      },
+      "newValue": "^10.0.0",
+      "newVersion": "10.0.0",
+      "updateType": "major",
+      "declared": "major",
+      "effective": "unknown",
+      "releaseTime": "2025-12-08T21:09:55.458Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "dependencyDashboardApproval",
+          "origin": {
+            "source": "packageRules",
+            "rule": 740,
+            "order": 0
+          }
+        }
+      ],
+      "suppressedBy": "dependencyDashboardApproval"
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/js-tokens-10.x",
+      "slug": "js-tokens-10.x",
+      "title": "fix(deps): update dependency js-tokens to v10",
+      "updateKeys": [
+        "yarn/package.json|npm|js-tokens|^4.0.0|105>^10.0.0"
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "dependencyDashboardApproval",
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/lock-file-maintenance",
+      "slug": "lock-file-maintenance",
+      "title": "chore(deps): refresh lock file (transitive deps, e.g. guzzle)",
+      "updateKeys": [
+        "lockFileMaintenance|composer|composer.lock>#lockFileMaintenance",
+        "lockFileMaintenance|npm|package-lock.json>#lockFileMaintenance",
+        "lockFileMaintenance|npm|yarn/yarn.lock>#lockFileMaintenance"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "after 1am and before 6am",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T23:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/monolog-monolog-3.x",
+      "slug": "monolog-monolog-3.x",
+      "title": "fix(deps): update dependency monolog/monolog to v3.12.0",
+      "updateKeys": [
+        "composer.json|composer|monolog/monolog|3.5.0|95>3.12.0"
+      ],
+      "edits": [
+        {
+          "file": "composer.json",
+          "start": 95,
+          "end": 100,
+          "old": "3.5.0",
+          "new": "3.12.0",
+          "manager": "composer"
+        }
+      ],
+      "tasks": [
+        {
+          "kind": "lock-refresh",
+          "manager": "composer",
+          "command": [
+            "composer",
+            "update",
+            "monolog/monolog",
+            "--with-all-dependencies",
+            "--no-plugins",
+            "--no-install",
+            "--no-scripts",
+            "--no-audit",
+            "--ignore-platform-reqs"
+          ],
+          "executionMode": "branch",
+          "fileFilters": [
+            "composer.lock"
+          ],
+          "allowedBy": -1,
+          "origin": {
+            "source": "pinup",
+            "rule": -1,
+            "order": 0
+          }
+        }
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/npm",
+      "slug": "npm",
+      "title": "fix(deps): update dependency minimist to v1.2.8",
+      "groupName": "npm packages",
+      "updateKeys": [
+        "package.json|npm|minimist|1.2.7|75>1.2.8"
+      ],
+      "edits": [
+        {
+          "file": "package.json",
+          "start": 75,
+          "end": 80,
+          "old": "1.2.7",
+          "new": "1.2.8",
+          "manager": "npm"
+        }
+      ],
+      "tasks": [
+        {
+          "kind": "lock-refresh",
+          "manager": "npm",
+          "command": [
+            "npm",
+            "install",
+            "--package-lock-only",
+            "--no-audit",
+            "--ignore-scripts",
+            "minimist"
+          ],
+          "executionMode": "branch",
+          "fileFilters": [
+            "package-lock.json",
+            "npm-shrinkwrap.json"
+          ],
+          "allowedBy": -1,
+          "origin": {
+            "source": "pinup",
+            "rule": -1,
+            "order": 0
+          }
+        }
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/psr-log-3.x",
+      "slug": "psr-log-3.x",
+      "title": "fix(deps): update dependency psr/log to v3.0.2",
+      "updateKeys": [
+        "composer.json|composer|psr/log|3.0.0|63>3.0.2"
+      ],
+      "edits": [
+        {
+          "file": "composer.json",
+          "start": 63,
+          "end": 68,
+          "old": "3.0.0",
+          "new": "3.0.2",
+          "manager": "composer"
+        }
+      ],
+      "tasks": [
+        {
+          "kind": "lock-refresh",
+          "manager": "composer",
+          "command": [
+            "composer",
+            "update",
+            "psr/log",
+            "--with-all-dependencies",
+            "--no-plugins",
+            "--no-install",
+            "--no-scripts",
+            "--no-audit",
+            "--ignore-platform-reqs"
+          ],
+          "executionMode": "branch",
+          "fileFilters": [
+            "composer.lock"
+          ],
+          "allowedBy": -1,
+          "origin": {
+            "source": "pinup",
+            "rule": -1,
+            "order": 0
+          }
+        }
+      ],
+      "automerge": false,
+      "labels": [
+        "renovate"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 3,
+    "depsExtracted": 4,
+    "lookupsIssued": 4,
+    "lookupsFromCache": 0,
+    "updatesFound": 7,
+    "updatesBlocked": 4,
+    "branchesPlanned": 3
+  }
+}

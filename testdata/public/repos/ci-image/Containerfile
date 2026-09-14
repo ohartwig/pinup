@@ -1,0 +1,28 @@
+# The image every pipeline in the estate runs its tooling from.
+FROM registry.acme.test/devops/images/wolfi-base:2@sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04 AS base
+
+# renovate: datasource=custom.wolfi depName=git versioning=apk
+ARG GIT_APK_VERSION=2.51.0-r0
+# renovate: datasource=custom.corp-apk depName=php-frankenphp-8.5 versioning=apk
+ARG PHP_FRANKENPHP_VERSION=8.5.1-r0
+RUN apk add --no-cache "git=${GIT_APK_VERSION}" "php-frankenphp-8.5=${PHP_FRANKENPHP_VERSION}"
+
+# renovate: datasource=github-releases packageName=hadolint/hadolint
+RUN install-tool hadolint 2.12.0
+# renovate: datasource=github-releases packageName=mikefarah/yq versioning=semver
+RUN install-tool yq 4.47.1
+# renovate: datasource=github-releases packageName=aquasecurity/trivy
+RUN install-tool trivy 0.66.0
+# renovate: datasource=github-releases packageName=getsops/sops
+RUN install-tool sops 3.10.2
+
+RUN go install github.com/google/go-containerregistry/cmd/crane@latest \
+    --with github.com/sigstore/cosign/v2@v2.5.3 \
+    --with github.com/anchore/syft@v1.32.0
+
+# renovate: datasource=custom.protonpass depName=pass-cli
+ARG PASS_CLI_VERSION=1.4.0
+RUN install-pass-cli "${PASS_CLI_VERSION}"
+
+FROM bash:alpine3.22 AS shell
+FROM ghcr.io/astral-sh/uv:0.8.14@sha256:2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7 AS uv

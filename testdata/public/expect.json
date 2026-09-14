@@ -1,0 +1,17 @@
+{
+  "config": "config/default.json",
+  "rulesOwn": 49,
+  "rulesResolved": 771,
+  "resolvedKeys": 337,
+  "presets": 11,
+  "patternEntries": 107,
+  "ruleVectors": 1728,
+  "corpusDeps": 192,
+  "corpora": {
+    "gomod": {
+      "config": "config/gomod.json"
+    }
+  },
+  "templatedNames": 10,
+  "suggestOverMatches": 2
+}

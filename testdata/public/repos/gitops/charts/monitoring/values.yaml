@@ -1,0 +1,18 @@
+grafana:
+  image:
+    # renovate: datasource=docker depName=grafana/grafana
+    tag: "12.1.1"
+loki:
+  image:
+    # renovate: datasource=docker depName=grafana/loki registryUrl=https://index.docker.io
+    tag: "3.5.5@sha256:93a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4"
+alloy:
+  # renovate: datasource=docker depName=grafana/alloy
+  image: grafana/alloy:v1.10.2
+blackbox:
+  # renovate: datasource=docker depName=prom/blackbox-exporter registryUrl=https://index.docker.io
+  image: "prom/blackbox-exporter:v0.27.0"
+ntfy:
+  image:
+    # renovate: datasource=docker depName=binwiederhier/ntfy
+    tag: "v2.14.0"

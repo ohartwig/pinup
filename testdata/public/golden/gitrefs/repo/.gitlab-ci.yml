@@ -1,0 +1,7 @@
+# The job image the estate's templates use: the gitlabci manager reads it
+# with the node versioning, under which 24-alpine is no version - what
+# moves is the digest docker:pinDigests pins onto it.
+lint:
+  image: node:24-alpine
+  script:
+    - node --version

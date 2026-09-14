@@ -16,91 +16,99 @@ import (
 	"github.com/ohartwig/pinup/model"
 )
 
-// The definitions below are copied from the captured default.json rather than
-// invented, so a change upstream shows up as a test failure rather than as a
-// difference nobody notices. loadDefinition reads one back out of the captured
-// config to prove the copies are still faithful.
-func loadDefinition(t *testing.T, index int) map[string]any {
+// nestedTemplateManager finds, in the fixture root's configuration, the
+// custom manager whose packageNameTemplate nests Handlebars conditionals -
+// the shape that justified hbs. Found by shape rather than by index, so
+// the test reads the same on any root of the same shape.
+func nestedTemplateManager(t *testing.T) (int, *model.CustomManager) {
 	t.Helper()
 	raw, err := os.ReadFile(fixture.Config(t))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var cfg struct {
-		CustomManagers []map[string]any `json:"customManagers"`
+		CustomManagers []struct {
+			MatchStrings        []string `json:"matchStrings"`
+			PackageNameTemplate string   `json:"packageNameTemplate"`
+			DatasourceTemplate  string   `json:"datasourceTemplate"`
+			VersioningTemplate  string   `json:"versioningTemplate"`
+			RegistryURLTemplate string   `json:"registryUrlTemplate"`
+		} `json:"customManagers"`
 	}
 	if err := json.Unmarshal(raw, &cfg); err != nil {
 		t.Fatal(err)
 	}
-	if index >= len(cfg.CustomManagers) {
-		t.Fatalf("the captured config has %d custom managers, no #%d", len(cfg.CustomManagers), index)
+	for i, m := range cfg.CustomManagers {
+		if strings.Count(m.PackageNameTemplate, "{{#if") >= 2 {
+			return i, &model.CustomManager{
+				Index: i, MatchStrings: m.MatchStrings, PackageNameTemplate: m.PackageNameTemplate,
+				DatasourceTemplate: m.DatasourceTemplate, VersioningTemplate: m.VersioningTemplate,
+				RegistryURLTemplate: m.RegistryURLTemplate,
+			}
+		}
 	}
-	return cfg.CustomManagers[index]
+	t.Fatal("the configuration has no custom manager with a nested packageNameTemplate")
+	return 0, nil
 }
 
-func firstMatchString(t *testing.T, def map[string]any) string {
-	t.Helper()
-	ms, _ := def["matchStrings"].([]any)
-	if len(ms) == 0 {
-		t.Fatal("definition has no matchStrings")
-	}
-	s, _ := ms[0].(string)
-	return s
-}
-
-// Custom manager #10 builds a composite packageName through a triple-nested
-// Handlebars conditional. These outputs are the ones the extraction corpus
-// recorded from the real container, so this is parity against measurement
-// rather than against my reading of the template.
-func TestManager10CompositePackageNames(t *testing.T) {
-	def := loadDefinition(t, 10)
-	pattern := firstMatchString(t, def)
-	tmpl, _ := def["packageNameTemplate"].(string)
-
-	cm := &model.CustomManager{
-		Index:               10,
-		MatchStrings:        []string{pattern},
-		PackageNameTemplate: tmpl,
-		DatasourceTemplate:  "gitlab-packages",
-		VersioningTemplate:  "composer",
-		RegistryURLTemplate: "https://git.ole-hartwig.eu",
-	}
-
-	src := `{
-  "require": {
-    "moselwal/dev": "^5.0",
-    "moselwal/fa4t3": "^1.0",
-    "moselwal/content-provenance": "~0.9"
-  }
-}`
-	res, err := New().Extract(context.Background(),
-		extract.File{Path: "composer.json", Content: []byte(src)},
-		extract.ManagerConfig{Custom: cm})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	want := map[string]string{
-		"moselwal/dev":                "development/moselwal/dev:moselwal/dev",
-		"moselwal/fa4t3":              "development/moselwal/typo3-fathom-analytics:moselwal/fa4t3",
-		"moselwal/content-provenance": "development/moselwal/content-provenance:moselwal/content-provenance",
-	}
-	got := map[string]string{}
-	for _, d := range res.Deps {
-		got[d.DepName] = d.PackageName
-		if d.Datasource != "gitlab-packages" || d.Versioning != "composer" {
-			t.Errorf("%s: datasource/versioning = %q/%q", d.DepName, d.Datasource, d.Versioning)
+// The custom manager with the nested Handlebars conditional builds a
+// composite packageName. The outputs compared against are the ones the
+// extraction corpus recorded from the pinned container for the same
+// composer.json, so this is parity against measurement rather than against
+// a reading of the template.
+func TestNestedTemplateReproducesTheCorpusPackageNames(t *testing.T) {
+	index, cm := nestedTemplateManager(t)
+	compared := 0
+	for _, c := range fixture.Corpora(t) {
+		if c.Tree == "" {
+			continue
 		}
-		// The offsets must bracket exactly the version.
-		if slice := src[d.Locus.ValueStart:d.Locus.ValueEnd]; slice != d.CurrentValue {
-			t.Errorf("%s: offsets point at %q, not at %q", d.DepName, slice, d.CurrentValue)
+		for _, e := range c.Entries(t, "regex") {
+			if !strings.HasSuffix(e.PackageFile, "composer.json") {
+				continue
+			}
+			var deps []struct {
+				DepName     string `json:"depName"`
+				PackageName string `json:"packageName"`
+			}
+			if err := json.Unmarshal(e.Deps, &deps); err != nil {
+				t.Fatal(err)
+			}
+			want := map[string]string{}
+			for _, d := range deps {
+				if strings.Contains(d.PackageName, ":") && strings.Contains(cm.MatchStrings[0], strings.SplitN(d.DepName, "/", 2)[0]+"/") {
+					want[d.DepName] = d.PackageName
+				}
+			}
+			if len(want) == 0 {
+				continue
+			}
+			src := c.Read(t, e.PackageFile)
+			res, err := New().Extract(context.Background(),
+				extract.File{Path: e.PackageFile, Content: src}, extract.ManagerConfig{Custom: cm})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := map[string]string{}
+			for _, d := range res.Deps {
+				got[d.DepName] = d.PackageName
+				// The offsets must bracket exactly the version.
+				if slice := string(src[d.Locus.ValueStart:d.Locus.ValueEnd]); slice != d.CurrentValue {
+					t.Errorf("%s: offsets point at %q, not at %q", d.DepName, slice, d.CurrentValue)
+				}
+			}
+			for dep, pkg := range want {
+				if got[dep] != pkg {
+					t.Errorf("%s/%s: packageName for %s:\n got %q\nwant %q", c.Name, e.PackageFile, dep, got[dep], pkg)
+				}
+				compared++
+			}
 		}
 	}
-	for dep, pkg := range want {
-		if got[dep] != pkg {
-			t.Errorf("packageName for %s:\n got %q\nwant %q", dep, got[dep], pkg)
-		}
+	if compared == 0 {
+		t.Skipf("no capture with its files records custom manager #%d's package names", index)
 	}
+	t.Logf("%d templated package names agreed with the corpus", compared)
 }
 
 // The mechanism that lets one definition replace a pair: an absent capture
@@ -161,11 +169,10 @@ func TestAnAbsentGroupLeavesTheFieldUnset(t *testing.T) {
 // A nested named group feeds a template: #20 derives a depName from the PHP
 // series inside the version it captured.
 func TestNestedGroupFeedsATemplate(t *testing.T) {
-	def := loadDefinition(t, 20)
 	cm := &model.CustomManager{
 		Index:              20,
-		MatchStrings:       []string{firstMatchString(t, def)},
-		DepNameTemplate:    def["depNameTemplate"].(string),
+		MatchStrings:       []string{`"platform"\s*:\s*\{[^}]*?"php"\s*:\s*"(?<currentValue>(?<phpSeries>\d+\.\d+)(?:\.\d+)?)"`},
+		DepNameTemplate:    "php-frankenphp-{{{phpSeries}}}",
 		DatasourceTemplate: "custom.wolfi",
 	}
 	src := `{"config":{"platform":{"php":"8.5.10"}}}`
@@ -193,11 +200,15 @@ func TestNestedGroupFeedsATemplate(t *testing.T) {
 // The recursive strategy: the outer pattern narrows a region so the inner one
 // cannot match text that happens to look right elsewhere in the file.
 func TestRecursiveStrategyConfinesTheInnerMatch(t *testing.T) {
-	def := loadDefinition(t, 0)
-	ms, _ := def["matchStrings"].([]any)
+	// The shape of the runner configuration's first custom manager: the
+	// outer pattern narrows to a default: or *_image: line, the inner one
+	// reads the image on it.
 	cm := &model.CustomManager{
-		Index:              0,
-		MatchStrings:       []string{ms[0].(string), ms[1].(string)},
+		Index: 0,
+		MatchStrings: []string{
+			`(?:[a-z0-9_-]+_image|default):[^\n]*`,
+			`(?<depName>registry\.example\.test/devops/ci-mirrors/[a-z0-9._/-]+):(?<currentValue>[a-zA-Z0-9][a-zA-Z0-9._-]*)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?`,
+		},
 		MatchStrategy:      StrategyRecursive,
 		DatasourceTemplate: "docker",
 		VersioningTemplate: "docker",
@@ -209,8 +220,8 @@ func TestRecursiveStrategyConfinesTheInnerMatch(t *testing.T) {
 	src := "spec:\n" +
 		"  inputs:\n" +
 		"    image-config:\n" +
-		"      default: registry.ole-hartwig.eu/devops/ci-mirrors/trivy:v0.74.0\n" +
-		"# see also registry.ole-hartwig.eu/devops/ci-mirrors/other:v9.9.9\n"
+		"      default: registry.example.test/devops/ci-mirrors/trivy:v0.74.0\n" +
+		"# see also registry.example.test/devops/ci-mirrors/other:v9.9.9\n"
 
 	res, err := New().Extract(context.Background(),
 		extract.File{Path: ".gitlab-ci.yml", Content: []byte(src)},

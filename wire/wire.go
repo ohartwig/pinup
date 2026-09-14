@@ -206,6 +206,17 @@ func LockedVersions(manager string, lock []byte) (map[string]string, error) {
 	return nil, nil
 }
 
+// LockedRegistries reads the registries a manager's lock file resolves its
+// packages from, keyed like LockedVersions, where the lock records that at
+// all: terraform's does, for a provider from a registry other than the
+// default. Every other manager answers nil.
+func LockedRegistries(manager string, lock []byte) map[string]string {
+	if manager == "terraform" {
+		return terraform.LockedRegistries(lock)
+	}
+	return nil
+}
+
 // Platform returns the GitLab platform for an instance. header is the
 // header the token travels in: PRIVATE-TOKEN or JOB-TOKEN.
 func Platform(baseURL, token, header string) publish.Platform {

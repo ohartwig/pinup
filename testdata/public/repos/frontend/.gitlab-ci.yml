@@ -1,0 +1,8 @@
+include:
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/node@2.14.3
+
+lint:
+  image: registry.acme.test/devops/ci-mirrors/node:24.8.0-alpine3.22
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm lint

@@ -47,7 +47,10 @@ mkdir -p "$WORK/repo"
 printf 'FROM alpine:3.21\n' > "$WORK/repo/Containerfile"
 git -C "$WORK/repo" init -q .
 git -C "$WORK/repo" add -A
-git -C "$WORK/repo" -c user.email=capture@example.invalid -c user.name=capture commit -q -m init
+# gpgsign off: the scaffold is a throwaway for the container to read, and the
+# global signing config would ask for a hardware key.
+git -C "$WORK/repo" -c user.email=capture@example.invalid -c user.name=capture \
+    -c commit.gpgsign=false commit -q -m init
 
 echo "capturing ${IMAGE} (${DIGEST})..."
 docker run --rm \

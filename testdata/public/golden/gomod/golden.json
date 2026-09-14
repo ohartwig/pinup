@@ -1,0 +1,17 @@
+{
+  "repo": "golden/gomod",
+  "now": "2026-09-14T08:00:00Z",
+  "covers": {
+    "managers": [
+      "gomod"
+    ],
+    "datasources": [
+      "go",
+      "golang-version"
+    ],
+    "versionings": [
+      "go-mod-directive",
+      "semver"
+    ]
+  }
+}

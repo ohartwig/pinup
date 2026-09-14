@@ -1,0 +1,18 @@
+{
+  "repo": "golden/gitrefs",
+  "now": "2026-09-14T08:00:00Z",
+  "covers": {
+    "managers": [
+      "custom.regex",
+      "gitlabci"
+    ],
+    "datasources": [
+      "git-refs",
+      "docker"
+    ],
+    "versionings": [
+      "semver",
+      "node"
+    ]
+  }
+}

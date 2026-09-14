@@ -1,0 +1,5 @@
+tenant: client-b
+website:
+  image:
+    # renovate: datasource=docker depName=registry.acme.test/development/client-b/website
+    tag: "1.0.4"

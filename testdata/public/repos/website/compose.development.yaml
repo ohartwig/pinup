@@ -1,0 +1,6 @@
+services:
+  web:
+    # renovate: datasource=gitlab-tags depName=platform/dev-proxy versioning=semver
+    image: registry.acme.test/platform/dev-proxy:2.3.0
+  db:
+    image: mariadb:11.8

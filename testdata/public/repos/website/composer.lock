@@ -1,0 +1,18 @@
+{
+  "_readme": ["This file locks the dependencies of your project to a known state"],
+  "content-hash": "0000000000000000000000000000000000000000",
+  "packages": [
+    {"name": "typo3/cms-core", "version": "v13.4.17"},
+    {"name": "guzzlehttp/guzzle", "version": "7.9.3"},
+    {"name": "cweagans/composer-patches", "version": "2.0.0"}
+  ],
+  "packages-dev": [
+    {"name": "phpunit/phpunit", "version": "11.5.30"}
+  ],
+  "platform": {"php": "^8.4"},
+  "platform-dev": {},
+  "platform-overrides": {
+    "php": "8.4.11"
+  },
+  "plugin-api-version": "2.6.0"
+}

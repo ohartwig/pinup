@@ -45,7 +45,13 @@ for src in "$@"; do
   name="$(basename "$src")"
   dst="${STAGE}/${name}"
   rm -rf "$dst"; mkdir -p "$dst"
-  git -C "$src" archive HEAD | tar -x -C "$dst"
+  # A checkout contributes its HEAD; a plain tree (the synthetic repositories
+  # under testdata/) contributes its files.
+  if git -C "$src" rev-parse --is-inside-work-tree >/dev/null 2>&1 && [ -d "$src/.git" ]; then
+    git -C "$src" archive HEAD | tar -x -C "$dst"
+  else
+    (cd "$src" && tar -c .) | tar -x -C "$dst"
+  fi
 
   # The repo's own renovate.json extends local>devops/renovate-runner, which
   # needs platform access. default.json is supplied as the config file instead,

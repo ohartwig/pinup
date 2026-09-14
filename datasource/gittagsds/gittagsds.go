@@ -188,7 +188,8 @@ func (d *Datasource) Digest(ctx context.Context, ref lookup.Ref, version string)
 }
 
 // execLsRemote runs `git ls-remote --tags --refs repoURL` and returns its
-// stdout. GIT_TERMINAL_PROMPT=0 turns a repository that needs credentials
+// stdout, its messages in C locale so a recorded failure reads the same on
+// every machine. GIT_TERMINAL_PROMPT=0 turns a repository that needs credentials
 // into an immediate failure instead of a hang; no token is ever passed, by
 // design (see the package doc).
 func execLsRemote(ctx context.Context, gitBin string, timeout time.Duration, repoURL string, all bool) (string, error) {
@@ -221,7 +222,7 @@ func execLsRemote(ctx context.Context, gitBin string, timeout time.Duration, rep
 	if strings.HasPrefix(repoURL, "file://") {
 		protocols += ":file"
 	}
-	cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + dir, "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_NOSYSTEM=1", "GIT_ALLOW_PROTOCOL=" + protocols}
+	cmd.Env = []string{"PATH=" + os.Getenv("PATH"), "HOME=" + dir, "LC_ALL=C", "GIT_TERMINAL_PROMPT=0", "GIT_CONFIG_NOSYSTEM=1", "GIT_ALLOW_PROTOCOL=" + protocols}
 	if v := os.Getenv("SSL_CERT_FILE"); v != "" {
 		cmd.Env = append(cmd.Env, "SSL_CERT_FILE="+v)
 	}

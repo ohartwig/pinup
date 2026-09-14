@@ -1,0 +1,15 @@
+include:
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/yaml@2.14.3
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/deploy-tools/argocd-sync@0.8.0
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/supply-chain-verify/base-image-pins@2
+
+default:
+  image: registry.acme.test/devops/ci-mirrors/alpine:3.22
+
+lint:
+  image: registry.acme.test/devops/ci-mirrors/kubeconform:0.7.0
+  script: [kubeconform -strict .]
+
+render:
+  image: registry.acme.test/devops/ci-mirrors/helm:3.19.0@sha256:718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2
+  script: [helm template charts/webapp]

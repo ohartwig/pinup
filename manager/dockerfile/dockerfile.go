@@ -72,7 +72,24 @@ var (
 	// would produce a version no datasource can resolve, and an Edit that
 	// replaced the comment along with it.
 	reArg = regexp.MustCompile(`(?i)^[ \t]*ARG[ \t]+(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?:=(?P<val>[^ \t]*))?[ \t]*.*$`)
+	// reSyntax is the BuildKit parser directive naming the frontend image,
+	// which Renovate reports as a dependency of depType "syntax" (measured:
+	// a customer repository's scheduler Containerfile). It is a comment to
+	// Docker, so it is read before the first instruction only.
+	reSyntax = regexp.MustCompile(`(?i)^[ \t]*#[ \t]*syntax[ \t]*=[ \t]*(?P<ref>\S+)[ \t]*$`)
+	// reArgRef finds the ${NAME}, ${NAME:-default} and $NAME references a
+	// FROM line may carry; the default form is measured nowhere and reported
+	// as unresolved.
+	reArgRef = regexp.MustCompile(`\$\{(?P<braced>[A-Za-z_][A-Za-z0-9_]*)(?P<def>:-[^}]*)?\}|\$(?P<bare>[A-Za-z_][A-Za-z0-9_]*)`)
 )
+
+// argValue is a global ARG's default and where its bytes sit in the file,
+// so a FROM that interpolates it can be edited at the ARG line - which is
+// where Renovate edits it (measured: replaceString "ARG X_TAG=1.0.5\n").
+type argValue struct {
+	val        string
+	start, end int
+}
 
 // Extract implements extract.Manager. It never returns an error for a
 // malformed file - a Dockerfile that does not match a pattern here simply
@@ -90,11 +107,24 @@ func (m *Manager) Extract(_ context.Context, f extract.File, cfg extract.Manager
 	// FROM. Those are the only ARGs Docker itself lets a FROM line
 	// interpolate, so they are the only ones this manager tries to resolve a
 	// `FROM img:${TAG}`-style reference against.
-	globalArgs := make(map[string]string)
+	globalArgs := make(map[string]argValue)
 	sawFrom := false
+	sawInstruction := false
 
 	for i, ln := range lines {
 		bare := strings.TrimSuffix(ln.text, "\r")
+
+		if idx, ok := matchNamed(reSyntax, bare); ok && !sawInstruction {
+			refSpan := idx["ref"]
+			dep := refDependency(f.Path, i+1, bare[refSpan[0]:refSpan[1]], ln.start+refSpan[0], nil)
+			dep.DepType = "syntax"
+			deps = append(deps, dep)
+			continue
+		}
+		if t := strings.TrimSpace(bare); t == "" || strings.HasPrefix(t, "#") {
+			continue
+		}
+		sawInstruction = true
 
 		if idx, ok := matchNamed(reArg, bare); ok {
 			nameSpan := idx["name"]
@@ -108,7 +138,7 @@ func (m *Manager) Extract(_ context.Context, f extract.File, cfg extract.Manager
 			vs, ve := trimValueSpan(bare, valSpan[0], valSpan[1])
 
 			if !sawFrom {
-				globalArgs[argName] = bare[vs:ve]
+				globalArgs[argName] = argValue{val: bare[vs:ve], start: ln.start + vs, end: ln.start + ve}
 			}
 			// An ARG is never a dependency of this manager, annotated or not.
 			// Measured: Renovate's dockerfile manager reports FROM references
@@ -162,8 +192,11 @@ func applyManagerDefaults(deps []model.Dependency, cfg extract.ManagerConfig) {
 }
 
 // fromDependency builds the Dependency for one FROM instruction's reference.
-// ref is either a stage name, "scratch", or an image reference.
-func fromDependency(file string, lineNo int, ref string, refAbs int, stages map[string]bool, globalArgs map[string]string) model.Dependency {
+// ref is either a stage name, "scratch", or an image reference - possibly
+// through the ARGs declared above the first FROM, which Docker lets a FROM
+// interpolate and Renovate resolves (measured: FROM ${IMG}:${TAG} with
+// both ARGs global is the image at the tag, edited on the tag's ARG line).
+func fromDependency(file string, lineNo int, ref string, refAbs int, stages map[string]bool, globalArgs map[string]argValue) model.Dependency {
 	if stages[ref] {
 		return internalReference(file, lineNo, ref, refAbs,
 			fmt.Sprintf("FROM %s refers to an earlier build stage in this file, not an external dependency", ref))
@@ -172,7 +205,100 @@ func fromDependency(file string, lineNo int, ref string, refAbs int, stages map[
 		return internalReference(file, lineNo, ref, refAbs,
 			"FROM scratch is the empty pseudo-image, not a dependency")
 	}
+	if strings.ContainsRune(ref, '$') {
+		if dep, ok := interpolatedDependency(file, lineNo, ref, refAbs, globalArgs); ok {
+			return dep
+		}
+	}
 	return refDependency(file, lineNo, ref, refAbs, globalArgs)
+}
+
+// interpolatedDependency resolves a FROM reference through the global ARGs
+// and builds the dependency on the resolved image, with the tag's and the
+// digest's Locus wherever their bytes actually sit: on the FROM line when
+// literal, on the ARG line when interpolated. ok is false when a reference
+// does not resolve - an ARG with no default, one declared after the first
+// FROM, or an inline default - or when the tag or digest would straddle
+// two places, which nothing can edit as one span.
+func interpolatedDependency(file string, lineNo int, ref string, refAbs int, globalArgs map[string]argValue) (model.Dependency, bool) {
+	var resolved strings.Builder
+	var origin []int // absolute source offset of each resolved byte
+	last := 0
+	for _, m := range reArgRef.FindAllStringSubmatchIndex(ref, -1) {
+		for k := last; k < m[0]; k++ {
+			origin = append(origin, refAbs+k)
+		}
+		resolved.WriteString(ref[last:m[0]])
+		name := ""
+		switch {
+		case m[2] >= 0 && m[4] < 0:
+			name = ref[m[2]:m[3]]
+		case m[6] >= 0:
+			name = ref[m[6]:m[7]]
+		default:
+			return model.Dependency{}, false // ${NAME:-default}: unmeasured
+		}
+		a, ok := globalArgs[name]
+		if !ok {
+			return model.Dependency{}, false
+		}
+		for k := range len(a.val) {
+			origin = append(origin, a.start+k)
+		}
+		resolved.WriteString(a.val)
+		last = m[1]
+	}
+	for k := last; k < len(ref); k++ {
+		origin = append(origin, refAbs+k)
+	}
+	resolved.WriteString(ref[last:])
+	full := resolved.String()
+	if strings.ContainsRune(full, '$') {
+		return model.Dependency{}, false
+	}
+
+	contiguous := func(start, end int) (int, int, bool) {
+		for k := start + 1; k < end; k++ {
+			if origin[k] != origin[k-1]+1 {
+				return 0, 0, false
+			}
+		}
+		if start == end {
+			return origin[start-1] + 1, origin[start-1] + 1, true
+		}
+		return origin[start], origin[end-1] + 1, true
+	}
+
+	imgName, tagStart, tagEnd, digestStart, digestEnd := splitRef(full)
+	dep := model.Dependency{
+		Manager:       name,
+		File:          file,
+		CustomManager: model.NoCustomManager,
+		DepName:       imgName,
+		Datasource:    "docker",
+		Versioning:    "docker",
+		CurrentValue:  full[tagStart:tagEnd],
+		Locus:         model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest, Line: lineNo},
+	}
+	if tagStart == tagEnd {
+		dep.SkipReason = "reference carries no tag; a lookup would fall back to latest"
+		dep.Locus.ValueStart, dep.Locus.ValueEnd = refAbs+len(ref), refAbs+len(ref)
+		return dep, true
+	}
+	vs, ve, ok := contiguous(tagStart, tagEnd)
+	if !ok {
+		return model.Dependency{}, false
+	}
+	dep.Locus.ValueStart, dep.Locus.ValueEnd = vs, ve
+	if digestStart >= 0 {
+		ds, de, ok := contiguous(digestStart, digestEnd)
+		if !ok {
+			return model.Dependency{}, false
+		}
+		dep.CurrentDigest = full[digestStart:digestEnd]
+		dep.Locus.DigestStart, dep.Locus.DigestEnd = ds, de
+	}
+	return dep, true
 }
 
 // copyFromDependency builds the Dependency for one COPY --from= value, which
@@ -216,7 +342,7 @@ func internalReference(file string, lineNo int, ref string, refAbs int, reason s
 // argument when it is not a stage or scratch, or COPY --from's when it is not
 // a stage or an index. globalArgs may be nil - it is only consulted to make a
 // skip reason more specific, never to change what gets skipped.
-func refDependency(file string, lineNo int, ref string, refAbs int, globalArgs map[string]string) model.Dependency {
+func refDependency(file string, lineNo int, ref string, refAbs int, globalArgs map[string]argValue) model.Dependency {
 	imgName, tagStart, tagEnd, digestStart, digestEnd := splitRef(ref)
 	tag := ref[tagStart:tagEnd]
 
@@ -266,7 +392,7 @@ func refDependency(file string, lineNo int, ref string, refAbs int, globalArgs m
 // to make a skip reason more informative; it never turns a variable
 // reference into an editable one, since the bytes to edit would then live in
 // the ARG line, not here.
-func resolveArgRef(tag string, globalArgs map[string]string) (string, bool) {
+func resolveArgRef(tag string, globalArgs map[string]argValue) (string, bool) {
 	inner := tag
 	switch {
 	case strings.HasPrefix(inner, "${") && strings.HasSuffix(inner, "}"):
@@ -283,7 +409,7 @@ func resolveArgRef(tag string, globalArgs map[string]string) (string, bool) {
 		return "", false
 	}
 	v, ok := globalArgs[inner]
-	return v, ok
+	return v.val, ok
 }
 
 // splitRef splits a raw reference token into its image name and the byte

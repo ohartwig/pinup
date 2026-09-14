@@ -1,0 +1,21 @@
+{
+  "repo": "golden/tfversion",
+  "now": "2026-09-14T08:00:00Z",
+  "covers": {
+    "managers": [
+      "terraform-version",
+      "kustomize"
+    ],
+    "datasources": [
+      "github-releases",
+      "github-tags",
+      "git-tags",
+      "docker",
+      "helm"
+    ],
+    "versionings": [
+      "docker",
+      "semver"
+    ]
+  }
+}

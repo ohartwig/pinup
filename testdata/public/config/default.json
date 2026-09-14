@@ -1,0 +1,1097 @@
+{
+  "extends": [
+    "config:recommended",
+    "docker:pinDigests",
+    "helpers:pinGitHubActionDigests",
+    ":configMigration",
+    "abandonments:recommended",
+    ":pinDevDependencies",
+    ":automergeDigest",
+    "customManagers:dockerfileVersions",
+    "customManagers:gitlabPipelineVersions",
+    "workarounds:typesNodeVersioning",
+    "mergeConfidence:all-badges"
+  ],
+  "executionTimeout": 90,
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/^\\.gitlab-ci\\.yml$/,/^templates(/.*)?/.*\\.ya?ml$/, datasourceTemplate=docker, versioningTemplate=docker",
+      "managerFilePatterns": [
+        "/^\\.gitlab-ci\\.yml$/",
+        "/^templates(/.*)?/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?:[a-z0-9_-]+_image|default):[^\\n]*",
+        "(?<depName>registry\\.acme\\.test/devops/ci-mirrors/[a-z0-9._/-]+):(?<currentValue>[a-zA-Z0-9][a-zA-Z0-9._-]*)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
+      "matchStringsStrategy": "recursive"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/^\\.gitlab-ci\\.yml$/,/^templates(/.*)?/.*\\.ya?ml$/, datasourceTemplate=docker, versioningTemplate=docker",
+      "managerFilePatterns": [
+        "/^\\.gitlab-ci\\.yml$/",
+        "/^templates(/.*)?/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?:[a-z0-9_-]+_image|default):[^\\n]*",
+        "(?<depName>registry\\.acme\\.test/devops/images/[a-z0-9._/-]+):(?<currentValue>[a-zA-Z0-9][a-zA-Z0-9._-]*)\""
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker",
+      "matchStringsStrategy": "recursive"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/^templates(/.*)?/.*\\.ya?ml$/, datasourceTemplate=docker",
+      "managerFilePatterns": [
+        "/^templates(/.*)?/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "name:\\s*(?<depName>[a-z0-9][a-z0-9._/-]*[a-z0-9]):(?<currentValue>[a-zA-Z0-9][a-zA-Z0-9._-]*)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/^templates(/.*)?/.*\\.yml$/,/(^|/)\\.gitlab-ci\\.yml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/^templates(/.*)?/.*\\.yml$/",
+        "/(^|/)\\.gitlab-ci\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)[^\\n]*\\n\\s*[^\\n]*?images/php-ci:(?<currentValue>\\d+\\.\\d+\\.\\d+)-\\$PHP_VERSION"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/^templates(/.*)?/.*\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate={{{versioning}}}",
+      "managerFilePatterns": [
+        "/^templates(/.*)?/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+[A-Z][A-Z0-9_]*:\\s*[\"'](?<currentValue>[^\"']+)[\"']"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "versioningTemplate": "{{{versioning}}}"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)compose\\.ya?ml$/,/(^|/)compose\\.[^/]+\\.ya?ml$/,/(^|/)docker-compose\\.ya?ml$/,…, datasourceTemplate={{{datasource}}}, versioningTemplate={{{versioning}}}",
+      "managerFilePatterns": [
+        "/(^|/)compose\\.ya?ml$/",
+        "/(^|/)compose\\.[^/]+\\.ya?ml$/",
+        "/(^|/)docker-compose\\.ya?ml$/",
+        "/(^|/)docker-compose\\.[^/]+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) versioning=(?<versioning>\\S+)\\s+image:\\s*\\S+:(?<currentValue>[^\\s:]+)"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "{{{versioning}}}",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^argocd-install/kustomization\\.yml$/"
+      ],
+      "matchStrings": [
+        "https:\\/\\/raw\\.githubusercontent\\.com\\/argoproj\\/argo-cd\\/v(?<currentValue>\\S+)\\/manifests\\/install.yaml",
+        "https:\\/\\/raw\\.githubusercontent\\.com\\/argoproj\\/argo-cd\\/v(?<currentValue>\\S+)\\/examples\\/k8s-rbac\\/argocd-server-applications\\/argocd-server-rbac-clusterrole\\.yaml",
+        "https:\\/\\/raw\\.githubusercontent\\.com\\/argoproj\\/argo-cd\\/v(?<currentValue>\\S+)\\/examples\\/k8s-rbac\\/argocd-server-applications\\/argocd-server-rbac-clusterrolebinding\\.yaml"
+      ],
+      "depNameTemplate": "argoproj/argo-cd",
+      "datasourceTemplate": "github-tags",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^default-.*\\.yml$/",
+        "/^build(/.*)?/.*\\.yml$/",
+        "/^test(/.*)?/.*\\.yml$/",
+        "/^deploy(/.*)?/.*\\.yml$/",
+        "/^lint(/.*)?/.*\\.yml$/",
+        "/^release(/.*)?/.*\\.yml$/",
+        "/^templates(/.*)?/.*\\.yml$/"
+      ],
+      "versioningTemplate": "semver",
+      "datasourceTemplate": "gitlab-releases",
+      "registryUrlTemplate": "https://{{{registryUrl}}}",
+      "depTypeTemplate": "repository",
+      "description": "Twin manager: managerFilePatterns=/^default-.*\\.yml$/,/^build(/.*)?/.*\\.yml$/,/^test(/.*)?/.*\\.yml$/,…, versioningTemplate=semver, datasourceTemplate=gitlab-releases",
+      "matchStrings": [
+        "component: (?<registryUrl>[^\\s\\/]+)\\/(?<depName>\\S+)\\/[^\\s\\/]+@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/|\\.)Dockerfile$/,/(^|/)Dockerfile\\.[^/]*$/",
+      "managerFilePatterns": [
+        "/(^|/|\\.)Dockerfile$/",
+        "/(^|/)Dockerfile\\.[^/]*$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?)(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[a-z-]+?))?\\s+RUN install-[a-z]+? (?<depName>[a-z-]+?) (?<currentValue>.+?)\\s"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/\\.sh$/",
+      "managerFilePatterns": [
+        "/\\.sh$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>.+?)(?: (?:packageName|lookupName)=(?<packageName>.+?))?(?: versioning=(?<versioning>[a-z-]+?))?\\s+[A-Z_]+?_VERSION=(?<currentValue>.+?)\\s"
+      ]
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)composer\\.json$/, datasourceTemplate=gitlab-packages, versioningTemplate=composer",
+      "managerFilePatterns": [
+        "/(^|/)composer\\.json$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>acme/[a-z0-9_-]+)\"\\s*:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "gitlab-packages",
+      "registryUrlTemplate": "https://git.acme.test",
+      "packageNameTemplate": "{{#if (equals depName 'acme/analytics')}}development/acme/typo3-analytics{{else}}{{#if (equals depName 'acme/client-a-news')}}development/client-a/extensions/client-a-news{{else}}{{#if (equals depName 'acme/client-a-sitepackage')}}development/client-a/extensions/sitepackage{{else}}development/{{depName}}{{/if}}{{/if}}{{/if}}:{{depName}}",
+      "versioningTemplate": "composer",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)composer\\.json$/, datasourceTemplate=gitlab-packages, versioningTemplate=composer",
+      "managerFilePatterns": [
+        "/(^|/)composer\\.json$/"
+      ],
+      "matchStrings": [
+        "\"(?<depName>partner/typo3-widgets)\"\\s*:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "gitlab-packages",
+      "registryUrlTemplate": "https://git.acme.test",
+      "packageNameTemplate": "development/acme/typo3-widgets:{{depName}}",
+      "versioningTemplate": "composer",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)composer\\.json$/, datasourceTemplate=gitlab-packages, versioningTemplate=composer",
+      "managerFilePatterns": [
+        "/(^|/)composer\\.json$/"
+      ],
+      "matchStrings": [
+        "\"corp/(?<packageSuffix>[a-z0-9_-]+)\"\\s*:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "gitlab-packages",
+      "registryUrlTemplate": "https://git.acme.test",
+      "depNameTemplate": "corp/{{packageSuffix}}",
+      "packageNameTemplate": "platform/core/{{packageSuffix}}:corp/{{packageSuffix}}",
+      "versioningTemplate": "composer",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)\\.gitlab-ci\\.yml$/,/(^|/)templates/.*\\.ya?ml$/, datasourceTemplate=gitlab-releases, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)\\.gitlab-ci\\.yml$/",
+        "/(^|/)templates/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "datasourceTemplate": "gitlab-releases",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)tenants/.*\\.ya?ml$/,/(^|/)charts/.*/values\\.ya?ml$/,/^bootstrap/.*\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)tenants/.*\\.ya?ml$/",
+        "/(^|/)charts/.*/values\\.ya?ml$/",
+        "/^bootstrap/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)tenants/.*\\.ya?ml$/,/(^|/)charts/.*/values\\.ya?ml$/,/^bootstrap/.*\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)tenants/.*\\.ya?ml$/",
+        "/(^|/)charts/.*/values\\.ya?ml$/",
+        "/^bootstrap/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+tag:\\s*\"(?<currentValue>[^\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\""
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)tenants/.*\\.ya?ml$/,/(^|/)charts/.*/values\\.ya?ml$/,/^bootstrap/.*\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=docker",
+      "managerFilePatterns": [
+        "/(^|/)tenants/.*\\.ya?ml$/",
+        "/(^|/)charts/.*/values\\.ya?ml$/",
+        "/^bootstrap/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)tenants/.*\\.ya?ml$/,/(^|/)charts/.*/values\\.ya?ml$/,/^bootstrap/.*\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=docker",
+      "managerFilePatterns": [
+        "/(^|/)tenants/.*\\.ya?ml$/",
+        "/(^|/)charts/.*/values\\.ya?ml$/",
+        "/^bootstrap/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+[A-Za-z][A-Za-z0-9_-]*:\\s*\"?(?<image>[^\\s\\\":]*/[^\\s\\\":]*):(?<currentValue>[^\\s\"@]+?)(?:@(?<currentDigest>sha256:[a-f0-9]{64}))?\"?\\s"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "versioningTemplate": "docker"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)Containerfile$/,/(^|/|\\.)Dockerfile$/, datasourceTemplate=custom.protonpass, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)Containerfile$/",
+        "/(^|/|\\.)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "# renovate:\\s*datasource=custom\\.protonpass\\s+depName=(?<depName>\\S+)(?:\\s+versioning=(?<versioning>[a-z-]+))?\\s+ARG PASS_CLI_VERSION=(?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "custom.protonpass",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)\\.gitlab-ci\\.yml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)\\.gitlab-ci\\.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+[A-Z_]+:\\s*\"(?<currentValue>[0-9][^\"]+)\"",
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+-\\s*install-tool\\s+\\S+\\s+(?<currentValue>[0-9]\\S*)"
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)composer\\.json$/,/(^|/)composer\\.lock$/, datasourceTemplate=custom.wolfi, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)composer\\.json$/",
+        "/(^|/)composer\\.lock$/"
+      ],
+      "matchStrings": [
+        "\"platform\"\\s*:\\s*\\{[^}]*?\"php\"\\s*:\\s*\"(?<currentValue>(?<phpSeries>\\d+\\.\\d+)(?:\\.\\d+)?)\"",
+        "\"platform-overrides\"\\s*:\\s*\\{[^}]*?\"php\"\\s*:\\s*\"(?<currentValue>(?<phpSeries>\\d+\\.\\d+)(?:\\.\\d+)?)\""
+      ],
+      "depNameTemplate": "php-frankenphp-{{{phpSeries}}}",
+      "datasourceTemplate": "custom.wolfi",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)Chart\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)Chart\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?) registryUrl=(?<registryUrl>\\S+?)\\s+appVersion:\\s*\"(?<currentValue>[^\"]+?)\""
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "registryUrlTemplate": "{{{registryUrl}}}",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)Chart\\.ya?ml$/, datasourceTemplate={{{datasource}}}, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)Chart\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+?) depName=(?<depName>\\S+?)\\s+appVersion:\\s*\"(?<currentValue>[^\"]+?)\""
+      ],
+      "datasourceTemplate": "{{{datasource}}}",
+      "versioningTemplate": "semver",
+      "extractVersionTemplate": "^v?(?<version>.+)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Twin manager: managerFilePatterns=/(^|/)Containerfile$/,/(^|/|\\.)Dockerfile$/, datasourceTemplate=go, versioningTemplate=semver",
+      "managerFilePatterns": [
+        "/(^|/)Containerfile$/",
+        "/(^|/|\\.)Dockerfile$/"
+      ],
+      "matchStrings": [
+        "--with\\s+(?<depName>[a-zA-Z0-9._/-]+)@(?<currentValue>v[0-9][^\\s\\\\]*)"
+      ],
+      "datasourceTemplate": "go",
+      "versioningTemplate": "semver"
+    },
+    {
+      "description": "Twin manager: managerFilePatterns=/(^|/)\\.gitlab-ci\\.yml$/,/(^|/)templates/.*\\.ya?ml$/, datasourceTemplate=gitlab-releases, versioningTemplate=loose",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)\\.gitlab-ci\\.yml$/",
+        "/(^|/)templates/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+)[\\r\\n]"
+      ],
+      "datasourceTemplate": "gitlab-releases",
+      "versioningTemplate": "loose"
+    }
+  ],
+  "customDatasources": {
+    "wolfi": {
+      "defaultRegistryUrlTemplate": "http://127.0.0.1:8099/{{packageName}}.json",
+      "format": "json",
+      "transformTemplates": [
+        "{ \"releases\": versions }"
+      ]
+    },
+    "corp-apk": {
+      "defaultRegistryUrlTemplate": "http://127.0.0.1:8099/corp/{{packageName}}.json",
+      "format": "json",
+      "transformTemplates": [
+        "{ \"releases\": versions }"
+      ]
+    },
+    "protonpass": {
+      "defaultRegistryUrlTemplate": "https://proton.me/download/pass-cli/versions.json",
+      "format": "json",
+      "transformTemplates": [
+        "{ \"releases\": [ { \"version\": passCliVersions.version } ] }"
+      ]
+    }
+  },
+  "dependencyDashboard": true,
+  "ignorePaths": [
+    "**/prometheus-exporter/**"
+  ],
+  "ignoreDeps": [
+    "example/legacy-sdk",
+    "example/test-double"
+  ],
+  "prHourlyLimit": 20,
+  "postUpdateOptions": [
+    "gomodTidy"
+  ],
+  "enabledManagers": [
+    "custom.regex",
+    "npm",
+    "kustomize",
+    "dockerfile",
+    "composer",
+    "gitlabci",
+    "gitlabci-include",
+    "terraform",
+    "terraform-version",
+    "gomod"
+  ],
+  "platformAutomerge": true,
+  "packageRules": [
+    {
+      "description": "Twin rule: matchPackageNames=* -> rangeStrategy=replace",
+      "matchPackageNames": [
+        "*"
+      ],
+      "rangeStrategy": "replace"
+    },
+    {
+      "description": "Twin rule: matchDatasources=npm -> minimumReleaseAge=3 days, internalChecksFilter=strict",
+      "matchDatasources": [
+        "npm"
+      ],
+      "minimumReleaseAge": "3 days",
+      "internalChecksFilter": "strict"
+    },
+    {
+      "description": "Twin rule: matchDatasources=npm; matchUpdateTypes=lockFileMaintenance,replacement,pin -> minimumReleaseAge=None",
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "lockFileMaintenance",
+        "replacement",
+        "pin"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
+      "description": "Twin rule: matchDatasources=npm; matchPackageNames=@acme/**,@corp/** -> minimumReleaseAge=0",
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "@acme/**",
+        "@corp/**"
+      ],
+      "minimumReleaseAge": "0"
+    },
+    {
+      "description": "Twin rule: matchUpdateTypes=minor,patch,digest,… -> automerge=True",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Twin rule: matchDatasources=custom.wolfi,custom.corp-apk; matchUpdateTypes=patch,minor -> groupName=alpine + wolfi packages, groupSlug=apk, minimumReleaseAge=0, automerge=True",
+      "matchDatasources": [
+        "custom.wolfi",
+        "custom.corp-apk"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "groupName": "alpine + wolfi packages",
+      "groupSlug": "apk",
+      "minimumReleaseAge": "0",
+      "automerge": true
+    },
+    {
+      "matchDatasources": [
+        "composer"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "groupName": "composer packages",
+      "groupSlug": "composer"
+    },
+    {
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "patch",
+        "minor"
+      ],
+      "groupName": "npm packages",
+      "groupSlug": "npm"
+    },
+    {
+      "description": "Twin rule: matchDatasources=npm; matchPackageNames=@acme/eslint-config -> registryUrls=https://git.acme.test/api/v4/projects/101/packages/npm/",
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "@acme/eslint-config"
+      ],
+      "registryUrls": [
+        "https://git.acme.test/api/v4/projects/101/packages/npm/"
+      ]
+    },
+    {
+      "matchDatasources": [
+        "npm"
+      ],
+      "matchPackageNames": [
+        "@acme/stylelint-config"
+      ],
+      "registryUrls": [
+        "https://git.acme.test/api/v4/projects/102/packages/npm/"
+      ]
+    },
+    {
+      "matchDatasources": [
+        "gitlab-releases",
+        "gitlab-tags",
+        "gitlab-packages"
+      ],
+      "registryUrls": [
+        "https://git.acme.test/"
+      ],
+      "minimumReleaseAge": "0"
+    },
+    {
+      "description": "Twin rule: matchDatasources=docker; matchPackageNames=registry.acme.test/**/sources -> minimumReleaseAge=0, schedule=at any time",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "registry.acme.test/**/sources"
+      ],
+      "minimumReleaseAge": "0",
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Twin rule: matchDatasources=packagist; matchPackageNames=acme/**,corp/**,partner/typo3-widgets -> enabled=False",
+      "matchDatasources": [
+        "packagist"
+      ],
+      "matchPackageNames": [
+        "acme/**",
+        "corp/**",
+        "partner/typo3-widgets"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Twin rule: matchDatasources=docker; matchPackageNames=git.acme.test/development/dependency_proxy/containers/{/,}**,git.acme.test:443/development/dependency_proxy/containers/{/,}** -> registryUrls=https://index.docker.io",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "git.acme.test/development/dependency_proxy/containers/{/,}**",
+        "git.acme.test:443/development/dependency_proxy/containers/{/,}**"
+      ],
+      "registryUrls": [
+        "https://index.docker.io"
+      ]
+    },
+    {
+      "description": "Twin rule: matchDatasources=gitlab-tags,gitlab-releases,gitlab-packages -> minimumReleaseAge=0",
+      "matchDatasources": [
+        "gitlab-tags",
+        "gitlab-releases",
+        "gitlab-packages"
+      ],
+      "minimumReleaseAge": "0"
+    },
+    {
+      "description": "Twin rule: matchDatasources=packagist; matchPackageNames=/^typo3\\/cms-/ -> minimumReleaseAge=0",
+      "matchDatasources": [
+        "packagist"
+      ],
+      "matchPackageNames": [
+        "/^typo3\\/cms-/"
+      ],
+      "minimumReleaseAge": "0"
+    },
+    {
+      "description": "Twin rule: matchManagers=dockerfile; matchPackageNames=mariadb,valkey/valkey; matchUpdateTypes=pin,digest -> enabled=True",
+      "matchManagers": [
+        "dockerfile"
+      ],
+      "matchPackageNames": [
+        "mariadb",
+        "valkey/valkey"
+      ],
+      "matchUpdateTypes": [
+        "pin",
+        "digest"
+      ],
+      "enabled": true
+    },
+    {
+      "matchPackageNames": [
+        "solr"
+      ],
+      "allowedVersions": "<9.6"
+    },
+    {
+      "description": "Twin rule: matchUpdateTypes=major -> enabled=True, automerge=False, minimumReleaseAge=7 days, dependencyDashboardApproval=True",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": true,
+      "automerge": false,
+      "minimumReleaseAge": "7 days",
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Twin rule: matchDatasources=gitlab-tags,gitlab-releases,gitlab-packages; matchUpdateTypes=major -> minimumReleaseAge=0, automerge=False",
+      "matchDatasources": [
+        "gitlab-tags",
+        "gitlab-releases",
+        "gitlab-packages"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "minimumReleaseAge": "0",
+      "automerge": false
+    },
+    {
+      "description": "Twin rule: matchPackageNames=typo3/cms-*,typo3/cms -> groupName=TYPO3 Core, groupSlug=typo3-core",
+      "matchPackageNames": [
+        "typo3/cms-*",
+        "typo3/cms"
+      ],
+      "groupName": "TYPO3 Core",
+      "groupSlug": "typo3-core"
+    },
+    {
+      "description": "Twin rule: matchPackageNames=symfony/*; matchUpdateTypes=major -> groupName=Symfony, groupSlug=symfony",
+      "matchPackageNames": [
+        "symfony/*"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "Symfony",
+      "groupSlug": "symfony"
+    },
+    {
+      "description": "Twin rule: matchPackageNames=doctrine/*; matchUpdateTypes=major -> groupName=Doctrine, groupSlug=doctrine",
+      "matchPackageNames": [
+        "doctrine/*"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "Doctrine",
+      "groupSlug": "doctrine"
+    },
+    {
+      "description": "Twin rule: matchPackageNames=laravel/*,illuminate/*; matchUpdateTypes=major -> groupName=Laravel, groupSlug=laravel",
+      "matchPackageNames": [
+        "laravel/*",
+        "illuminate/*"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "Laravel",
+      "groupSlug": "laravel"
+    },
+    {
+      "description": "Twin rule: matchPackageNames=phpunit/*,codeception/*,pestphp/*; matchUpdateTypes=major -> groupName=PHP test tools, groupSlug=php-test-tools",
+      "matchPackageNames": [
+        "phpunit/*",
+        "codeception/*",
+        "pestphp/*"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "PHP test tools",
+      "groupSlug": "php-test-tools"
+    },
+    {
+      "matchManagers": [
+        "gitlabci",
+        "gitlabci-include",
+        "custom.regex"
+      ],
+      "automerge": true,
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "description": "Twin rule: matchPackageNames=devops/ci-cd-components/**; matchUpdateTypes=minor,patch,digest -> groupName=CI components, groupSlug=ci-components",
+      "matchPackageNames": [
+        "devops/ci-cd-components/**"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "groupName": "CI components",
+      "groupSlug": "ci-components"
+    },
+    {
+      "matchManagers": [
+        "kustomize",
+        "npm",
+        "composer",
+        "dockerfile"
+      ],
+      "automerge": true,
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchManagers": [
+        "terraform",
+        "terraform-version"
+      ],
+      "automerge": true,
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
+      "matchPackageNames": [
+        "bash"
+      ],
+      "versioning": "regex:^alpine(?<major>[0-9]+)\\.(?<minor>[0-9]+)"
+    },
+    {
+      "matchPackageNames": [
+        "bash"
+      ],
+      "automerge": true,
+      "matchUpdateTypes": [
+        "minor"
+      ]
+    },
+    {
+      "description": "Twin rule: matchPackageNames=typo3/*,!typo3/cms-*,typo3-console/*,… -> minimumReleaseAge=6 hours",
+      "matchPackageNames": [
+        "typo3/*",
+        "!typo3/cms-*",
+        "typo3-console/*",
+        "friendsoftypo3/*",
+        "b13/*",
+        "helhum/*"
+      ],
+      "minimumReleaseAge": "6 hours"
+    },
+    {
+      "description": "Twin rule: matchManagers=composer -> rangeStrategy=bump",
+      "matchManagers": [
+        "composer"
+      ],
+      "rangeStrategy": "bump"
+    },
+    {
+      "description": "Twin rule: matchManagers=composer; matchPackageNames=typo3/cms-*,typo3/cms -> rangeStrategy=update-lockfile",
+      "matchManagers": [
+        "composer"
+      ],
+      "matchPackageNames": [
+        "typo3/cms-*",
+        "typo3/cms"
+      ],
+      "rangeStrategy": "update-lockfile"
+    },
+    {
+      "description": "Twin rule: matchManagers=custom.regex; matchPackageNames=acme/**,corp/**,partner/typo3-widgets -> rangeStrategy=pin",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "acme/**",
+        "corp/**",
+        "partner/typo3-widgets"
+      ],
+      "rangeStrategy": "pin"
+    },
+    {
+      "description": "Twin rule: matchManagers=custom.regex; matchPackageNames=pass-cli -> postUpgradeTasks={commands,fileFilters,executionMode}",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchPackageNames": [
+        "pass-cli"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "node scripts/update-pass-cli-hashes.mjs"
+        ],
+        "fileFilters": [
+          "**/Containerfile"
+        ],
+        "executionMode": "update"
+      }
+    },
+    {
+      "description": "Twin rule: matchPackageNames=!acme/**,!corp/**,!partner/typo3-widgets,… -> schedule=* 0,4,8,12,16,20 * * *",
+      "matchPackageNames": [
+        "!acme/**",
+        "!corp/**",
+        "!partner/typo3-widgets",
+        "!@acme/**",
+        "!@corp/**",
+        "!typo3/cms-*",
+        "!development/acme/**",
+        "!registry.acme.test/development/acme/**",
+        "!registry.acme.test/**/sources",
+        "!devops/**"
+      ],
+      "schedule": [
+        "* 0,4,8,12,16,20 * * *"
+      ]
+    },
+    {
+      "description": "Twin rule: matchDatasources=custom.wolfi; matchPackageNames=caddy-acme,cosign,crowdsec,… -> schedule=at any time",
+      "matchDatasources": [
+        "custom.wolfi"
+      ],
+      "matchPackageNames": [
+        "caddy-acme",
+        "cosign",
+        "crowdsec",
+        "crowdsec-*",
+        "dex-corp",
+        "frankenphp-8.4",
+        "frankenphp-8.5",
+        "geesefs",
+        "grafana",
+        "grafana-alloy",
+        "k6",
+        "ksops",
+        "libwatcher-c",
+        "libwatcher-c-*",
+        "loki",
+        "loki-*",
+        "mariadb-11.8",
+        "mariadb-11.8-*",
+        "mariadb-12.3",
+        "mariadb-12.3-*",
+        "php-frankenphp-8.4",
+        "php-frankenphp-8.4-*",
+        "php-frankenphp-8.5",
+        "php-frankenphp-8.5-*",
+        "prometheus-blackbox-exporter",
+        "prometheus-mysqld-exporter",
+        "prometheus-node-exporter",
+        "prometheus-redis-exporter",
+        "rcodesign",
+        "step",
+        "syft",
+        "trufflehog",
+        "vexctl"
+      ],
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Twin rule: matchDatasources=custom.corp-apk -> schedule=at any time",
+      "matchDatasources": [
+        "custom.corp-apk"
+      ],
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Twin rule: matchDatasources=docker; matchPackageNames=cgr.dev/**,reg.mini.dev/**,registry.acme.test/devops/ci-mirrors/wolfi-base,…; matchUpdateTypes=minor,patch,digest,… -> minimumReleaseAge=1 hour, schedule=at any time",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "cgr.dev/**",
+        "reg.mini.dev/**",
+        "registry.acme.test/devops/ci-mirrors/wolfi-base",
+        "registry.acme.test/devops/ci-mirrors/minimus/**",
+        "registry.acme.test/devops/ci-mirrors/bash",
+        "registry.acme.test/devops/ci-mirrors/grafana",
+        "registry.acme.test/devops/ci-mirrors/prometheus",
+        "registry.acme.test/devops/ci-mirrors/loki",
+        "registry.acme.test/devops/ci-mirrors/promtail",
+        "registry.acme.test/devops/ci-mirrors/prometheus-alertmanager",
+        "registry.acme.test/devops/ci-mirrors/prometheus-pushgateway",
+        "registry.acme.test/devops/ci-mirrors/git",
+        "registry.acme.test/devops/ci-mirrors/k6",
+        "registry.acme.test/devops/ci-mirrors/trivy",
+        "registry.acme.test/devops/ci-mirrors/trufflehog",
+        "registry.acme.test/devops/ci-mirrors/curl"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin"
+      ],
+      "minimumReleaseAge": "1 hour",
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Twin rule: matchManagers=custom.regex; matchDatasources=gitlab-tags,gitlab-packages; matchFileNames=**/composer.json; matchUpdateTypes=minor,patch -> groupName=first-party composer packages, groupSlug=first-party-composer",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "gitlab-tags",
+        "gitlab-packages"
+      ],
+      "matchFileNames": [
+        "**/composer.json"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "first-party composer packages",
+      "groupSlug": "first-party-composer"
+    },
+    {
+      "description": "Twin rule: matchManagers=custom.regex; matchDatasources=custom.wolfi; matchFileNames=**/composer.json,**/composer.lock -> postUpgradeTasks={commands,fileFilters,executionMode}",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "custom.wolfi"
+      ],
+      "matchFileNames": [
+        "**/composer.json",
+        "**/composer.lock"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "composer update --lock --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs"
+        ],
+        "fileFilters": [
+          "composer.json",
+          "composer.lock"
+        ],
+        "executionMode": "branch"
+      }
+    },
+    {
+      "description": "Twin rule: matchManagers=custom.regex; matchDatasources=gitlab-tags,gitlab-packages; matchFileNames=**/composer.json -> postUpgradeTasks={commands,fileFilters,executionMode}",
+      "matchManagers": [
+        "custom.regex"
+      ],
+      "matchDatasources": [
+        "gitlab-tags",
+        "gitlab-packages"
+      ],
+      "matchFileNames": [
+        "**/composer.json"
+      ],
+      "postUpgradeTasks": {
+        "commands": [
+          "composer update {{{depName}}} --with-all-dependencies --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs"
+        ],
+        "fileFilters": [
+          "composer.json",
+          "composer.lock"
+        ],
+        "executionMode": "branch"
+      }
+    },
+    {
+      "description": "Twin rule: matchDatasources=docker; matchPackageNames=registry.acme.test/**,!registry.acme.test/devops/ci-mirrors/** -> minimumReleaseAge=0, schedule=at any time",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "registry.acme.test/**",
+        "!registry.acme.test/devops/ci-mirrors/**"
+      ],
+      "minimumReleaseAge": "0",
+      "schedule": [
+        "at any time"
+      ]
+    },
+    {
+      "description": "Twin rule: matchPackageNames=mcp/sdk; matchUpdateTypes=major,minor -> enabled=False",
+      "matchPackageNames": [
+        "mcp/sdk"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Twin rule: matchDatasources=docker -> minimumReleaseAgeBehaviour=timestamp-optional",
+      "matchDatasources": [
+        "docker"
+      ],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
+    },
+    {
+      "description": "Twin rule: matchDatasources=gitlab-releases; matchCurrentValue=/^\\d+$/; matchUpdateTypes=minor,patch,digest,… -> enabled=False",
+      "matchDatasources": [
+        "gitlab-releases"
+      ],
+      "matchCurrentValue": "/^\\d+$/",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pin"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Twin rule: matchDatasources=gitlab-releases; matchCurrentValue=/^\\d+$/; matchUpdateTypes=major -> dependencyDashboardApproval=True, automerge=False, minimumReleaseAge=0",
+      "matchDatasources": [
+        "gitlab-releases"
+      ],
+      "matchCurrentValue": "/^\\d+$/",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true,
+      "automerge": false,
+      "minimumReleaseAge": "0"
+    },
+    {
+      "description": "Twin rule: matchDatasources=go; matchPackageNames=github.com/aws/aws-sdk-go-v2,github.com/aws/aws-sdk-go-v2/** -> fetchChangeLogs=off",
+      "matchDatasources": [
+        "go"
+      ],
+      "matchPackageNames": [
+        "github.com/aws/aws-sdk-go-v2",
+        "github.com/aws/aws-sdk-go-v2/**"
+      ],
+      "fetchChangeLogs": "off"
+    }
+  ],
+  "labels": [
+    "renovate"
+  ],
+  "minimumReleaseAge": "24 hours",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
+    ],
+    "minimumReleaseAge": "0",
+    "schedule": [
+      "at any time"
+    ],
+    "automerge": true
+  },
+  "timezone": "Europe/Berlin",
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "after 1am and before 6am"
+    ],
+    "automerge": true,
+    "commitMessageAction": "Refresh lock file (transitive deps, e.g. guzzle)"
+  },
+  "schedule": [
+    "at any time"
+  ],
+  "commitBody": "Refs: RENOVATE\n\nUpdate-Type: {{updateType}}",
+  "rebaseWhen": "behind-base-branch",
+  "ignoreUnstable": true,
+  "rangeStrategy": "update-lockfile",
+  "description": "Synthetic twin of a runner configuration for a fictional estate on git.acme.test: the same presets, managers, rule shapes and custom datasources as the configuration pinup was built against, with generic names. Captured in the pinned Renovate container like the original; see tools/capture/README.md.",
+  "prCreation": "immediate"
+}

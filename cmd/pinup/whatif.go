@@ -433,9 +433,12 @@ func (r *whatifRun) extractAll() error {
 			continue
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
-		locked, lockName := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
-		if locked != nil {
-			r.locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lockName
+		lock := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
+		if lock.versions != nil && lock.dir == filepath.Dir(match.Path) {
+			// The lock beside the manifest is the one maintenance refreshes
+			// and a task regenerates; an ancestor's lock only says what is
+			// pinned.
+			r.locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lock.name
 		}
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
@@ -443,10 +446,19 @@ func (r *whatifRun) extractAll() error {
 			// composer and npm by the name the manifest uses, terraform by
 			// the registry source (`cloudflare/cloudflare`) behind the
 			// local name (`cloudflare`).
-			if v, ok := locked[d.PackageName]; ok && d.PackageName != "" {
+			key := d.DepName
+			if _, ok := lock.versions[d.PackageName]; ok && d.PackageName != "" {
+				key = d.PackageName
+			}
+			if v, ok := lock.versions[key]; ok {
 				d.LockedVersion = v
-			} else if v, ok := locked[d.DepName]; ok {
-				d.LockedVersion = v
+			}
+			// A terraform lock also says where a provider was resolved from;
+			// a registry other than the default is where the lookup goes. A
+			// skipped dependency is never looked up and records none
+			// (measured: the versionless legacy provider blocks).
+			if reg, ok := lock.registries[key]; ok && len(d.RegistryURLs) == 0 && d.SkipReason == "" {
+				d.RegistryURLs = []string{reg}
 			}
 			if d.SkipReason == "" && ignored[d.DepName] {
 				d.SkipReason = "listed in ignoreDeps"
@@ -1002,27 +1014,47 @@ func lockFilesOf(res extract.Result) []string {
 	return nil
 }
 
+// lockFile is what a manifest's lock file pins: versions by package name,
+// registries by package name where the lock names one (terraform), and the
+// lock's name relative to the manifest's directory.
+type lockFile struct {
+	versions   map[string]string
+	registries map[string]string
+	name, dir  string
+}
+
 // lockedVersions reads the first lock file present of the candidates and
-// returns what it pins and which file it was.
-func lockedVersions(root, manifest, manager string, lockFiles []string, plan *model.Plan) (map[string]string, string) {
+// returns what it pins. A composer or npm lock sits beside its manifest; a
+// terraform lock sits wherever init ran, at the manifest's directory or an
+// ancestor of it (measured: a module's versions.tf three directories down
+// carries the root lock's versions), so the search walks up to the root.
+func lockedVersions(root, manifest, manager string, lockFiles []string, plan *model.Plan) lockFile {
 	if len(lockFiles) == 0 {
-		return nil, ""
+		return lockFile{}
 	}
-	dir := filepath.Dir(manifest)
-	for _, name := range lockFiles {
-		path := filepath.Join(dir, name)
-		raw, err := os.ReadFile(filepath.Join(root, path))
-		if err != nil {
-			continue
+	dirs := []string{filepath.Dir(manifest)}
+	if manager == "terraform" {
+		for d := dirs[0]; d != "." && d != "/" && d != ""; {
+			d = filepath.Dir(d)
+			dirs = append(dirs, d)
 		}
-		locked, err := wire.LockedVersions(manager, raw)
-		if err != nil {
-			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "extract", File: path, Msg: err.Error()})
-			continue
-		}
-		return locked, name
 	}
-	return nil, ""
+	for _, dir := range dirs {
+		for _, name := range lockFiles {
+			path := filepath.Join(dir, name)
+			raw, err := os.ReadFile(filepath.Join(root, path))
+			if err != nil {
+				continue
+			}
+			locked, err := wire.LockedVersions(manager, raw)
+			if err != nil {
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "extract", File: path, Msg: err.Error()})
+				continue
+			}
+			return lockFile{versions: locked, registries: wire.LockedRegistries(manager, raw), name: name, dir: dir}
+		}
+	}
+	return lockFile{}
 }
 
 // postUpgradeOf reads an update's resolved postUpgradeTasks object.
@@ -1283,9 +1315,11 @@ func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[stri
 		if d.LockedVersion == "" || len(d.LockFiles) == 0 {
 			continue
 		}
+		// A version pinned by an ancestor's lock names nothing to maintain
+		// beside this manifest.
 		name := locks[d.Manager+"|"+filepath.Dir(d.File)]
 		if name == "" {
-			name = d.LockFiles[0]
+			continue
 		}
 		lock := filepath.Join(filepath.Dir(d.File), name)
 		key := d.Manager + "|" + lock

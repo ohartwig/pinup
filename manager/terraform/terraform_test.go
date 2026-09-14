@@ -7,8 +7,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"fmt"
-	"os"
-	"os/exec"
+	"path"
 	"sort"
 	"strings"
 	"testing"
@@ -135,8 +134,8 @@ func TestSyntheticTerraformFile(t *testing.T) {
 		cf.Datasource != "terraform-provider" || cf.SkipReason != "" {
 		t.Errorf("cloudflare required_provider = %+v", cf)
 	}
-	if len(cf.RegistryURLs) != 1 || cf.RegistryURLs[0] != openTofuRegistry {
-		t.Errorf("cloudflare registryUrls = %v, want [%s]", cf.RegistryURLs, openTofuRegistry)
+	if len(cf.RegistryURLs) != 0 {
+		t.Errorf("cloudflare registryUrls = %v, want none: the lock file decides, not the manifest", cf.RegistryURLs)
 	}
 	if len(cf.LockFiles) != 1 || cf.LockFiles[0] != lockFileName {
 		t.Errorf("cloudflare lockFiles = %v, want [%s]", cf.LockFiles, lockFileName)
@@ -177,8 +176,8 @@ func TestSyntheticTerraformFile(t *testing.T) {
 		t.Errorf("web_green module = %+v, want a local skip (count meta-argument must not confuse the scanner)", webGreen)
 	}
 
-	vpc := depNamed(t, deps, "vpc", "module")
-	if vpc.Datasource != "terraform-module" || vpc.PackageName != "terraform-aws-modules/vpc/aws" || vpc.CurrentValue != "5.8.1" || vpc.SkipReason != "" {
+	vpc := depNamed(t, deps, "terraform-aws-modules/vpc/aws", "module")
+	if vpc.Datasource != "terraform-module" || vpc.PackageName != "" || vpc.CurrentValue != "5.8.1" || vpc.SkipReason != "" {
 		t.Errorf("vpc registry module = %+v", vpc)
 	}
 	assertLocus(t, f, vpc)
@@ -294,124 +293,133 @@ func (k depKey) String() string {
 		k.packageName, k.skipReason, k.registryURLs, k.extractVersion, k.versioning)
 }
 
-// TestAgainstRealKohInfraCheckout compares this manager's extraction of the
-// koh-infra checkout's 22 terraform packageFiles against the Renovate corpus
-// recording for the same repository (testdata/<root>/renovate-43.288.0/extract,
-// key "terraform"). It is skipped, not failed, when either side is
-// unavailable - the checkout is a local mirror this repository does not own.
-//
-// The corpus was captured against the checkout's committed HEAD, not
-// whatever happens to be in the working tree, so every file is read with
-// `git show HEAD:<path>` - the same approach manager/npmman's real-checkout
-// test uses.
-func TestAgainstRealKohInfraCheckout(t *testing.T) {
-	const repoDir = "/Volumes/Samsung_X5/Projects/koh-infra"
-	if _, err := os.Stat(repoDir); err != nil {
-		t.Skipf("real checkout not available: %v", err)
-	}
-
-	corpusBytes, err := os.ReadFile(fixture.Captured(t, "extract", "koh-infra.json"))
-	if err != nil {
-		t.Skipf("corpus fixture not available: %v", err)
-	}
-
-	var fixture struct {
-		Terraform []struct {
-			PackageFile string `json:"packageFile"`
-			Deps        []struct {
-				DepName        string   `json:"depName"`
-				DepType        string   `json:"depType"`
-				Datasource     string   `json:"datasource"`
-				CurrentValue   string   `json:"currentValue"`
-				PackageName    string   `json:"packageName"`
-				SkipReason     string   `json:"skipReason"`
-				RegistryURLs   []string `json:"registryUrls"`
-				ExtractVersion string   `json:"extractVersion"`
-				Versioning     string   `json:"versioning"`
-			} `json:"deps"`
-		} `json:"terraform"`
-	}
-	if err := json.Unmarshal(corpusBytes, &fixture); err != nil {
-		t.Fatalf("corpus fixture does not parse: %v", err)
-	}
-
-	// Counts, not a set: versions.tf legitimately records the same tuple
-	// twice (two `provider "aws" { ... }` blocks - the default and the
-	// us_east_1 alias - carry no field this comparison distinguishes), so
-	// deduplicating would silently drop one entry on both sides.
-	want := make(map[string]int)
-	total := 0
-	for _, pf := range fixture.Terraform {
-		for _, d := range pf.Deps {
-			k := depKey{
-				packageFile: pf.PackageFile, depName: d.DepName, depType: d.DepType,
-				datasource: d.Datasource, currentValue: d.CurrentValue, packageName: d.PackageName,
-				skipReason: d.SkipReason, registryURLs: strings.Join(d.RegistryURLs, ","),
-				extractVersion: d.ExtractVersion, versioning: d.Versioning,
-			}
-			want[k.String()]++
-			total++
-		}
-	}
-	if total != 56 {
-		t.Fatalf("corpus fixture has %d terraform dependencies, want 56 - the fixture itself changed", total)
-	}
-
-	got := make(map[string]int)
-	skippedFiles := 0
-	for _, pf := range fixture.Terraform {
-		out, err := exec.Command("git", "-C", repoDir, "show", "HEAD:"+pf.PackageFile).Output()
-		if err != nil {
-			t.Logf("could not read %s from the checkout's HEAD commit: %v", pf.PackageFile, err)
-			skippedFiles++
+// TestAgreesWithTheCorpus compares this manager's extraction of every
+// terraform packageFile in the fixture root's corpus against what the
+// pinned Renovate container extracted from the same files. A capture whose
+// checkout is not on this machine is skipped - a local mirror this
+// repository does not own; the public root's repositories are in the tree.
+func TestAgreesWithTheCorpus(t *testing.T) {
+	ran := 0
+	for _, c := range fixture.Corpora(t) {
+		entries := c.Entries(t, "terraform")
+		if len(entries) == 0 {
 			continue
 		}
-		f := extract.File{Path: pf.PackageFile, Content: out}
-		res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{})
-		if err != nil {
-			t.Fatalf("Extract(%s) returned an error: %v", pf.PackageFile, err)
+		if c.Tree == "" {
+			t.Logf("%s: checkout not present; %d files skipped", c.Name, len(entries))
+			continue
 		}
-		for _, d := range res.Deps {
-			k := depKey{
-				packageFile: pf.PackageFile, depName: d.DepName, depType: d.DepType,
-				datasource: d.Datasource, currentValue: d.CurrentValue, packageName: d.PackageName,
-				skipReason: d.SkipReason, registryURLs: strings.Join(d.RegistryURLs, ","),
-				extractVersion: d.ExtractVersion, versioning: d.Versioning,
+		ran++
+		t.Run(c.Name, func(t *testing.T) {
+			// Counts, not a set: versions.tf legitimately records the same
+			// tuple twice (two `provider "aws" { ... }` blocks - the default
+			// and an alias - carry no field this comparison distinguishes),
+			// so deduplicating would silently drop one entry on both sides.
+			want := make(map[string]int)
+			got := make(map[string]int)
+			total := 0
+			for _, e := range entries {
+				var deps []struct {
+					DepName        string   `json:"depName"`
+					DepType        string   `json:"depType"`
+					Datasource     string   `json:"datasource"`
+					CurrentValue   string   `json:"currentValue"`
+					PackageName    string   `json:"packageName"`
+					SkipReason     string   `json:"skipReason"`
+					RegistryURLs   []string `json:"registryUrls"`
+					ExtractVersion string   `json:"extractVersion"`
+					Versioning     string   `json:"versioning"`
+				}
+				if err := json.Unmarshal(e.Deps, &deps); err != nil {
+					t.Fatal(err)
+				}
+				for _, d := range deps {
+					k := depKey{
+						packageFile: e.PackageFile, depName: d.DepName, depType: d.DepType,
+						datasource: d.Datasource, currentValue: d.CurrentValue, packageName: d.PackageName,
+						skipReason: d.SkipReason, registryURLs: strings.Join(d.RegistryURLs, ","),
+						extractVersion: d.ExtractVersion, versioning: d.Versioning,
+					}
+					want[k.String()]++
+					total++
+				}
+				f := extract.File{Path: e.PackageFile, Content: c.Read(t, e.PackageFile)}
+				res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{})
+				if err != nil {
+					t.Fatalf("Extract(%s) returned an error: %v", e.PackageFile, err)
+				}
+				// The registry is the lock file's to say, and the run reads
+				// the lock beside the manifest or above it; the manager sees
+				// the manifest alone, so the comparison does what the run
+				// does before it compares.
+				registries := lockedRegistriesFor(t, c, e.PackageFile)
+				for i := range res.Deps {
+					if reg, ok := registries[res.Deps[i].PackageName]; ok && len(res.Deps[i].RegistryURLs) == 0 && res.Deps[i].SkipReason == "" {
+						res.Deps[i].RegistryURLs = []string{reg}
+					}
+				}
+				for _, d := range res.Deps {
+					k := depKey{
+						packageFile: e.PackageFile, depName: d.DepName, depType: d.DepType,
+						datasource: d.Datasource, currentValue: d.CurrentValue, packageName: d.PackageName,
+						skipReason: d.SkipReason, registryURLs: strings.Join(d.RegistryURLs, ","),
+						extractVersion: d.ExtractVersion, versioning: d.Versioning,
+					}
+					got[k.String()]++
+				}
 			}
-			got[k.String()]++
-		}
-	}
-	if skippedFiles == len(fixture.Terraform) {
-		t.Skip("none of the corpus's packageFiles could be read from the checkout")
-	}
+			if total == 0 {
+				t.Fatal("the capture records no terraform dependencies; nothing was compared")
+			}
 
-	var missing, invented []string
-	agreed := 0
-	for k, wantN := range want {
-		gotN := got[k]
-		switch {
-		case gotN < wantN:
-			missing = append(missing, fmt.Sprintf("%s (want %d, got %d)", k, wantN, gotN))
-			agreed += gotN
-		default:
-			agreed += wantN
-		}
+			var missing, invented []string
+			agreed := 0
+			for k, wantN := range want {
+				gotN := got[k]
+				switch {
+				case gotN < wantN:
+					missing = append(missing, fmt.Sprintf("%s (want %d, got %d)", k, wantN, gotN))
+					agreed += gotN
+				default:
+					agreed += wantN
+				}
+			}
+			for k, gotN := range got {
+				if wantN := want[k]; gotN > wantN {
+					invented = append(invented, fmt.Sprintf("%s (got %d, want %d)", k, gotN, wantN))
+				}
+			}
+			sort.Strings(missing)
+			sort.Strings(invented)
+			if len(missing) > 0 {
+				t.Errorf("missing dependencies the corpus recorded:\n%s", strings.Join(missing, "\n"))
+			}
+			if len(invented) > 0 {
+				t.Errorf("invented dependencies the corpus did not record:\n%s", strings.Join(invented, "\n"))
+			}
+			t.Logf("agreed with the corpus on %d of %d dependencies", agreed, total)
+		})
 	}
-	for k, gotN := range got {
-		if wantN := want[k]; gotN > wantN {
-			invented = append(invented, fmt.Sprintf("%s (got %d, want %d)", k, gotN, wantN))
-		}
+	if ran == 0 {
+		t.Skip("no terraform capture with its files on this machine")
 	}
-	sort.Strings(missing)
-	sort.Strings(invented)
+}
 
-	if len(missing) > 0 {
-		t.Errorf("missing dependencies the corpus recorded:\n%s", strings.Join(missing, "\n"))
+// lockedRegistriesFor reads the nearest .terraform.lock.hcl at or above a
+// manifest in a corpus tree, the way the run does, and returns its
+// registries; nothing when there is no lock.
+func lockedRegistriesFor(t *testing.T, c fixture.Corpus, packageFile string) map[string]string {
+	t.Helper()
+	dir := path.Dir(packageFile)
+	for {
+		if raw, ok := c.Lookup(t, path.Join(dir, lockFileName)); ok {
+			return LockedRegistries(raw)
+		}
+		if dir == "." || dir == "/" {
+			return nil
+		}
+		dir = path.Dir(dir)
 	}
-	if len(invented) > 0 {
-		t.Errorf("invented dependencies the corpus did not record:\n%s", strings.Join(invented, "\n"))
-	}
-	t.Logf("agreed with the corpus on %d of %d dependencies", agreed, total)
 }
 
 func TestLockedVersions(t *testing.T) {
@@ -447,5 +455,17 @@ provider "registry.opentofu.org/hashicorp/aws" {
 		if got[k] != v {
 			t.Errorf("%s = %q, want %q", k, got[k], v)
 		}
+	}
+	regs := LockedRegistries([]byte(lock))
+	if regs["cloudflare/cloudflare"] != "https://registry.opentofu.org" || regs["hashicorp/aws"] != "https://registry.opentofu.org" {
+		t.Errorf("registries = %v, want both on registry.opentofu.org", regs)
+	}
+	// The default registry says nothing new; a lock naming it yields none.
+	regs = LockedRegistries([]byte(`provider "registry.terraform.io/hashicorp/aws" {
+  version = "6.13.0"
+}
+`))
+	if len(regs) != 0 {
+		t.Errorf("the default registry was recorded: %v", regs)
 	}
 }

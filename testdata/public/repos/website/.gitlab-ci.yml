@@ -1,0 +1,13 @@
+include:
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/php@2.14.3
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/deploy-tools/rsync@1.3.0
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-ci-yaml@1
+
+variables:
+  php_image: registry.acme.test/devops/images/php-ci:3.2.1@sha256:4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9
+
+test:
+  image: registry.acme.test/devops/ci-mirrors/php:8.4.11-cli-alpine3.22
+  script:
+    - composer install
+    - vendor/bin/phpunit

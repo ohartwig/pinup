@@ -1,0 +1,715 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "golden",
+  "generatedAt": "2026-09-14T08:00:00Z",
+  "repo": {
+    "path": "golden/gomod"
+  },
+  "limits": {
+    "prHourlyLimit": 20,
+    "prConcurrentLimit": 10
+  },
+  "dashboard": {
+    "enabled": true,
+    "title": "Dependency Dashboard"
+  },
+  "deps": [
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "go",
+      "depType": "golang",
+      "currentValue": "1.27.0",
+      "datasource": "golang-version",
+      "versioning": "go-mod-directive",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 41,
+        "valueEnd": 47,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 3
+      },
+      "skipReason": "up to date: \"1.27.0\" written as a go-mod-directive value already admits 1.27.1"
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "go",
+      "depType": "toolchain",
+      "currentValue": "1.27.1",
+      "datasource": "golang-version",
+      "versioning": "semver",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 61,
+        "valueEnd": 67,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 5
+      },
+      "skipReason": "up to date: none of 262 releases is newer than 1.27.1"
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "go.etcd.io/bbolt",
+      "packageName": "go.etcd.io/bbolt",
+      "depType": "require",
+      "currentValue": "v1.5.0",
+      "datasource": "go",
+      "versioning": "semver",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 97,
+        "valueEnd": 103,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 8
+      },
+      "skipReason": "up to date: none of 34 releases is newer than v1.5.0",
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "gopkg.in/yaml.v3",
+      "packageName": "gopkg.in/yaml.v3",
+      "depType": "require",
+      "currentValue": "v3.0.1",
+      "datasource": "go",
+      "versioning": "semver",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 122,
+        "valueEnd": 128,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 9
+      },
+      "skipReason": "up to date: none of 2 releases is newer than v3.0.1",
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "golang.org/x/mod",
+      "packageName": "golang.org/x/mod",
+      "depType": "indirect",
+      "currentValue": "v0.39.0",
+      "datasource": "go",
+      "versioning": "semver",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "advisories": [
+        {
+          "id": "GO-2026-6179",
+          "aliases": [
+            "BIT-golang-2026-56865",
+            "CVE-2026-56865"
+          ],
+          "summary": "Fix transparency log tile verification bypass in golang.org/x/mod/sumdb/tlog",
+          "fixed": "0.40.0",
+          "published": "2026-08-13T21:43:54Z"
+        },
+        {
+          "id": "GO-2026-6180",
+          "aliases": [
+            "BIT-golang-2026-56864",
+            "CVE-2026-56864"
+          ],
+          "summary": "Ignore unrelated, unauthenticated hashes in Lookup in golang.org/x/mod/sumdb",
+          "fixed": "0.40.0",
+          "published": "2026-08-13T21:43:54Z"
+        }
+      ],
+      "vulnerabilityBound": "0.40.0",
+      "locus": {
+        "valueStart": 160,
+        "valueEnd": 167,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 13
+      },
+      "disabled": "indirect dependency",
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "golang.org/x/sys",
+      "packageName": "golang.org/x/sys",
+      "depType": "indirect",
+      "currentValue": "v0.45.0",
+      "datasource": "go",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 198,
+        "valueEnd": 205,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 14
+      },
+      "skipReason": "indirect dependency",
+      "disabled": "indirect dependency",
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "golang.org/x/mobile",
+      "packageName": "golang.org/x/mobile",
+      "depType": "require",
+      "currentValue": "v0.0.0-20260821190718-4776eadac327",
+      "currentDigest": "4776eadac327",
+      "datasource": "go",
+      "versioning": "semver",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 249,
+        "valueEnd": 283,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 17
+      },
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "github.com/aws/aws-sdk-go-v2",
+      "packageName": "github.com/aws/aws-sdk-go-v2",
+      "depType": "require",
+      "currentValue": "v1.43.8",
+      "datasource": "go",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/aws/aws-sdk-go-v2",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 322,
+        "valueEnd": 329,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 19
+      },
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "go.mod",
+      "customManager": -1,
+      "depName": "github.com/aws/aws-sdk-go-v2",
+      "packageName": "github.com/aws/aws-sdk-go-v2",
+      "depType": "replace",
+      "currentValue": "v1.43.7",
+      "datasource": "go",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/aws/aws-sdk-go-v2",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 400,
+        "valueEnd": 407,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 21
+      },
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "tools/go.mod",
+      "customManager": -1,
+      "depName": "go",
+      "depType": "golang",
+      "currentValue": "1.26",
+      "datasource": "golang-version",
+      "versioning": "go-mod-directive",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 47,
+        "valueEnd": 51,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 3
+      },
+      "skipReason": "up to date: \"1.26\" admits 1.27.1, and none of 262 releases is newer"
+    },
+    {
+      "manager": "gomod",
+      "file": "tools/go.mod",
+      "customManager": -1,
+      "depName": "github.com/spf13/cobra",
+      "packageName": "github.com/spf13/cobra",
+      "depType": "require",
+      "currentValue": "v1.9.1",
+      "datasource": "go",
+      "versioning": "semver",
+      "sourceUrl": "https://github.com/spf13/cobra",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 87,
+        "valueEnd": 93,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 6
+      },
+      "lockFiles": [
+        "go.sum"
+      ]
+    },
+    {
+      "manager": "gomod",
+      "file": "tools/go.mod",
+      "customManager": -1,
+      "depName": "golang.org/x/tools",
+      "packageName": "golang.org/x/tools",
+      "depType": "indirect",
+      "currentValue": "v0.30.0",
+      "datasource": "go",
+      "rangeStrategy": "replace",
+      "minimumReleaseAge": "24 hours",
+      "internalChecksFilter": "strict",
+      "locus": {
+        "valueStart": 114,
+        "valueEnd": 121,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 7
+      },
+      "skipReason": "indirect dependency",
+      "disabled": "indirect dependency",
+      "lockFiles": [
+        "go.sum"
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "depKey": "go.mod|gomod|github.com/aws/aws-sdk-go-v2|v1.43.7|400",
+      "dep": {
+        "manager": "gomod",
+        "file": "go.mod",
+        "customManager": -1,
+        "depName": "github.com/aws/aws-sdk-go-v2",
+        "packageName": "github.com/aws/aws-sdk-go-v2",
+        "depType": "replace",
+        "currentValue": "v1.43.7",
+        "datasource": "go",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/aws/aws-sdk-go-v2",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 400,
+          "valueEnd": 407,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 21
+        },
+        "lockFiles": [
+          "go.sum"
+        ]
+      },
+      "newValue": "v1.47.0",
+      "newVersion": "v1.47.0",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-09T18:16:59Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "go.mod|gomod|github.com/aws/aws-sdk-go-v2|v1.43.8|322",
+      "dep": {
+        "manager": "gomod",
+        "file": "go.mod",
+        "customManager": -1,
+        "depName": "github.com/aws/aws-sdk-go-v2",
+        "packageName": "github.com/aws/aws-sdk-go-v2",
+        "depType": "require",
+        "currentValue": "v1.43.8",
+        "datasource": "go",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/aws/aws-sdk-go-v2",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 322,
+          "valueEnd": 329,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 19
+        },
+        "lockFiles": [
+          "go.sum"
+        ]
+      },
+      "newValue": "v1.47.0",
+      "newVersion": "v1.47.0",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2026-09-09T18:16:59Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "go.mod|gomod|golang.org/x/mobile|v0.0.0-20260821190718-4776eadac327|249",
+      "dep": {
+        "manager": "gomod",
+        "file": "go.mod",
+        "customManager": -1,
+        "depName": "golang.org/x/mobile",
+        "packageName": "golang.org/x/mobile",
+        "depType": "require",
+        "currentValue": "v0.0.0-20260821190718-4776eadac327",
+        "currentDigest": "4776eadac327",
+        "datasource": "go",
+        "versioning": "semver",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 249,
+          "valueEnd": 283,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 17
+        },
+        "lockFiles": [
+          "go.sum"
+        ]
+      },
+      "newValue": "v0.0.0-20260908204917-8b95e45f8d3e",
+      "newVersion": "v0.0.0-20260908204917-8b95e45f8d3e",
+      "newDigest": "8b95e45f8d3e",
+      "updateType": "digest",
+      "declared": "unknown",
+      "effective": "unknown",
+      "releaseTime": "2026-09-08T20:49:17Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    },
+    {
+      "depKey": "go.mod|gomod|golang.org/x/mod|v0.39.0|160",
+      "dep": {
+        "manager": "gomod",
+        "file": "go.mod",
+        "customManager": -1,
+        "depName": "golang.org/x/mod",
+        "packageName": "golang.org/x/mod",
+        "depType": "indirect",
+        "currentValue": "v0.39.0",
+        "datasource": "go",
+        "versioning": "semver",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "advisories": [
+          {
+            "id": "GO-2026-6179",
+            "aliases": [
+              "BIT-golang-2026-56865",
+              "CVE-2026-56865"
+            ],
+            "summary": "Fix transparency log tile verification bypass in golang.org/x/mod/sumdb/tlog",
+            "fixed": "0.40.0",
+            "published": "2026-08-13T21:43:54Z"
+          },
+          {
+            "id": "GO-2026-6180",
+            "aliases": [
+              "BIT-golang-2026-56864",
+              "CVE-2026-56864"
+            ],
+            "summary": "Ignore unrelated, unauthenticated hashes in Lookup in golang.org/x/mod/sumdb",
+            "fixed": "0.40.0",
+            "published": "2026-08-13T21:43:54Z"
+          }
+        ],
+        "vulnerabilityBound": "0.40.0",
+        "locus": {
+          "valueStart": 160,
+          "valueEnd": 167,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 13
+        },
+        "disabled": "indirect dependency",
+        "lockFiles": [
+          "go.sum"
+        ]
+      },
+      "newValue": "v0.40.0",
+      "newVersion": "v0.40.0",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "timeSource": "unknown",
+      "securityFix": true
+    },
+    {
+      "depKey": "tools/go.mod|gomod|github.com/spf13/cobra|v1.9.1|87",
+      "dep": {
+        "manager": "gomod",
+        "file": "tools/go.mod",
+        "customManager": -1,
+        "depName": "github.com/spf13/cobra",
+        "packageName": "github.com/spf13/cobra",
+        "depType": "require",
+        "currentValue": "v1.9.1",
+        "datasource": "go",
+        "versioning": "semver",
+        "sourceUrl": "https://github.com/spf13/cobra",
+        "rangeStrategy": "replace",
+        "minimumReleaseAge": "24 hours",
+        "internalChecksFilter": "strict",
+        "locus": {
+          "valueStart": 87,
+          "valueEnd": 93,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 6
+        },
+        "lockFiles": [
+          "go.sum"
+        ]
+      },
+      "newValue": "v1.10.2",
+      "newVersion": "v1.10.2",
+      "updateType": "minor",
+      "declared": "minor",
+      "effective": "unknown",
+      "releaseTime": "2025-12-03T23:51:15Z",
+      "timeSource": "datasource",
+      "blocks": [
+        {
+          "reason": "schedule",
+          "until": "2026-09-14T10:00:00Z",
+          "origin": {
+            "source": "packageRules",
+            "rule": 758,
+            "order": 0
+          },
+          "note": "outside * 0,4,8,12,16,20 * * * (Europe/Berlin)"
+        }
+      ],
+      "suppressedBy": "schedule"
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/aws-sdk-go-v2-monorepo",
+      "slug": "aws-sdk-go-v2-monorepo",
+      "title": "fix(deps): update module github.com/aws/aws-sdk-go-v2 to v1.47.0",
+      "groupName": "aws-sdk-go-v2 monorepo",
+      "updateKeys": [
+        "go.mod|gomod|github.com/aws/aws-sdk-go-v2|v1.43.7|400>v1.47.0",
+        "go.mod|gomod|github.com/aws/aws-sdk-go-v2|v1.43.8|322>v1.47.0"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/github.com-spf13-cobra-1.x",
+      "slug": "github.com-spf13-cobra-1.x",
+      "title": "fix(deps): update module github.com/spf13/cobra to v1.10.2",
+      "updateKeys": [
+        "tools/go.mod|gomod|github.com/spf13/cobra|v1.9.1|87>v1.10.2"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    },
+    {
+      "name": "renovate/go-golang.org-x-mod-vulnerability",
+      "slug": "go-golang.org-x-mod-vulnerability",
+      "title": "chore(deps): update module golang.org/x/mod to v0.40.0 [security]",
+      "updateKeys": [
+        "go.mod|gomod|golang.org/x/mod|v0.39.0|160>v0.40.0"
+      ],
+      "edits": [
+        {
+          "file": "go.mod",
+          "start": 160,
+          "end": 167,
+          "old": "v0.39.0",
+          "new": "v0.40.0",
+          "manager": "gomod"
+        }
+      ],
+      "tasks": [
+        {
+          "kind": "lock-refresh",
+          "manager": "gomod",
+          "command": [
+            "go",
+            "mod",
+            "tidy"
+          ],
+          "executionMode": "branch",
+          "fileFilters": [
+            "go.mod",
+            "go.sum"
+          ],
+          "allowedBy": -1,
+          "origin": {
+            "source": "pinup",
+            "rule": -1,
+            "order": 0
+          }
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "security"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    },
+    {
+      "name": "renovate/golang.org-x-mobile-digest",
+      "slug": "golang.org-x-mobile-digest",
+      "title": "fix(deps): update golang.org/x/mobile digest to 8b95e45",
+      "updateKeys": [
+        "go.mod|gomod|golang.org/x/mobile|v0.0.0-20260821190718-4776eadac327|249>v0.0.0-20260908204917-8b95e45f8d3e@8b95e45f8d3e"
+      ],
+      "automerge": true,
+      "labels": [
+        "renovate"
+      ],
+      "suppressedBy": "schedule",
+      "schedule": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T10:00:00Z"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:age-confidence-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so prBodyColumns set here have no effect"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so prBodyColumns set here have no effect"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 2,
+    "depsExtracted": 12,
+    "lookupsIssued": 7,
+    "lookupsFromCache": 0,
+    "updatesFound": 5,
+    "updatesBlocked": 4,
+    "branchesPlanned": 1
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "pinup/lock-probe",
+  "require": {
+    "psr/log": "3.0.0",
+    "monolog/monolog": "3.5.0"
+  },
+  "config": { "allow-plugins": false }
+}

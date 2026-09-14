@@ -14,9 +14,11 @@ resolver answered - captured by **executing** it (`tools/capture/presets.sh`,
 `tools/presetgen` (a test asserts the two never drift), and the resolver in
 `config/preset` is checked against every `resolved` entry.
 
-`default-resolved.json` is `resolveConfigPresets` over `default.json` itself:
-the 770 rules and every top-level key, as the acceptance surface for
-`print-config` parity.
+Each fixture root's `presets/default-resolved.json` is `resolveConfigPresets`
+over that root's `default.json` itself (`tools/capture/resolve-config.sh`):
+the 771 rules and every top-level key, as the acceptance surface for
+`print-config` parity. The paragraphs below were measured on the estate's
+root; the public twin, of the same shape, resolves the same way.
 
 ## What the capture settled
 

@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-09-14T07:29:52+00:00",
+  "capturedBy": "tools/capture/print-config.sh, run locally",
+  "configSha256": "e98529662eeda31f6492d2164bc3ca01e404759351e8cc297055aed15d972788",
+  "configSourceCommit": "authored",
+  "imageDigest": "sha256:3b72fc4274c56f65f53dcd4dcbed3143289358e0a2d96f7af215e6cf1923e5f6",
+  "imageRef": "renovate/renovate:43.288.0",
+  "method": "executed the pinned container and recorded its output; nothing copied from the Renovate source tree",
+  "partitions": [
+    "default"
+  ],
+  "renovateVersion": "43.288.0",
+  "tz": "Europe/Berlin"
+}

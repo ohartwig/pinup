@@ -1,0 +1,1 @@
+{ "name": "lock-probe", "version": "1.0.0", "dependencies": { "minimist": "1.2.7" } }

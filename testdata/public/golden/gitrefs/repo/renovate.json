@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["local>devops/renovate-runner"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "A pinned commit of an upstream without a version stream, announced by a `# renovate:` line above `expected-commit` - devops/wolfi-packages' shape for crowdsecurity/hub, a rolling branch with no tags and no releases.",
+      "managerFilePatterns": ["/^[^/]+\\.yaml$/"],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>git-refs)\\s+depName=(?<depName>\\S+?)\\s+currentValue=(?<currentValue>\\S+?)\\s*\\n\\s*expected-commit:\\s*(?<currentDigest>[0-9a-f]{40})"
+      ]
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "The raised pin also raises the epoch, through the command the runner allowlists.",
+      "matchDatasources": ["git-refs"],
+      "postUpgradeTasks": {
+        "commands": ["node tools/update-expected-commit.mjs {{{packageFile}}}"],
+        "fileFilters": ["*.yaml"],
+        "executionMode": "update"
+      }
+    }
+  ]
+}

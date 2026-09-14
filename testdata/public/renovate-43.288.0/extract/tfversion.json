@@ -1,0 +1,127 @@
+{
+  "kustomize": [
+    {
+      "deps": [
+        {
+          "autoReplaceStringTemplate": "{{newValue}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "2",
+          "datasource": "docker",
+          "depName": "registry.ole-hartwig.eu/devops/images/wolfi-base",
+          "depType": "Kustomization",
+          "packageName": "registry.ole-hartwig.eu/devops/images/wolfi-base",
+          "replaceString": "2"
+        }
+      ],
+      "packageFile": "base/kustomization.yaml"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "v3.3.1",
+          "datasource": "github-tags",
+          "depName": "kubernetes-sigs/kustomize",
+          "depType": "Kustomization"
+        },
+        {
+          "currentValue": "v2.12.3",
+          "datasource": "github-tags",
+          "depName": "argoproj/argo-cd",
+          "depType": "Kustomization"
+        },
+        {
+          "currentValue": "1.4.0",
+          "datasource": "git-tags",
+          "depName": "git.ole-hartwig.eu/devops/gitops/manifests",
+          "depType": "Kustomization",
+          "packageName": "https://git.ole-hartwig.eu/devops/gitops/manifests.git"
+        },
+        {
+          "currentValue": "v0.9.1",
+          "datasource": "git-tags",
+          "depName": "git.ole-hartwig.eu/devops/gitops/manifests",
+          "depType": "Kustomization",
+          "packageName": "ssh://**redacted**@git.ole-hartwig.eu/devops/gitops/manifests.git"
+        },
+        {
+          "currentValue": "v5.0.0",
+          "datasource": "github-tags",
+          "depName": "kubernetes-sigs/kustomize",
+          "depType": "Kustomization"
+        },
+        {
+          "autoReplaceStringTemplate": "{{newValue}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "1.27.0",
+          "datasource": "docker",
+          "depName": "registry.ole-hartwig.eu/devops/images/golang",
+          "depType": "Kustomization",
+          "packageName": "registry.ole-hartwig.eu/devops/images/golang",
+          "replaceString": "1.27.0"
+        },
+        {
+          "autoReplaceStringTemplate": "{{newValue}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "1.27.2",
+          "datasource": "docker",
+          "depName": "registry.ole-hartwig.eu/devops/ci-mirrors/nginx",
+          "depType": "Kustomization",
+          "packageName": "registry.ole-hartwig.eu/devops/ci-mirrors/nginx",
+          "replaceString": "1.27.2"
+        },
+        {
+          "currentDigest": "sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04",
+          "datasource": "docker",
+          "depName": "alpine",
+          "depType": "Kustomization",
+          "packageName": "alpine",
+          "replaceString": "sha256:0e319421871a27d782ccb3bae290d8b38d6b521406b54564a9f83d99a18f8a04"
+        },
+        {
+          "currentDigest": "sha256:8f0e5ce5f4c2b0c3f6c4fd0f0b6d9e2f8c7a6b5d4e3f2a1b0c9d8e7f6a5b4c3d",
+          "currentValue": "1.36",
+          "depName": "busybox",
+          "depType": "Kustomization",
+          "skipReason": "invalid-dependency-specification"
+        },
+        {
+          "currentValue": "8.5.1",
+          "datasource": "helm",
+          "depName": "grafana",
+          "depType": "HelmChart",
+          "registryUrls": [
+            "https://grafana.github.io/helm-charts"
+          ]
+        },
+        {
+          "currentValue": "25.8.0",
+          "datasource": "docker",
+          "depName": "prometheus",
+          "depType": "HelmChart",
+          "packageName": "registry.ole-hartwig.eu/devops/charts/prometheus",
+          "pinDigests": false
+        }
+      ],
+      "packageFile": "overlays/prod/kustomization.yaml"
+    }
+  ],
+  "terraform-version": [
+    {
+      "deps": [
+        {
+          "currentValue": "1.9.8",
+          "datasource": "github-releases",
+          "depName": "hashicorp/terraform"
+        }
+      ],
+      "packageFile": ".terraform-version"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "v1.7.0",
+          "datasource": "github-releases",
+          "depName": "hashicorp/terraform"
+        }
+      ],
+      "packageFile": "infra/.terraform-version"
+    }
+  ]
+}

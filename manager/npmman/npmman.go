@@ -20,10 +20,14 @@
 // JSON to find the four dependency sections and skip everything else
 // correctly, including nested objects and arrays that are not dependencies.
 //
-// engines, packageManager and volta are not treated as dependencies here.
-// Renovate extracts engines.node and similar as separate pseudo-dependencies;
-// none of the corpus vectors exercise that, so it is left undone rather than
-// guessed at.
+// Beyond the four sections, three more shapes are measured (the public
+// fixture root's frontend, 2026-09-14): engines.node is a dependency "node"
+// on the node-version datasource with depType "engines"; packageManager
+// ("pnpm@10.15.0") is a dependency on the tool with depType "packageManager"
+// and the version after the "@"; and pnpm.overrides is a section with
+// depType "pnpm.overrides" whose entries carry packageName as well. Other
+// engines, volta, and the top-level overrides and resolutions blocks are not
+// measured and are left undone rather than guessed at.
 //
 // yarn.lock and pnpm-lock.yaml are a different lockfile format entirely and
 // are out of scope; only package-lock.json is read, through LockedVersions.
@@ -68,6 +72,19 @@ var sectionDepTypes = map[string]bool{
 	"optionalDependencies": true,
 	"peerDependencies":     true,
 }
+
+// engineDepTypes is the engines block's depType; engineDatasources maps the
+// engine names with a measured datasource. An engine not listed is recorded
+// and held, not resolved against a guessed registry.
+const enginesDepType = "engines"
+
+var engineDatasources = map[string]string{"node": "node-version"}
+
+// packageManagerDepType is the depType of the packageManager field.
+const packageManagerDepType = "packageManager"
+
+// pnpmOverridesDepType is the depType of entries under pnpm.overrides.
+const pnpmOverridesDepType = "pnpm.overrides"
 
 // Manager implements extract.Manager for package.json. It carries no state:
 // every call is a pure function of the file it is given.
@@ -165,13 +182,26 @@ func (sc *scanner) run() error {
 		}
 		i = skipWS(sc.src, i+1)
 
-		if sectionDepTypes[key] {
+		switch {
+		case sectionDepTypes[key] || key == enginesDepType:
 			n, err := sc.section(key, i)
 			if err != nil {
 				return err
 			}
 			i = n
-		} else {
+		case key == packageManagerDepType:
+			n, err := sc.packageManager(i)
+			if err != nil {
+				return err
+			}
+			i = n
+		case key == "pnpm":
+			n, err := sc.pnpm(i)
+			if err != nil {
+				return err
+			}
+			i = n
+		default:
 			n, ok := skipValue(sc.src, i)
 			if !ok {
 				return fmt.Errorf("could not skip the value of key %q", key)
@@ -251,6 +281,104 @@ func (sc *scanner) section(depType string, i int) (int, error) {
 	}
 }
 
+// packageManager reads the packageManager field: "<tool>@<version>", the
+// tool a dependency on the npm registry and the Locus around the version
+// alone. i is positioned at the value. A value of another shape - no "@",
+// or a "+<hash>" suffix, which is not measured - is recorded and held.
+func (sc *scanner) packageManager(i int) (int, error) {
+	dep := model.Dependency{
+		Manager:       name,
+		File:          sc.file,
+		CustomManager: model.NoCustomManager,
+		DepType:       packageManagerDepType,
+		Datasource:    name,
+		Locus:         model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest, Line: lineAt(sc.src, i)},
+	}
+	if i >= len(sc.src) || sc.src[i] != '"' {
+		n, ok := skipValue(sc.src, i)
+		if !ok {
+			return 0, fmt.Errorf("could not skip the non-string value of %q", packageManagerDepType)
+		}
+		return n, nil
+	}
+	valStart, valEnd, next, ok := scanString(sc.src, i)
+	if !ok {
+		return 0, fmt.Errorf("malformed %q value", packageManagerDepType)
+	}
+	raw := string(sc.src[valStart:valEnd])
+	tool, version, found := strings.Cut(raw, "@")
+	if tool == "" || !found {
+		return next, nil
+	}
+	dep.DepName = tool
+	dep.CurrentValue = version
+	dep.Locus.ValueStart = valStart + len(tool) + 1
+	dep.Locus.ValueEnd = valEnd
+	if strings.Contains(version, "+") {
+		dep.SkipReason = "packageManager with an integrity hash is not handled"
+	}
+	sc.deps = append(sc.deps, dep)
+	return next, nil
+}
+
+// pnpm walks the pnpm block for its overrides, which are a dependency
+// section under the depType "pnpm.overrides"; every other key in the block
+// is skipped. i is positioned at the block's value.
+func (sc *scanner) pnpm(i int) (int, error) {
+	if i >= len(sc.src) || sc.src[i] != '{' {
+		n, ok := skipValue(sc.src, i)
+		if !ok {
+			return 0, fmt.Errorf("could not skip the non-object value of \"pnpm\"")
+		}
+		return n, nil
+	}
+	i++
+	for {
+		i = skipWS(sc.src, i)
+		if i >= len(sc.src) {
+			return 0, fmt.Errorf("unexpected end of file inside \"pnpm\"")
+		}
+		if sc.src[i] == '}' {
+			return i + 1, nil
+		}
+		keyStart, keyEnd, next, ok := scanString(sc.src, i)
+		if !ok {
+			return 0, fmt.Errorf("expected a key inside \"pnpm\" at offset %d", i)
+		}
+		key := string(sc.src[keyStart:keyEnd])
+		i = skipWS(sc.src, next)
+		if i >= len(sc.src) || sc.src[i] != ':' {
+			return 0, fmt.Errorf("expected ':' after %q in \"pnpm\"", key)
+		}
+		i = skipWS(sc.src, i+1)
+		var err error
+		if key == "overrides" {
+			i, err = sc.section(pnpmOverridesDepType, i)
+			if err != nil {
+				return 0, err
+			}
+		} else {
+			n, ok := skipValue(sc.src, i)
+			if !ok {
+				return 0, fmt.Errorf("could not skip the value of \"pnpm\".%q", key)
+			}
+			i = n
+		}
+		i = skipWS(sc.src, i)
+		if i >= len(sc.src) {
+			return 0, fmt.Errorf("unexpected end of file after \"pnpm\".%q", key)
+		}
+		switch sc.src[i] {
+		case ',':
+			i++
+		case '}':
+			return i + 1, nil
+		default:
+			return 0, fmt.Errorf("expected ',' or '}' after \"pnpm\".%q, found %q", key, sc.src[i])
+		}
+	}
+}
+
 // dependency builds one Dependency from a "name": <value> pair and returns
 // the byte offset right after the value, so the caller can resume scanning.
 //
@@ -265,6 +393,18 @@ func (sc *scanner) dependency(depType, depName string, i int) (model.Dependency,
 		Datasource:    name,
 		Locus:         model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest, Line: lineAt(sc.src, i)},
 		LockFiles:     lockFileNames,
+	}
+	switch depType {
+	case enginesDepType:
+		dep.LockFiles = nil
+		if ds, ok := engineDatasources[depName]; ok {
+			dep.Datasource = ds
+		} else {
+			dep.Datasource = ""
+			dep.SkipReason = "engine " + depName + " has no measured datasource"
+		}
+	case pnpmOverridesDepType:
+		dep.PackageName = depName
 	}
 
 	if i >= len(sc.src) || sc.src[i] != '"' {

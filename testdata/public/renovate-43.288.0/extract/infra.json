@@ -1,0 +1,280 @@
+{
+  "gitlabci": [
+    {
+      "deps": [
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "1.10.6",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/opentofu",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/opentofu",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/opentofu:1.10.6"
+        },
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentDigest": "sha256:60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1",
+          "currentValue": "1.10.6",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/opentofu",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/opentofu",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/opentofu:1.10.6@sha256:60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1"
+        },
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        },
+        {
+          "currentValue": "1",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/lint-tools",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        }
+      ],
+      "packageFile": ".gitlab-ci.yml"
+    }
+  ],
+  "regex": [
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/terraform@2.14.3",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "{{{datasource}}}",
+      "deps": [
+        {
+          "currentValue": "0.59.1",
+          "datasource": "github-releases",
+          "depName": "terraform-linters/tflint",
+          "replaceString": "# renovate: datasource=github-releases depName=terraform-linters/tflint\n  TFLINT_VERSION: \"0.59.1\"",
+          "versioning": "semver"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+[A-Z_]+:\\s*\"(?<currentValue>[0-9][^\"]+)\"",
+        "# renovate: datasource=(?<datasource>[a-z-]+) depName=(?<depName>\\S+)\\s+-\\s*install-tool\\s+\\S+\\s+(?<currentValue>[0-9]\\S*)"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "versioningTemplate": "semver"
+    },
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "1",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/lint-tools",
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-ci-yaml@1\n",
+          "versioning": "loose"
+        }
+      ],
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+)[\\r\\n]"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "versioningTemplate": "loose"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "0.59.1",
+          "datasource": "github-releases",
+          "depName": "terraform-linters/tflint",
+          "replaceString": "# renovate: datasource=github-releases depName=terraform-linters/tflint\n  TFLINT_VERSION: \"0.59.1\"\n"
+        }
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>[a-zA-Z0-9-._]+?) depName=(?<depName>[^\\s]+?)(?: (?:packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?(?: registryUrl=(?<registryUrl>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VERSION\\s*:\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
+      ],
+      "packageFile": ".gitlab-ci.yml"
+    }
+  ],
+  "terraform": [
+    {
+      "deps": [
+        {
+          "currentValue": "5.10.1",
+          "datasource": "terraform-provider",
+          "depName": "cloudflare",
+          "depType": "required_provider",
+          "lockedVersion": "5.10.1",
+          "packageName": "cloudflare/cloudflare"
+        },
+        {
+          "currentValue": ">= 1.9.0",
+          "datasource": "github-releases",
+          "depName": "hashicorp/terraform",
+          "depType": "required_version",
+          "extractVersion": "v(?<version>.*)$",
+          "versioning": "hashicorp"
+        }
+      ],
+      "packageFile": "dns/versions.tf"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "~> 5.4",
+          "datasource": "terraform-module",
+          "depName": "terraform-aws-modules/s3-bucket/aws",
+          "depType": "module"
+        },
+        {
+          "depName": "network",
+          "depType": "module",
+          "skipReason": "local"
+        },
+        {
+          "depName": "node_a",
+          "depType": "module",
+          "skipReason": "local"
+        },
+        {
+          "depName": "node_b",
+          "depType": "module",
+          "skipReason": "local"
+        },
+        {
+          "currentValue": "6.0.1",
+          "datasource": "terraform-module",
+          "depName": "terraform-aws-modules/vpc/aws",
+          "depType": "module"
+        }
+      ],
+      "packageFile": "main.tf"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": ">= 6.0",
+          "datasource": "terraform-provider",
+          "depName": "aws",
+          "depType": "required_provider",
+          "lockedVersion": "6.13.0",
+          "packageName": "hashicorp/aws"
+        },
+        {
+          "currentValue": ">= 1.9.0",
+          "datasource": "github-releases",
+          "depName": "hashicorp/terraform",
+          "depType": "required_version",
+          "extractVersion": "v(?<version>.*)$",
+          "versioning": "hashicorp"
+        }
+      ],
+      "packageFile": "modules/node/versions.tf"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "~> 6.11",
+          "datasource": "terraform-provider",
+          "depName": "aws",
+          "depType": "required_provider",
+          "lockedVersion": "6.13.0",
+          "packageName": "hashicorp/aws"
+        },
+        {
+          "currentValue": ">= 1.9.0",
+          "datasource": "github-releases",
+          "depName": "hashicorp/terraform",
+          "depType": "required_version",
+          "extractVersion": "v(?<version>.*)$",
+          "versioning": "hashicorp"
+        }
+      ],
+      "packageFile": "storage/versions.tf"
+    },
+    {
+      "deps": [
+        {
+          "currentValue": "~> 6.11",
+          "datasource": "terraform-provider",
+          "depName": "aws",
+          "depType": "required_provider",
+          "lockedVersion": "6.13.0",
+          "packageName": "hashicorp/aws"
+        },
+        {
+          "currentValue": ">= 5.9, < 6",
+          "datasource": "terraform-provider",
+          "depName": "cloudflare",
+          "depType": "required_provider",
+          "lockedVersion": "5.10.1",
+          "packageName": "cloudflare/cloudflare"
+        },
+        {
+          "currentValue": "18.4.0",
+          "datasource": "terraform-provider",
+          "depName": "gitlab",
+          "depType": "required_provider",
+          "lockedVersion": "18.4.0",
+          "packageName": "gitlabhq/gitlab"
+        },
+        {
+          "datasource": "terraform-provider",
+          "depName": "null",
+          "depType": "required_provider",
+          "lockedVersion": "3.2.4",
+          "packageName": "hashicorp/null",
+          "skipReason": "unspecified-version"
+        },
+        {
+          "datasource": "terraform-provider",
+          "depName": "random",
+          "depType": "required_provider",
+          "lockedVersion": "3.7.2",
+          "packageName": "hashicorp/random",
+          "skipReason": "unspecified-version"
+        },
+        {
+          "datasource": "terraform-provider",
+          "depName": "tls",
+          "depType": "required_provider",
+          "lockedVersion": "4.1.0",
+          "packageName": "hashicorp/tls",
+          "skipReason": "unspecified-version"
+        },
+        {
+          "currentValue": ">= 1.9.0",
+          "datasource": "github-releases",
+          "depName": "hashicorp/terraform",
+          "depType": "required_version",
+          "extractVersion": "v(?<version>.*)$",
+          "versioning": "hashicorp"
+        }
+      ],
+      "packageFile": "versions.tf"
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+FROM registry.acme.test/devops/images/php-fpm:3.2.1@sha256:5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0
+COPY --from=registry.acme.test/devops/ci-mirrors/supercronic:0.2.34 /usr/local/bin/supercronic /usr/local/bin/
+ENTRYPOINT ["supercronic", "/etc/crontab"]

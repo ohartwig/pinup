@@ -178,6 +178,20 @@ test:go:
       - coverage.out
     expire_in: 1 week
 
+# The same suite on the public fixture root - the synthetic twin under
+# testdata/public, which is what the public mirror carries once the
+# estate's own fixtures are filtered out. Green here is what proves the
+# published tree tests itself; a test that only passes on the estate's
+# captures is found here, not by a contributor.
+test:go:public:
+  stage: test
+  image: ${GO_IMAGE}
+  needs: []
+  variables:
+    PINUP_FIXTURES: testdata/public
+  script:
+    - go test -race ./...
+
 # The mutation suite: every harness layer is broken on purpose, one
 # named change at a time, and its tests must go red - the answer to "how
 # do we know this gate can fail". It copies the tracked tree, so it needs

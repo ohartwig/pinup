@@ -1,0 +1,35 @@
+include:
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@2.14.3
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/golden-image/build@1.2.0
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-ci-yaml@1
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/semantic-release@3.4.1
+  - component: $CI_SERVER_HOST/devops/ci-cd-components/supply-chain-verify/base-image-pins@2
+
+default:
+  image: registry.acme.test/devops/ci-mirrors/alpine:3.22
+
+variables:
+  build_image: registry.acme.test/devops/images/golang:1.27.1@sha256:8f3a1c9e2b7d4e6f0a1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7
+  lint_image: registry.acme.test/devops/images/ci-tools:1.9.2
+  # renovate: datasource=github-releases depName=golangci/golangci-lint
+  GOLANGCI_LINT_VERSION: "2.6.1"
+  # renovate: datasource=github-releases depName=koalaman/shellcheck
+  SHELLCHECK_VERSION: "0.11.0"
+  # renovate: datasource=gitlab-releases depName=images/php-ci
+  PHP_CI_VERSION: "3.2.1"
+
+build:
+  image: registry.acme.test/devops/ci-mirrors/docker:28.3.3
+  services:
+    - name: registry.acme.test/devops/ci-mirrors/docker:28.3.3-dind@sha256:1b2c3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6
+      alias: docker
+  before_script:
+    # renovate: datasource=github-releases depName=sigstore/cosign
+    - install-tool cosign 2.5.3
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" .
+
+test:
+  image: registry.acme.test/devops/images/php-ci:3.2.1-$PHP_VERSION
+  script:
+    - composer test

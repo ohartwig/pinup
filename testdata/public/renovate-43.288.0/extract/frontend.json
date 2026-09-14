@@ -1,0 +1,229 @@
+{
+  "gitlabci": [
+    {
+      "deps": [
+        {
+          "autoReplaceStringTemplate": "{{depName}}{{#if newValue}}:{{newValue}}{{/if}}{{#if newDigest}}@{{newDigest}}{{/if}}",
+          "currentValue": "24.8.0-alpine3.22",
+          "datasource": "docker",
+          "depName": "registry.acme.test/devops/ci-mirrors/node",
+          "depType": "image",
+          "packageName": "registry.acme.test/devops/ci-mirrors/node",
+          "replaceString": "registry.acme.test/devops/ci-mirrors/node:24.8.0-alpine3.22"
+        },
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-tags",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "depType": "repository",
+          "registryUrls": [
+            "https://${CI_SERVER_HOST}"
+          ],
+          "versioning": "semver-partial"
+        }
+      ],
+      "packageFile": ".gitlab-ci.yml"
+    }
+  ],
+  "npm": [
+    {
+      "deps": [
+        {
+          "currentValue": "^1.7.4",
+          "datasource": "npm",
+          "depName": "@floating-ui/dom",
+          "depType": "dependencies",
+          "prettyDepType": "dependency"
+        },
+        {
+          "currentValue": "^3.15.0",
+          "datasource": "npm",
+          "depName": "alpinejs",
+          "depType": "dependencies",
+          "prettyDepType": "dependency"
+        },
+        {
+          "currentValue": "^7.6.5",
+          "datasource": "npm",
+          "depName": "focus-trap",
+          "depType": "dependencies",
+          "prettyDepType": "dependency"
+        },
+        {
+          "currentValue": "^12.0.2",
+          "datasource": "npm",
+          "depName": "swiper",
+          "depType": "dependencies",
+          "prettyDepType": "dependency"
+        },
+        {
+          "currentValue": "4.17.21",
+          "datasource": "npm",
+          "depName": "lodash",
+          "depType": "dependencies",
+          "prettyDepType": "dependency"
+        },
+        {
+          "currentValue": "~1.11.13",
+          "datasource": "npm",
+          "depName": "dayjs",
+          "depType": "dependencies",
+          "prettyDepType": "dependency"
+        },
+        {
+          "currentValue": "^3.2.0",
+          "datasource": "npm",
+          "depName": "@acme/eslint-config",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^2.0.1",
+          "datasource": "npm",
+          "depName": "@acme/stylelint-config",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^24.3.1",
+          "datasource": "npm",
+          "depName": "@types/node",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^10.4.21",
+          "datasource": "npm",
+          "depName": "autoprefixer",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^9.35.0",
+          "datasource": "npm",
+          "depName": "eslint",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^8.5.6",
+          "datasource": "npm",
+          "depName": "postcss",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "3.6.2",
+          "datasource": "npm",
+          "depName": "prettier",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^1.92.1",
+          "datasource": "npm",
+          "depName": "sass",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^16.23.1",
+          "datasource": "npm",
+          "depName": "stylelint",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^4.1.13",
+          "datasource": "npm",
+          "depName": "tailwindcss",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "~5.9.2",
+          "datasource": "npm",
+          "depName": "typescript",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^7.1.5",
+          "datasource": "npm",
+          "depName": "vite",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "currentValue": "^3.2.4",
+          "datasource": "npm",
+          "depName": "vitest",
+          "depType": "devDependencies",
+          "prettyDepType": "devDependency"
+        },
+        {
+          "commitMessageTopic": "Node.js",
+          "currentValue": ">=24",
+          "datasource": "node-version",
+          "depName": "node",
+          "depType": "engines",
+          "prettyDepType": "engine"
+        },
+        {
+          "commitMessageTopic": "pnpm",
+          "currentValue": "10.15.0",
+          "datasource": "npm",
+          "depName": "pnpm",
+          "depType": "packageManager",
+          "prettyDepType": "packageManager"
+        },
+        {
+          "currentValue": ">=9",
+          "datasource": "npm",
+          "depName": "minimatch",
+          "depType": "pnpm.overrides",
+          "packageName": "minimatch",
+          "prettyDepType": "overrides"
+        }
+      ],
+      "extractedConstraints": {
+        "node": ">=24",
+        "pnpm": "10.15.0"
+      },
+      "managerData": {
+        "hasPackageManager": true,
+        "npmrcFileName": null,
+        "packageJsonName": "@acme/frontend",
+        "yarnZeroInstall": false
+      },
+      "packageFile": "package.json",
+      "packageFileVersion": "1.0.0",
+      "skipInstalls": true
+    }
+  ],
+  "regex": [
+    {
+      "datasourceTemplate": "gitlab-releases",
+      "deps": [
+        {
+          "currentValue": "2.14.3",
+          "datasource": "gitlab-releases",
+          "depName": "devops/ci-cd-components/composed-default-pipelines",
+          "extractVersion": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+          "registryUrls": [
+            "https://git.acme.test/"
+          ],
+          "replaceString": "${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/node@2.14.3",
+          "versioning": "semver"
+        }
+      ],
+      "extractVersionTemplate": "^v?(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "matchStrings": [
+        "\\$\\{?CI_SERVER_HOST\\}?/(?<depName>devops/ci-cd-components/[a-z0-9-]+)/[a-z0-9-]+@(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "packageFile": ".gitlab-ci.yml",
+      "registryUrlTemplate": "https://git.acme.test",
+      "versioningTemplate": "semver"
+    }
+  ]
+}

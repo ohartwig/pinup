@@ -5,11 +5,12 @@ package gitlabci
 
 import (
 	"context"
-	"os"
+	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/ohartwig/pinup/extract"
+	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -189,42 +190,74 @@ func TestInvalidYAMLIsAWarningNotAFailure(t *testing.T) {
 	}
 }
 
-// The real ci-tools pipeline, against what the pinned container extracted
-// from it. This is the manager's acceptance test.
-func TestRealCiToolsPipeline(t *testing.T) {
-	const path = "/Volumes/Samsung_X5/Projects/moselwal/devops/images/ci-tools/.gitlab-ci.yml"
-	src, err := os.ReadFile(path)
-	if err != nil {
-		t.Skipf("checkout not present: %v", err)
-	}
-	res, err := New().Extract(context.Background(),
-		extract.File{Path: ".gitlab-ci.yml", Content: src}, extract.ManagerConfig{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := map[string]int{}
-	for _, d := range res.Deps {
-		if d.SkipReason != "" {
-			continue
+// TestAgreesWithTheCorpus compares this manager's extraction of every
+// pipeline file in the fixture root's corpus against what the pinned
+// Renovate container extracted from the same file: every actionable image
+// and component the capture records, pinup records, and nothing more. A
+// capture whose checkout is not on this machine is skipped; the public
+// root's repositories are in the tree. This is the manager's acceptance
+// test.
+func TestAgreesWithTheCorpus(t *testing.T) {
+	type key struct{ depName, value, digest, datasource string }
+	ran := 0
+	for _, c := range fixture.Corpora(t) {
+		for _, e := range c.Entries(t, "gitlabci") {
+			if c.Tree == "" {
+				t.Logf("%s: checkout not present; %s skipped", c.Name, e.PackageFile)
+				continue
+			}
+			ran++
+			t.Run(c.Name+"/"+e.PackageFile, func(t *testing.T) {
+				var deps []struct {
+					DepName       string `json:"depName"`
+					CurrentValue  string `json:"currentValue"`
+					CurrentDigest string `json:"currentDigest"`
+					Datasource    string `json:"datasource"`
+					SkipReason    string `json:"skipReason"`
+				}
+				if err := json.Unmarshal(e.Deps, &deps); err != nil {
+					t.Fatal(err)
+				}
+				want := map[key]int{}
+				for _, d := range deps {
+					if d.SkipReason != "" {
+						continue
+					}
+					want[key{d.DepName, d.CurrentValue, d.CurrentDigest, d.Datasource}]++
+				}
+				if len(want) == 0 {
+					t.Fatalf("the capture records nothing actionable in %s; the test would check nothing", e.PackageFile)
+				}
+				src := c.Read(t, e.PackageFile)
+				res, err := New().Extract(context.Background(), extract.File{Path: e.PackageFile, Content: src}, extract.ManagerConfig{})
+				if err != nil {
+					t.Fatal(err)
+				}
+				got := map[key]int{}
+				for _, d := range res.Deps {
+					if d.SkipReason != "" {
+						continue
+					}
+					got[key{d.DepName, d.CurrentValue, d.CurrentDigest, d.Datasource}]++
+					if slice := string(src[d.Locus.ValueStart:d.Locus.ValueEnd]); slice != d.CurrentValue {
+						t.Errorf("%s: offsets point at %q", d.DepName, slice)
+					}
+				}
+				for k, n := range want {
+					if got[k] != n {
+						t.Errorf("%s %s@%s (%s): the capture has %d, pinup %d", k.depName, k.value, k.digest, k.datasource, n, got[k])
+					}
+				}
+				for k, n := range got {
+					if want[k] == 0 {
+						t.Errorf("pinup extracted %s %s@%s (%s) x%d, which the capture does not record", k.depName, k.value, k.digest, k.datasource, n)
+					}
+				}
+				t.Logf("%d actionable dependencies compared", len(want))
+			})
 		}
-		got[d.DepName+"|"+d.CurrentValue]++
-		if slice := string(src[d.Locus.ValueStart:d.Locus.ValueEnd]); slice != d.CurrentValue {
-			t.Errorf("%s: offsets point at %q", d.DepName, slice)
-		}
 	}
-	// From testdata/<root>/renovate-43.288.0/extract/ci-tools.json, gitlabci.
-	for _, want := range []string{
-		"moby/buildkit|v0.32.2-rootless",
-		"registry.ole-hartwig.eu/devops/ci-mirrors/container-scanning|8.6.34",
-		"registry.ole-hartwig.eu/devops/ci-mirrors/alpine|3.22",
-		"devops/ci-cd-components/lint-tools|1",
-		"devops/ci-cd-components/release-tools|1",
-		"devops/ci-cd-components/container-scanning|3",
-		"devops/ci-cd-components/supply-chain-verify|2",
-	} {
-		if got[want] == 0 {
-			t.Errorf("not extracted: %s", want)
-		}
+	if ran == 0 {
+		t.Skip("no gitlabci capture with its files on this machine")
 	}
-	t.Logf("%d actionable dependencies from the real file", len(got))
 }

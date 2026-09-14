@@ -1,0 +1,6 @@
+{
+  "name": "golden/estate",
+  "require": {
+    "acme/sitepackage": "^5.0"
+  }
+}

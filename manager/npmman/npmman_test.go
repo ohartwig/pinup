@@ -6,8 +6,6 @@ package npmman
 import (
 	"context"
 	"encoding/json/v2"
-	"os"
-	"os/exec"
 	"slices"
 	"sort"
 	"testing"
@@ -193,90 +191,69 @@ func TestNonObjectPackageJSONYieldsAWarningNotAnError(t *testing.T) {
 	}
 }
 
-// TestAgainstRealTemplate2024Checkout compares this manager's extraction of
-// the estate's own template-2024 package.json against the Renovate corpus
-// recording for the same file (testdata/<root>/renovate-43.288.0/extract,
-// key "npm"). It is skipped, not failed, when either side is unavailable -
-// the checkout is a local mirror this repository does not own.
-//
-// The corpus was captured against the checkout's committed HEAD, not
-// whatever happens to be in the working tree - this local mirror carries
-// uncommitted work (an eslint flat-config migration, at the time this test
-// was written) that the corpus knows nothing about. `git show HEAD:` is what
-// gets back the exact bytes Renovate saw.
-func TestAgainstRealTemplate2024Checkout(t *testing.T) {
-	const repoDir = "/Volumes/Samsung_X5/Projects/moselwal/development/moselwal/template-2024"
-	if _, err := os.Stat(repoDir); err != nil {
-		t.Skipf("real checkout not available: %v", err)
-	}
-	src, err := exec.Command("git", "-C", repoDir, "show", "HEAD:package.json").Output()
-	if err != nil {
-		t.Skipf("could not read package.json from the checkout's HEAD commit: %v", err)
-	}
+// TestAgreesWithTheCorpus compares this manager's extraction of every
+// package.json in the fixture root's corpus against what the pinned Renovate
+// container extracted from the same file. A capture whose checkout is not on
+// this machine is skipped; the public root's repositories are in the tree.
+func TestAgreesWithTheCorpus(t *testing.T) {
+	ran := 0
+	for _, c := range fixture.Corpora(t) {
+		for _, e := range c.Entries(t, "npm") {
+			if c.Tree == "" {
+				t.Logf("%s: checkout not present; %s skipped", c.Name, e.PackageFile)
+				continue
+			}
+			ran++
+			t.Run(c.Name+"/"+e.PackageFile, func(t *testing.T) {
+				var deps []struct {
+					DepName      string `json:"depName"`
+					CurrentValue string `json:"currentValue"`
+					DepType      string `json:"depType"`
+				}
+				if err := json.Unmarshal(e.Deps, &deps); err != nil {
+					t.Fatal(err)
+				}
+				want := make(map[string]bool, len(deps))
+				for _, d := range deps {
+					want[d.DepName+"|"+d.CurrentValue+"|"+d.DepType] = true
+				}
 
-	corpusBytes, err := os.ReadFile(fixture.Captured(t, "extract", "template-2024.json"))
-	if err != nil {
-		t.Skipf("corpus fixture not available: %v", err)
-	}
+				f := extract.File{Path: e.PackageFile, Content: c.Read(t, e.PackageFile)}
+				res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{})
+				if err != nil {
+					t.Fatalf("Extract returned an error: %v", err)
+				}
+				got := make(map[string]bool, len(res.Deps))
+				for _, d := range res.Deps {
+					got[d.DepName+"|"+d.CurrentValue+"|"+d.DepType] = true
+				}
 
-	var fixture struct {
-		Npm []struct {
-			PackageFile string `json:"packageFile"`
-			Deps        []struct {
-				DepName      string `json:"depName"`
-				CurrentValue string `json:"currentValue"`
-				DepType      string `json:"depType"`
-			} `json:"deps"`
-		} `json:"npm"`
-	}
-	if err := json.Unmarshal(corpusBytes, &fixture); err != nil {
-		t.Fatalf("corpus fixture does not parse: %v", err)
-	}
-	if len(fixture.Npm) != 1 {
-		t.Fatalf("expected exactly one npm packageFile entry in the corpus, got %d", len(fixture.Npm))
-	}
-	if fixture.Npm[0].PackageFile != "package.json" {
-		t.Fatalf("corpus packageFile = %q, want %q", fixture.Npm[0].PackageFile, "package.json")
-	}
-
-	want := make(map[string]bool, len(fixture.Npm[0].Deps))
-	for _, d := range fixture.Npm[0].Deps {
-		want[d.DepName+"|"+d.CurrentValue+"|"+d.DepType] = true
-	}
-
-	f := extract.File{Path: "package.json", Content: src}
-	res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{})
-	if err != nil {
-		t.Fatalf("Extract returned an error: %v", err)
-	}
-
-	got := make(map[string]bool, len(res.Deps))
-	for _, d := range res.Deps {
-		got[d.DepName+"|"+d.CurrentValue+"|"+d.DepType] = true
-	}
-
-	var missing, invented []string
-	for k := range want {
-		if !got[k] {
-			missing = append(missing, k)
+				var missing, invented []string
+				for k := range want {
+					if !got[k] {
+						missing = append(missing, k)
+					}
+				}
+				for k := range got {
+					if !want[k] {
+						invented = append(invented, k)
+					}
+				}
+				sort.Strings(missing)
+				sort.Strings(invented)
+				if len(missing) > 0 {
+					t.Errorf("missing %d dependencies the corpus recorded: %v", len(missing), missing)
+				}
+				if len(invented) > 0 {
+					t.Errorf("invented %d dependencies the corpus did not record: %v", len(invented), invented)
+				}
+				t.Logf("agreed with the corpus on %d of %d dependencies (%d invented)", len(want)-len(missing), len(want), len(invented))
+			})
 		}
 	}
-	for k := range got {
-		if !want[k] {
-			invented = append(invented, k)
-		}
+	if ran == 0 {
+		t.Skip("no npm capture with its files on this machine")
 	}
-	sort.Strings(missing)
-	sort.Strings(invented)
-
-	if len(missing) > 0 {
-		t.Errorf("missing %d dependencies the corpus recorded: %v", len(missing), missing)
-	}
-	if len(invented) > 0 {
-		t.Errorf("invented %d dependencies the corpus did not record: %v", len(invented), invented)
-	}
-	agreed := len(want) - len(missing)
-	t.Logf("agreed with the corpus on %d of %d dependencies (%d invented)", agreed, len(want), len(invented))
 }
 
 func TestLockedVersionsV3Lock(t *testing.T) {
