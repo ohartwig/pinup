@@ -1,3 +1,18 @@
+## [0.19.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.18.0...v0.19.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **planner:** the pipeline files of every platform count for the ci commit type ([0acaa60](https://git.ole-hartwig.eu/pinup/pinup/commit/0acaa6003dcb50ff0b7d317656b30fc6f7facbe9))
+
+### :bug: Fixes
+
+* **advisories:** a dependency without a versioning of its own is asked under its datasource's default ([9c0b795](https://git.ole-hartwig.eu/pinup/pinup/commit/9c0b795e4801e1b5a292c959950acdcad7586b25))
+* **runner:** the commit type is decided again on what the branch actually commits ([2d309db](https://git.ole-hartwig.eu/pinup/pinup/commit/2d309dba3afd6a05ac1c4c5392796283a2f88f46))
+
+### :barber: Styles
+
+* **planner:** gofmt ([3ceee85](https://git.ole-hartwig.eu/pinup/pinup/commit/3ceee85011b54e6a79e4cf5f46ae47fe0e92b3b5))
+
 ## [0.18.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.17.0...v0.18.0) (2026-09-14)
 
 ### :sparkles: Features
