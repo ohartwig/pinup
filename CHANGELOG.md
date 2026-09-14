@@ -1,3 +1,10 @@
+## [0.14.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.3...v0.14.4) (2026-09-14)
+
+### :bug: Fixes
+
+* **regexm:** a match that bound a digest moves it ([6fd1feb](https://git.ole-hartwig.eu/pinup/pinup/commit/6fd1febf0f4838941bf18a1b5a03758cbae42b97))
+* **composer:** a tilde inside its major keeps the target's components ([e9851bc](https://git.ole-hartwig.eu/pinup/pinup/commit/e9851bca7116924e9b7a5a1490d6c5a22265e25b))
+
 ## [0.14.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.2...v0.14.3) (2026-09-13)
 
 ### :bug: Fixes
