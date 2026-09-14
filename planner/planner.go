@@ -84,7 +84,18 @@ func Plan(req Request) Result {
 			d.SkipReason = skip
 		}
 		res.Deps = append(res.Deps, d)
-		res.Updates = append(res.Updates, ups...)
+		// Two buckets can name one value - a minor and a "major" of a 0.x
+		// range written the same way. One update per value: the plan
+		// refuses a key that appears twice, and it was a whole
+		// repository's run that failed on it (2026-09-14).
+		seen := map[string]bool{}
+		for _, u := range ups {
+			if seen[u.Key()] {
+				continue
+			}
+			seen[u.Key()] = true
+			res.Updates = append(res.Updates, u)
+		}
 	}
 	return res
 }

@@ -463,17 +463,30 @@ func (s *Scheme) NewValue(current, target string, strategy versioning.RangeStrat
 		return c.op + strings.Join(out, ".")
 	}
 
-	// Tilde zeroes the last stated component where caret keeps it: measured,
-	// "^13.4" becomes "^1.1" while "~0.9" becomes "~1.0", and tilde gives the
-	// same answer under every strategy including bump.
-	//
-	// Stated plainly because it rests on ONE observed tilde constraint: the
-	// probe grid carried a single tilde range, so the rule "tilde writes
-	// major.0 for two stated components" is the narrowest reading that fits
-	// rather than a law. Widening the grid before relying on tilde rewriting
-	// in anger would be cheap and is worth doing.
+	// Tilde: measured on one vector, "~0.9" with a 1.1.0 target becomes
+	// "~1.0" under every strategy, bump included - a major crossed, and
+	// the components after the major are zero. The first reading of that
+	// vector, "tilde always writes major.0", was wrong for a tilde that
+	// stays inside its major: it turned "~0.458.0" into "~0.0" for a
+	// 0.459.0 target (development/moselwal/gsc-index-info, 2026-09-14) and
+	// two updates then shared one value. The reading now: a crossed major
+	// zeroes what follows it, an uncrossed one keeps the stated components
+	// from the target - "~0.459.0". The second half rests on composer's
+	// own meaning of tilde rather than on a probe; a three-component tilde
+	// in the probe grid would settle it and is worth adding.
 	if c.op == "~" {
-		out := c.op + strconv.Itoa(t.at(0)) + ".0"
+		parts := max(c.stated, 1)
+		var out string
+		if t.at(0) != c.v.at(0) {
+			zeros := make([]string, parts)
+			zeros[0] = strconv.Itoa(t.at(0))
+			for i := 1; i < parts; i++ {
+				zeros[i] = "0"
+			}
+			out = c.op + strings.Join(zeros, ".")
+		} else {
+			out = write(parts)
+		}
 		if strategy == versioning.StrategyWiden {
 			return current + " || " + out, nil
 		}

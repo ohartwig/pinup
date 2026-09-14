@@ -55,6 +55,26 @@ func TestRewritingKeepsShapePerStrategy(t *testing.T) {
 	}
 }
 
+// A tilde that stays inside its major keeps the target's components; one
+// that crosses a major zeroes what follows it (the captured "~0.9" ->
+// "~1.0"). Measured live 2026-09-14: "~0.458.0" with 0.459.0 became
+// "~0.0", and two updates shared the value.
+func TestTildeInsideItsMajorKeepsTheComponents(t *testing.T) {
+	s := New()
+	for _, c := range []struct{ current, target, want string }{
+		{"~0.458.0", "0.459.0", "~0.459.0"},
+		{"~0.458.0", "1.2.3", "~1.0.0"},
+		{"~2.3", "2.7.1", "~2.7"},
+		{"~2.3", "3.1.0", "~3.0"},
+		{"~4", "5.0.0", "~5"},
+	} {
+		got, err := s.NewValue(c.current, c.target, versioning.StrategyReplace)
+		if err != nil || got != c.want {
+			t.Errorf("NewValue(%q -> %s) = %q %v, want %q", c.current, c.target, got, err, c.want)
+		}
+	}
+}
+
 // A constraint is valid but never stable, because it does not name a release.
 func TestConstraintsAreValidButNotStable(t *testing.T) {
 	s := New()
