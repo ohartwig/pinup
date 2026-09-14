@@ -39,8 +39,12 @@ type MergeRequest struct {
 	SHA       string
 	WebURL    string
 	Automerge bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	// AutomergeRefused says why the platform would not arm automerge for
+	// a request that asked for it - the bot may not merge in this
+	// project - so the run can report it beside the request it did open.
+	AutomergeRefused string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 }
 
 // Request is what a branch wants its merge request to look like.

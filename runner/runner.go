@@ -196,6 +196,13 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			created++
 			out = Outcome{Branch: b.Name, Action: "created", MRIID: mr.IID, SHA: sha}
 		}
+		if mr.AutomergeRefused != "" {
+			// The request is open; only the merge is somebody else's. Said
+			// once per run, on the branch, not as a failure that would
+			// re-create nothing.
+			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: %s", b.Name, mr.AutomergeRefused)})
+			out.Message = strings.TrimSpace(out.Message + " " + mr.AutomergeRefused)
+		}
 		b.Existing = &model.ExistingBranch{Name: b.Name, SHA: sha, MRIID: mr.IID, MRState: mr.State}
 		outcomes = append(outcomes, out)
 	}

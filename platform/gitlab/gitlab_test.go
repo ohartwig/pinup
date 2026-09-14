@@ -41,6 +41,7 @@ type fakeMR struct {
 	automerge            bool
 	canMerge             bool // whether the /merge endpoint currently succeeds
 	staleHead            bool // the request still records the head before a rebase push
+	mayNotMerge          bool // the token's user lacks merge permission: GitLab answers 401
 	createdAt, updatedAt time.Time
 	mergedAt             time.Time
 }
@@ -89,10 +90,11 @@ type requestLog struct {
 // and update, the merge (automerge) endpoint, and the commit signature
 // endpoint.
 type gitlabServer struct {
-	mu       sync.Mutex
-	token    string
-	projects map[string]*fakeProject // URL-encoded project path -> project
-	requests []requestLog
+	mu          sync.Mutex
+	token       string
+	projects    map[string]*fakeProject // URL-encoded project path -> project
+	requests    []requestLog
+	mayNotMerge bool // the token's user lacks merge permission everywhere: /merge answers 401
 }
 
 func newGitlabServer(token string) *gitlabServer {
@@ -414,6 +416,12 @@ func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR) {
 		writeJSON(w, http.StatusConflict, map[string]string{"message": "SHA does not match HEAD of source branch: " + mr.sha})
 		return
 	}
+	if mr.mayNotMerge || s.mayNotMerge {
+		// GitLab answers 401 when the user may not accept the request - a
+		// Developer on a protected branch (measured: nozzleops/platform).
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"message": "401 Unauthorized"})
+		return
+	}
 	if !mr.canMerge {
 		// GitLab answers 405 when the pipeline has not started yet.
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -551,6 +559,33 @@ func TestHistoryPaginatesNewestFirst(t *testing.T) {
 	// Three items at a forced page size of two is two requests.
 	if n := rt.Count("git.example.org"); n != 2 {
 		t.Errorf("made %d requests, want 2 (pagination not exercised)", n)
+	}
+}
+
+// A bot that may not merge in a project still opens the request; the
+// refusal travels with it for the run to report, and is not an error that
+// would make the run believe the request does not exist (measured on
+// nozzleops/platform, 2026-09-14: eight requests created, eight "failed").
+func TestAutomergeRefusedByPermissionIsReportedNotFailed(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	srv.mu.Lock()
+	srv.mayNotMerge = true
+	srv.mu.Unlock()
+	req := publish.Request{SourceBranch: "renovate/x", TargetBranch: "main", Title: "bump x", Automerge: true}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatalf("the request was created; the refusal is not an error: %v", err)
+	}
+	if mr.IID == 0 || mr.Automerge || !strings.Contains(mr.AutomergeRefused, "may not merge") {
+		t.Errorf("mr = %+v", mr)
+	}
+	if len(proj.mrs) != 1 {
+		t.Errorf("%d requests exist, want the one", len(proj.mrs))
+	}
+	mr2, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+	if err != nil || mr2.Automerge || slices.Contains(changed, "automerge") || !strings.Contains(mr2.AutomergeRefused, "may not merge") {
+		t.Errorf("update: err=%v mr=%+v changed=%v", err, mr2, changed)
 	}
 }
 

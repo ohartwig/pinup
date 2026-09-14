@@ -205,18 +205,22 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 		return publish.MergeRequest{}, fmt.Errorf("gitlab: decode created merge request for %q: %w", proj.Path, err)
 	}
 
+	refused := ""
 	if r.Automerge {
-		merged, ok, err := p.trySetAutomerge(ctx, proj.Path, mr.IID, mr.SHA)
+		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, mr.IID, mr.SHA)
 		if err != nil {
 			return publish.MergeRequest{}, err
 		}
 		if ok {
 			mr = merged
 		}
+		refused = why
 		// Not ok, no error: the pipeline has not started or the MR cannot yet
 		// be merged. mr keeps Automerge=false; the next run tries again.
 	}
-	return toPublish(mr), nil
+	out := toPublish(mr)
+	out.AutomergeRefused = refused
+	return out, nil
 }
 
 // UpdateMergeRequest brings an existing merge request in line with r,
@@ -238,6 +242,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 
 	fields := map[string]any{}
 	var changed []string
+	refused := ""
 	if cur.Title != r.Title {
 		fields["title"] = r.Title
 		changed = append(changed, "title")
@@ -273,7 +278,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	// stopped allowing automerge must be able to take it back.
 	switch {
 	case r.Automerge && !cur.Automerge:
-		merged, ok, err := p.trySetAutomerge(ctx, proj.Path, iid, cur.SHA)
+		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, iid, cur.SHA)
 		if err != nil {
 			return publish.MergeRequest{}, nil, err
 		}
@@ -281,6 +286,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 			cur = merged
 			changed = append(changed, "automerge")
 		}
+		refused = why
 	case !r.Automerge && cur.Automerge:
 		u := fmt.Sprintf("%s/cancel_merge_when_pipeline_succeeds", mrURL)
 		resp, err := p.do(ctx, http.MethodPost, u, nil)
@@ -294,7 +300,9 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		changed = append(changed, "automerge")
 	}
 
-	return toPublish(cur), changed, nil
+	out := toPublish(cur)
+	out.AutomergeRefused = refused
+	return out, changed, nil
 }
 
 // CommitVerification reports how GitLab judged a commit's signature. A 404
@@ -532,8 +540,13 @@ func (p *Platform) ListProjects(ctx context.Context) ([]string, error) {
 // trySetAutomerge asks GitLab to merge sourceBranch's request when its
 // pipeline succeeds. A 405 (pipeline has not started) or 406 (not currently
 // mergeable) is reported as ok=false with no error: the caller keeps
-// Automerge=false and a later run tries again. Any other non-2xx is an error.
-func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid int, sha string) (mrJSON, bool, error) {
+// Automerge=false and a later run tries again. A 401 or 403 is GitLab's
+// answer when the token's user may not merge in this project (Developer on
+// a protected branch; measured on nozzleops/platform, 2026-09-14, where the
+// request had been created a second before): ok=false, no error, and the
+// refusal returned for the run to report beside the request. Any other
+// non-2xx is an error.
+func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid int, sha string) (mrJSON, bool, string, error) {
 	u := fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d/merge", p.base, url.PathEscape(projectPath), iid)
 	payload := map[string]any{
 		"merge_when_pipeline_succeeds": true,
@@ -547,18 +560,20 @@ func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid 
 
 	resp, err := p.do(ctx, http.MethodPut, u, payload)
 	if err != nil {
-		return mrJSON{}, false, err
+		return mrJSON{}, false, "", err
 	}
 	switch {
 	case resp.status >= 200 && resp.status < 300:
 		var mr mrJSON
 		if err := json.Unmarshal(resp.body, &mr); err != nil {
-			return mrJSON{}, false, fmt.Errorf("gitlab: decode merge response for %q !%d: %w", projectPath, iid, err)
+			return mrJSON{}, false, "", fmt.Errorf("gitlab: decode merge response for %q !%d: %w", projectPath, iid, err)
 		}
 		// The response is not guaranteed to echo the flag back consistently
 		// across GitLab versions; the call succeeding is what matters.
 		mr.Automerge = true
-		return mr, true, nil
+		return mr, true, "", nil
+	case resp.status == http.StatusUnauthorized || resp.status == http.StatusForbidden:
+		return mrJSON{}, false, fmt.Sprintf("automerge refused by %q (status %d): the bot may not merge here, a Maintainer merges", projectPath, resp.status), nil
 	case resp.status == http.StatusBadRequest || resp.status == http.StatusMethodNotAllowed ||
 		resp.status == http.StatusNotAcceptable || resp.status == http.StatusUnprocessableEntity ||
 		resp.status == http.StatusConflict:
@@ -569,9 +584,9 @@ func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid 
 		// rebase push, while the request still records the old head
 		// (pinup/pinup!1, 2026-09-13). All mean "not yet", and the next
 		// run asks again.
-		return mrJSON{}, false, nil
+		return mrJSON{}, false, "", nil
 	default:
-		return mrJSON{}, false, classify(resp, projectPath)
+		return mrJSON{}, false, "", classify(resp, projectPath)
 	}
 }
 
