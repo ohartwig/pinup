@@ -1,3 +1,9 @@
+## [0.18.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.17.0...v0.18.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **planner:** a branch that touches pipeline files alone is a ci commit ([d9c45cb](https://git.ole-hartwig.eu/pinup/pinup/commit/d9c45cb4ae7cfcb6eccffa075f8288c715b75690))
+
 ## [0.17.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.16.2...v0.17.0) (2026-09-14)
 
 ### :sparkles: Features
