@@ -1,3 +1,18 @@
+## [0.16.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.16.0...v0.16.1) (2026-09-14)
+
+### :bug: Fixes
+
+* **preset:** the preset library is pinup's own, not Renovate's data ([2686869](https://git.ole-hartwig.eu/pinup/pinup/commit/2686869f92de93145335685b9e39b82f0657ab03))
+
+### :repeat: Continuous Integrations
+
+* the public mirror and the GitHub release assets, as yasrt does them ([bb9aa84](https://git.ole-hartwig.eu/pinup/pinup/commit/bb9aa847b5609ed1964f25d823ec5b66c6b9846a))
+* release-tools/yasrt@2 ([7f5a3a7](https://git.ole-hartwig.eu/pinup/pinup/commit/7f5a3a7f43a4f41647cd75bac2df052ca19829b1))
+
+### :repeat: Chores
+
+* **lint:** drop the helpers the preset test rewrite left unused ([2175c76](https://git.ole-hartwig.eu/pinup/pinup/commit/2175c76a4adc4257356ac8f824267be1ed08bab1))
+
 ## [0.16.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.15.0...v0.16.0) (2026-09-14)
 
 ### :sparkles: Features
