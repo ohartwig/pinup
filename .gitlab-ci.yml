@@ -39,7 +39,7 @@ include:
   # Build, scan and signing stay on the TAG pipeline: tag-pipeline has the
   # release trigger this project on the tag it just cut, so those jobs run
   # exactly as they did when the tag came from semantic-release's push.
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/yasrt@1
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/release-tools/yasrt@2
     inputs:
       stage-version: .pre
       stage-release: release
