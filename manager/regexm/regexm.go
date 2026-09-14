@@ -331,26 +331,14 @@ func renderTemplate(tmpl string, env hbs.Env) (string, bool, error) {
 }
 
 // Edit replaces the bytes this manager recorded, refusing when they have
-// moved.
+// moved: the value, the digest a currentDigest group bound, or both as
+// value@digest - extract.EditRef, the same as the other managers. Its own
+// edit replaced the value span alone, so a digest move of a reference a
+// regex matched with its digest (wolfi-base:latest@sha256 in the
+// image-signing templates) wrote "latest" over "latest" and the push
+// found nothing changed (2026-09-14).
 func (*Manager) Edit(_ context.Context, f extract.File, up model.Update) (model.Edit, error) {
-	l := up.Dep.Locus
-	if l.ValueStart < 0 || l.ValueEnd > len(f.Content) || l.ValueStart > l.ValueEnd {
-		return model.Edit{}, fmt.Errorf("regexm: %s: recorded offsets [%d:%d] are outside the file",
-			f.Path, l.ValueStart, l.ValueEnd)
-	}
-	got := string(f.Content[l.ValueStart:l.ValueEnd])
-	if got != up.Dep.CurrentValue {
-		return model.Edit{}, fmt.Errorf("regexm: %s changed since extraction: expected %q at [%d:%d], found %q",
-			f.Path, up.Dep.CurrentValue, l.ValueStart, l.ValueEnd, got)
-	}
-	return model.Edit{
-		File:    f.Path,
-		Start:   l.ValueStart,
-		End:     l.ValueEnd,
-		Old:     got,
-		New:     up.NewValue,
-		Manager: "custom.regex",
-	}, nil
+	return extract.EditRef("custom.regex", f, up)
 }
 
 // Describe renders a one-line summary of a definition, for diagnostics that

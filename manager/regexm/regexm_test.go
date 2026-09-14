@@ -297,6 +297,42 @@ func TestEditRefusesAChangedFile(t *testing.T) {
 	}
 }
 
+// A match with a currentDigest group moves the digest span on a digest
+// update, and value and digest together on a version move - the shape the
+// image-signing templates carry (wolfi-base:latest@sha256:…). The value
+// span alone was replaced before, "latest" over "latest", and nothing
+// changed (2026-09-14).
+func TestEditMovesTheDigestAMatchBound(t *testing.T) {
+	cm := &model.CustomManager{
+		Index:              3,
+		MatchStrings:       []string{`image:\s*(?<depName>[^:\s]+):(?<currentValue>[^@\s]+)@(?<currentDigest>sha256:[a-f0-9]+)`},
+		DatasourceTemplate: "docker",
+	}
+	src := "image: registry.example.org/base:latest@sha256:aaaa\n"
+	f := extract.File{Path: "template.yml", Content: []byte(src)}
+	res, err := New().Extract(context.Background(), f, extract.ManagerConfig{Custom: cm})
+	if err != nil || len(res.Deps) != 1 || res.Deps[0].CurrentDigest != "sha256:aaaa" {
+		t.Fatalf("extract: %v, %+v", err, res.Deps)
+	}
+	e, err := New().Edit(context.Background(), f, model.Update{Dep: res.Deps[0], NewValue: "latest", NewDigest: "sha256:bbbb", Type: model.UpdateDigest})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out := src[:e.Start] + e.New + src[e.End:]; out != "image: registry.example.org/base:latest@sha256:bbbb\n" {
+		t.Errorf("digest move gave %q", out)
+	}
+	e, err = New().Edit(context.Background(), f, model.Update{Dep: res.Deps[0], NewValue: "2", NewDigest: "sha256:cccc", Type: model.UpdateMajor})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out := src[:e.Start] + e.New + src[e.End:]; out != "image: registry.example.org/base:2@sha256:cccc\n" {
+		t.Errorf("value and digest gave %q", out)
+	}
+	if _, err := New().Edit(context.Background(), f, model.Update{Dep: res.Deps[0], NewValue: "2", Type: model.UpdateMajor}); err == nil {
+		t.Error("a tag move without a digest for a pinned reference was accepted")
+	}
+}
+
 // combination is not implemented, and says so rather than guessing at
 // semantics nothing in the estate exercises.
 func TestCombinationStrategyIsRefused(t *testing.T) {
