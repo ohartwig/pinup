@@ -76,7 +76,7 @@ include:
   # GITHUB_MIRROR_TOKEN is a fine-grained token with contents:write on the
   # mirror repository - about publishing the project, not about releasing it.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.4.0
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.4.1
     inputs:
       stage: .post
       mirror-target: 'ohartwig/pinup'
