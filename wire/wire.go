@@ -112,22 +112,24 @@ type DatasourceOptions struct {
 	// CustomDatasources are the configuration's customDatasources, served
 	// generically - except the names ApkViews serves natively.
 	CustomDatasources map[string]model.CustomDatasource
+	// ApkViews are the apk datasources served natively, by the name the
+	// configuration uses ("custom.wolfi"); nil means DefaultApkViews.
+	ApkViews map[string]apkds.View
 }
 
-// ApkViews are the apk datasources served natively rather than through the
-// Renovate runner's sidecar. custom.wolfi is what at least one of the public
-// Wolfi repository and the estate's mirror carries, on both architectures;
-// custom.koh-apk is the estate's own packages only - the sidecar's two
-// views, measured in datasource/apkds.
-var ApkViews = map[string]apkds.View{
-	"custom.wolfi": {
-		Mirrors: []string{"https://packages.wolfi.dev/os", "https://pub-e45431adaf86477786d9d2ef6ec04768.r2.dev"},
-		Arches:  []string{"x86_64", "aarch64"},
-	},
-	"custom.koh-apk": {
-		Mirrors: []string{"https://pub-e45431adaf86477786d9d2ef6ec04768.r2.dev"},
-		Arches:  []string{"x86_64", "aarch64"},
-	},
+// DefaultApkViews is the one apk view every installation has: the public
+// Wolfi repository, on both architectures. An installation with its own
+// index or mirror - the estate's custom.koh-apk, its mirror of Wolfi -
+// adds views through PINUP_APK_VIEWS; measured in datasource/apkds, the
+// sidecar's rules: union across mirrors per arch, intersection across
+// arches.
+func DefaultApkViews() map[string]apkds.View {
+	return map[string]apkds.View{
+		"custom.wolfi": {
+			Mirrors: []string{"https://packages.wolfi.dev/os"},
+			Arches:  []string{"x86_64", "aarch64"},
+		},
+	}
 }
 
 // Datasources returns every datasource, keyed by the name the configuration
@@ -152,10 +154,14 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"git-tags":           gittagsds.New(),
 		"git-refs":           gittagsds.NewKind(gittagsds.Refs),
 	}
-	for name, view := range ApkViews {
+	views := o.ApkViews
+	if views == nil {
+		views = DefaultApkViews()
+	}
+	for name, view := range views {
 		r[name] = apkds.New(name, client, view)
 	}
-	for name, ds := range CustomDatasources(client, o.CustomDatasources) {
+	for name, ds := range CustomDatasources(client, o.CustomDatasources, views) {
 		r[name] = ds
 	}
 	return r
@@ -165,11 +171,13 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 // customDatasources, skipping the names served natively. The
 // configuration is known only once it is resolved, so this is called from
 // the run as well, with what the repository's configuration declares.
-func CustomDatasources(client *httpx.Client, defs map[string]model.CustomDatasource) lookup.Registry {
+// native names the views served natively, which a configuration's own
+// declaration of the same name does not replace.
+func CustomDatasources(client *httpx.Client, defs map[string]model.CustomDatasource, native map[string]apkds.View) lookup.Registry {
 	r := lookup.Registry{}
 	for _, def := range defs {
 		name := "custom." + def.Name
-		if _, native := ApkViews[name]; native {
+		if _, ok := native[name]; ok {
 			continue
 		}
 		r[name] = customds.New(def, client)

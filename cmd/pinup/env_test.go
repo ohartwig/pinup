@@ -157,3 +157,29 @@ func TestParseTargets(t *testing.T) {
 		t.Errorf("an --also token that is not in the environment: %v", err)
 	}
 }
+
+// PINUP_APK_VIEWS adds native apk views over the public Wolfi default and
+// may replace it; a malformed value or a view without a mirror is an
+// error, not a silently empty index.
+func TestApkViewsFromEnv(t *testing.T) {
+	env := func(v string) func(string) string { return func(string) string { return v } }
+	views, err := apkViews(env(""))
+	if err != nil || len(views) != 1 || len(views["custom.wolfi"].Mirrors) != 1 {
+		t.Fatalf("default views = %v, %v", views, err)
+	}
+	views, err = apkViews(env(`{"custom.corp-apk": {"mirrors": ["https://pkgs.example.test"]}, "custom.wolfi": {"mirrors": ["https://packages.wolfi.dev/os", "https://mirror.example.test"], "arches": ["x86_64"]}}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v := views["custom.corp-apk"]; len(v.Mirrors) != 1 || len(v.Arches) != 2 {
+		t.Errorf("corp-apk = %+v; arches should default to both", v)
+	}
+	if v := views["custom.wolfi"]; len(v.Mirrors) != 2 || len(v.Arches) != 1 {
+		t.Errorf("wolfi = %+v; the default view should be replaced", v)
+	}
+	for _, bad := range []string{`{"corp-apk": {"mirrors": ["x"]}}`, `{"custom.x": {}}`, `not json`} {
+		if _, err := apkViews(env(bad)); err == nil {
+			t.Errorf("%s: accepted", bad)
+		}
+	}
+}

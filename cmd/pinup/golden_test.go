@@ -253,7 +253,7 @@ func TestGoldenRepositories(t *testing.T) {
 			// stays unreachable, in the same words.
 			opts.CustomDatasources = func(defs map[string]model.CustomDatasource) lookup.Registry {
 				r := lookup.Registry{}
-				for n, live := range wire.CustomDatasources(nil, defs) {
+				for n, live := range wire.CustomDatasources(nil, defs, wire.DefaultApkViews()) {
 					r[n] = cannedRegistry{name: n, scheme: live.DefaultVersioning(), answers: answers}
 				}
 				return r
@@ -339,14 +339,18 @@ func recordGolden(t *testing.T, dir string, meta goldenMeta, now time.Time) {
 	answers := &cannedLookups{Releases: map[string]*model.ReleaseSet{}, Digests: map[string]string{}, Advisories: map[string]osv.Finding{}, Failures: map[string]cannedFailure{}}
 	mu := &sync.Mutex{}
 	live := lookup.Registry{}
-	for n, ds := range wire.Datasources(httpClient(env), datasourceOptions(env)) {
+	dsOpts, err := datasourceOptions(env, os.Getenv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for n, ds := range wire.Datasources(httpClient(env), dsOpts) {
 		live[n] = recordingDS{inner: ds, mu: mu, answers: answers}
 	}
 	opts := goldenOptions(t, dir, meta, live, now)
 	opts.Advisories = recordingAdvisories{inner: &osv.Client{}, answers: answers}
 	opts.CustomDatasources = func(defs map[string]model.CustomDatasource) lookup.Registry {
 		r := lookup.Registry{}
-		for n, ds := range wire.CustomDatasources(httpClient(env), defs) {
+		for n, ds := range wire.CustomDatasources(httpClient(env), defs, dsOpts.ApkViews) {
 			r[n] = recordingDS{inner: ds, mu: mu, answers: answers}
 		}
 		return r

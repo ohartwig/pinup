@@ -106,6 +106,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	// its own repository has no checkout of the runner project, and a copy
 	// of the file would be a second truth.
 	runnerDefault := ""
+	runnerProj := runnerProject(os.Getenv, *cfgPath)
 	if strings.HasPrefix(*cfgPath, "local>") {
 		local, err := fetchConfig(ctx, platform, *cfgPath)
 		if err != nil {
@@ -141,11 +142,16 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		store = s
 	}
 	one := &runOptions{
-		cfgPath: *cfgPath, runnerDefault: runnerDefault, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
+		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: dashboardTitle(os.Getenv),
 	}
-	one.datasources = wire.Datasources(one.client, datasourceOptions(env))
+	dsOpts, err := datasourceOptions(env, os.Getenv)
+	if err != nil {
+		return err
+	}
+	one.datasources = wire.Datasources(one.client, dsOpts)
+	one.dsOptions = dsOpts
 	if *indexPath != "" {
 		idx, err := report.LoadIndex(*indexPath)
 		if err != nil {
@@ -300,6 +306,7 @@ func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platf
 type runOptions struct {
 	cfgPath       string
 	runnerDefault string
+	runnerProject string
 	cache         lookup.Cache
 	cacheTTL      time.Duration
 	dryRun        bool
@@ -311,6 +318,7 @@ type runOptions struct {
 	// datasources, when set, replaces the wired registry: a test hands in
 	// a canned one and proves the live path without a network.
 	datasources lookup.Registry
+	dsOptions   wire.DatasourceOptions
 	identity    git.Identity
 	signing     git.Signing
 	platform    publish.Platform
@@ -540,8 +548,9 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		Presets:       preset.Remote{Reader: o.platform, Ctx: ctx},
 		Released:      o.released,
 		RunnerDefault: o.runnerDefault,
+		RunnerProject: o.runnerProject,
 	}
-	opts.CustomDatasources = customDatasourcesHook(o.client)
+	opts.CustomDatasources = customDatasourcesHook(o.client, o.dsOptions)
 	// The dashboard's ticked boxes, read before planning: an approval, a
 	// window or a release age lifted by a person, a rebase asked for.
 	if !o.dryRun {

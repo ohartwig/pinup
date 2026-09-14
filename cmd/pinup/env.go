@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ohartwig/pinup/datasource/apkds"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/plugin"
 	"github.com/ohartwig/pinup/wire"
@@ -93,10 +94,21 @@ func firstSet(getenv func(string) string, names ...string) string {
 // (PINUP_REGISTRY_HOST, else CI_REGISTRY), the realm must be the instance
 // over TLS, and the scope is the one a lookup needs (the datasource sees
 // to that). Without a registry host no registry credential exists.
-func datasourceOptions(p platformEnv) wire.DatasourceOptions {
+//
+// PINUP_APK_VIEWS adds apk datasources served natively, a JSON object by
+// the name the configuration uses: {"custom.koh-apk": {"mirrors": [...],
+// "arches": ["x86_64", "aarch64"]}}. They join wire.DefaultApkViews; a
+// name already there is replaced, so an installation with a mirror of
+// Wolfi lists it under custom.wolfi with the public repository.
+func datasourceOptions(p platformEnv, getenv func(string) string) (wire.DatasourceOptions, error) {
 	o := wire.DatasourceOptions{GitLabURL: p.URL}
+	views, err := apkViews(getenv)
+	if err != nil {
+		return o, err
+	}
+	o.ApkViews = views
 	if p.Host == "" || p.Token == "" || p.RegistryHost == "" {
-		return o
+		return o, nil
 	}
 	user := "oauth2"
 	if p.Header == "JOB-TOKEN" {
@@ -108,7 +120,34 @@ func datasourceOptions(p platformEnv) wire.DatasourceOptions {
 		}
 		return user, p.Token, true
 	}
-	return o
+	return o, nil
+}
+
+// apkViews reads PINUP_APK_VIEWS over the default views.
+func apkViews(getenv func(string) string) (map[string]apkds.View, error) {
+	views := wire.DefaultApkViews()
+	raw := getenv("PINUP_APK_VIEWS")
+	if raw == "" {
+		return views, nil
+	}
+	var extra map[string]struct {
+		Mirrors []string `json:"mirrors"`
+		Arches  []string `json:"arches"`
+	}
+	if err := json.Unmarshal([]byte(raw), &extra); err != nil {
+		return nil, fmt.Errorf("PINUP_APK_VIEWS: %w", err)
+	}
+	for name, v := range extra {
+		if !strings.HasPrefix(name, "custom.") || len(v.Mirrors) == 0 {
+			return nil, fmt.Errorf("PINUP_APK_VIEWS: %s needs a custom. name and at least one mirror", name)
+		}
+		arches := v.Arches
+		if len(arches) == 0 {
+			arches = []string{"x86_64", "aarch64"}
+		}
+		views[name] = apkds.View{Mirrors: v.Mirrors, Arches: arches}
+	}
+	return views, nil
 }
 
 // instancePaths are the API paths the platform token may reach through

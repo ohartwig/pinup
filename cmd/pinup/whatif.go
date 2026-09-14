@@ -63,6 +63,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	if err != nil {
 		return err
 	}
+	project := runnerProject(os.Getenv, *cfgPath)
 	if strings.HasPrefix(*cfgPath, "local>") {
 		if env.Host == "" {
 			return fmt.Errorf("whatif: --config %s needs the instance: set PINUP_GITLAB_URL or CI_SERVER_URL", *cfgPath)
@@ -75,12 +76,17 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		*cfgPath = local
 	}
 	client := httpClient(env)
+	dsOpts, err := datasourceOptions(env, os.Getenv)
+	if err != nil {
+		return err
+	}
 	opts := whatifOptions{
 		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: now,
-		Datasources: wire.Datasources(client, datasourceOptions(env)),
-		CacheTTL:    *cacheTTL,
+		Datasources:   wire.Datasources(client, dsOpts),
+		CacheTTL:      *cacheTTL,
+		RunnerProject: project,
 	}
-	opts.CustomDatasources = customDatasourcesHook(client)
+	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
 	advisories := &osv.Client{}
 	opts.Advisories = advisories
 	notes := &changelog.Fetcher{Client: client, GitLabURL: env.URL, TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
@@ -194,20 +200,42 @@ type whatifOptions struct {
 	// must match; a self-hosted setting, never a repository's. nil means
 	// the configuration file's own allowedCommands, if any.
 	AllowedCommands []string
-	// RunnerDefault is the runner's default.json, what the estate's
-	// repositories extend as local>devops/renovate-runner. Empty means
-	// ConfigPath is that file. It differs for the fast lane, whose
-	// --config is release-fast.json and itself extends the default.
+	// RunnerDefault is the runner's default.json, what the repositories
+	// extend as local><RunnerProject>. Empty means ConfigPath is that
+	// file. It differs for the fast lane, whose --config is
+	// release-fast.json and itself extends the default.
 	RunnerDefault string
+	// RunnerProject is the platform project the repositories extend the
+	// runner configuration from; empty means defaultRunnerProject.
+	RunnerProject string
 }
 
-// runnerAliases are the names the estate's repositories extend the runner
+// defaultRunnerProject is the project the estate's repositories extend -
+// what --config local>... names, or PINUP_RUNNER_PROJECT, overrides it.
+const defaultRunnerProject = "devops/renovate-runner"
+
+// runnerAliases are the names the repositories extend the runner
 // configuration by. They resolve to the runner's own file without a fetch
 // and without changing a byte in any renovate.json.
-var runnerAliases = []string{
-	"local>devops/renovate-runner",
-	"local>devops/renovate-runner:default.json",
-	"local>devops/renovate-runner:default",
+func runnerAliases(project string) []string {
+	if project == "" {
+		project = defaultRunnerProject
+	}
+	return []string{"local>" + project, "local>" + project + ":default.json", "local>" + project + ":default"}
+}
+
+// runnerProject is the project the runner configuration lives in: the one
+// --config local>... names, else PINUP_RUNNER_PROJECT, else the default.
+func runnerProject(getenv func(string) string, cfgPath string) string {
+	if strings.HasPrefix(cfgPath, "local>") {
+		if project, _, _, err := preset.ParseLocal(strings.TrimPrefix(cfgPath, "local>")); err == nil && project != "" {
+			return project
+		}
+	}
+	if v := getenv("PINUP_RUNNER_PROJECT"); v != "" {
+		return v
+	}
+	return defaultRunnerProject
 }
 
 // resolveConfig resolves the configuration a repository runs under.
@@ -218,7 +246,7 @@ var runnerAliases = []string{
 // Renovate composes them in production, where the repository's own keys
 // and rules come last and decide (testdata/renovate/.../presets/README.md).
 // A repository without one runs under the runner's file alone.
-func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
+func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
 	global, err := config.LoadFile(cfgPath)
 	if err != nil {
 		return config.Decoded{}, nil, nil, err
@@ -232,7 +260,7 @@ func resolveConfig(root, cfgPath, runnerDefault string, remote preset.Source) (c
 		aliasDoc = def.Raw
 	}
 	aliases := preset.Aliases{}
-	for _, name := range runnerAliases {
+	for _, name := range runnerAliases(runnerProject) {
 		aliases[name] = aliasDoc
 	}
 	sources := preset.Chain{aliases}
@@ -331,7 +359,7 @@ type whatifRun struct {
 // files and opens the plan.
 func (r *whatifRun) configure() error {
 	o := r.o
-	decoded, resolved, presetWarnings, err := resolveConfig(o.Root, o.ConfigPath, o.RunnerDefault, o.Presets)
+	decoded, resolved, presetWarnings, err := resolveConfig(o.Root, o.ConfigPath, o.RunnerDefault, o.RunnerProject, o.Presets)
 	if err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
@@ -979,9 +1007,13 @@ func (s advisoryStore) Put(key string, payload []byte) {
 
 // customDatasourcesHook lets whatif build the datasources a configuration
 // declares, with the same client the fixed ones use.
-func customDatasourcesHook(client *httpx.Client) func(map[string]model.CustomDatasource) lookup.Registry {
+func customDatasourcesHook(client *httpx.Client, o wire.DatasourceOptions) func(map[string]model.CustomDatasource) lookup.Registry {
+	views := o.ApkViews
+	if views == nil {
+		views = wire.DefaultApkViews()
+	}
 	return func(defs map[string]model.CustomDatasource) lookup.Registry {
-		return wire.CustomDatasources(client, defs)
+		return wire.CustomDatasources(client, defs, views)
 	}
 }
 

@@ -772,3 +772,27 @@ func TestADashboardBoxLiftsTheHoldItNames(t *testing.T) {
 		}
 	}
 }
+
+// The runner project the repositories extend by alias comes from --config
+// when that is a local> name, from PINUP_RUNNER_PROJECT otherwise, and is
+// the estate's default when neither says.
+func TestRunnerProjectComesFromConfigOrEnvironment(t *testing.T) {
+	env := func(m map[string]string) func(string) string { return func(k string) string { return m[k] } }
+	for _, tc := range []struct {
+		env     map[string]string
+		cfgPath string
+		want    string
+	}{
+		{nil, "/tmp/default.json", "devops/renovate-runner"},
+		{map[string]string{"PINUP_RUNNER_PROJECT": "platform/bot"}, "/tmp/default.json", "platform/bot"},
+		{map[string]string{"PINUP_RUNNER_PROJECT": "platform/bot"}, "local>tools/runner:release-fast.json", "tools/runner"},
+		{nil, "local>tools/runner", "tools/runner"},
+	} {
+		if got := runnerProject(env(tc.env), tc.cfgPath); got != tc.want {
+			t.Errorf("%v %s: got %q, want %q", tc.env, tc.cfgPath, got, tc.want)
+		}
+	}
+	if got := runnerAliases("platform/bot"); len(got) != 3 || got[0] != "local>platform/bot" || got[2] != "local>platform/bot:default" {
+		t.Errorf("aliases = %v", got)
+	}
+}
