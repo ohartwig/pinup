@@ -1,3 +1,19 @@
+## [0.16.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.15.0...v0.16.0) (2026-09-14)
+
+### :sparkles: Features
+
+* **cmd:** the runner project and the apk views come from the environment ([456771f](https://git.ole-hartwig.eu/pinup/pinup/commit/456771faebb83ccfe009dc713a48ad632d207c80))
+
+### :white_check_mark: Tests
+
+* a public fixture root of the estate's shape, and what it found ([cdcb0a1](https://git.ole-hartwig.eu/pinup/pinup/commit/cdcb0a1e78c4d19d8eee9fbfde76f95cfd012019))
+* fixtures split into the shared Renovate captures and the estate's own ([b0a954f](https://git.ole-hartwig.eu/pinup/pinup/commit/b0a954f1dfaa398b3a830b92892a7937126f02dc))
+
+### :repeat: Chores
+
+* **lint:** the fixture Deployment declares its security context ([90af4c5](https://git.ole-hartwig.eu/pinup/pinup/commit/90af4c55fa1acc77d62ceb0ece015e2df55af03a))
+* **lint:** the fixture Containerfiles pass hadolint ([949cea9](https://git.ole-hartwig.eu/pinup/pinup/commit/949cea978ae1bf4c51ddb912b008957ecc7667cc))
+
 ## [0.15.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.14.4...v0.15.0) (2026-09-14)
 
 ### :sparkles: Features
