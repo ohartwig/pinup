@@ -467,9 +467,9 @@ func IsPipelineFile(path string) bool {
 		return true
 	}
 	for _, dir := range []string{
-		".gitlab/",           // GitLab: included pipeline files
-		".github/workflows/", // GitHub Actions
-		".github/actions/",   // GitHub Actions: local actions
+		".gitlab/",                                 // GitLab: included pipeline files
+		".github/workflows/",                       // GitHub Actions
+		".github/actions/",                         // GitHub Actions: local actions
 		".forgejo/workflows/", ".gitea/workflows/", // Forgejo, Gitea
 		".woodpecker/", ".circleci/", ".buildkite/", ".azure-pipelines/",
 	} {
