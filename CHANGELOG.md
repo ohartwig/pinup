@@ -1,3 +1,18 @@
+## [0.24.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.3...v0.24.0) (2026-09-15)
+
+### :sparkles: Features
+
+* **datasource:** node-version and pypi, with a pep440 versioning ([9451a8e](https://git.ole-hartwig.eu/pinup/pinup/commit/9451a8ee619b7b6bb052c7c46c6af6c8db8fc9a4))
+* **terraform:** a provider bump moves .terraform.lock.hcl with it ([17acc1b](https://git.ole-hartwig.eu/pinup/pinup/commit/17acc1bf628451c6762386e34e21a5c263e71ad0))
+
+### :bug: Fixes
+
+* **terraform:** bound a provider zip entry by its header's size ([148b8ff](https://git.ole-hartwig.eu/pinup/pinup/commit/148b8ff10efdc66887414402937d4126fe20eaff))
+
+### :white_check_mark: Tests
+
+* **golden:** pyver on the public fixture root too ([344c4f3](https://git.ole-hartwig.eu/pinup/pinup/commit/344c4f3de394a3ab0821d5cfa5b237e11953c87f))
+
 ## [0.23.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.2...v0.23.3) (2026-09-15)
 
 ### :bug: Fixes
