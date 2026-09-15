@@ -275,6 +275,12 @@ func TestConcurrentLimitCountsOpenRequests(t *testing.T) {
 	if held := p.Updates[1]; len(held.Blocks) != 1 || held.Blocks[0].Reason != model.BlockConcurrentLimit || !strings.Contains(held.Blocks[0].Note, "3 merge requests already open") {
 		t.Errorf("held update %+v", held)
 	}
+	// The branch carries the reason too: the shadow comparator buckets
+	// on it, and a limit-held branch without one is "planned, nobody
+	// opened it".
+	if p.Branches[1].SuppressedBy != model.BlockConcurrentLimit || p.Branches[0].SuppressedBy != "" {
+		t.Errorf("branch reasons %q / %q", p.Branches[0].SuppressedBy, p.Branches[1].SuppressedBy)
+	}
 }
 
 // fakeTasks stands in for the toolchain: it writes whatever files the test

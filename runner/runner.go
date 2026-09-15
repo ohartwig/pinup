@@ -598,6 +598,13 @@ func hold(plan *model.Plan, b *model.Branch, block model.Block) {
 		}
 	}
 	b.Edits = nil
+	// The branch says so too: the shadow comparator buckets on the
+	// branch's reason, and a limit-held branch without one read as a
+	// branch pinup plans and nobody opens (measured 2026-09-15: four in
+	// koh-gitops, red for the second run running).
+	if b.SuppressedBy == "" {
+		b.SuppressedBy = block.Reason
+	}
 }
 
 func union(a, b []string) []string {
