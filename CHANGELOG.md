@@ -1,3 +1,23 @@
+## [0.22.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.21.1...v0.22.0) (2026-09-15)
+
+### :sparkles: Features
+
+* **npm:** a workspace member reads its versions off the root lock, and a bump refreshes that lock where it is ([8c29360](https://git.ole-hartwig.eu/pinup/pinup/commit/8c29360b5aa1b816eafe3c00485787d5099c0783))
+
+### :bug: Fixes
+
+* **npmds:** a version whose deprecation was revoked carries deprecated: false, and the packument still decodes ([2d927de](https://git.ole-hartwig.eu/pinup/pinup/commit/2d927de6bb41625b37350295aacebfaab7976d87))
+
+### :white_check_mark: Tests
+
+* **fixtures:** the estate configuration as of renovate-runner!341 ([3011570](https://git.ole-hartwig.eu/pinup/pinup/commit/3011570d7fac1a005df986042313b7e108331932))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update ci components ([0280a12](https://git.ole-hartwig.eu/pinup/pinup/commit/0280a1208a734bb4e3b7719607d6d1b13c4926d2))
+* extension-clean-export 1.4.1 - the mirror exports its token ([9e419f1](https://git.ole-hartwig.eu/pinup/pinup/commit/9e419f1b0abb43315a8dfd731283d8fcd00c8452))
+* the mirror from extension-clean-export/github-mirror, not a copy of the job ([fb04057](https://git.ole-hartwig.eu/pinup/pinup/commit/fb0405798499f81cbaa933ce9ba665a089746fcb))
+
 ## [0.21.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.21.0...v0.21.1) (2026-09-14)
 
 ### :bug: Fixes
