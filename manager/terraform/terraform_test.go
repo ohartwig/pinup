@@ -469,3 +469,61 @@ provider "registry.opentofu.org/hashicorp/aws" {
 		t.Errorf("the default registry was recorded: %v", regs)
 	}
 }
+
+// A provider bump moves the lock with it: the version string and the whole
+// hashes list, by byte range; constraints and the other providers stay.
+func TestLockEditsMoveOneProvider(t *testing.T) {
+	lock := []byte(`# This file is maintained automatically by "tofu init".
+
+provider "registry.opentofu.org/hashicorp/aws" {
+  version     = "6.64.0"
+  constraints = ">= 5.40.0"
+  hashes = [
+    "h1:old1=",
+    "zh:aaaa",
+  ]
+}
+
+provider "registry.opentofu.org/cloudflare/cloudflare" {
+  version     = "5.0.0"
+  constraints = "~> 5.0"
+  hashes = [
+    "h1:cf=",
+  ]
+}
+`)
+	edits, err := LockEdits(".terraform.lock.hcl", lock, "hashicorp/aws", "6.65.0", []string{"h1:new1=", "h1:new2=", "zh:bbbb"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(edits) != 2 || edits[0].Old != "6.64.0" || edits[0].New != "6.65.0" {
+		t.Fatalf("edits %+v", edits)
+	}
+	out := string(lock[:edits[0].Start]) + edits[0].New + string(lock[edits[0].End:edits[1].Start]) + edits[1].New + string(lock[edits[1].End:])
+	want := `# This file is maintained automatically by "tofu init".
+
+provider "registry.opentofu.org/hashicorp/aws" {
+  version     = "6.65.0"
+  constraints = ">= 5.40.0"
+  hashes = [
+    "h1:new1=",
+    "h1:new2=",
+    "zh:bbbb",
+  ]
+}
+
+provider "registry.opentofu.org/cloudflare/cloudflare" {
+  version     = "5.0.0"
+  constraints = "~> 5.0"
+  hashes = [
+    "h1:cf=",
+  ]
+}
+`
+	if out != want {
+		t.Errorf("rewritten lock:\n%s", out)
+	}
+	if _, err := LockEdits(".terraform.lock.hcl", lock, "hashicorp/google", "1.0.0", nil); err == nil {
+		t.Error("a provider the lock does not carry must be an error")
+	}
+}

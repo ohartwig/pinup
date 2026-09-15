@@ -23,6 +23,7 @@ import (
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/manager/terraform"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/osv"
 	"github.com/ohartwig/pinup/planner"
@@ -345,6 +346,10 @@ type whatifRun struct {
 	// locks maps "manager|dir" to the lock file present there, so the
 	// refresh task and the maintenance branch name the one that exists.
 	locks map[string]string
+	// lockPaths maps "manager|dir" to the path of the lock a manifest's
+	// versions were read from - beside it or, for terraform, an ancestor's
+	// - for the edit that moves the lock with the manifest.
+	lockPaths map[string]string
 
 	datasources   lookup.Registry
 	fetcher       *lookup.Fetcher
@@ -444,6 +449,7 @@ func (r *whatifRun) extractAll() error {
 	// locks remembers the lock files the run read, by manager and
 	// directory: a manifest edit there needs a lock refresh task.
 	r.locks = map[string]string{}
+	r.lockPaths = map[string]string{}
 	for _, match := range r.found.Matches {
 		body, ok := r.contents[match.Path]
 		if !ok {
@@ -466,6 +472,9 @@ func (r *whatifRun) extractAll() error {
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		lock := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
+		if lock.versions != nil {
+			r.lockPaths[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = filepath.Join(lock.dir, lock.name)
+		}
 		if lock.versions != nil && lock.dir == filepath.Dir(match.Path) {
 			// The lock beside the manifest is the one maintenance refreshes
 			// and a task regenerates; a terraform ancestor's lock only says
@@ -690,6 +699,18 @@ func (r *whatifRun) realise() error {
 		}
 		edits, warnings := editsFor(r.ctx, branches[i], plan.Updates, r.contents, r.decoded, r.managers)
 		plan.Warnings = append(plan.Warnings, warnings...)
+		// A terraform provider bump moves its lock too, in the same branch:
+		// the version and the hashes of the new release, computed here,
+		// never by a tool on the checkout. A lock that cannot be moved
+		// holds the branch - a manifest ahead of its lock is a branch
+		// `tofu init` refuses (measured 2026-09-15: koh-infra).
+		if lockEdits, err := r.terraformLockEdits(o.Root, branches[i], plan.Updates); err != nil {
+			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "plan", File: branches[i].Name, Msg: err.Error()})
+			holdBranch(&branches[i], plan.Updates, model.Block{Reason: model.BlockTaskRefused, Org: model.Origin{Source: "pinup", Rule: model.NoRule}, Note: err.Error()})
+			continue
+		} else {
+			edits = append(edits, lockEdits...)
+		}
 		branches[i].Edits = edits
 		// The commands the branch needs beyond its edits: a lock refresh
 		// where a manifest with a lock changed, and the configuration's
@@ -1431,4 +1452,57 @@ func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[stri
 		})
 	}
 	return out
+}
+
+// providerHasher is what the terraform-provider datasource offers beyond
+// lookup.Datasource: the hashes a lock records for a version.
+type providerHasher interface {
+	ProviderHashes(ctx context.Context, ref lookup.Ref, version string) ([]string, error)
+}
+
+// terraformLockEdits returns the edits that move the .terraform.lock.hcl
+// entries of a branch's terraform provider updates, one per provider. A
+// provider without a lock in its manifest's reach needs none.
+func (r *whatifRun) terraformLockEdits(root string, b model.Branch, updates []model.Update) ([]model.Edit, error) {
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	var edits []model.Edit
+	done := map[string]bool{}
+	for _, u := range updates {
+		if !keys[u.Key()] || u.Blocked() || u.Dep.Manager != "terraform" || u.Dep.Datasource != "terraform-provider" {
+			continue
+		}
+		lockPath := r.lockPaths["terraform|"+filepath.Dir(u.Dep.File)]
+		if lockPath == "" {
+			continue
+		}
+		name := u.Dep.PackageName
+		if name == "" {
+			name = u.Dep.DepName
+		}
+		if done[lockPath+"|"+name] {
+			continue
+		}
+		done[lockPath+"|"+name] = true
+		hasher, ok := r.datasources["terraform-provider"].(providerHasher)
+		if !ok {
+			return nil, fmt.Errorf("%s: the terraform-provider datasource computes no lock hashes", lockPath)
+		}
+		hashes, err := hasher.ProviderHashes(r.ctx, lookup.Ref{Datasource: "terraform-provider", PackageName: name, RegistryURLs: u.Dep.RegistryURLs}, u.NewValue)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %s: %w", lockPath, name, err)
+		}
+		lock, err := os.ReadFile(filepath.Join(root, lockPath))
+		if err != nil {
+			return nil, err
+		}
+		es, err := terraform.LockEdits(lockPath, lock, name, u.NewValue, hashes)
+		if err != nil {
+			return nil, err
+		}
+		edits = append(edits, es...)
+	}
+	return edits, nil
 }

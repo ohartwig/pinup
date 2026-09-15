@@ -72,6 +72,7 @@
 package terraform
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -514,4 +515,58 @@ func lastTwoSegments(s string) string {
 		return ""
 	}
 	return segs[len(segs)-2] + "/" + segs[len(segs)-1]
+}
+
+// LockEdits returns the edits that move one provider's entry in a
+// .terraform.lock.hcl to version, with the hashes the registry's release
+// yields (datasource/terraformds.ProviderHashes): the version string and
+// the whole hashes list, each a byte range, the constraints line untouched
+// - it mirrors the manifest's own constraint, which the manifest edit
+// moves or does not. source names the provider as the lock does
+// ("registry.opentofu.org/hashicorp/aws") or as the manifest does
+// ("hashicorp/aws"); the last two segments decide. Until 2026-09-15 a
+// provider bump left the lock behind, and `tofu init` refused the branch.
+func LockEdits(path string, lock []byte, source, version string, hashes []string) ([]model.Edit, error) {
+	want := lastTwoSegments(source)
+	if want == "" {
+		want = source
+	}
+	for _, it := range parseBody(lock) {
+		if !it.isBlock || it.blockType != "provider" || len(it.labels) != 1 || lastTwoSegments(it.labels[0].raw(lock)) != want {
+			continue
+		}
+		current, span, ok := findStringAttr(lock, it.body, "version")
+		if !ok {
+			return nil, fmt.Errorf("terraform: %s: provider %s has no version", path, want)
+		}
+		// The hashes list follows the version inside the same block: from
+		// its opening bracket to the closing one, no brackets nest in it.
+		rest := lock[span.end:]
+		limit := len(rest)
+		if next := bytes.Index(rest, []byte("\nprovider ")); next >= 0 {
+			limit = next
+		}
+		hi := bytes.Index(rest[:limit], []byte("hashes"))
+		if hi < 0 {
+			return nil, fmt.Errorf("terraform: %s: provider %s has no hashes list", path, want)
+		}
+		open := bytes.IndexByte(rest[hi:limit], '[')
+		closeIdx := bytes.IndexByte(rest[hi:limit], ']')
+		if open < 0 || closeIdx < open {
+			return nil, fmt.Errorf("terraform: %s: provider %s: hashes list not bracketed", path, want)
+		}
+		listStart := span.end + hi + open + 1
+		listEnd := span.end + hi + closeIdx
+		var b strings.Builder
+		b.WriteString("\n")
+		for _, h := range hashes {
+			b.WriteString("    \"" + h + "\",\n")
+		}
+		b.WriteString("  ")
+		return []model.Edit{
+			{File: path, Start: span.start, End: span.end, Old: current, New: version, Manager: name},
+			{File: path, Start: listStart, End: listEnd, Old: string(lock[listStart:listEnd]), New: b.String(), Manager: name},
+		}, nil
+	}
+	return nil, fmt.Errorf("terraform: %s: no provider entry for %s", path, want)
 }

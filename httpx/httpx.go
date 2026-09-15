@@ -433,3 +433,37 @@ func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rul
 func drain(r io.Reader) {
 	_, _ = io.Copy(io.Discard, io.LimitReader(r, 64<<10))
 }
+
+// Stream fetches rawURL and hands its body to read while it arrives, for
+// the one thing a datasource downloads that no cache and no MaxBody should
+// hold: a provider's zip, hashed for a lock file and discarded. The same
+// credentials and user agent as Get, no conditional headers, one attempt -
+// a body that fails mid-way is the caller's to retry, if it wants to. Only a
+// 2xx reaches read; anything else is a StatusError.
+func (c *Client) Stream(ctx context.Context, rawURL string, read func(io.Reader) error) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("httpx: invalid url: %w", err)
+	}
+	rule, hasRule := c.ruleFor(u.Host)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return fmt.Errorf("httpx: build request: %w", err)
+	}
+	if c.userAgent != "" {
+		req.Header.Set("User-Agent", c.userAgent)
+	}
+	if hasRule && c.pathAllowed(rule, req.URL.Path) {
+		applyHostRule(req, rule)
+	}
+	resp, err := c.hc.Do(req)
+	if err != nil {
+		return fmt.Errorf("httpx: request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		drain(resp.Body)
+		return &StatusError{StatusCode: resp.StatusCode, URL: rawURL}
+	}
+	return read(resp.Body)
+}

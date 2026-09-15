@@ -897,3 +897,84 @@ func TestAnNpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
 		}
 	}
 }
+
+// hashingDS is a terraform-provider datasource that also answers the
+// lock's hashes, as the real one does.
+type hashingDS struct {
+	cannedDS
+	hashes map[string][]string
+	asked  []string
+}
+
+func (h *hashingDS) ProviderHashes(_ context.Context, ref lookup.Ref, version string) ([]string, error) {
+	h.asked = append(h.asked, ref.PackageName+"@"+version)
+	hs, ok := h.hashes[version]
+	if !ok {
+		return nil, fmt.Errorf("no release %s", version)
+	}
+	return hs, nil
+}
+
+// A terraform provider bump moves the .terraform.lock.hcl with it, in the
+// same branch: the version and the hashes the registry's release yields.
+// The lock may sit at an ancestor of the manifest.
+func TestATerraformProviderBumpMovesTheLock(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(root+"/modules/dns", 0o755)
+	os.WriteFile(root+"/modules/dns/versions.tf", []byte(`terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
+  }
+}
+`), 0o644)
+	os.WriteFile(root+"/.terraform.lock.hcl", []byte(`provider "registry.opentofu.org/hashicorp/aws" {
+  version     = "6.64.0"
+  constraints = "6.64.0"
+  hashes = [
+    "h1:old=",
+    "zh:aaaa",
+  ]
+}
+`), 0o644)
+	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
+	at := time.Date(2026, 9, 15, 14, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(t, at)
+	opts.Root, opts.RepoName = root, "devops/koh-infra"
+	ds := &hashingDS{cannedDS: cannedDS{name: "terraform-provider", scheme: "hashicorp", releases: map[string][]string{"hashicorp/aws": {"6.64.0", "6.65.0"}}},
+		hashes: map[string][]string{"6.65.0": {"h1:new=", "zh:bbbb"}}}
+	opts.Datasources["terraform-provider"] = ds
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var b *model.Branch
+	for i := range plan.Branches {
+		if strings.Contains(plan.Branches[i].Name, "aws") {
+			b = &plan.Branches[i]
+		}
+	}
+	if b == nil {
+		t.Fatalf("no aws branch: %+v warnings %v", plan.Branches, plan.Warnings)
+	}
+	files := map[string]int{}
+	for _, e := range b.Edits {
+		files[e.File]++
+	}
+	if files["modules/dns/versions.tf"] != 1 || files[".terraform.lock.hcl"] != 2 {
+		t.Errorf("edits by file %v; want the manifest's one and the lock's two (version, hashes)", files)
+	}
+	if len(ds.asked) != 1 || ds.asked[0] != "hashicorp/aws@6.65.0" {
+		t.Errorf("hashes asked for %v", ds.asked)
+	}
+	for _, e := range b.Edits {
+		if e.File == ".terraform.lock.hcl" && strings.Contains(e.New, "h1:new=") && !strings.Contains(e.New, "zh:bbbb") {
+			t.Errorf("lock hashes edit %q", e.New)
+		}
+	}
+	if b.SuppressedBy != "" {
+		t.Errorf("branch held: %s", b.SuppressedBy)
+	}
+}
