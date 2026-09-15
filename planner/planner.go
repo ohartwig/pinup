@@ -538,7 +538,11 @@ func (p *planning) withDigests(ups []model.Update) ([]model.Update, string, *mod
 			kept = append(kept, u)
 			continue
 		}
-		digest, err := lookupDigest(req, *d, u.NewVersion)
+		// The registry knows the tag as the file spells it, not the version
+		// the scheme reads off it: v2.28.0 under semver is 2.28.0, and
+		// asking for that tag is a 404 (measured 2026-09-15: ntfy in
+		// koh-gitops, "minor to v2.28.0 not planned").
+		digest, err := lookupDigest(req, *d, u.NewValue)
 		if err != nil {
 			warn = &model.Warning{Stage: "plan", File: d.File,
 				Msg: fmt.Sprintf("%s: %s to %s not planned: %v", d.DepName, u.Type, u.NewValue, err)}

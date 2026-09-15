@@ -445,6 +445,14 @@ func TestDigestPinnedReferencesMoveWholeOrNotAtAll(t *testing.T) {
 	if len(res.Updates) != 1 || res.Updates[0].NewValue != "3.23" || res.Updates[0].NewDigest != "sha256:new23" {
 		t.Fatalf("want 3.23@sha256:new23, got %+v", res.Updates)
 	}
+	// A tag with a v the scheme drops is asked for as the file spells it.
+	vpinned := dep("ntfy", "v2.27.0", "semver")
+	vpinned.CurrentDigest = "sha256:old27"
+	digests["v2.28.0"] = "sha256:new28"
+	res = Plan(req(vpinned, releases("v2.27.0", "v2.28.0")))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "v2.28.0" || res.Updates[0].NewDigest != "sha256:new28" {
+		t.Fatalf("want v2.28.0@sha256:new28, got %+v warnings %v", res.Updates, res.Warnings)
+	}
 	// The tag is current but its digest moved: a digest update.
 	res = Plan(req(pinned, releases("3.22")))
 	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdateDigest || res.Updates[0].NewValue != "3.22" || res.Updates[0].NewDigest != "sha256:new22" {
