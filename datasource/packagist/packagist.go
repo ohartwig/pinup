@@ -24,6 +24,7 @@
 package packagist
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -216,15 +217,22 @@ func (d *Datasource) fetchP2(ctx context.Context, base, metadataURLTemplate, pkg
 	}
 
 	var doc struct {
-		Packages map[string][]map[string]json.RawMessage `json:"packages"`
-		Minified string                                  `json:"minified"`
+		Packages map[string]json.RawMessage `json:"packages"`
+		Minified string                     `json:"minified"`
 	}
 	if err := json.Unmarshal(resp.Body, &doc); err != nil {
 		return nil, false, fmt.Errorf("packagist: registry %s: parsing metadata for %s: %w", base, pkgVariant, err)
 	}
 
-	list, ok := doc.Packages[pkgVariant]
-	if !ok || len(list) == 0 {
+	rawList, ok := doc.Packages[pkgVariant]
+	if !ok {
+		return nil, false, nil
+	}
+	list, err := versionList(rawList)
+	if err != nil {
+		return nil, false, fmt.Errorf("packagist: registry %s: parsing metadata for %s: %w", base, pkgVariant, err)
+	}
+	if len(list) == 0 {
 		return nil, false, nil
 	}
 	if doc.Minified == minifiedComposer2 {
@@ -240,6 +248,31 @@ func (d *Datasource) fetchP2(ctx context.Context, base, metadataURLTemplate, pkg
 		entries = append(entries, e)
 	}
 	return entries, true, nil
+}
+
+// versionList reads a package's versions out of a metadata document. The
+// Composer 2 format lists them as an array; a registry may answer the
+// metadata-url with the provider format instead, an object keyed by
+// version string - GitLab's group registry does (measured 2026-09-16:
+// every package at /group/175/-/packages/composer/p2/), and Composer reads
+// both the same way, so this does too. The object's keys are sorted for a
+// stable order; the array's order is the registry's.
+func versionList(raw json.RawMessage) ([]map[string]json.RawMessage, error) {
+	trimmed := bytes.TrimSpace(raw)
+	if len(trimmed) > 0 && trimmed[0] == '[' {
+		var list []map[string]json.RawMessage
+		err := json.Unmarshal(trimmed, &list)
+		return list, err
+	}
+	var byVersion map[string]map[string]json.RawMessage
+	if err := json.Unmarshal(trimmed, &byVersion); err != nil {
+		return nil, err
+	}
+	list := make([]map[string]json.RawMessage, 0, len(byVersion))
+	for _, k := range slices.Sorted(maps.Keys(byVersion)) {
+		list = append(list, byVersion[k])
+	}
+	return list, nil
 }
 
 // lookupInline reads a small repository's packages.json that lists every

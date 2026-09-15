@@ -5,6 +5,7 @@ package packagist
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -95,11 +96,33 @@ func (f *gitlabFake) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
-	if r.URL.Path != "/packages.json" {
+	// The shape GitLab's group registry answers with (measured 2026-09-16
+	// at /api/v4/group/175/-/packages/composer/): an empty inline list, a
+	// host-root-relative metadata-url, and per package a document in the
+	// provider format - an object keyed by version, not the Composer 2
+	// array. A fake that served the inline format hid exactly that, and
+	// the metadata parser refused every first-party package for it.
+	const p2 = "/api/v4/group/175/-/packages/composer/p2/"
+	switch {
+	case r.URL.Path == "/packages.json":
+		writeJSON(w, map[string]any{"packages": []any{}, "metadata-url": p2 + "%package%.json"})
+	case strings.HasPrefix(r.URL.Path, p2) && strings.HasSuffix(r.URL.Path, ".json"):
+		pkg := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, p2), ".json")
+		versions, ok := f.packages[pkg]
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		byVersion := map[string]any{}
+		for v, fields := range versions {
+			entry := map[string]any{"name": pkg, "version": v}
+			maps.Copy(entry, fields)
+			byVersion[v] = entry
+		}
+		writeJSON(w, map[string]any{"packages": map[string]any{pkg: byVersion}})
+	default:
 		w.WriteHeader(http.StatusNotFound)
-		return
 	}
-	writeJSON(w, map[string]any{"packages": f.packages})
 }
 
 func writeJSON(w http.ResponseWriter, body any) {
@@ -221,8 +244,9 @@ func TestFirstPartyPackageFoundOnGitLabSkipsPackagist(t *testing.T) {
 	if rs.RegistryURL != "https://"+gitlabHost {
 		t.Errorf("RegistryURL = %q, want the GitLab registry that answered", rs.RegistryURL)
 	}
-	if n := rt.Count(gitlabHost); n != 1 {
-		t.Errorf("gitlab requests = %d, want 1", n)
+	// packages.json, the p2 document, and the ~dev document (a miss).
+	if n := rt.Count(gitlabHost); n != 3 {
+		t.Errorf("gitlab requests = %d, want 3", n)
 	}
 	if n := rt.Count(packagistHost); n != 0 {
 		t.Errorf("packagist requests = %d, want 0 - a first-party hit must never fall through", n)
@@ -261,8 +285,8 @@ func TestPublicPackageFallsThroughToPackagistAfterGitLabMiss(t *testing.T) {
 	if rs.RegistryURL != "https://"+packagistHost {
 		t.Errorf("RegistryURL = %q, want packagist (the one that actually answered)", rs.RegistryURL)
 	}
-	if n := rt.Count(gitlabHost); n != 1 {
-		t.Errorf("gitlab requests = %d, want 1 (the miss)", n)
+	if n := rt.Count(gitlabHost); n != 2 {
+		t.Errorf("gitlab requests = %d, want 2 (packages.json and the miss)", n)
 	}
 	// packages.json + the stable p2 document + the (404) ~dev document.
 	if n := rt.Count(packagistHost); n != 3 {
@@ -313,7 +337,7 @@ func TestUnauthorizedOnPrivateRegistryDoesNotFallThrough(t *testing.T) {
 	rt.MustNotHaveBeenCalled("developer.mend.io")
 
 	if n := rt.Count(gitlabHost); n != 1 {
-		t.Errorf("gitlab requests = %d, want 1", n)
+		t.Errorf("gitlab requests = %d, want 1 (the refused packages.json)", n)
 	}
 	if n := rt.Count(packagistHost); n != 0 {
 		t.Errorf("packagist requests = %d, want 0 - an auth failure must not fall through", n)
@@ -343,8 +367,8 @@ func TestPackageInNoRegistryNamesBoth(t *testing.T) {
 	}
 	rt.MustNotHaveBeenCalled("developer.mend.io")
 
-	if n := rt.Count(gitlabHost); n != 1 {
-		t.Errorf("gitlab requests = %d, want 1", n)
+	if n := rt.Count(gitlabHost); n != 2 {
+		t.Errorf("gitlab requests = %d, want 2 (packages.json and the miss)", n)
 	}
 	// packages.json + the 404'd stable p2 document (no ~dev attempt once
 	// the stable lookup itself already came back not-found).
