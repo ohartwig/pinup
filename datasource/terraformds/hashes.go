@@ -147,11 +147,17 @@ func (d *Datasource) zipHash1(ctx context.Context, rawURL string) (string, error
 		if err != nil {
 			return "", fmt.Errorf("zip %s: %w", f.Name, err)
 		}
+		// An entry claims its own uncompressed size; the copy is bounded by
+		// that claim plus one byte, so a member that inflates past what its
+		// header promised is refused rather than hashed to exhaustion.
 		h := sha256.New()
-		_, err = io.Copy(h, rc)
+		n, err := io.CopyN(h, rc, int64(f.UncompressedSize64)+1)
 		rc.Close()
-		if err != nil {
+		if err != nil && err != io.EOF {
 			return "", fmt.Errorf("zip %s: %w", f.Name, err)
+		}
+		if n != int64(f.UncompressedSize64) {
+			return "", fmt.Errorf("zip %s: %d bytes, header promised %d", f.Name, n, f.UncompressedSize64)
 		}
 		entries = append(entries, entry{f.Name, fmt.Sprintf("%x", h.Sum(nil))})
 	}
