@@ -1,3 +1,13 @@
+## [0.24.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.0...v0.24.1) (2026-09-15)
+
+### :bug: Fixes
+
+* **packagist:** a metadata document in the provider format is read ([09ec106](https://git.ole-hartwig.eu/pinup/pinup/commit/09ec1061a450f6e59b85b18c28f30929abaccb46))
+
+### :repeat: Continuous Integrations
+
+* the fast lane starts after the binaries are uploaded ([da43818](https://git.ole-hartwig.eu/pinup/pinup/commit/da43818c11a5b7ab6daec20cb4919e9745e09ca3))
+
 ## [0.24.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.3...v0.24.0) (2026-09-15)
 
 ### :sparkles: Features
