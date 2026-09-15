@@ -1,3 +1,13 @@
+## [0.23.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.1...v0.23.2) (2026-09-15)
+
+### :bug: Fixes
+
+* **runner:** a branch held by a limit says so on the branch, as the comparator reads it ([aff1c6b](https://git.ole-hartwig.eu/pinup/pinup/commit/aff1c6b97997bfa1931f0a964a751e30d8d18686))
+
+### :white_check_mark: Tests
+
+* a synthetic vendor in the manager-10 examples ([9bc6958](https://git.ole-hartwig.eu/pinup/pinup/commit/9bc69588f3b1186eb638f94dd8a6749370eb5c91))
+
 ## [0.23.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.0...v0.23.1) (2026-09-15)
 
 ### :bug: Fixes
