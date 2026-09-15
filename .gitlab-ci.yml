@@ -51,10 +51,12 @@ include:
       # this project's own copy of the bot token (the group's copy is gone).
       mr-comments: 'true'
       comment-token-var: PINUP_GITLAB_TOKEN
-      # A release starts the runner's fast lane, which raises the golden
-      # image within minutes; until 2026-09-15 that bump waited for the
-      # hourly scan. The runner's job-token allowlist admits this group.
-      trigger-pinup: 'true'
+      # The runner's fast lane is not started from here: the component
+      # fires it when the tag is cut, which is before this tag pipeline has
+      # built and uploaded the binaries the golden image fetches (v0.24.0:
+      # the image's bump 404ed on fetch:binary eight minutes before upload
+      # ran). trigger:pinup below fires after upload instead.
+      trigger-pinup: 'false'
       rules-config:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
@@ -372,6 +374,23 @@ upload:
     - test -s "$CI_PROJECT_DIR/SHA256SUMS.sig" || { echo "SHA256SUMS.sig is missing or empty; refusing to publish an unsigned release"; exit 1; }
     - cp "$CI_PROJECT_DIR/SHA256SUMS" "$CI_PROJECT_DIR/SHA256SUMS.sig" dist/
     - cd dist && go run ../tools/upload.go "${PACKAGE_URL}/${CI_COMMIT_TAG}" *.zip *.sha256 pinup-linux-* pinup-darwin-* SHA256SUMS SHA256SUMS.sig
+
+# A release starts the runner's fast lane, which raises the golden image
+# within minutes; until 2026-09-15 that bump waited for the hourly scan.
+# After upload, not on the tag: the image's fetch:binary reads the package
+# this pipeline publishes. The runner's job-token allowlist admits this
+# group, so the bridge needs no token.
+trigger:pinup:
+  stage: release
+  needs: [upload]
+  rules:
+    - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+  variables:
+    RELEASED_PACKAGE: $CI_PROJECT_PATH
+    RELEASED_VERSION: $CI_COMMIT_TAG
+  trigger:
+    project: pinup/runner
+    branch: main
 
 release:links:
   stage: release
