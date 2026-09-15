@@ -26,8 +26,10 @@ import (
 	"github.com/ohartwig/pinup/datasource/gittagsds"
 	"github.com/ohartwig/pinup/datasource/gods"
 	"github.com/ohartwig/pinup/datasource/helmds"
+	"github.com/ohartwig/pinup/datasource/nodeds"
 	"github.com/ohartwig/pinup/datasource/npmds"
 	"github.com/ohartwig/pinup/datasource/packagist"
+	"github.com/ohartwig/pinup/datasource/pypids"
 	"github.com/ohartwig/pinup/datasource/terraformds"
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/httpx"
@@ -55,6 +57,7 @@ import (
 	"github.com/ohartwig/pinup/versioning/loose"
 	"github.com/ohartwig/pinup/versioning/npm"
 	"github.com/ohartwig/pinup/versioning/partial"
+	"github.com/ohartwig/pinup/versioning/pep440"
 	"github.com/ohartwig/pinup/versioning/regexver"
 	"github.com/ohartwig/pinup/versioning/semver"
 )
@@ -76,6 +79,7 @@ func Versionings() versioning.Registry {
 		"go-mod-directive": godirective.New(),
 		"hashicorp":        hashicorp.New(),
 		"regex":            regexver.New(),
+		"pep440":           pep440.New(),
 	}
 }
 
@@ -150,6 +154,8 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"terraform-module":   terraformds.New(terraformds.Module, client, "https://registry.terraform.io"),
 		"golang-version":     gods.New(gods.Toolchain, client, "https://go.dev"),
 		"helm":               helmds.New(client),
+		"node-version":       nodeds.New(client, ""),
+		"pypi":               pypids.New(client),
 		"git-tags":           gittagsds.New(),
 		"git-refs":           gittagsds.NewKind(gittagsds.Refs),
 	}
