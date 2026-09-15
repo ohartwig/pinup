@@ -1,0 +1,19 @@
+# A component template pinning a Python linter, in the shape lint-tools'
+# lint-ci-yaml template uses (customManagers[4], versioning named).
+spec:
+  inputs:
+    stage:
+      default: lint
+---
+variables:
+  # renovate: datasource=pypi depName=yamllint versioning=pep440
+  YAMLLINT_VERSION: "1.35.1"
+  # renovate: datasource=pypi depName=git-filter-repo versioning=pep440
+  GIT_FILTER_REPO_VERSION: "2.45.0"
+
+lint:yaml:
+  stage: $[[ inputs.stage ]]
+  image: python:3.13-alpine
+  script:
+    - pip install "yamllint==${YAMLLINT_VERSION}" "git-filter-repo==${GIT_FILTER_REPO_VERSION}"
+    - yamllint .

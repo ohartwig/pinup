@@ -1,0 +1,10 @@
+# A Python tool pinned in a CI variable under the runner's annotation
+# manager for .gitlab-ci.yml (customManagers[19]): no versioning named,
+# so the pypi datasource's own pep440 applies.
+variables:
+  # renovate: datasource=pypi depName=boto3
+  BOTO3_VERSION: "1.43.93"
+
+check:
+  script:
+    - pip install "boto3==${BOTO3_VERSION}"

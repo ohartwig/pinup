@@ -1,0 +1,18 @@
+{
+  "repo": "golden/pyver",
+  "now": "2026-09-15T17:00:00Z",
+  "covers": {
+    "managers": [
+      "custom.regex",
+      "npm"
+    ],
+    "datasources": [
+      "node-version",
+      "pypi"
+    ],
+    "versionings": [
+      "node",
+      "pep440"
+    ]
+  }
+}

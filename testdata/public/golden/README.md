@@ -24,4 +24,5 @@ commit that explains why.
 | `gomod` | `gomod` under the runner's own configuration: `go-mod-directive`, `go` and `golang-version`; a pseudo-version pin moving as a digest, an `// indirect` requirement reached only by its security fix, `go mod tidy` beside every module that has a `go.sum` and none for the tree that has not |
 | `gitrefs` | `git-refs`: a branch pinned by commit (`expected-commit` under a `# renovate:` line, devops/wolfi-packages' shape) refreshed to the branch head, on the branch Renovate uses; and a `node:24-alpine` job image under the `node` versioning, where the tag is no version and the digest gets pinned - as Renovate pins it (measured on hub node:24-alpine), unlike a range no release satisfies |
 | `lock` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
+| `pyver` | `pypi` under `pep440`: three Python tools pinned in CI variables (the annotation managers for `.gitlab-ci.yml` and component templates), and `engines.node` through `node-version`, a range the current line already satisfies |
 | `osv` | the vulnerability fast path: lodash 4.17.20, guzzle 7.4.4, symfony/http-kernel 6.0.0 against OSV |
