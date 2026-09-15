@@ -67,13 +67,37 @@ func (d *Datasource) DefaultVersioning() string { return "npm" }
 // which only the full document carries.
 type registryDoc struct {
 	Versions map[string]struct {
-		Deprecated string `json:"deprecated"`
+		Deprecated deprecatedField `json:"deprecated"`
 	} `json:"versions"`
 	// Time maps a version to its RFC 3339 publish time, plus "created" and
 	// "modified" keys this datasource has no use for and ignores.
 	Time       map[string]string `json:"time"`
 	DistTags   map[string]string `json:"dist-tags"`
 	Repository repositoryField   `json:"repository"`
+}
+
+// deprecatedField reads a version's "deprecated" key: a message when the
+// version is deprecated, absent when it is not - and, on a version whose
+// deprecation was later revoked, the bool false (measured: react 16.7.0,
+// 2026-09-15; the whole packument failed to decode and react went without
+// a lookup). A bool true is a deprecation without a message.
+type deprecatedField struct {
+	Message string
+	Set     bool
+}
+
+func (f *deprecatedField) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		f.Message, f.Set = s, true
+		return nil
+	}
+	var on bool
+	if err := json.Unmarshal(b, &on); err != nil {
+		return err
+	}
+	f.Set = on
+	return nil
 }
 
 // repositoryField reads npm's "repository" key, which the ecosystem writes
@@ -144,7 +168,7 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 				rel.Timestamp = t
 			}
 		}
-		if doc.Versions[v].Deprecated != "" {
+		if doc.Versions[v].Deprecated.Set {
 			rel.Deprecated = true
 		}
 		rs.Releases = append(rs.Releases, rel)

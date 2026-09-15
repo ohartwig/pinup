@@ -71,10 +71,13 @@ func (r *npmRegistry) count(path string) int {
 // animejsDoc is a full registry document (the superset shape) for a
 // three-version package with one deprecated version and a "git+...git"
 // repository URL, matching what registry.npmjs.org actually publishes.
+// 1.0.0 carries the bool false a revoked deprecation leaves behind
+// (measured: react 16.7.0), 1.2.0 a bool true without a message.
 const animejsDoc = `{
 	"versions": {
-		"1.0.0": {},
+		"1.0.0": {"deprecated": false},
 		"1.1.0": {"deprecated": "use anime 2.x instead"},
+		"1.2.0": {"deprecated": true},
 		"2.0.0": {}
 	},
 	"time": {
@@ -82,6 +85,7 @@ const animejsDoc = `{
 		"modified": "2019-01-01T00:00:00.000Z",
 		"1.0.0": "2017-06-01T12:00:00.000Z",
 		"1.1.0": "2018-06-01T12:00:00.000Z",
+		"1.2.0": "2018-09-01T12:00:00.000Z",
 		"2.0.0": "2019-01-01T12:00:00.000Z"
 	},
 	"dist-tags": {"latest": "2.0.0"},
@@ -145,8 +149,8 @@ func TestReleasesVersionsTimestampsDeprecatedAndSourceURL(t *testing.T) {
 		t.Errorf("/animejs served %d times, want 1", n)
 	}
 
-	if len(rs.Releases) != 3 {
-		t.Fatalf("got %d releases, want 3: %v", len(rs.Releases), rs.Releases)
+	if len(rs.Releases) != 4 {
+		t.Fatalf("got %d releases, want 4: %v", len(rs.Releases), rs.Releases)
 	}
 
 	byVersion := make(map[string]struct {
@@ -160,7 +164,7 @@ func TestReleasesVersionsTimestampsDeprecatedAndSourceURL(t *testing.T) {
 		}{r.Timestamp, r.Deprecated}
 	}
 
-	for _, v := range []string{"1.0.0", "1.1.0", "2.0.0"} {
+	for _, v := range []string{"1.0.0", "1.1.0", "1.2.0", "2.0.0"} {
 		got, ok := byVersion[v]
 		if !ok {
 			t.Errorf("version %q missing from releases", v)
@@ -180,6 +184,9 @@ func TestReleasesVersionsTimestampsDeprecatedAndSourceURL(t *testing.T) {
 	}
 	if !byVersion["1.1.0"].deprecated {
 		t.Error("1.1.0 carries a non-empty deprecated string and must be reported deprecated")
+	}
+	if !byVersion["1.2.0"].deprecated {
+		t.Error("1.2.0 carries deprecated: true and must be reported deprecated")
 	}
 
 	const wantSource = "https://github.com/juliangarnier/anime"
