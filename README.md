@@ -50,8 +50,16 @@ go install github.com/ohartwig/pinup/cmd/pinup@latest
 ```
 
 Static binaries for Linux and macOS (amd64, arm64) come with every
-[release](https://github.com/ohartwig/pinup/releases), with checksums and a
-signature.
+[release](https://github.com/ohartwig/pinup/releases), with `SHA256SUMS` and
+a detached cosign signature over it. They are built and signed once, in the
+author's pipeline, and the same files are published on GitHub — nothing is
+rebuilt there.
+
+```sh
+cosign verify-blob --key <public-key> --signature SHA256SUMS.sig \
+  --insecure-ignore-tlog=true SHA256SUMS
+sha256sum -c SHA256SUMS
+```
 
 ## Use
 

@@ -76,7 +76,7 @@ include:
   # GITHUB_MIRROR_TOKEN is a fine-grained token with contents:write on the
   # mirror repository - about publishing the project, not about releasing it.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.4.1
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.4.2
     inputs:
       stage: .post
       mirror-target: 'ohartwig/pinup'
@@ -87,7 +87,37 @@ include:
       rules-config:
         - if: $GITHUB_MIRROR_TOKEN == null
           when: never
-        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+        # push, web and api: a run started by hand on main mirrors too.
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "api")
+        # And the tag pipeline, before release:github: a release needs its
+        # tag on GitHub first.
+        - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
+
+  # The GitHub release, with the files this pipeline built and signed - the
+  # same files release:links links here. The workflow that rebuilt the
+  # binaries on GitHub is gone: a binary built a second time elsewhere is a
+  # second artefact under the same name, and the signature over SHA256SUMS
+  # cannot be rebuilt at all. Same component as yasrt and s3mail.
+  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-release@1.4.2
+    inputs:
+      stage: .post
+      release-target: 'ohartwig/pinup'
+      release-token-var: 'GITHUB_MIRROR_TOKEN'
+      assets: ['dist/*.zip', 'dist/*.sha256', 'dist/pinup-*64', 'SHA256SUMS', 'SHA256SUMS.sig']
+      needs-config:
+        - mirror:github
+        - build:linux-arm64
+        - build:linux-amd64
+        - build:darwin-arm64
+        - build:darwin-amd64
+        - manifest
+        - job: sign:artifact:SHA256SUMS
+          optional: true
+      rules-config:
+        - if: $GITHUB_MIRROR_TOKEN == null
+          when: never
+        - if: $CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+$/
 
   # Signing the manifest comes from the estate: a detached cosign signature
   # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
