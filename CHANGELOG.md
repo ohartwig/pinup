@@ -1,3 +1,9 @@
+## [0.23.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.0...v0.23.1) (2026-09-15)
+
+### :bug: Fixes
+
+* **net:** IPv6 first, a name on every request, and the composer metadata-url resolved as Composer does ([400ad9f](https://git.ole-hartwig.eu/pinup/pinup/commit/400ad9faf53f22218574ad169b9528d1ef4f7fc1))
+
 ## [0.23.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.22.0...v0.23.0) (2026-09-15)
 
 ### :sparkles: Features
