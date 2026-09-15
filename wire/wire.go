@@ -203,11 +203,18 @@ func DefaultVersioning(ds lookup.Registry) func(string) string {
 // package name. A manager receives one file, the manifest; the lock is a
 // sibling the run reads for it. Managers without a lock answer nil.
 func LockedVersions(manager string, lock []byte) (map[string]string, error) {
+	return LockedVersionsFor(manager, lock, "")
+}
+
+// LockedVersionsFor is LockedVersions for the manifest at member, a
+// directory relative to the lock's own: an npm workspace member reads its
+// versions off the root lock. Every other manager ignores member.
+func LockedVersionsFor(manager string, lock []byte, member string) (map[string]string, error) {
 	switch manager {
 	case "composer":
 		return composerman.LockedVersions(lock)
 	case "npm":
-		return npmman.LockedVersions(lock)
+		return npmman.LockedVersionsFor(lock, member)
 	case "terraform":
 		return terraform.LockedVersions(lock)
 	case "gomod":

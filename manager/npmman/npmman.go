@@ -38,6 +38,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -502,6 +503,19 @@ func (m *Manager) Edit(_ context.Context, f extract.File, up model.Update) (mode
 //
 // A yarn.lock is read too, classic and berry; pnpm-lock.yaml is not.
 func LockedVersions(lock []byte) (map[string]string, error) {
+	return LockedVersionsFor(lock, "")
+}
+
+// LockedVersionsFor reads a lock for the manifest at member, a directory
+// relative to the lock's own - "" for the manifest beside it, "apps/web"
+// for a workspace member whose versions the root lock carries. npm hoists
+// what it can to node_modules/<name>; a member that needs another version
+// of a package gets it under <member>/node_modules/<name>, and that entry
+// is the member's answer (lockfileVersion 2 and 3; the v1 shape knows no
+// members). Measured 2026-09-15 on nozzleops/platform, whose four
+// package.json share one root package-lock.json and carried no locked
+// versions at all.
+func LockedVersionsFor(lock []byte, member string) (map[string]string, error) {
 	if trimmed := bytes.TrimSpace(lock); len(trimmed) > 0 && trimmed[0] != '{' {
 		return yarnLockedVersions(lock)
 	}
@@ -520,15 +534,32 @@ func LockedVersions(lock []byte) (map[string]string, error) {
 
 	out := make(map[string]string)
 	if doc.LockfileVersion >= 2 {
+		nested := ""
+		if member = strings.Trim(filepath.ToSlash(member), "/"); member != "" && member != "." {
+			nested = member + "/node_modules/"
+		}
+		own := map[string]bool{}
 		for key, pkg := range doc.Packages {
+			if pkg.Version == "" {
+				continue
+			}
+			if nested != "" {
+				if depName, ok := strings.CutPrefix(key, nested); ok && !strings.Contains(depName, "/node_modules/") {
+					out[depName] = pkg.Version
+					own[depName] = true
+					continue
+				}
+			}
 			depName, ok := strings.CutPrefix(key, "node_modules/")
-			if !ok || pkg.Version == "" {
+			if !ok {
 				continue
 			}
 			if strings.Contains(depName, "/node_modules/") {
 				continue // a transitive dependency nested inside another package
 			}
-			out[depName] = pkg.Version
+			if !own[depName] {
+				out[depName] = pkg.Version
+			}
 		}
 		return out, nil
 	}

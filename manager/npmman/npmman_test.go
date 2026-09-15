@@ -383,3 +383,41 @@ __metadata:
 		t.Error("garbage must be refused")
 	}
 }
+
+// A workspace member reads its versions off the root lock: what is hoisted
+// to node_modules/<name>, and where the member needs another version, its
+// own <member>/node_modules/<name> entry - never a package nested inside a
+// package. The manifest beside the lock reads it as before.
+func TestLockedVersionsForAWorkspaceMember(t *testing.T) {
+	const lock = `{
+  "name": "platform",
+  "lockfileVersion": 3,
+  "packages": {
+    "": {"name": "platform", "version": "0.0.0", "workspaces": ["apps/*"]},
+    "apps/web": {"name": "web", "version": "0.0.0"},
+    "node_modules/web": {"resolved": "apps/web", "link": true},
+    "node_modules/@types/node": {"version": "22.20.1"},
+    "node_modules/react": {"version": "19.1.0"},
+    "apps/web/node_modules/react": {"version": "18.3.1"},
+    "apps/web/node_modules/react/node_modules/loose-envify": {"version": "1.4.0"}
+  }
+}`
+	for member, want := range map[string]map[string]string{
+		"":         {"@types/node": "22.20.1", "react": "19.1.0"},
+		"apps/web": {"@types/node": "22.20.1", "react": "18.3.1"},
+		"apps/api": {"@types/node": "22.20.1", "react": "19.1.0"},
+	} {
+		got, err := LockedVersionsFor([]byte(lock), member)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for name, version := range want {
+			if got[name] != version {
+				t.Errorf("member %q: %s = %q, want %q", member, name, got[name], version)
+			}
+		}
+		if _, ok := got["loose-envify"]; ok {
+			t.Errorf("member %q: a package nested inside react leaked", member)
+		}
+	}
+}

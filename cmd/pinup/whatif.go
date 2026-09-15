@@ -468,9 +468,16 @@ func (r *whatifRun) extractAll() error {
 		lock := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
 		if lock.versions != nil && lock.dir == filepath.Dir(match.Path) {
 			// The lock beside the manifest is the one maintenance refreshes
-			// and a task regenerates; an ancestor's lock only says what is
-			// pinned.
+			// and a task regenerates; a terraform ancestor's lock only says
+			// what is pinned.
 			r.locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lock.name
+		} else if lock.versions != nil && wire.ManagerNameOf(match.Manager) == "npm" {
+			// An npm workspace: the root lock is the member's lock, and the
+			// one a refresh regenerates - recorded by its path from the
+			// member, so the task runs where the lock is.
+			if rel, err := filepath.Rel(filepath.Dir(match.Path), lock.dir); err == nil {
+				r.locks["npm|"+filepath.Dir(match.Path)] = filepath.Join(rel, lock.name)
+			}
 		}
 		for _, d := range res.Deps {
 			d.Manager = wire.ManagerNameOf(match.Manager)
@@ -1075,7 +1082,10 @@ func lockedVersions(root, manifest, manager string, lockFiles []string, plan *mo
 		return lockFile{}
 	}
 	dirs := []string{filepath.Dir(manifest)}
-	if manager == "terraform" {
+	// terraform: init ran at the manifest's directory or an ancestor. npm:
+	// a workspace member's versions are in the root's lock (measured:
+	// nozzleops/platform, four package.json under one package-lock.json).
+	if manager == "terraform" || manager == "npm" {
 		for d := dirs[0]; d != "." && d != "/" && d != ""; {
 			d = filepath.Dir(d)
 			dirs = append(dirs, d)
@@ -1088,7 +1098,11 @@ func lockedVersions(root, manifest, manager string, lockFiles []string, plan *mo
 			if err != nil {
 				continue
 			}
-			locked, err := wire.LockedVersions(manager, raw)
+			member := ""
+			if dir != filepath.Dir(manifest) {
+				member, _ = filepath.Rel(dir, filepath.Dir(manifest))
+			}
+			locked, err := wire.LockedVersionsFor(manager, raw, member)
 			if err != nil {
 				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "extract", File: path, Msg: err.Error()})
 				continue
@@ -1176,12 +1190,50 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		}
 		names[k] = append(names[k], u.Dep.DepName)
 	}
+	// One refresh per lock, not per manifest: a workspace member's lock
+	// is the root's, so the refresh runs where the lock is and regenerates
+	// it whole, as every manifest under it now reads - naming the member's
+	// packages there would add them to the root instead. A root manifest's
+	// own refresh on the same lock folds into that one.
+	type refresh struct {
+		lockFile    string
+		names       []string
+		maintenance bool
+		whole       bool
+	}
+	byLock := map[lockKey]*refresh{}
+	var lockOrder []lockKey
 	for _, k := range order {
 		lockFile := locks[k.manager+"|"+k.dir]
 		if lockFile == "" && k.dir == "" {
 			lockFile = locks[k.manager+"|."]
 		}
-		if t, ok := plugin.LockRefresh(k.manager, k.dir, lockFile, names[k], maintenance[k]); ok {
+		dir, whole := k.dir, false
+		if strings.Contains(lockFile, "/") {
+			dir = filepath.Clean(filepath.Join(k.dir, filepath.Dir(lockFile)))
+			if dir == "." {
+				dir = ""
+			}
+			lockFile, whole = filepath.Base(lockFile), true
+		}
+		at := lockKey{k.manager, dir}
+		r, seen := byLock[at]
+		if !seen {
+			r = &refresh{lockFile: lockFile}
+			byLock[at] = r
+			lockOrder = append(lockOrder, at)
+		}
+		r.names = append(r.names, names[k]...)
+		r.maintenance = r.maintenance || maintenance[k]
+		r.whole = r.whole || whole
+	}
+	for _, at := range lockOrder {
+		r := byLock[at]
+		refreshNames := r.names
+		if r.whole {
+			refreshNames = nil
+		}
+		if t, ok := plugin.LockRefresh(at.manager, at.dir, r.lockFile, refreshNames, r.maintenance); ok {
 			tasks = append(tasks, t)
 		}
 	}

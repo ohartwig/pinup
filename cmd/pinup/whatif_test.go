@@ -834,3 +834,66 @@ func TestRunnerProjectComesFromConfigOrEnvironment(t *testing.T) {
 		t.Errorf("aliases = %v", got)
 	}
 }
+
+// An npm workspace: the members' package.json share the root's
+// package-lock.json. Each member's dependencies carry the version the root
+// lock resolved for that member, and a bump in a member refreshes the root
+// lock, whole, where it is - not a lock beside the member that does not
+// exist (measured 2026-09-15: nozzleops/platform, four manifests, no
+// locked versions, no lock refresh).
+func TestAnNpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(root+"/apps/web", 0o755)
+	os.WriteFile(root+"/package.json", []byte(`{"name":"platform","private":true,"workspaces":["apps/*"],"devDependencies":{"lodash":"4.17.20"}}`), 0o644)
+	os.WriteFile(root+"/apps/web/package.json", []byte(`{"name":"web","dependencies":{"lodash":"4.17.20","react":"18.3.1"}}`), 0o644)
+	os.WriteFile(root+"/package-lock.json", []byte(`{"name":"platform","lockfileVersion":3,"packages":{
+  "": {"name":"platform","workspaces":["apps/*"]},
+  "apps/web": {"name":"web"},
+  "node_modules/lodash": {"version":"4.17.20"},
+  "node_modules/react": {"version":"19.1.0"},
+  "apps/web/node_modules/react": {"version":"18.3.1"}}}`), 0o644)
+	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
+	at := time.Date(2026, 9, 15, 14, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(t, at)
+	opts.Root, opts.RepoName = root, "nozzleops/platform"
+	opts.Datasources["npm"] = cannedDS{name: "npm", scheme: "npm", releases: map[string][]string{
+		"lodash": {"4.17.20", "4.17.21"}, "react": {"18.3.1", "19.1.0"},
+	}}
+	opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	locked := map[string]string{}
+	for _, d := range plan.Deps {
+		locked[d.File+"|"+d.DepName] = d.LockedVersion
+	}
+	for key, want := range map[string]string{
+		"package.json|lodash": "4.17.20", "apps/web/package.json|lodash": "4.17.20", "apps/web/package.json|react": "18.3.1",
+	} {
+		if locked[key] != want {
+			t.Errorf("%s locked %q, want %q (all: %v)", key, locked[key], want, locked)
+		}
+	}
+	var refreshes []model.Task
+	for _, b := range plan.Branches {
+		for _, task := range b.Tasks {
+			if task.Kind == model.TaskLockRefresh {
+				refreshes = append(refreshes, task)
+			}
+		}
+	}
+	if len(refreshes) == 0 {
+		t.Fatalf("no lock refresh planned; branches: %+v", plan.Branches)
+	}
+	for _, task := range refreshes {
+		if task.Dir != "" {
+			t.Errorf("a refresh runs in %q; the lock is at the root", task.Dir)
+		}
+		for _, arg := range task.Command {
+			if arg == "lodash" || arg == "react" {
+				t.Errorf("a workspace refresh names a package: %v", task.Command)
+			}
+		}
+	}
+}
