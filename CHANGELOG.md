@@ -1,3 +1,9 @@
+## [0.23.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.22.0...v0.23.0) (2026-09-15)
+
+### :sparkles: Features
+
+* **release:** the assets on GitHub are the signed ones from here ([7325148](https://git.ole-hartwig.eu/pinup/pinup/commit/7325148d904e417faa5f9e3bd5ddc8338e3b2a6a))
+
 ## [0.22.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.21.1...v0.22.0) (2026-09-15)
 
 ### :sparkles: Features
