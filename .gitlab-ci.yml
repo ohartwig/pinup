@@ -51,6 +51,10 @@ include:
       # this project's own copy of the bot token (the group's copy is gone).
       mr-comments: 'true'
       comment-token-var: PINUP_GITLAB_TOKEN
+      # A release starts the runner's fast lane, which raises the golden
+      # image within minutes; until 2026-09-15 that bump waited for the
+      # hourly scan. The runner's job-token allowlist admits this group.
+      trigger-pinup: 'true'
       rules-config:
         - if: $CI_PIPELINE_SOURCE == "schedule"
           when: never
