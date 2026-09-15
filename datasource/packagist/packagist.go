@@ -30,6 +30,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 	"sync"
@@ -391,11 +392,23 @@ func authError(base, what string, err error) error {
 	return nil
 }
 
-// resolveMetadataURL joins a metadata-url template with the registry base,
-// leaving an absolute template as it is.
+// resolveMetadataURL resolves a metadata-url template against the registry
+// base the way Composer does: an absolute template stands, one starting
+// with "/" is a path from the host's root, anything else is relative to
+// the registry. packagist.org says "/p2/%package%.json" under
+// https://repo.packagist.org, where root and registry coincide; GitLab's
+// group registry says "/api/v4/group/175/-/packages/composer/p2/%package%.json"
+// - the whole path - and appending that to the registry doubled it,
+// every lookup 404ed, and the estate's CrowdSec read fifty such 404s
+// from one runner as probing (measured 2026-09-15).
 func resolveMetadataURL(base, tmpl string) string {
 	if strings.HasPrefix(tmpl, "http://") || strings.HasPrefix(tmpl, "https://") {
 		return tmpl
+	}
+	if strings.HasPrefix(tmpl, "/") {
+		if u, err := url.Parse(base); err == nil && u.Host != "" {
+			return u.Scheme + "://" + u.Host + tmpl
+		}
 	}
 	return strings.TrimRight(base, "/") + "/" + strings.TrimLeft(tmpl, "/")
 }

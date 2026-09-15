@@ -414,7 +414,15 @@ func TestMetadataURLMayBeAbsolute(t *testing.T) {
 	if got := resolveMetadataURL("https://repo.packagist.org", "https://repo.packagist.org/p2/x/y.json"); got != "https://repo.packagist.org/p2/x/y.json" {
 		t.Errorf("absolute: %s", got)
 	}
-	if got := resolveMetadataURL("https://git.example.org/api/v4/group/175/-/packages/composer/", "/p2/%package%.json"); got != "https://git.example.org/api/v4/group/175/-/packages/composer/p2/%package%.json" {
+	// A template starting with "/" is a path from the host's root, as
+	// Composer reads it: GitLab's group registry names its whole path.
+	if got := resolveMetadataURL("https://git.example.org/api/v4/group/175/-/packages/composer/", "/api/v4/group/175/-/packages/composer/p2/%package%.json"); got != "https://git.example.org/api/v4/group/175/-/packages/composer/p2/%package%.json" {
+		t.Errorf("host-root: %s", got)
+	}
+	if got := resolveMetadataURL("https://repo.packagist.org", "/p2/%package%.json"); got != "https://repo.packagist.org/p2/%package%.json" {
+		t.Errorf("host-root at the root: %s", got)
+	}
+	if got := resolveMetadataURL("https://git.example.org/api/v4/group/175/-/packages/composer/", "p2/%package%.json"); got != "https://git.example.org/api/v4/group/175/-/packages/composer/p2/%package%.json" {
 		t.Errorf("relative: %s", got)
 	}
 }
