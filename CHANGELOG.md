@@ -1,3 +1,13 @@
+## [0.23.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.2...v0.23.3) (2026-09-15)
+
+### :bug: Fixes
+
+* **planner:** the digest of a newer tag is asked for as the file spells it ([cf5a249](https://git.ole-hartwig.eu/pinup/pinup/commit/cf5a249e4a740c0c8442dd819568f89f900a462a))
+
+### :repeat: Continuous Integrations
+
+* a release starts pinup/runner's fast lane ([fd6cec2](https://git.ole-hartwig.eu/pinup/pinup/commit/fd6cec246db3055a75673e56856eae6b87aafb9f))
+
 ## [0.23.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.23.1...v0.23.2) (2026-09-15)
 
 ### :bug: Fixes
