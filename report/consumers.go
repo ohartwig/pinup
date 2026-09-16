@@ -221,9 +221,11 @@ func (x *Index) forget(repo string) {
 // named by its project path as the release trigger names it -
 // "devops/ci-cd-components/lint-tools". The match is by what the estate's
 // managers extract for that project: the path itself (component includes,
-// gitlab-tags), a registry image ending in the path (docker), or a
-// composite "path:vendor/name" (the custom composer manager). Any
-// datasource counts.
+// gitlab-tags), a registry image ending in the path or in the path plus
+// one more segment (docker: a project publishes ".../commerce" as well as
+// ".../commerce/sources", ".../commerce/ci" - GitLab's nested repositories,
+// which only that project can own), or a composite "path:vendor/name"
+// (the custom composer manager). Any datasource counts.
 func (x *Index) ConsumersOf(projectPath string) []string {
 	seen := map[string]bool{}
 	var out []string
@@ -246,9 +248,16 @@ func (x *Index) ConsumersOf(projectPath string) []string {
 // released project.
 func RefersTo(key, projectPath string) bool {
 	_, name, _ := strings.Cut(key, "|")
-	return name == projectPath ||
-		strings.HasPrefix(name, projectPath+":") ||
-		strings.HasSuffix(name, "/"+projectPath)
+	if name == projectPath || strings.HasPrefix(name, projectPath+":") || strings.HasSuffix(name, "/"+projectPath) {
+		return true
+	}
+	// A nested registry repository: "<registry>/<project path>/<name>",
+	// one segment and no more - measured 2026-09-16, the release of
+	// ai-ready-platform/platform/commerce found no consumer although
+	// koh-gitops pins ".../commerce/sources", and the tenants waited for
+	// the hourly wave instead of the fast lane.
+	i := strings.LastIndex(name, "/"+projectPath+"/")
+	return i >= 0 && !strings.Contains(name[i+len(projectPath)+2:], "/")
 }
 
 func contains(ss []string, s string) bool {
