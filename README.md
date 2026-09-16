@@ -74,36 +74,133 @@ cosign verify-blob --key <public-key> --signature SHA256SUMS.sig \
 sha256sum -c SHA256SUMS
 ```
 
-## Use
+## Quickstart
+
+Four steps, each complete on its own. Stop where you have what you need.
+
+### 1. Plan a repository you already have
+
+`whatif` resolves the configuration, reads the manifests, looks the
+versions up and writes a plan. It changes nothing and needs no token
+(private registries aside). Any repository with a `renovate.json` will do;
+without one, `{"extends": ["config:recommended"]}` is enough to start.
 
 ```sh
-# Plan a checkout under a configuration; write nothing.
+cd a-repository
 pinup whatif --repo . --config renovate.json --report plan.json
 
-# The same, then apply and publish: branches, merge requests, dashboard.
-export PINUP_GITLAB_URL=https://gitlab.example.org PINUP_GITLAB_TOKEN=glpat-…
-pinup run --project group/project --config 'local>devops/renovate-runner'
-
-# On GitHub: pull requests, a dashboard issue, auto-merge where the
-# repository allows it. A GitHub token alone selects the platform.
-export PINUP_GITHUB_TOKEN=ghp_…
-pinup run --project owner/repository --config 'local>owner/runner-config'
-
-# Every project an autodiscover filter matches, eight at a time.
-pinup run --autodiscover '["devops/**","!devops/archive/**"]' --config … --report 'reports/%s.json'
-
-# What a configuration resolves to, and which rule set each value.
-pinup print-config --config renovate.json --explain
-
-# Which of a configuration's keys pinup supports, and a YAML rewrite of it.
-pinup migrate --config renovate.json
-pinup migrate --config renovate.json --to yaml
+# what would move, and what is held back and why
+jq -r '.updates[] | "\(.dep.depName) \(.dep.currentValue) -> \(.newValue)  \(.blocks[0].reason // "ready") \(.blocks[0].origin | if . then "\(.source)[\(.rule)]" else "" end)"' plan.json
 ```
 
-`pinup <command>` without flags prints the usage of each command. The
-documentation - getting started, every command and flag, the
-configuration keys, the plan format, platforms, tasks, security - is in
-[docs/](docs/README.md).
+A line like `lodash 4.17.20 -> 4.17.21  ready` becomes a branch on the
+next `run`; `redis 20.13.4 -> 28.1.0  dependencyDashboardApproval
+packageRules[3]` says which rule holds the major and where it lives
+(`config[-1]` is the top level of the configuration).
+`--now 2026-01-01T00:00:00Z` plans as of another moment - the way to check
+a schedule or a `minimumReleaseAge` without waiting for it.
+
+### 2. Run against one project
+
+`run` does what `whatif` does and then pushes the branches, opens or
+updates the merge requests and keeps the dashboard issue. It needs the
+platform and a token that may write to the project.
+
+```sh
+export PINUP_GITLAB_URL=https://gitlab.example.org
+export PINUP_GITLAB_TOKEN=glpat-…              # scopes: api, write_repository
+export PINUP_GIT_NAME="Dependency Bot" PINUP_GIT_EMAIL=bot@example.org
+export PINUP_SIGNING_FORMAT=none               # or openpgp / ssh + PINUP_SIGNING_KEY
+
+pinup run --project group/project --config renovate.json --report plan.json
+```
+
+On GitHub the same command reads `PINUP_GITHUB_TOKEN` and
+`--project owner/repository`; a GitHub token with no GitLab instance in
+the environment selects the platform. `--dry-run` stops after the plan
+with the platform's view of the open merge requests folded in - the
+safe first run against a real project.
+
+What you get: one branch per update or group, named the way Renovate
+names it (`renovate/lodash-4.x`), a merge request whose description lists
+the edits and the release notes, `automerge` set where a rule says so, and
+a "Dependency Dashboard" issue that lists every held update with a
+checkbox to approve it.
+
+### 3. One configuration for many repositories
+
+Put the estate's rules in a runner project and let each repository extend
+it. Nothing else has to change in the repositories, and a repository with
+no file at all still gets the runner's defaults.
+
+```jsonc
+// runner project: default.json
+{ "extends": ["config:recommended"], "packageRules": [ … ] }
+
+// any repository: renovate.json
+{ "extends": ["local>group/pinup-runner"] }
+```
+
+```sh
+pinup run --autodiscover '["group/**", "!group/archive/**"]' \
+          --config 'local>group/pinup-runner' --report 'reports/%s.json'
+```
+
+`--autodiscover` runs every non-archived project the token can see that
+matches the globs, eight at a time; `%s` becomes the project path.
+[`docs/examples/renovate.json`](docs/examples/renovate.json) is a
+complete runner configuration - automerge for patch and minor, dashboard
+approval for majors, an analyzer rule for a chart vendor that raises the
+major on every release.
+
+### 4. Schedule it
+
+[`docs/examples/gitlab-ci.yml`](docs/examples/gitlab-ci.yml) is a
+scheduled GitLab job: a toolchain image with pinup, composer, npm and go
+on the `PATH`, the token as a masked variable, the lookup cache kept
+between runs, the plans as artefacts.
+[`docs/examples/github-actions.yml`](docs/examples/github-actions.yml)
+is the same on GitHub Actions. Hourly is fine: a run over two hundred
+repositories takes ten minutes of wall time, and a run that finds nothing
+new writes nothing.
+
+## Coming from Renovate
+
+- **Keep the configuration.** `pinup migrate --config renovate.json`
+  classifies every key as supported, partial or unsupported, with the
+  difference spelled out ([configuration](docs/configuration.md)). Nothing
+  in the repositories changes; `pinup migrate --to yaml` rewrites a file
+  as `.pinup.yaml` if you want it to, and only then.
+- **Keep the branches.** The same branch names and titles, so an open
+  Renovate merge request is adopted, not duplicated. A branch somebody
+  else committed to is left alone.
+- **Run both for a while.** `pinup shadow --plans 'reports/*.json'`
+  compares pinup's plans with what Renovate has open and fails when a
+  difference persists across two runs without a triaged reason - with a
+  control repository that must differ, so the comparison is proven able
+  to fail before its first verdict is believed.
+- **What is not there:** Bitbucket and Azure DevOps; managers pinup does
+  not read (Maven, Gradle, NuGet, Cargo, pip requirements); Mend Merge
+  Confidence - pinup classifies itself ([effective
+  classification](docs/effective-classification.md)) and calls no third
+  party.
+
+## Commands
+
+```sh
+pinup whatif --repo . --config renovate.json --report plan.json   # plan, write nothing
+pinup run --project group/project --config … --report plan.json    # plan, apply, publish
+pinup run --autodiscover '["group/**"]' --config … --report 'reports/%s.json'
+pinup run --released group/library@1.4.0 --config …                # the fast lane: only that dependency's consumers
+pinup print-config --config renovate.json --explain                # what a configuration resolves to, and which rule set each value
+pinup migrate --config renovate.json [--to yaml]                   # which keys pinup supports; a YAML rewrite
+pinup advisories --index '.pinup/consumers.json'                   # OSV over everything the runs have seen, no clone
+pinup shadow --plans 'reports/*.json'                              # compare with the merge requests another tool has open
+```
+
+`pinup <command> -h` prints every flag. The documentation - getting
+started, every command, the configuration keys, the plan format,
+platforms, tasks, security - is in [docs/](docs/README.md).
 
 ## Configure
 

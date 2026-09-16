@@ -1,0 +1,34 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["after 6am and before 8pm every weekday"],
+  "minimumReleaseAge": "3 days",
+  "prConcurrentLimit": 10,
+  "packageRules": [
+    {
+      "description": "Patch and minor updates merge on their own once the pipeline is green.",
+      "matchUpdateTypes": ["patch", "minor", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "A major waits for a tick on the dashboard.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Helm charts from a vendor that raises the major on every release: ask the analyzer what changed, and trust it.",
+      "matchDatasources": ["docker", "helm"],
+      "matchPackageNames": ["registry-1.docker.io/bitnamicharts/**"],
+      "analyze": true
+    },
+    {
+      "matchDatasources": ["docker", "helm"],
+      "matchUpdateTypes": ["major"],
+      "matchEffective": ["patch", "minor"],
+      "trustEffective": true,
+      "automerge": true,
+      "dependencyDashboardApproval": false
+    }
+  ]
+}

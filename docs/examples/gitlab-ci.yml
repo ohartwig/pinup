@@ -1,0 +1,48 @@
+# A scheduled pinup job on GitLab. Put this in a runner project, give it a
+# pipeline schedule (hourly, nightly - your call), and point PINUP_GITLAB_TOKEN
+# at a masked, protected variable holding the bot's token (scopes: api,
+# write_repository). Every repository the token is a member of and that
+# matches the autodiscover filter is planned and updated.
+#
+# The image is yours to build: any image with pinup on the PATH, plus the
+# toolchains the lock refreshes need (composer, npm, go) - see
+# docs/tasks-and-plugins.md. github.com/ohartwig/pinup ships static binaries.
+
+stages: [update]
+
+pinup:run:
+  stage: update
+  image: registry.example.org/images/pinup-toolchain:0
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  variables:
+    PINUP_GIT_NAME: "Dependency Bot"
+    PINUP_GIT_EMAIL: "bot@example.org"
+    PINUP_SIGNING_FORMAT: none          # or openpgp / ssh with PINUP_SIGNING_KEY
+    PINUP_CACHE: .pinup/cache.db
+    PINUP_ALLOWED_COMMANDS: '["^composer update .*", "^npm install .*", "^go mod tidy$"]'
+  cache:
+    key: pinup-$CI_JOB_NAME
+    paths: [.pinup/]
+  script:
+    - mkdir -p .pinup reports
+    - pinup run
+        --autodiscover '["group/**", "!group/archive/**"]'
+        --config 'local>group/pinup-runner'
+        --report 'reports/%s.json'
+  artifacts:
+    paths: [reports/]
+    when: always
+    expire_in: 1 week
+
+# Optional: a job that only reads, for a merge request against the runner
+# configuration - shows what would change, writes nothing.
+pinup:whatif:
+  stage: update
+  image: registry.example.org/images/pinup-toolchain:0
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - pinup run --dry-run --project group/one-project --config default.json --report plan.json
+  artifacts:
+    paths: [plan.json]

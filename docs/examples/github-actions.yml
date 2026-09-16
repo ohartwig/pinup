@@ -1,0 +1,38 @@
+# A scheduled pinup workflow on GitHub. A GitHub token with no GitLab
+# instance in the environment selects the GitHub platform; a fine-grained
+# token needs contents, pull requests and issues read/write on the
+# repositories it should update. GITHUB_TOKEN of the workflow works for
+# the repository the workflow runs in.
+
+name: dependency updates
+on:
+  schedule:
+    - cron: "17 6 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  pinup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with: { go-version: "1.27" }
+      - run: go install github.com/ohartwig/pinup/cmd/pinup@latest
+      # --config names the run's configuration (here: the repository's own
+      # file, from the checkout); pinup clones the project it updates through
+      # the token and reads that clone's renovate.json on top.
+      - run: |
+          pinup run --project "$GITHUB_REPOSITORY" --config renovate.json --report plan.json
+        env:
+          PINUP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PINUP_GIT_NAME: Dependency Bot
+          PINUP_GIT_EMAIL: bot@example.org
+          PINUP_SIGNING_FORMAT: none
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: plan, path: plan.json }

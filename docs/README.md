@@ -18,6 +18,7 @@ For people who run pinup:
 | [Tasks and plugins](tasks-and-plugins.md) | lock refreshes and post-upgrade commands: what runs, in what scope, with what |
 | [Platforms](platforms.md) | GitLab and GitHub: credentials, what each can and cannot do |
 | [Security](security.md) | the invariants, the credential paths, what a repository can and cannot make the bot do |
+| [Examples](examples/) | a complete runner configuration, a scheduled GitLab job, a GitHub Actions workflow |
 
 For people who change pinup: [`plan.md`](plan.md) (architecture, phases,
 the test harness, the cutover) and [`tech-spec.md`](tech-spec.md) (the
