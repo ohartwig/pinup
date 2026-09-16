@@ -148,7 +148,12 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		}
 		if sha == "" && !pushed {
 			// Nothing was pushed and no branch exists: a task-only branch
-			// whose tool found nothing to refresh. Nothing to open.
+			// whose tool found nothing to refresh. Nothing to open, and
+			// the plan says why.
+			hold(plan, b, model.Block{
+				Reason: model.BlockNothingToRefresh, Org: model.Origin{Source: "config", Rule: model.NoRule},
+				Note: "the lock file is current; the refresh changed nothing",
+			})
 			outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "unchanged", Message: "nothing to refresh"})
 			continue
 		}

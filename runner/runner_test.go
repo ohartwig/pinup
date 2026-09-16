@@ -383,3 +383,39 @@ func TestATaskCommitsItsLockWithTheEditOrNothing(t *testing.T) {
 		t.Errorf("missing toolchain: %+v, ran %d", outs, none.ran)
 	}
 }
+
+func TestALockRefreshThatChangesNothingIsHeldWithItsReason(t *testing.T) {
+	remote, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := context.Background()
+	lock := model.Task{Kind: model.TaskLockRefresh, Manager: "composer", Command: []string{"composer", "update", "--lock"},
+		ExecutionMode: model.ExecBranch, FileFilters: []string{"composer.lock"}, AllowedBy: -1}
+	// A maintenance branch: tasks only, no edits.
+	b := model.Branch{Name: "renovate/lock-file-maintenance", Title: "chore(deps): lock file maintenance", Tasks: []model.Task{lock}}
+
+	tasks := &fakeTasks{writes: map[string]string{}}
+	o := options(repo, pf)
+	o.Tasks = tasks
+	p := plan(b)
+	outs, err := Execute(ctx, p, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(outs) != 1 || outs[0].Action != "unchanged" || tasks.ran != 1 {
+		t.Fatalf("outcomes %+v, ran %d", outs, tasks.ran)
+	}
+	if len(pf.MRs) != 0 {
+		t.Errorf("a refresh that changed nothing opened %d merge requests", len(pf.MRs))
+	}
+	// The plan says why nothing was opened - the comparator and the
+	// dashboard read the branch's reason, and a branch without one reads
+	// as planned and never delivered.
+	if p.Branches[0].SuppressedBy != model.BlockNothingToRefresh {
+		t.Errorf("branch suppressedBy = %q, want %q", p.Branches[0].SuppressedBy, model.BlockNothingToRefresh)
+	}
+	cmd := exec.Command("git", "ls-remote", "--heads", remote, "renovate/lock-file-maintenance")
+	cmd.Env = append(os.Environ(), testEnv...)
+	if out, _ := cmd.Output(); len(strings.TrimSpace(string(out))) != 0 {
+		t.Errorf("a branch was pushed for nothing: %q", out)
+	}
+}

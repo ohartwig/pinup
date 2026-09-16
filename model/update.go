@@ -182,6 +182,13 @@ const (
 	// refresh for weeks without a red job; pinup holds the branch and
 	// names the command instead.
 	BlockTaskRefused BlockReason = "taskRefused"
+	// BlockNothingToRefresh holds a task-only branch - a lock file
+	// maintenance - whose tool ran and changed nothing: the lock is
+	// current, there is nothing to commit and nothing to open. The plan
+	// says so rather than naming a branch that nobody will ever see
+	// (measured 2026-09-16: sixteen such branches read as pinup-only in
+	// the comparison once Renovate no longer refreshed the same locks).
+	BlockNothingToRefresh BlockReason = "nothingToRefresh"
 )
 
 // Block is one reason an update is held, with the rule that held it. Every
