@@ -830,8 +830,13 @@ func TestRunnerProjectComesFromConfigOrEnvironment(t *testing.T) {
 			t.Errorf("%v %s: got %q, want %q", tc.env, tc.cfgPath, got, tc.want)
 		}
 	}
-	if got := runnerAliases("platform/bot"); len(got) != 3 || got[0] != "local>platform/bot" || got[2] != "local>platform/bot:default" {
+	// The runner's own project and the one the repositories were written
+	// against, which stays an alias after the file moved.
+	if got := runnerAliases("platform/bot"); len(got) != 6 || got[0] != "local>platform/bot" || got[2] != "local>platform/bot:default" || got[3] != "local>devops/renovate-runner" {
 		t.Errorf("aliases = %v", got)
+	}
+	if got := runnerAliases("devops/renovate-runner"); len(got) != 3 {
+		t.Errorf("the default project aliases itself once: %v", got)
 	}
 }
 

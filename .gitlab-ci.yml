@@ -409,7 +409,8 @@ release:links:
 #
 # On the schedule: the job builds pinup from the tree it runs in and points
 # it at this repository under the estate's runner configuration, fetched
-# from devops/renovate-runner. What it opens is a merge request against
+# from pinup/runner (devops/renovate-runner until the cutover's step 12,
+# 2026-09-16). What it opens is a merge request against
 # this repository, signed with the key the job imports, showing Verified.
 # Release criterion, not milestone. The job image is the toolchain image,
 # for gpg and go; the golang image has no gpg, which the first live run
@@ -465,7 +466,7 @@ update:pinup:
       mode="run"
       if [ "${PINUP_MODE:-}" = "whatif" ]; then mode="run --dry-run"; fi
       # shellcheck disable=SC2086
-      /tmp/pinup $mode --project "$CI_PROJECT_PATH" --config "local>devops/renovate-runner" --report pinup-plan.json
+      /tmp/pinup $mode --project "$CI_PROJECT_PATH" --config "local>pinup/runner" --report pinup-plan.json
   artifacts:
     paths: [pinup-plan.json, pinup-plan.md]
     expire_in: 1 week

@@ -221,12 +221,20 @@ const defaultRunnerProject = "devops/renovate-runner"
 
 // runnerAliases are the names the repositories extend the runner
 // configuration by. They resolve to the runner's own file without a fetch
-// and without changing a byte in any renovate.json.
+// and without changing a byte in any renovate.json - which is why the
+// project the repositories were written against stays an alias after the
+// configuration moved: the estate's renovate.json files extend
+// devops/renovate-runner, and that project is archived (cutover step 12,
+// 2026-09-16) while pinup/runner carries the file.
 func runnerAliases(project string) []string {
 	if project == "" {
 		project = defaultRunnerProject
 	}
-	return []string{"local>" + project, "local>" + project + ":default.json", "local>" + project + ":default"}
+	names := []string{"local>" + project, "local>" + project + ":default.json", "local>" + project + ":default"}
+	if project != defaultRunnerProject {
+		names = append(names, "local>"+defaultRunnerProject, "local>"+defaultRunnerProject+":default.json", "local>"+defaultRunnerProject+":default")
+	}
+	return names
 }
 
 // runnerProject is the project the runner configuration lives in: the one
