@@ -1256,7 +1256,17 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		if r.whole {
 			refreshNames = nil
 		}
-		if t, ok := plugin.LockRefresh(at.manager, at.dir, r.lockFile, refreshNames, r.maintenance); ok {
+		t, ok := plugin.LockRefresh(at.manager, at.dir, r.lockFile, refreshNames, r.maintenance)
+		if !ok && r.maintenance {
+			// A maintenance branch is nothing but its refresh; without a
+			// refresh for this manager's lock it would be a branch with
+			// no edit and no task, which the runner skips without a word
+			// and the comparison reads as planned and never opened
+			// (measured 2026-09-16: koh-infra's .terraform.lock.hcl).
+			return tasks, &model.Block{Reason: model.BlockPluginRequired, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
+				Note: fmt.Sprintf("no lock refresh for %s (%s)", at.manager, filepath.Join(at.dir, r.lockFile))}
+		}
+		if ok {
 			tasks = append(tasks, t)
 		}
 	}

@@ -584,6 +584,10 @@ func escapeHTML(s string) string {
 
 func fail(plan *model.Plan, b *model.Branch, step string, err error) Outcome {
 	plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: %s: %v", b.Name, step, err)})
+	hold(plan, b, model.Block{
+		Reason: model.BlockPublishFailed, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
+		Note: step + ": " + err.Error(),
+	})
 	return Outcome{Branch: b.Name, Action: "failed", Message: step + ": " + err.Error()}
 }
 

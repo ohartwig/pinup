@@ -206,6 +206,13 @@ func TestAFailingBranchDoesNotStopTheOthers(t *testing.T) {
 	if len(p.Warnings) != 2 || !strings.Contains(p.Warnings[0].Msg, "renovate/a") || !strings.Contains(p.Warnings[1].Msg, "403") {
 		t.Errorf("each failure is a warning naming the branch: %+v", p.Warnings)
 	}
+	// The branch says so too: a reader of the plan must not take a
+	// branch the run could not write for one nobody acted on.
+	for _, b := range p.Branches {
+		if b.SuppressedBy != model.BlockPublishFailed {
+			t.Errorf("%s suppressedBy = %q, want %q", b.Name, b.SuppressedBy, model.BlockPublishFailed)
+		}
+	}
 }
 
 // A branch somebody committed to is theirs: the run neither rebuilds it

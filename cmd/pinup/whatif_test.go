@@ -1013,3 +1013,50 @@ func TestALockMaintenanceBranchRaisesNoApplyWarning(t *testing.T) {
 		}
 	}
 }
+
+// A maintenance branch is nothing but its refresh. For a lock no plugin
+// refreshes (terraform's), the branch used to have neither edit nor task:
+// the runner skipped it without a word and the comparison read it as
+// planned and never opened (koh-infra, 2026-09-16). It is held instead.
+func TestALockMaintenanceWithoutARefreshIsHeldAsPluginRequired(t *testing.T) {
+	root := t.TempDir()
+	os.WriteFile(root+"/versions.tf", []byte(`terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "6.64.0"
+    }
+  }
+}
+`), 0o644)
+	os.WriteFile(root+"/.terraform.lock.hcl", []byte(`provider "registry.opentofu.org/hashicorp/aws" {
+  version     = "6.64.0"
+  constraints = "6.64.0"
+  hashes = [
+    "h1:old=",
+  ]
+}
+`), 0o644)
+	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"], "lockFileMaintenance": {"enabled": true, "schedule": ["at any time"]}}`), 0o644)
+	at := time.Date(2026, 9, 16, 1, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(t, at)
+	opts.Root, opts.RepoName = root, "devops/koh-infra"
+	opts.Datasources["terraform-provider"] = cannedDS{name: "terraform-provider", scheme: "hashicorp", releases: map[string][]string{"hashicorp/aws": {"6.64.0"}}}
+	opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var found *model.Branch
+	for i := range plan.Branches {
+		if plan.Branches[i].Name == "renovate/lock-file-maintenance" {
+			found = &plan.Branches[i]
+		}
+	}
+	if found == nil {
+		t.Fatalf("no maintenance branch planned for the terraform lock; branches: %+v", plan.Branches)
+	}
+	if found.SuppressedBy != model.BlockPluginRequired {
+		t.Errorf("suppressedBy = %q, want %q (edits %d, tasks %d)", found.SuppressedBy, model.BlockPluginRequired, len(found.Edits), len(found.Tasks))
+	}
+}

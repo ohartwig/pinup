@@ -189,6 +189,12 @@ const (
 	// (measured 2026-09-16: sixteen such branches read as pinup-only in
 	// the comparison once Renovate no longer refreshed the same locks).
 	BlockNothingToRefresh BlockReason = "nothingToRefresh"
+	// BlockPublishFailed marks a branch the run tried to write and could
+	// not - a push refused, a task whose output left its scope, a merge
+	// request the platform declined. The warning names the step and the
+	// error; the branch carries the reason so that a reader of the plan
+	// does not take it for one nobody acted on.
+	BlockPublishFailed BlockReason = "publishFailed"
 )
 
 // Block is one reason an update is held, with the rule that held it. Every
