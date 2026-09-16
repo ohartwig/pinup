@@ -5,7 +5,9 @@ SPDX-License-Identifier: MIT
 
 # pinup documentation
 
-For people who run pinup:
+For people who run pinup. The same pages, as a website:
+<https://ole-hartwig.eu/en/open-source/pinup> (German:
+<https://ole-hartwig.eu/open-source/pinup>).
 
 | Page | What it answers |
 |---|---|

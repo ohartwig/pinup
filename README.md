@@ -200,7 +200,9 @@ pinup shadow --plans 'reports/*.json'                              # compare wit
 
 `pinup <command> -h` prints every flag. The documentation - getting
 started, every command, the configuration keys, the plan format,
-platforms, tasks, security - is in [docs/](docs/README.md).
+platforms, tasks, security - is in [docs/](docs/README.md) and, as web
+pages, at <https://ole-hartwig.eu/en/open-source/pinup> (German:
+<https://ole-hartwig.eu/open-source/pinup>).
 
 ## Configure
 
