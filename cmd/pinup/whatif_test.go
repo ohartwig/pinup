@@ -978,3 +978,38 @@ func TestATerraformProviderBumpMovesTheLock(t *testing.T) {
 		t.Errorf("branch held: %s", b.SuppressedBy)
 	}
 }
+
+// A maintenance branch names the lock file and no range in it: asking the
+// manager for an edit reported "no editable range recorded for lock file"
+// on every live run over a composer repository (measured 2026-09-16,
+// thirteen of moselwal's), a warning the dashboard then listed as a
+// repository problem.
+func TestALockMaintenanceBranchRaisesNoApplyWarning(t *testing.T) {
+	root := t.TempDir()
+	os.WriteFile(root+"/composer.json", []byte(`{"name":"acme/site","require":{"monolog/monolog":"^3.0"}}`), 0o644)
+	os.WriteFile(root+"/composer.lock", []byte(`{"packages":[{"name":"monolog/monolog","version":"3.8.0"}],"packages-dev":[]}`), 0o644)
+	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"], "lockFileMaintenance": {"enabled": true, "schedule": ["at any time"]}}`), 0o644)
+	at := time.Date(2026, 9, 16, 1, 5, 0, 0, time.UTC)
+	opts := ciToolsOptions(t, at)
+	opts.Root, opts.RepoName = root, "development/moselwal/site"
+	opts.Datasources["packagist"] = cannedDS{name: "packagist", scheme: "composer", releases: map[string][]string{"monolog/monolog": {"3.8.0"}}}
+	opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, b := range plan.Branches {
+		if b.Name == "renovate/lock-file-maintenance" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("no maintenance branch planned; branches: %+v", plan.Branches)
+	}
+	for _, w := range plan.Warnings {
+		if w.Stage == "apply" {
+			t.Errorf("apply warning on a maintenance branch: %s", w.Msg)
+		}
+	}
+}

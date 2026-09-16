@@ -776,9 +776,11 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		keys[k] = true
 	}
 	for _, u := range updates {
-		if !keys[u.Key()] || u.Blocked() || u.LockOnly {
+		if !keys[u.Key()] || u.Blocked() || u.LockOnly || u.Type == model.UpdateLockFileMaintenance {
 			// A lock-only update writes no manifest byte; its lock
-			// refresh is the branch's task.
+			// refresh is the branch's task. A maintenance update names
+			// the lock itself and no range in it - asking its manager
+			// for an edit reported "no editable range" on every run.
 			continue
 		}
 		body, ok := contents[u.Dep.File]
