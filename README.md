@@ -5,9 +5,13 @@ SPDX-License-Identifier: MIT
 
 # pinup
 
-Dependency updates for a GitLab estate: one static Go binary that reads
-your existing Renovate configuration, plans every change before it writes
-one, and opens merge requests that say what they bring.
+Dependency updates as one static Go binary: it reads your existing Renovate
+configuration, plans every change before it writes one, and opens merge
+requests that say what they bring. The datasources and managers are
+platform-neutral; the platform behind them - where the merge requests, the
+dashboard issue and the project listing live - is an interface with a
+GitLab implementation proven in production and a GitHub one on its way
+(`docs/tasks.md`, D.24).
 
 ```text
 config → resolve → checkout → discover → extract → lookup → classify → plan → apply → publish
