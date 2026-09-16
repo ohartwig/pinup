@@ -153,6 +153,11 @@ func sortBranches(plan *model.Plan, states map[string]BranchState, open []publis
 		}
 		h := heldBranch{br, firstBlock(br, updates)}
 		switch br.SuppressedBy {
+		case model.BlockNothingToRefresh:
+			// A maintenance that found the lock current is not held by
+			// anything a reader could lift; it is done. Listing it every
+			// night as "held" would name a problem where there is none.
+			continue
 		case model.BlockDashboardApproval:
 			s.pendingApproval = append(s.pendingApproval, h)
 		case model.BlockSchedule:
