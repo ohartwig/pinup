@@ -1,3 +1,9 @@
+## [0.24.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.2...v0.24.3) (2026-09-16)
+
+### :bug: Fixes
+
+* **plan:** a maintenance branch without a refresh, and a failed publish, say so on the branch ([b6d8ee8](https://git.ole-hartwig.eu/pinup/pinup/commit/b6d8ee8c775a09585d1c3ff31f1042a31f3203eb))
+
 ## [0.24.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.1...v0.24.2) (2026-09-16)
 
 ### :bug: Fixes
