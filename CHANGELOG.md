@@ -1,3 +1,13 @@
+## [0.26.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.25.1...v0.26.0) (2026-09-16)
+
+### :sparkles: Features
+
+* **platform:** GitHub - pull requests, dashboard issue, auto-merge (D.24) ([0cf7a17](https://git.ole-hartwig.eu/pinup/pinup/commit/0cf7a17e75779f83333fc4715b5d14caacbb2650))
+
+### :memo: Documentation
+
+* the platform is an interface, GitLab is the proven implementation ([27986c0](https://git.ole-hartwig.eu/pinup/pinup/commit/27986c0bd7fc58893db75405d84529580711f43e))
+
 ## [0.25.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.25.0...v0.25.1) (2026-09-16)
 
 ### :bug: Fixes
