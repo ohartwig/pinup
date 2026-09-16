@@ -24,6 +24,10 @@ func TestIndexRecordsAndAnswersEveryShapeTheEstateUses(t *testing.T) {
 		dep("gitlab-tags", "devops/ci-cd-components/lint-tools"),
 		dep("docker", "registry.ole-hartwig.eu/devops/images/golang"),
 	}}, now)
+	x.Record("devops/koh-gitops", &model.Plan{Deps: []model.Dependency{
+		dep("docker", "registry.ole-hartwig.eu/ai-ready-platform/platform/commerce/sources"),
+		dep("docker", "registry.ole-hartwig.eu/ai-ready-platform/platform/deeper/than/one"),
+	}}, now)
 	x.Record("development/moselwal/moselwal-websites", &model.Plan{Deps: []model.Dependency{
 		{Datasource: "gitlab-packages", DepName: "moselwal/dev", PackageName: "development/moselwal/dev:moselwal/dev", CustomManager: 10},
 		dep("gitlab-tags", "devops/ci-cd-components/lint-tools"),
@@ -35,6 +39,9 @@ func TestIndexRecordsAndAnswersEveryShapeTheEstateUses(t *testing.T) {
 		"devops/images/golang":               "development/moselwal/moselwal-websites,devops/images/ci-tools", // held deps count
 		"development/moselwal/dev":           "development/moselwal/moselwal-websites",
 		"devops/images/nothing":              "",
+		// a nested registry repository of the project, one segment deep
+		"ai-ready-platform/platform/commerce": "devops/koh-gitops",
+		"ai-ready-platform/platform":          "", // a group is not a project
 	} {
 		if got := strings.Join(x.ConsumersOf(path), ","); got != want {
 			t.Errorf("ConsumersOf(%q) = %q, want %q", path, got, want)
