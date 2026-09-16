@@ -313,7 +313,7 @@ func readArchive(data []byte) (chart, error) {
 	}
 	var meta map[string]any
 	if err := yamlx.Unmarshal(chartYAML, &meta); err != nil {
-		return c, fmt.Errorf("Chart.yaml: %w", err)
+		return c, fmt.Errorf("chart archive: Chart.yaml: %w", err)
 	}
 	c.appVersion, _ = meta["appVersion"].(string)
 	if n, ok := meta["appVersion"].(float64); ok {
