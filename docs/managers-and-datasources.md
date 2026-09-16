@@ -59,7 +59,7 @@ never a failed run for the repository.
 | `docker` | image tags | version and compatibility segment (`22-alpine3.21`); a different suffix or component count is another image, not an update |
 | `apk` | Wolfi/Alpine package versions | `-rN` revisions, epochs |
 | `composer` | Composer constraints | `^`, `~`, `*`, stability flags, `dev-` branches |
-| `npm` | npm ranges | `^`, `~`, `x`, `||`, hyphen ranges |
+| `npm` | npm ranges | `^`, `~`, `x`, `\|\|`, hyphen ranges |
 | `node` | Node.js | semver, with `engines` ranges as npm ranges |
 | `go` | Go modules | `v` prefix, pseudo-versions, `+incompatible` |
 | `go-mod-directive` | the `go` directive | `1.27` admits `1.27.x` |

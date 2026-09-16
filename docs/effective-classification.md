@@ -76,7 +76,7 @@ and values stood still reads `patch`.
 
 Under the update table, per analyzed update:
 
-```
+```markdown
 **registry-1.docker.io/bitnamicharts/redis**: declared major, effective breaking-values (helm-chart)
 
 | Compared | From | To | Finding |

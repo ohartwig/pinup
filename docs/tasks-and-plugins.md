@@ -77,6 +77,6 @@ correctly: the refresh writes `node_modules/.package-lock.json`.)
 Tasks run the toolchain on the job image's `PATH`: the runner's toolchain
 image carries composer, npm and go, and the commands run in-process,
 without a shell (`a || b` hands composer a package named `||`). A
-container flavour of the same contract - a digest-pinned image per task
-- is what the specification describes and what a runner with Docker-in-
+container flavour of the same contract, a digest-pinned image per task,
+is what the specification describes and what a runner with Docker-in-
 Docker would use; the exec flavour is the one proven in production.
