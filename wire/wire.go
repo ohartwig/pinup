@@ -44,6 +44,7 @@ import (
 	"github.com/ohartwig/pinup/manager/terraform"
 	"github.com/ohartwig/pinup/manager/tfversion"
 	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/platform/github"
 	"github.com/ohartwig/pinup/platform/gitlab"
 	"github.com/ohartwig/pinup/publish"
 	"github.com/ohartwig/pinup/versioning"
@@ -240,9 +241,13 @@ func LockedRegistries(manager string, lock []byte) map[string]string {
 	return nil
 }
 
-// Platform returns the GitLab platform for an instance. header is the
-// header the token travels in: PRIVATE-TOKEN or JOB-TOKEN.
-func Platform(baseURL, token, header string) publish.Platform {
+// Platform returns the platform of kind ("gitlab" or "github") for an
+// instance. header is the header a GitLab token travels in: PRIVATE-TOKEN
+// or JOB-TOKEN; GitHub's is a bearer token.
+func Platform(kind, baseURL, token, header string) publish.Platform {
+	if kind == "github" {
+		return github.New(baseURL, nil, token)
+	}
 	return gitlab.New(baseURL, nil, gitlab.Token{Value: token, Header: header})
 }
 

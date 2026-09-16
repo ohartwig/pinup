@@ -33,10 +33,15 @@ import (
 // The instance comes from PINUP_GITLAB_URL, else CI_SERVER_URL. Without
 // either, a dependency that names no registry is skipped with that reason.
 type platformEnv struct {
+	// Kind is the platform: "gitlab" (the default) or "github".
+	// PINUP_PLATFORM names it; without that, a GitHub token with no GitLab
+	// instance in the environment means GitHub.
+	Kind  string
 	URL   string
 	Host  string
 	Token string
-	// Header is the header that carries Token: PRIVATE-TOKEN or JOB-TOKEN.
+	// Header is the header that carries Token: PRIVATE-TOKEN or JOB-TOKEN
+	// on GitLab; empty on GitHub, where it is a bearer token.
 	Header string
 	// GitHubToken is GITHUB_COM_TOKEN - the name the Renovate runner uses;
 	// the same variable serves pinup, bound to api.github.com and nothing
@@ -52,6 +57,19 @@ type platformEnv struct {
 
 func platformFromEnv(getenv func(string) string) (platformEnv, error) {
 	var p platformEnv
+	kind := strings.ToLower(getenv("PINUP_PLATFORM"))
+	ghTok := firstSet(getenv, "PINUP_GITHUB_TOKEN", "GITHUB_TOKEN")
+	if kind == "" && ghTok != "" && firstSet(getenv, "PINUP_GITLAB_URL", "CI_SERVER_URL", "PINUP_GITLAB_TOKEN", "GITLAB_TOKEN") == "" {
+		kind = "github"
+	}
+	switch kind {
+	case "", "gitlab":
+		p.Kind = "gitlab"
+	case "github":
+		return githubFromEnv(getenv, ghTok)
+	default:
+		return p, fmt.Errorf("PINUP_PLATFORM=%q: the platforms are gitlab and github", kind)
+	}
 	p.URL = strings.TrimRight(firstSet(getenv, "PINUP_GITLAB_URL", "CI_SERVER_URL"), "/")
 	if u, err := url.Parse(p.URL); err == nil {
 		p.Host = u.Host
@@ -75,6 +93,43 @@ func platformFromEnv(getenv func(string) string) (platformEnv, error) {
 		return p, fmt.Errorf("a GitLab token is set but no instance to send it to: set PINUP_GITLAB_URL (or CI_SERVER_URL)")
 	}
 	return p, nil
+}
+
+// githubFromEnv reads the GitHub shape: PINUP_GITHUB_URL (else github.com)
+// is the web host git clones from and the platform derives its API base
+// from; the token is a bearer token, and it also serves the github-*
+// datasources when GITHUB_COM_TOKEN names none of its own.
+func githubFromEnv(getenv func(string) string, token string) (platformEnv, error) {
+	p := platformEnv{Kind: "github"}
+	p.URL = strings.TrimRight(firstSet(getenv, "PINUP_GITHUB_URL", "GITHUB_SERVER_URL"), "/")
+	if p.URL == "" {
+		p.URL = "https://github.com"
+	}
+	u, err := url.Parse(p.URL)
+	if err != nil || u.Host == "" {
+		return p, fmt.Errorf("PINUP_GITHUB_URL %q is not a URL", p.URL)
+	}
+	p.Host = u.Host
+	p.Token = token
+	if p.Token == "" {
+		return p, fmt.Errorf("PINUP_PLATFORM=github needs PINUP_GITHUB_TOKEN (or GITHUB_TOKEN)")
+	}
+	p.GitHubToken = getenv("GITHUB_COM_TOKEN")
+	if p.GitHubToken == "" && strings.EqualFold(p.Host, "github.com") {
+		p.GitHubToken = p.Token
+	}
+	p.RegistryHost = firstSet(getenv, "PINUP_REGISTRY_HOST")
+	return p, nil
+}
+
+// gitLabURL is the GitLab instance the run knows, or empty on another
+// platform - what the gitlab-* datasources and the release-notes fetcher
+// default to.
+func (p platformEnv) gitLabURL() string {
+	if p.Kind == "gitlab" {
+		return p.URL
+	}
+	return ""
 }
 
 func firstSet(getenv func(string) string, names ...string) string {
@@ -101,13 +156,13 @@ func firstSet(getenv func(string) string, names ...string) string {
 // name already there is replaced, so an installation with a mirror of
 // Wolfi lists it under custom.wolfi with the public repository.
 func datasourceOptions(p platformEnv, getenv func(string) string) (wire.DatasourceOptions, error) {
-	o := wire.DatasourceOptions{GitLabURL: p.URL}
+	o := wire.DatasourceOptions{GitLabURL: p.gitLabURL()}
 	views, err := apkViews(getenv)
 	if err != nil {
 		return o, err
 	}
 	o.ApkViews = views
-	if p.Host == "" || p.Token == "" || p.RegistryHost == "" {
+	if p.Kind != "gitlab" || p.Host == "" || p.Token == "" || p.RegistryHost == "" {
 		return o, nil
 	}
 	user := "oauth2"
@@ -166,7 +221,10 @@ const instancePaths = `^/api/v4/(projects/.+/(releases|repository/tags|repositor
 // own header alike - on a cross-host redirect.
 func httpClient(p platformEnv) *httpx.Client {
 	var rules []httpx.HostRule
-	if p.Host != "" && p.Token != "" {
+	// On GitHub the platform token is the api.github.com rule below (or,
+	// on an enterprise host, none: the github-* datasources are bound to
+	// github.com); the instance rule is GitLab's shape.
+	if p.Kind == "gitlab" && p.Host != "" && p.Token != "" {
 		rules = append(rules, httpx.HostRule{
 			MatchHost: p.Host, Token: p.Token, HeaderName: p.Header,
 			PathPattern: instancePaths,

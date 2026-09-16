@@ -102,9 +102,13 @@ func cmdAskpass(args []string, out, errw io.Writer) error {
 	}
 	switch {
 	case strings.HasPrefix(strings.ToLower(prompt), "username"):
-		if env.Header == "JOB-TOKEN" {
+		switch {
+		case env.Kind == "github":
+			// GitHub's username for a token over HTTPS.
+			fmt.Fprintln(out, "x-access-token")
+		case env.Header == "JOB-TOKEN":
 			fmt.Fprintln(out, "gitlab-ci-token")
-		} else {
+		default:
 			fmt.Fprintln(out, "oauth2")
 		}
 	default:

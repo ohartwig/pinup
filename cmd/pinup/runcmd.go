@@ -110,7 +110,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	ctx := context.Background()
 	now := time.Now()
 
-	platform := wire.Platform(env.URL, env.Token, env.Header)
+	platform := wire.Platform(env.Kind, env.URL, env.Token, env.Header)
 
 	// --config may name the runner's file on the platform rather than a
 	// path: "local>devops/renovate-runner". The job that runs pinup against
@@ -593,7 +593,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		advisories.Store = advisoryStore{cache: o.cache, now: o.now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
 	}
 	opts.Advisories = advisories
-	notes := &changelog.Fetcher{Client: o.client, GitLabURL: o.env.URL, TTL: changelogTTL, Now: o.now, MaxBody: noteBodyLimit}
+	notes := &changelog.Fetcher{Client: o.client, GitLabURL: o.env.gitLabURL(), TTL: changelogTTL, Now: o.now, MaxBody: noteBodyLimit}
 	if o.cache != nil {
 		notes.Cache = o.cache
 	}

@@ -50,6 +50,54 @@ func TestPlatformFromEnv(t *testing.T) {
 	if c := httpClient(p); c == nil {
 		t.Error("no client")
 	}
+
+	// GitHub: named, or implied by a GitHub token with no GitLab instance.
+	p, err = platformFromEnv(envOf(map[string]string{"PINUP_GITHUB_TOKEN": "ghp_y"}))
+	if err != nil || p.Kind != "github" || p.URL != "https://github.com" || p.Host != "github.com" || p.Token != "ghp_y" || p.Header != "" {
+		t.Errorf("github implied: %+v %v", p, err)
+	}
+	if p.GitHubToken != "ghp_y" {
+		t.Error("on github.com the platform token serves the github-* datasources too")
+	}
+	p, err = platformFromEnv(envOf(map[string]string{"PINUP_PLATFORM": "github", "PINUP_GITHUB_URL": "https://github.example/", "GITHUB_TOKEN": "ghp_z", "GITHUB_COM_TOKEN": "ghp_com"}))
+	if err != nil || p.Kind != "github" || p.URL != "https://github.example" || p.Host != "github.example" || p.Token != "ghp_z" || p.GitHubToken != "ghp_com" {
+		t.Errorf("github enterprise: %+v %v", p, err)
+	}
+	if _, err := platformFromEnv(envOf(map[string]string{"PINUP_PLATFORM": "github"})); err == nil {
+		t.Error("github without a token must be refused")
+	}
+	if _, err := platformFromEnv(envOf(map[string]string{"PINUP_PLATFORM": "bitbucket"})); err == nil {
+		t.Error("an unknown platform must be refused")
+	}
+	// A GitLab instance in the environment keeps GitLab the default even
+	// beside a GitHub token (the estate's runner carries GITHUB_COM_TOKEN
+	// for the github-* datasources).
+	p, err = platformFromEnv(envOf(map[string]string{"CI_SERVER_URL": "https://git.example.org", "CI_JOB_TOKEN": "job", "GITHUB_TOKEN": "ghp_q"}))
+	if err != nil || p.Kind != "gitlab" {
+		t.Errorf("gitlab stays the default: %+v %v", p, err)
+	}
+}
+
+func TestAskpassAnswersGitHubAsAccessToken(t *testing.T) {
+	t.Setenv("PINUP_GITLAB_URL", "")
+	t.Setenv("CI_SERVER_URL", "")
+	t.Setenv("PINUP_GITLAB_TOKEN", "")
+	t.Setenv("GITLAB_TOKEN", "")
+	t.Setenv("CI_JOB_TOKEN", "")
+	t.Setenv("PINUP_PLATFORM", "github")
+	t.Setenv("PINUP_GITHUB_TOKEN", "ghp_x")
+	var out strings.Builder
+	if err := cmdAskpass([]string{"Username for 'https://github.com':"}, &out, io.Discard); err != nil || strings.TrimSpace(out.String()) != "x-access-token" {
+		t.Errorf("username: %q %v", out.String(), err)
+	}
+	out.Reset()
+	if err := cmdAskpass([]string{"Password for 'https://x-access-token@github.com':"}, &out, io.Discard); err != nil || strings.TrimSpace(out.String()) != "ghp_x" {
+		t.Errorf("password: %q %v", out.String(), err)
+	}
+	out.Reset()
+	if err := cmdAskpass([]string{"Password for 'https://x-access-token@gitlab.com':"}, &out, io.Discard); err == nil || out.Len() != 0 {
+		t.Errorf("another host answered: %q %v", out.String(), err)
+	}
 }
 
 func TestGitIdentityFromEnv(t *testing.T) {

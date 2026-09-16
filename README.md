@@ -9,9 +9,11 @@ Dependency updates as one static Go binary: it reads your existing Renovate
 configuration, plans every change before it writes one, and opens merge
 requests that say what they bring. The datasources and managers are
 platform-neutral; the platform behind them - where the merge requests, the
-dashboard issue and the project listing live - is an interface with a
-GitLab implementation proven in production and a GitHub one on its way
-(`docs/tasks.md`, D.24).
+dashboard issue and the project listing live - is an interface with two
+implementations: GitLab, proven in production across an estate of two
+hundred repositories, and GitHub, proven against a fake that speaks the
+API and in a read-only run against this repository's own mirror, waiting
+for its first production repository (`docs/tasks.md`, D.24).
 
 ```text
 config → resolve → checkout → discover → extract → lookup → classify → plan → apply → publish
@@ -75,6 +77,11 @@ pinup whatif --repo . --config renovate.json --report plan.json
 export PINUP_GITLAB_URL=https://gitlab.example.org PINUP_GITLAB_TOKEN=glpat-…
 pinup run --project group/project --config 'local>devops/renovate-runner'
 
+# On GitHub: pull requests, a dashboard issue, auto-merge where the
+# repository allows it. A GitHub token alone selects the platform.
+export PINUP_GITHUB_TOKEN=ghp_…
+pinup run --project owner/repository --config 'local>owner/runner-config'
+
 # Every project an autodiscover filter matches, eight at a time.
 pinup run --autodiscover '["devops/**","!devops/archive/**"]' --config … --report 'reports/%s.json'
 
@@ -102,8 +109,11 @@ Environment:
 
 | Variable | Meaning |
 |---|---|
-| `PINUP_GITLAB_URL` / `CI_SERVER_URL` | the instance |
+| `PINUP_PLATFORM` | `gitlab` (the default) or `github`; a GitHub token with no GitLab instance in the environment means `github` |
+| `PINUP_GITLAB_URL` / `CI_SERVER_URL` | the GitLab instance |
 | `PINUP_GITLAB_TOKEN` / `GITLAB_TOKEN` | a personal access token (`api`, `write_repository`); `CI_JOB_TOKEN` is used when none is set (read-only) |
+| `PINUP_GITHUB_URL` / `GITHUB_SERVER_URL` | the GitHub host; `github.com` when unset |
+| `PINUP_GITHUB_TOKEN` / `GITHUB_TOKEN` | a token with `repo` (pull requests, issues, contents) - a fine-grained one with contents, pull requests and issues read/write; on `github.com` it serves the `github-*` datasources as well |
 | `PINUP_REGISTRY_HOST` / `CI_REGISTRY` | the estate's container registry; the token is exchanged for a pull token there and nowhere else |
 | `GITHUB_COM_TOKEN` | for GitHub lookups and release notes, bound to `api.github.com` |
 | `PINUP_GIT_NAME`, `PINUP_GIT_EMAIL`, `PINUP_SIGNING_FORMAT`, `PINUP_SIGNING_KEY` | who commits and how commits are signed (`openpgp` or `ssh`); unsigned only with the explicit word `none` |

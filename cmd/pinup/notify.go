@@ -108,7 +108,7 @@ func cmdNotify(args []string, out, errw io.Writer) error {
 	if env.Host == "" {
 		return fmt.Errorf("notify: the GitLab instance is not known; set PINUP_GITLAB_URL or CI_SERVER_URL")
 	}
-	platform := wire.Platform(env.URL, env.Token, env.Header)
+	platform := wire.Platform(env.Kind, env.URL, env.Token, env.Header)
 	ctx := context.Background()
 	proj, err := platform.Project(ctx, *project)
 	if err != nil {

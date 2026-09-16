@@ -69,7 +69,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		if env.Host == "" {
 			return fmt.Errorf("whatif: --config %s needs the instance: set PINUP_GITLAB_URL or CI_SERVER_URL", *cfgPath)
 		}
-		local, err := fetchConfig(context.Background(), wire.Platform(env.URL, env.Token, env.Header), *cfgPath)
+		local, err := fetchConfig(context.Background(), wire.Platform(env.Kind, env.URL, env.Token, env.Header), *cfgPath)
 		if err != nil {
 			return err
 		}
@@ -90,7 +90,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
 	advisories := &osv.Client{}
 	opts.Advisories = advisories
-	notes := &changelog.Fetcher{Client: client, GitLabURL: env.URL, TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
+	notes := &changelog.Fetcher{Client: client, GitLabURL: env.gitLabURL(), TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
 	opts.Changelog = notes
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
@@ -100,7 +100,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	// there is one to read from; without a token they stay unknown and the
 	// resolution says so.
 	if env.Host != "" {
-		opts.Presets = preset.Remote{Reader: wire.Platform(env.URL, env.Token, env.Header), Ctx: context.Background()}
+		opts.Presets = preset.Remote{Reader: wire.Platform(env.Kind, env.URL, env.Token, env.Header), Ctx: context.Background()}
 	}
 	if *cachePath != "" {
 		store, err := cache.Open(*cachePath)
