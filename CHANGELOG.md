@@ -1,3 +1,13 @@
+## [0.27.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.27.0...v0.27.1) (2026-09-16)
+
+### :memo: Documentation
+
+* link the documentation pages on ole-hartwig.eu ([2317e21](https://git.ole-hartwig.eu/pinup/pinup/commit/2317e21f6a07aadaca23e5bdead2125e7d22dd13))
+
+### :repeat: Chores
+
+* **mirror:** the architecture notes and the specification stay with the development repository ([aafe7ae](https://git.ole-hartwig.eu/pinup/pinup/commit/aafe7aefdf923a201340960b567ad4e598043470))
+
 ## [0.27.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.26.0...v0.27.0) (2026-09-16)
 
 ### :sparkles: Features
