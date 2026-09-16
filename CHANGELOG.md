@@ -1,3 +1,10 @@
+## [0.24.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.1...v0.24.2) (2026-09-16)
+
+### :bug: Fixes
+
+* **plan:** a lock maintenance update asks no manager for an edit ([e88a75b](https://git.ole-hartwig.eu/pinup/pinup/commit/e88a75bffef91957b2608bee9f9709c257dbe201))
+* **runner:** a lock refresh that changes nothing holds its branch with the reason ([7803456](https://git.ole-hartwig.eu/pinup/pinup/commit/7803456c0974bbe89e9171248dde7ff4db3f42dd))
+
 ## [0.24.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.0...v0.24.1) (2026-09-15)
 
 ### :bug: Fixes
