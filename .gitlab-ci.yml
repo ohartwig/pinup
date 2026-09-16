@@ -88,11 +88,27 @@ include:
   # GITHUB_MIRROR_TOKEN is a fine-grained token with contents:write on the
   # mirror repository - about publishing the project, not about releasing it.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.4.2
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.5.0
     inputs:
       stage: .post
       mirror-target: 'ohartwig/pinup'
       mirror-token-var: 'GITHUB_MIRROR_TOKEN'
+      # Names that must not leave the instance and sit in old revisions of
+      # files that otherwise belong to the project (a test table, a comment,
+      # a fixture since stripped): rewritten in every blob of the history,
+      # and the job refuses to push while one is still reachable. The
+      # package name is replaced whole - its two-letter vendor alone would
+      # match inside other words.
+      replace-text:
+        - 'acme==>acme'
+        - 'tenant-b==>tenant-b'
+        - 'tenant-c==>tenant-c'
+        - 'tenant-d==>tenant-d'
+        - 'tenant-e==>tenant-e'
+        - 'tenant-f==>tenant-f'
+        - 'vendor-x/typo3-mcp-server==>vendor-x/typo3-mcp-server'
+        - 'partner-a==>partner-a'
+        - 'partner-a-jobs==>partner-a-jobs'
       strip-paths: ['CLAUDE.md', '.gitsigners', '.gitsigners.d', '.gitlab', '.mise.toml', 'lefthook.yml', 'docs/tasks.md', 'docs/reviews', 'testdata/estate', 'testdata/parity', 'testdata/golden', 'testdata/upstream', 'testdata/renovate/renovate-43.288.0/presets/closure.json', 'config/preset/library.json', 'tools/presetgen']
       keep-tags: 'v*'
       prune: 'true'
