@@ -50,7 +50,7 @@ include:
       # The bot's own token starts the tag pipeline and, when that pipeline
       # fails, takes the tag and the release back (GDG-44's net). The
       # component's caveat - a pipeline started as an external user gets
-      # zero jobs - does not apply: renovate-bot (322) is a bot user, not
+      # zero jobs - does not apply: pinup-bot (322, renovate-bot until 2026-09-16) is a bot user, not
       # external, and the bot is a Maintainer of this group.
       tag-pipeline-token-var: PINUP_GITLAB_TOKEN
       # The note on every merge request and closed issue of a release, with
