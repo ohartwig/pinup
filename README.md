@@ -100,7 +100,10 @@ pinup migrate --config renovate.json
 pinup migrate --config renovate.json --to yaml
 ```
 
-`pinup <command>` without flags prints the usage of each command.
+`pinup <command>` without flags prints the usage of each command. The
+documentation - getting started, every command and flag, the
+configuration keys, the plan format, platforms, tasks, security - is in
+[docs/](docs/README.md).
 
 ## Configure
 
