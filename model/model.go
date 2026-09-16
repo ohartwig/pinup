@@ -108,6 +108,10 @@ type Dependency struct {
 	// the digest its value resolves to (a pinDigest update). Rule 760 of
 	// the estate's configuration sets it for every docker dependency.
 	PinDigests bool `json:"pinDigests,omitempty"`
+	// Analyze asks for the effective classification of this dependency's
+	// updates, from a rule's `analyze: true`; off by default, since an
+	// analyzer fetches both versions of the thing.
+	Analyze bool `json:"analyze,omitempty"`
 	// MinimumReleaseAge and InternalChecksFilter, from the pre-lookup rule
 	// pass, let the planner choose among candidates by age: under
 	// "strict" the newest release that already satisfies the age is the

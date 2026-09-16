@@ -227,3 +227,37 @@ func TestObjectsReplaceExceptTheMeasuredMergedOnes(t *testing.T) {
 		t.Errorf("Wrote[prBodyDefinitions] = %v, want the one rule", res.Wrote["prBodyDefinitions"])
 	}
 }
+
+// A rule on the analyzer's label fires only once there is one: before an
+// analyzer ran the subject carries no effective label, and "unknown" is
+// not a value a rule can name - a rule must never fire on the absence of
+// an answer. The rule is marked as one that relaxes on the analyzer's
+// word, which the planner admits only with trustEffective.
+func TestMatchEffectiveFiresOnlyOnALabel(t *testing.T) {
+	e, err := Compile([]any{
+		map[string]any{"matchDatasources": []any{"helm"}, "matchUpdateTypes": []any{"major"}, "matchEffective": []any{"patch", "minor"}, "automerge": true},
+	}, versioning.Registry{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !e.Rules[0].UsesEffective {
+		t.Error("a matchEffective rule must be marked")
+	}
+	base := map[string]any{"automerge": false}
+	s := Subject{DepName: "redis", Datasource: "helm", UpdateType: "major"}
+	if res := e.Apply(base, s); len(res.Matched) != 0 {
+		t.Errorf("no label, no match: %v", res.Matched)
+	}
+	s.Effective = "unknown"
+	if res := e.Apply(base, s); len(res.Matched) != 0 {
+		t.Errorf("unknown is not a label a rule matches: %v", res.Matched)
+	}
+	s.Effective = "patch"
+	if res := e.Apply(base, s); len(res.Matched) != 1 || res.Config["automerge"] != true {
+		t.Errorf("a patch label matches: %v %v", res.Matched, res.Config["automerge"])
+	}
+	s.Effective = "breaking-values"
+	if res := e.Apply(base, s); len(res.Matched) != 0 {
+		t.Errorf("breaking-values is not in the list: %v", res.Matched)
+	}
+}

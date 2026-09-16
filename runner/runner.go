@@ -475,6 +475,19 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 		}
 		s.WriteString("\n")
 	}
+	// What an analyzer saw, where one ran: the effective label beside the
+	// declared one, and the rows it rests on, so a reader checks the label
+	// against the facts rather than takes it.
+	for _, u := range members {
+		if u.Analyzer == "" && len(u.Evidence) == 0 {
+			continue
+		}
+		fmt.Fprintf(&s, "**%s**: declared %s, effective %s (%s)\n\n| Compared | From | To | Finding |\n|---|---|---|---|\n", u.Dep.DepName, u.Declared, u.Effective, u.Analyzer)
+		for _, ev := range u.Evidence {
+			fmt.Fprintf(&s, "| %s | %s | %s | %s |\n", ev.Kind, cell(ev.From), cell(ev.To), Sanitize(escapeHTML(ev.Note)))
+		}
+		s.WriteString("\n")
+	}
 	s.WriteString("| File | Change |\n|---|---|\n")
 	for _, e := range b.Edits {
 		fmt.Fprintf(&s, "| `%s` | `%s` → `%s` |\n", e.File, e.Old, e.New)
@@ -521,6 +534,14 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 		s.WriteString("\n" + footer + "\n")
 	}
 	return s.String()
+}
+
+// cell renders an evidence value as code, or a dash for none.
+func cell(v string) string {
+	if v == "" {
+		return "—"
+	}
+	return "`" + Sanitize(escapeHTML(v)) + "`"
 }
 
 // change is the "from → to" cell of an update.

@@ -208,6 +208,46 @@ func (d *Datasource) Digest(ctx context.Context, ref lookup.Ref, tag string) (st
 	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }
 
+// Manifest returns a tag's manifest as the registry serves it - what an
+// analyzer reads a chart's layers from. Not called from Releases, for the
+// same reason Digest is not.
+func (d *Datasource) Manifest(ctx context.Context, ref lookup.Ref, tag string) ([]byte, error) {
+	registry, repository := resolve(ref)
+	u := registry + "/v2/" + repository + "/manifests/" + url.PathEscape(tag)
+	resp, err := d.authenticatedGet(ctx, registry, repository, u, manifestAccept)
+	if err != nil {
+		return nil, err
+	}
+	return resp.body, nil
+}
+
+// Blob returns a blob by digest, up to limit bytes; a registry that
+// redirects blobs to object storage is followed, and the bearer token
+// stays behind on the way (net/http drops Authorization across hosts).
+func (d *Datasource) Blob(ctx context.Context, ref lookup.Ref, digest string, limit int64) ([]byte, error) {
+	registry, repository := resolve(ref)
+	u := registry + "/v2/" + repository + "/blobs/" + url.PathEscape(digest)
+	key := tokenKey{registry: registry, repository: repository}
+	resp, err := d.doGetLimit(ctx, u, "", d.tokenFor(key), limit)
+	if err != nil {
+		return nil, err
+	}
+	if resp.status == http.StatusUnauthorized {
+		token, aerr := d.authenticate(ctx, registry, repository, resp.header)
+		if aerr != nil {
+			return nil, fmt.Errorf("docker: %s: %w", repository, aerr)
+		}
+		d.setToken(key, token)
+		if resp, err = d.doGetLimit(ctx, u, "", token, limit); err != nil {
+			return nil, err
+		}
+	}
+	if resp.status != http.StatusOK {
+		return nil, fmt.Errorf("docker: %s blob %s: status %d", repository, digest, resp.status)
+	}
+	return resp.body, nil
+}
+
 // listTags walks every page of the tags list, following Link: rel="next" per
 // RFC 5988 until the registry stops sending one.
 func (d *Datasource) listTags(ctx context.Context, registry, repository string) ([]string, error) {
@@ -343,6 +383,11 @@ func (d *Datasource) setToken(key tokenKey, token string) {
 // non-empty, and reads the body fully before returning so the connection can
 // go back to the pool.
 func (d *Datasource) doGet(ctx context.Context, rawURL, accept, token string) (*httpResponse, error) {
+	return d.doGetLimit(ctx, rawURL, accept, token, 4<<20)
+}
+
+// doGetLimit is doGet with the body bound to limit bytes.
+func (d *Datasource) doGetLimit(ctx context.Context, rawURL, accept, token string, limit int64) (*httpResponse, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("docker: build request: %w", err)
@@ -362,7 +407,7 @@ func (d *Datasource) doGet(ctx context.Context, rawURL, accept, token string) (*
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, 4<<20))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit))
 	if err != nil {
 		return nil, fmt.Errorf("docker: read response from %s: %w", req.URL.Host, err)
 	}

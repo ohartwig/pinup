@@ -593,6 +593,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		advisories.Store = advisoryStore{cache: o.cache, now: o.now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
 	}
 	opts.Advisories = advisories
+	opts.Analyzers = wire.Analyzers(o.client, o.datasources)
 	notes := &changelog.Fetcher{Client: o.client, GitLabURL: o.env.gitLabURL(), TTL: changelogTTL, Now: o.now, MaxBody: noteBodyLimit}
 	if o.cache != nil {
 		notes.Cache = o.cache

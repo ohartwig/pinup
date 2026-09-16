@@ -39,6 +39,13 @@ dependencies, and without moving a line of anyone's `renovate.json`:
   vulnerability alerts (OSV), the dependency dashboard with its checkboxes.
   `pinup migrate` reports, key by key, what a configuration uses and what
   pinup supports.
+- **An effective label beside the declared one.** A rule with `analyze:
+  true` asks an analyzer what actually changed: for a Helm chart, the
+  application's own version, the values keys the new chart no longer has
+  (`breaking-values`), the subcharts. `matchEffective` rules read the
+  label, the merge request shows the evidence, and the stricter of the two
+  labels decides automerge unless a rule says `trustEffective: true` -
+  for the chart vendor that raises the major on every release.
 - **Renovate-compatible branches.** The same branch names and titles, so an
   estate switches without a single duplicated merge request; open branches
   are adopted.

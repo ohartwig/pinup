@@ -39,6 +39,7 @@ var keySupport = map[string]support{
 	"matchPackageNames": supported, "matchDepNames": supported, "matchDatasources": supported, "matchManagers": supported,
 	"matchDepTypes": supported, "matchUpdateTypes": supported, "matchCurrentValue": supported, "matchCurrentVersion": partial,
 	"matchFileNames": supported, "matchSourceUrls": partial, "matchJsonata": partial, "matchCategories": unsupported,
+	"matchEffective": supported, "analyze": supported, "trustEffective": supported,
 	// Decisions.
 	"enabled": supported, "minimumReleaseAge": supported, "minimumReleaseAgeBehaviour": supported, "schedule": supported,
 	"timezone": supported, "automerge": supported, "dependencyDashboardApproval": supported, "groupName": supported,

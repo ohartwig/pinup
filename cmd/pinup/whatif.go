@@ -17,6 +17,7 @@ import (
 	"github.com/ohartwig/pinup/apply"
 	"github.com/ohartwig/pinup/cache"
 	"github.com/ohartwig/pinup/changelog"
+	"github.com/ohartwig/pinup/classify"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
 	"github.com/ohartwig/pinup/discover"
@@ -88,6 +89,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		RunnerProject: project,
 	}
 	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
+	opts.Analyzers = wire.Analyzers(client, opts.Datasources)
 	advisories := &osv.Client{}
 	opts.Advisories = advisories
 	notes := &changelog.Fetcher{Client: client, GitLabURL: env.gitLabURL(), TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
@@ -193,6 +195,10 @@ type whatifOptions struct {
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
 	Advisories advisoryChecker
+	// Analyzers classify what actually changed for an update whose
+	// dependency a rule marked `analyze: true`; nil means no update gets
+	// an effective label. wire supplies them.
+	Analyzers classify.Registry
 	// Changelog reads the release notes between the current and the new
 	// version for every update the run will act on, unless a rule sets
 	// fetchChangeLogs "off" for it; nil means no update carries notes.
@@ -647,6 +653,19 @@ func (r *whatifRun) planUpdates() error {
 	r.postUpgrade = map[string]plugin.PostUpgrade{}
 	r.changelogOff = map[string]bool{}
 	for _, u := range planned.Updates {
+		// The effective label, where a rule asked for one and an analyzer
+		// can read the thing: what actually changed, beside what the
+		// version number says. Its failure to look is a warning; the
+		// label stays unknown and nothing relaxes.
+		if u.Dep.Analyze && o.Analyzers != nil && !u.Blocked() && u.NewVersion != "" && u.Dep.CurrentValue != "" {
+			e, name, ok, err := o.Analyzers.Run(r.ctx, u.Dep, u.Dep.CurrentValue, u.NewVersion)
+			switch {
+			case err != nil:
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "analyze", File: u.Dep.File, Msg: fmt.Sprintf("%s %s → %s: %s: %v", u.Dep.DepName, u.Dep.CurrentValue, u.NewVersion, name, err)})
+			case ok:
+				u.Effective, u.Analyzer, u.Evidence = e.Risk, name, e.Evidence
+			}
+		}
 		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now)
 		if err != nil {
 			return fmt.Errorf("%s: %w", u.DepKey, err)
@@ -850,6 +869,9 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	if pin, ok := res.Config["pinDigests"].(bool); ok {
 		d.PinDigests = pin
 	}
+	if a, ok := res.Config["analyze"].(bool); ok {
+		d.Analyze = a
+	}
 	if f, ok := res.Config["internalChecksFilter"].(string); ok && f != "" && f != "none" {
 		d.InternalChecksFilter = f
 		if age, ok := res.Config["minimumReleaseAge"].(string); ok {
@@ -877,10 +899,30 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, map[string]any, error) {
 	// The rules were written for Renovate and see the type Renovate would
 	// report: a majorAvailable update is a major to them.
-	res := engine.Apply(base, rules.SubjectOf(u.Dep, u.Type.Renovate().String()))
+	subject := rules.SubjectOf(u.Dep, u.Type.Renovate().String())
+	if u.Effective != model.RiskUnknown {
+		subject.Effective = u.Effective.String()
+	}
+	res := engine.Apply(base, subject)
 	// The update type's own object - lockFileMaintenance.schedule, say -
 	// applies over the rules' result before the policy is read.
 	cfg := planner.Overlay(res.Config, u.Type)
+	// The safety rule of the effective label: it may relax an automerge
+	// only where a rule says the analyzer's word is to be trusted. An
+	// automerge that a matchEffective rule switched on stays off without
+	// trustEffective, and the plan says so on the update.
+	if on, _ := cfg["automerge"].(bool); on && u.Effective != model.RiskUnknown && u.Effective < u.Declared {
+		trusted, _ := cfg["trustEffective"].(bool)
+		if !trusted && wroteByEffectiveRule(engine, res, "automerge") {
+			// Both views: the policy reads the overlay, the branch's name
+			// and merge request read the rules' own result.
+			cfg["automerge"] = false
+			res.Config["automerge"] = false
+			// Opened, not merged on its own; the evidence table says why.
+			u.Evidence = append(u.Evidence, model.Evidence{Kind: "automerge", From: u.Declared.String(), To: u.Effective.String(),
+				Note: fmt.Sprintf("not armed: %s set it on the analyzer's %s over a declared %s; trustEffective: true would let it", lastWriter(res, "automerge"), u.Effective, u.Declared)})
+		}
+	}
 	if u.SecurityFix {
 		// Measured: a security fix travels under the vulnerabilityAlerts
 		// object - its own branch topic, the security label, no release
@@ -906,6 +948,22 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		return decided, cfg, err
 	}
 	return decided, res.Config, err
+}
+
+// wroteByEffectiveRule reports whether the rule that last wrote key was one
+// matching on the analyzer's label.
+func wroteByEffectiveRule(engine *rules.Engine, res rules.Resolution, key string) bool {
+	chain := res.Wrote[key]
+	if len(chain) == 0 {
+		return false
+	}
+	idx := chain[len(chain)-1]
+	for _, r := range engine.Rules {
+		if r.Index == idx {
+			return r.UsesEffective
+		}
+	}
+	return false
 }
 
 func lastWriter(res rules.Resolution, key string) string {

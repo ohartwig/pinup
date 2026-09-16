@@ -197,6 +197,19 @@ const (
 	BlockPublishFailed BlockReason = "publishFailed"
 )
 
+// Evidence is one observation an analyzer made between two versions: what
+// it compared, the two values, and what it concluded from them. A row of
+// the evidence table in the merge request.
+type Evidence struct {
+	// Kind names the comparison: "appVersion", "values", "kubeVersion",
+	// "dependencies".
+	Kind string `json:"kind"`
+	From string `json:"from,omitempty"`
+	To   string `json:"to,omitempty"`
+	// Note is the conclusion in words: "major", "3 keys removed: a, b, c".
+	Note string `json:"note"`
+}
+
 // Block is one reason an update is held, with the rule that held it. Every
 // held update carries at least one; that is what lets a merge-request body say
 // what is pending and when it thaws.
@@ -236,6 +249,11 @@ type Update struct {
 	// analyzer and stays RiskUnknown unless one ran.
 	Declared  Risk `json:"declared"`
 	Effective Risk `json:"effective"`
+	// Analyzer names the analyzer that set Effective; Evidence is what it
+	// saw, rendered into the merge request so a reader can check the label
+	// against the facts rather than take it.
+	Analyzer string     `json:"analyzer,omitempty"`
+	Evidence []Evidence `json:"evidence,omitempty"`
 
 	ReleaseTime time.Time  `json:"releaseTime,omitzero"`
 	TimeSource  TimeSource `json:"timeSource"`

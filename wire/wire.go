@@ -12,11 +12,14 @@
 package wire
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 
+	"github.com/ohartwig/pinup/analyzer/helmchart"
+	"github.com/ohartwig/pinup/classify"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/datasource/apkds"
 	"github.com/ohartwig/pinup/datasource/customds"
@@ -378,4 +381,29 @@ func ManagerNameOf(key string) string {
 		return "custom.regex"
 	}
 	return key
+}
+
+// Analyzers returns every analyzer, in the order they are asked. The
+// helm-chart analyzer reads OCI charts through the docker datasource of
+// the registry handed in, so a chart at a private registry is read with
+// the credential its lookup has.
+func Analyzers(client *httpx.Client, ds lookup.Registry) classify.Registry {
+	var oci helmchart.OCIReader
+	if d, ok := ds["docker"].(*dockerds.Datasource); ok {
+		oci = ociReader{d}
+	}
+	return classify.Registry{helmchart.New(client, oci)}
+}
+
+// ociReader adapts the docker datasource to what the analyzer asks for:
+// a package name and registry list rather than a lookup.Ref, which an
+// analyzer (layer 3) must not import.
+type ociReader struct{ ds *dockerds.Datasource }
+
+func (o ociReader) Manifest(ctx context.Context, packageName string, registryURLs []string, tag string) ([]byte, error) {
+	return o.ds.Manifest(ctx, lookup.Ref{Datasource: "docker", PackageName: packageName, RegistryURLs: registryURLs}, tag)
+}
+
+func (o ociReader) Blob(ctx context.Context, packageName string, registryURLs []string, digest string, limit int64) ([]byte, error) {
+	return o.ds.Blob(ctx, lookup.Ref{Datasource: "docker", PackageName: packageName, RegistryURLs: registryURLs}, digest, limit)
 }

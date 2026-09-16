@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/ohartwig/pinup/apply"
 	"github.com/ohartwig/pinup/cache"
+	"github.com/ohartwig/pinup/classify"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/fake/fixture"
 	"github.com/ohartwig/pinup/lookup"
@@ -1063,5 +1065,96 @@ func TestALockMaintenanceWithoutARefreshIsHeldAsPluginRequired(t *testing.T) {
 	}
 	if found.SuppressedBy != model.BlockPluginRequired {
 		t.Errorf("suppressedBy = %q, want %q (edits %d, tasks %d)", found.SuppressedBy, model.BlockPluginRequired, len(found.Edits), len(found.Tasks))
+	}
+}
+
+// chartAnalyzer stands in for the helm-chart analyzer: it says the
+// application stood still, whatever the chart's version did.
+type chartAnalyzer struct{ asked []string }
+
+func (a *chartAnalyzer) Name() string                    { return "helm-chart" }
+func (a *chartAnalyzer) Applies(d model.Dependency) bool { return d.Datasource == "helm" }
+func (a *chartAnalyzer) Analyze(_ context.Context, d model.Dependency, from, to string) (classify.Effective, error) {
+	a.asked = append(a.asked, d.DepName+" "+from+" "+to)
+	return classify.Effective{Risk: model.RiskPatch, Evidence: []model.Evidence{
+		{Kind: "appVersion", From: "7.4.2", To: "7.4.2", Note: "unchanged"},
+		{Kind: "values", Note: "0 keys removed, 1 added"},
+	}}, nil
+}
+
+// A chart vendor that raises the major on every release: the declared
+// label is major, the analyzer's is patch. A rule on the analyzer's label
+// may open the request as a patch, and may merge it on its own only when
+// it says the analyzer's word is to be trusted - the stricter label wins
+// otherwise, and the plan says so.
+func TestAnAnalyzedMajorRelaxesAutomergeOnlyWhenTrusted(t *testing.T) {
+	for _, trusted := range []bool{false, true} {
+		root := t.TempDir()
+		os.WriteFile(root+"/apps/redis.yaml", nil, 0o644)
+		os.MkdirAll(root+"/apps", 0o755)
+		os.WriteFile(root+"/apps/redis.yaml", []byte("# renovate: datasource=helm depName=redis registryUrl=https://charts.example/charts\ntargetRevision: 20.13.4\n"), 0o644)
+		trust := ""
+		if trusted {
+			trust = `, "trustEffective": true`
+		}
+		os.WriteFile(root+"/renovate.json", []byte(`{
+  "extends": ["local>devops/renovate-runner"],
+  "customManagers": [{
+    "customType": "regex",
+    "managerFilePatterns": ["/^apps/.*\\.yaml$/"],
+    "matchStrings": ["# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+) registryUrl=(?<registryUrl>\\S+)\\s+targetRevision:\\s*(?<currentValue>\\S+)"]
+  }],
+  "packageRules": [
+    {"matchDatasources": ["helm"], "analyze": true, "minimumReleaseAge": null, "schedule": ["at any time"]},
+    {"matchDatasources": ["helm"], "matchUpdateTypes": ["major"], "matchEffective": ["patch", "minor"], "automerge": true, "dependencyDashboardApproval": false`+trust+`}
+  ]
+}`), 0o644)
+		at := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
+		opts := ciToolsOptions(t, at)
+		opts.Root, opts.RepoName = root, "acme/platform"
+		opts.Datasources["helm"] = cannedDS{name: "helm", scheme: "semver", releases: map[string][]string{"redis": {"20.13.4", "21.0.0"}}}
+		an := &chartAnalyzer{}
+		opts.Analyzers = classify.Registry{an}
+		plan, err := whatif(context.Background(), opts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var u *model.Update
+		for i := range plan.Updates {
+			if plan.Updates[i].Dep.DepName == "redis" {
+				u = &plan.Updates[i]
+			}
+		}
+		if u == nil {
+			t.Fatalf("trusted=%v: no redis update; deps %+v", trusted, plan.Deps)
+		}
+		if len(an.asked) != 1 || an.asked[0] != "redis 20.13.4 21.0.0" {
+			t.Errorf("trusted=%v: analyzer asked %v", trusted, an.asked)
+		}
+		if u.Declared != model.RiskMajor || u.Effective != model.RiskPatch || u.Analyzer != "helm-chart" || len(u.Evidence) < 2 {
+			t.Errorf("trusted=%v: declared %s effective %s analyzer %q evidence %d", trusted, u.Declared, u.Effective, u.Analyzer, len(u.Evidence))
+		}
+		if u.Blocked() {
+			t.Errorf("trusted=%v: the rule on the label lifts the approval: blocks %+v", trusted, u.Blocks)
+		}
+		var br *model.Branch
+		for i := range plan.Branches {
+			if slices.Contains(plan.Branches[i].UpdateKeys, u.Key()) {
+				br = &plan.Branches[i]
+			}
+		}
+		if br == nil {
+			t.Fatalf("trusted=%v: no branch for the update", trusted)
+		}
+		if br.Automerge != trusted {
+			t.Errorf("trusted=%v: branch automerge = %v", trusted, br.Automerge)
+		}
+		last := u.Evidence[len(u.Evidence)-1]
+		if !trusted && (last.Kind != "automerge" || !strings.Contains(last.Note, "trustEffective")) {
+			t.Errorf("untrusted: the evidence must say why automerge is not armed: %+v", u.Evidence)
+		}
+		if trusted && last.Kind == "automerge" {
+			t.Errorf("trusted: nothing to explain: %+v", u.Evidence)
+		}
 	}
 }

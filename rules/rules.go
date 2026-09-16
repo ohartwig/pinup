@@ -44,6 +44,11 @@ type Subject struct {
 	Versioning     string
 	UpdateType     string
 	SourceURL      string
+	// Effective is the analyzer's label of the update ("patch", "minor",
+	// "major", "breaking-values"); empty before an analyzer ran, and a
+	// matchEffective rule stays silent then - "unknown" is not a value a
+	// rule matches, so a rule can never fire on the absence of an answer.
+	Effective string
 	// IsLockfileUpdate is the only field the estate's matchJsonata rules read
 	// besides SourceURL.
 	IsLockfileUpdate bool
@@ -59,6 +64,10 @@ type Rule struct {
 	Apply map[string]any
 
 	matchers []matcher
+	// UsesEffective marks a rule with a matchEffective matcher: a rule that
+	// relaxes an automerge on the analyzer's word, which the safety rule
+	// admits only with trustEffective.
+	UsesEffective bool
 	// unsupported names a matcher this engine cannot evaluate; the rule then
 	// never fires and Compile reports it, so a silent non-match is not an
 	// option.
@@ -111,6 +120,9 @@ func Compile(packageRules []any, vs versioning.Registry) (*Engine, error) {
 				return nil, fmt.Errorf("packageRules[%d].%s: %w", i, k, err)
 			}
 			r.matchers = append(r.matchers, m)
+			if k == "matchEffective" {
+				r.UsesEffective = true
+			}
 		}
 		e.Rules = append(e.Rules, r)
 	}
@@ -151,7 +163,7 @@ func compileMatcher(key string, v any) (matcher, error) {
 	switch key {
 	case "matchPackageNames", "matchDepNames", "matchDatasources", "matchManagers",
 		"matchDepTypes", "matchUpdateTypes", "matchCurrentValue", "matchSourceUrls",
-		"matchFileNames", "matchCategories":
+		"matchFileNames", "matchCategories", "matchEffective":
 		raw, err := stringList(v)
 		if err != nil {
 			return nil, err
@@ -189,6 +201,10 @@ func compileMatcher(key string, v any) (matcher, error) {
 			return func(s Subject, _ versioning.Registry) bool { return s.DepType != "" && l.match(s.DepType) }, nil
 		case "matchUpdateTypes":
 			return func(s Subject, _ versioning.Registry) bool { return s.UpdateType != "" && l.match(s.UpdateType) }, nil
+		case "matchEffective":
+			return func(s Subject, _ versioning.Registry) bool {
+				return s.Effective != "" && s.Effective != "unknown" && l.match(s.Effective)
+			}, nil
 		case "matchCurrentValue":
 			return func(s Subject, _ versioning.Registry) bool { return s.CurrentValue != "" && l.match(s.CurrentValue) }, nil
 		case "matchSourceUrls":
@@ -479,6 +495,9 @@ func (r Resolution) Explain(key string) string {
 
 // SubjectOf builds a matching subject from a dependency. Manager names are
 // translated to Renovate's: every custom regex definition is "custom.regex".
+// SubjectOf is the subject of a dependency, with the update type once
+// lookup has produced one; an analyzer's label is set by the caller on the
+// result (Subject.Effective), since it exists only after the analysis.
 func SubjectOf(d model.Dependency, updateType string) Subject {
 	manager := d.Manager
 	if d.CustomManager != model.NoCustomManager {
