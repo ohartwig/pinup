@@ -1,3 +1,14 @@
+## [0.25.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.25.0...v0.25.1) (2026-09-16)
+
+### :bug: Fixes
+
+* **dashboard:** a lock found current is not listed as held ([c4fc231](https://git.ole-hartwig.eu/pinup/pinup/commit/c4fc231f41305c594027933967b9fc192c8c71d5))
+
+### :repeat: Continuous Integrations
+
+* the public mirror rewrites the names that must not leave the instance ([185fb11](https://git.ole-hartwig.eu/pinup/pinup/commit/185fb119388dc3925b197ef43ececf298ae93097))
+* the bot token starts the tag pipeline, so a failed one is taken back ([adb0acc](https://git.ole-hartwig.eu/pinup/pinup/commit/adb0acc64f8366ab1acad34320f519e88fc4622d))
+
 ## [0.25.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.3...v0.25.0) (2026-09-16)
 
 ### :sparkles: Features
