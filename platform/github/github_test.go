@@ -260,6 +260,9 @@ func (s *githubServer) serveRepo(w http.ResponseWriter, r *http.Request, rp *fak
 				if b, ok := in["body"].(string); ok {
 					m.body = b
 				}
+				if st, ok := in["state"].(string); ok {
+					m.state = st
+				}
 			}
 			writeJSON(w, 200, m.toJSON(owner, name))
 			return
@@ -686,4 +689,19 @@ func TestLinkHeaderNext(t *testing.T) {
 		t.Errorf("no next: %q", got)
 	}
 	_ = url.QueryEscape
+}
+
+func TestClosePullRequestRetitlesAndCloses(t *testing.T) {
+	p, srv, _ := newFixture(t)
+	rp := srv.addRepo("acme/site", "main")
+	rp.pulls = append(rp.pulls, &fakePull{number: 4, state: "open", head: "renovate/x", base: "main", title: "chore(deps): x", createdAt: fixedTime(1), updatedAt: fixedTime(1)})
+	if err := p.CloseMergeRequest(context.Background(), publish.Project{Path: "acme/site"}, 4, "chore(deps): x - autoclosed"); err != nil {
+		t.Fatal(err)
+	}
+	if rp.pulls[0].state != "closed" || rp.pulls[0].title != "chore(deps): x - autoclosed" {
+		t.Errorf("pull = %+v", rp.pulls[0])
+	}
+	if _, ok, _ := p.FindMergeRequest(context.Background(), publish.Project{Path: "acme/site"}, "renovate/x"); ok {
+		t.Error("a closed request is not found as open")
+	}
 }

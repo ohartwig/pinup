@@ -86,6 +86,11 @@ type Platform interface {
 	// matches, and reports what it changed.
 	UpdateMergeRequest(ctx context.Context, p Project, iid int, r Request) (MergeRequest, []string, error)
 
+	// CloseMergeRequest closes one, retitled - what a run does with a
+	// request whose update no longer exists: the value it carried is on
+	// the base by another road, or the rule that asked for it is gone.
+	CloseMergeRequest(ctx context.Context, p Project, iid int, title string) error
+
 	// CommitVerification reports how the platform judged a commit's
 	// signature: "verified", "unverified", or the platform's own word.
 	CommitVerification(ctx context.Context, p Project, sha string) (string, error)

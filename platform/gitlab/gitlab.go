@@ -305,6 +305,16 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	return out, changed, nil
 }
 
+// CloseMergeRequest closes the request under a new title.
+func (p *Platform) CloseMergeRequest(ctx context.Context, proj publish.Project, iid int, title string) error {
+	u := fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d", p.base, url.PathEscape(proj.Path), iid)
+	resp, err := p.do(ctx, http.MethodPut, u, map[string]any{"state_event": "close", "title": title})
+	if err != nil {
+		return err
+	}
+	return classify(resp, proj.Path)
+}
+
 // CommitVerification reports how GitLab judged a commit's signature. A 404
 // means GitLab has no signature record for the commit at all, which is what
 // an unsigned commit looks like.

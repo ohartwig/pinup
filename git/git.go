@@ -445,6 +445,12 @@ func (r *Repo) Push(ctx context.Context, remote, branch, expect string) error {
 	return err
 }
 
+// DeleteRemoteBranch removes branch from remote.
+func (r *Repo) DeleteRemoteBranch(ctx context.Context, remote, branch string) error {
+	_, err := r.run(ctx, "push", "--quiet", remote, "--delete", "refs/heads/"+branch)
+	return err
+}
+
 // CheckIdentity verifies that the signing key vouches for who. For ssh the
 // allowed-signers file must carry a line whose principal is who.Email and
 // whose key matches; for openpgp the key's user ids must contain the

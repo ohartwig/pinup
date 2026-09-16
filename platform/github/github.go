@@ -315,6 +315,19 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	return out, changed, nil
 }
 
+// CloseMergeRequest closes the pull request under a new title.
+func (p *Platform) CloseMergeRequest(ctx context.Context, proj publish.Project, number int, title string) error {
+	base, err := p.repoURL(proj.Path)
+	if err != nil {
+		return err
+	}
+	resp, err := p.do(ctx, http.MethodPatch, fmt.Sprintf("%s/pulls/%d", base, number), map[string]any{"state": "closed", "title": title})
+	if err != nil {
+		return err
+	}
+	return classify(resp, proj.Path)
+}
+
 // setLabels replaces the labels of issue/pull request number and returns
 // what GitHub now records.
 func (p *Platform) setLabels(ctx context.Context, repoURL string, number int, labels []string) ([]labelJSON, error) {

@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -424,5 +425,96 @@ func TestALockRefreshThatChangesNothingIsHeldWithItsReason(t *testing.T) {
 	cmd.Env = append(os.Environ(), testEnv...)
 	if out, _ := cmd.Output(); len(strings.TrimSpace(string(out))) != 0 {
 		t.Errorf("a branch was pushed for nothing: %q", out)
+	}
+}
+
+// A request whose branch the plan no longer names is closed as autoclosed
+// and its branch deleted; one somebody committed to is theirs and stays;
+// one the plan still names - held or not - stays whatever its state. A
+// narrowed run (one package, one released dependency) prunes nothing.
+func TestARequestNoLongerPlannedIsAutoclosed(t *testing.T) {
+	remote, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := context.Background()
+
+	// Two branches on the remote with open requests: one the plan still
+	// names, one it does not; and a third with a foreign commit.
+	first := plan(
+		model.Branch{Name: "renovate/alpine-3.x", Title: "a", UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}},
+		model.Branch{Name: "renovate/golang-1.x", Title: "b", UpdateKeys: []string{"Containerfile|golang|1.26"}, Edits: []model.Edit{edit("1.26", "1.27")}},
+	)
+	if _, err := Execute(ctx, first, options(repo, pf)); err != nil {
+		t.Fatal(err)
+	}
+	if len(pf.MRs) != 2 {
+		t.Fatalf("two requests expected, %d", len(pf.MRs))
+	}
+	// Somebody else's branch under the prefix, with their commit.
+	seed := filepath.Join(filepath.Dir(repo.Dir), "theirs")
+	mustGit(t, filepath.Dir(repo.Dir), "clone", "--quiet", remote, seed)
+	mustGit(t, seed, "checkout", "--quiet", "-b", "renovate/theirs")
+	os.WriteFile(filepath.Join(seed, "NOTE"), []byte("x"), 0o644)
+	mustGit(t, seed, "add", "NOTE")
+	mustGit(t, seed, "-c", "user.name=Someone", "-c", "user.email=someone@example.invalid", "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "theirs")
+	mustGit(t, seed, "push", "--quiet", remote, "renovate/theirs")
+	pf.MRs = append(pf.MRs, publish.MergeRequest{IID: 99, State: "opened", SourceBranch: "renovate/theirs", Title: "theirs"})
+
+	// The next plan names alpine only: golang's value reached the base
+	// another way. Held or not, named is named.
+	second := plan(model.Branch{Name: "renovate/alpine-3.x", Title: "a", UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}})
+	o := options(repo, pf)
+	o.Prune = true
+	outs, err := Execute(ctx, second, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var closed []string
+	for _, out := range outs {
+		if out.Action == "autoclosed" {
+			closed = append(closed, out.Branch)
+		}
+	}
+	if !slices.Equal(closed, []string{"renovate/golang-1.x"}) {
+		t.Errorf("autoclosed = %v, want golang only", closed)
+	}
+	for _, m := range pf.MRs {
+		switch m.SourceBranch {
+		case "renovate/golang-1.x":
+			if m.State != "closed" || !strings.HasSuffix(m.Title, " - autoclosed") {
+				t.Errorf("golang: %+v", m)
+			}
+		case "renovate/alpine-3.x", "renovate/theirs":
+			if m.State != "opened" {
+				t.Errorf("%s must stay open: %+v", m.SourceBranch, m)
+			}
+		}
+	}
+	cmd := exec.Command("git", "ls-remote", "--heads", remote)
+	cmd.Env = append(os.Environ(), testEnv...)
+	heads, _ := cmd.Output()
+	if strings.Contains(string(heads), "renovate/golang-1.x") {
+		t.Error("the autoclosed branch must be deleted")
+	}
+	if !strings.Contains(string(heads), "renovate/theirs") || !strings.Contains(string(heads), "renovate/alpine-3.x") {
+		t.Errorf("the other branches stay: %s", heads)
+	}
+	warned := false
+	for _, w := range second.Warnings {
+		if strings.Contains(w.Msg, "renovate/theirs") && strings.Contains(w.Msg, "left to them") {
+			warned = true
+		}
+	}
+	if !warned {
+		t.Errorf("a foreign branch is left with a warning: %+v", second.Warnings)
+	}
+
+	// Without Prune nothing is closed, whatever the plan names.
+	pf.MRs[1].State = "opened"
+	third := plan(model.Branch{Name: "renovate/alpine-3.x", Title: "a", UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}})
+	outs, _ = Execute(ctx, third, options(repo, pf))
+	for _, out := range outs {
+		if out.Action == "autoclosed" {
+			t.Errorf("a narrowed run pruned %s", out.Branch)
+		}
 	}
 }

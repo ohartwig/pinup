@@ -55,6 +55,12 @@ type Options struct {
 	ConcurrentLimit int
 	// Prefix is the branch prefix the open-request count looks at.
 	Prefix string
+	// Prune closes the open requests under Prefix whose branch the plan
+	// no longer names - the value they carried reached the base by
+	// another road, or the rule behind them is gone - and deletes their
+	// branches. Only a full plan may say so: a run over one package or
+	// one released dependency names one branch and must leave the rest.
+	Prune bool
 	// Tasks runs a branch's tasks - lock refreshes and postUpgradeTasks -
 	// on the checkout after its edits are written. nil means a branch with
 	// tasks fails rather than being pushed without them.
@@ -212,7 +218,57 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		b.Existing = &model.ExistingBranch{Name: b.Name, SHA: sha, MRIID: mr.IID, MRState: mr.State}
 		outcomes = append(outcomes, out)
 	}
+	if o.Prune {
+		outcomes = append(outcomes, prune(ctx, o, plan)...)
+	}
 	return outcomes, nil
+}
+
+// prune closes the open requests whose branch the plan does not name, as
+// autoclosed, and deletes their branches. A branch somebody committed to
+// is theirs and stays, with a warning; a branch the plan names - held or
+// not - stays whatever its state. The measured case: a bump merged to the
+// base through another request left its own open (koh-gitops!2647,
+// 2026-09-16), which the comparison then read as an update pinup misses.
+func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
+	prefix := o.Prefix
+	if prefix == "" {
+		prefix = "renovate/"
+	}
+	open, err := o.Platform.OpenMergeRequests(ctx, o.Project, prefix)
+	if err != nil {
+		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("prune: listing open merge requests: %v", err)})
+		return nil
+	}
+	named := map[string]bool{}
+	for _, b := range plan.Branches {
+		named[b.Name] = true
+	}
+	var out []Outcome
+	for _, m := range open {
+		if named[m.SourceBranch] || m.State != "opened" {
+			continue
+		}
+		if err := o.Repo.Fetch(ctx, o.Remote, m.SourceBranch); err == nil {
+			if foreign, err := o.Repo.ForeignAuthors(ctx, o.Base, o.Remote+"/"+m.SourceBranch, o.Identity); err == nil && len(foreign) > 0 {
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: !%d is no longer planned but carries commits by %s; left to them", m.SourceBranch, m.IID, strings.Join(foreign, ", "))})
+				continue
+			}
+		}
+		title := m.Title
+		if !strings.HasSuffix(title, " - autoclosed") {
+			title += " - autoclosed"
+		}
+		if err := o.Platform.CloseMergeRequest(ctx, o.Project, m.IID, title); err != nil {
+			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: closing !%d: %v", m.SourceBranch, m.IID, err)})
+			continue
+		}
+		if err := o.Repo.DeleteRemoteBranch(ctx, o.Remote, m.SourceBranch); err != nil {
+			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: !%d closed, the branch stays: %v", m.SourceBranch, m.IID, err)})
+		}
+		out = append(out, Outcome{Branch: m.SourceBranch, Action: "autoclosed", MRIID: m.IID, Message: "no longer planned"})
+	}
+	return out
 }
 
 // mergedBefore reports the newest merged request on the branch whose

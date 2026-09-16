@@ -154,6 +154,19 @@ func (p *Platform) ListProjects(context.Context) ([]string, error) {
 	return append([]string(nil), p.Projects...), nil
 }
 
+func (p *Platform) CloseMergeRequest(_ context.Context, _ publish.Project, iid int, title string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.Calls = append(p.Calls, "CloseMergeRequest")
+	for i := range p.MRs {
+		if p.MRs[i].IID == iid {
+			p.MRs[i].State, p.MRs[i].Title = "closed", title
+			return nil
+		}
+	}
+	return fmt.Errorf("platformfake: no merge request %d", iid)
+}
+
 func (p *Platform) OpenMergeRequests(_ context.Context, _ publish.Project, prefix string) ([]publish.MergeRequest, error) {
 	p.record("Open " + prefix)
 	p.mu.Lock()

@@ -400,6 +400,13 @@ func (s *gitlabServer) updateMergeRequest(w http.ResponseWriter, mr *fakeMR, bod
 		_ = json.Unmarshal(raw, &labels)
 		mr.labels = splitLabels(labels)
 	}
+	if raw, ok := payload["state_event"]; ok {
+		var ev string
+		_ = json.Unmarshal(raw, &ev)
+		if ev == "close" {
+			mr.state = "closed"
+		}
+	}
 	mr.updatedAt = mr.updatedAt.Add(time.Minute)
 	out := mr.toJSON()
 	s.mu.Unlock()
@@ -957,5 +964,20 @@ func TestTheDashboardIsTheBotsOwnIssue(t *testing.T) {
 	}
 	if _, body, ok, _ := pf.ReadIssue(context.Background(), publish.Project{Path: "group/proj"}, "pinup Dashboard"); !ok || body != "the bot's own" {
 		t.Errorf("the bot's own issue is not read back: ok=%v body=%q", ok, body)
+	}
+}
+
+func TestCloseMergeRequestRetitlesAndCloses(t *testing.T) {
+	p, srv, _ := newFixture(t, "glpat-x")
+	proj := srv.addProject("group/app", "main")
+	proj.mrs = append(proj.mrs, &fakeMR{iid: 7, state: "opened", sourceBranch: "renovate/x", title: "chore(deps): x"})
+	if err := p.CloseMergeRequest(context.Background(), publish.Project{Path: "group/app"}, 7, "chore(deps): x - autoclosed"); err != nil {
+		t.Fatal(err)
+	}
+	if proj.mrs[0].state != "closed" || proj.mrs[0].title != "chore(deps): x - autoclosed" {
+		t.Errorf("mr = %+v", proj.mrs[0])
+	}
+	if _, ok, _ := p.FindMergeRequest(context.Background(), publish.Project{Path: "group/app"}, "renovate/x"); ok {
+		t.Error("a closed request is not found as open")
 	}
 }
