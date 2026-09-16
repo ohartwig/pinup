@@ -14,7 +14,7 @@ worth stating plainly rather than leaving implicit:
   Renovate's source rather than running it, that step is wrong.
 
 Renovate is AGPL-3.0; pinup is MIT. The separation above is what makes those
-two compatible here. See `docs/tech-spec.md` §0.1 and `NOTICE`.
+two compatible here. See `NOTICE`.
 
 ## What is captured
 

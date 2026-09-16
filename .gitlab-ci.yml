@@ -109,7 +109,7 @@ include:
         - 'vendor-x/typo3-mcp-server==>vendor-x/typo3-mcp-server'
         - 'partner-a==>partner-a'
         - 'partner-a-jobs==>partner-a-jobs'
-      strip-paths: ['CLAUDE.md', '.gitsigners', '.gitsigners.d', '.gitlab', '.mise.toml', 'lefthook.yml', 'docs/tasks.md', 'docs/reviews', 'testdata/estate', 'testdata/parity', 'testdata/golden', 'testdata/upstream', 'testdata/renovate/renovate-43.288.0/presets/closure.json', 'config/preset/library.json', 'tools/presetgen']
+      strip-paths: ['CLAUDE.md', '.gitsigners', '.gitsigners.d', '.gitlab', '.mise.toml', 'lefthook.yml', 'docs/tasks.md', 'docs/plan.md', 'docs/tech-spec.md', 'docs/reviews', 'testdata/estate', 'testdata/parity', 'testdata/golden', 'testdata/upstream', 'testdata/renovate/renovate-43.288.0/presets/closure.json', 'config/preset/library.json', 'tools/presetgen']
       keep-tags: 'v*'
       prune: 'true'
       rules-config:

@@ -104,7 +104,7 @@ trusting it.
 
 The runner that operates an estate of two hundred repositories on this
 shape - partitions, a release fast lane, an advisory watch - is
-described in [`plan.md`](plan.md) §6.
+described in the architecture notes of the development repository.
 
 ## What to read next
 

@@ -13,7 +13,7 @@ dashboard issue and the project listing live - is an interface with two
 implementations: GitLab, proven in production across an estate of two
 hundred repositories, and GitHub, proven against a fake that speaks the
 API and in a read-only run against this repository's own mirror, waiting
-for its first production repository (`docs/tasks.md`, D.24).
+for its first production repository.
 
 ```text
 config → resolve → checkout → discover → extract → lookup → classify → plan → apply → publish
@@ -262,9 +262,10 @@ Six layers, enforced by a test rather than a convention; hermetic HTTP
 through servers that speak the protocol, with a transport that fails a test
 on any unregistered host; golden repositories that are versioned by
 directory, never rewritten; a mutation suite that breaks each harness layer
-on purpose and must see it go red. [`docs/plan.md`](docs/plan.md) has the
-architecture, [`docs/tech-spec.md`](docs/tech-spec.md) the specification
-with its corrections, [CONTRIBUTING.md](CONTRIBUTING.md) the rules.
+on purpose and must see it go red. [CONTRIBUTING.md](CONTRIBUTING.md) has
+the rules. The architecture notes, the specification with its measured
+corrections and the task list live with the development repository, not in
+this mirror; ask if you need them.
 
 ## Where this lives
 

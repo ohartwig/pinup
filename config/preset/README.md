@@ -16,7 +16,7 @@ container's resolver handed back for the 1085 presets in the estate's
 closure: gained by execution, identical in content. That is not a clean
 room for data, whatever it is for behaviour, and it shipped a curated
 collection - 461 monorepo groups, 63 replacement rules, their descriptions -
-under MIT. Decided 2026-09-14 (docs/tasks.md, D.21): the library is
+under MIT. Decided 2026-09-14: the library is
 authored, and carries what the configurations use.
 
 ## What it carries

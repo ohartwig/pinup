@@ -20,6 +20,6 @@ For people who run pinup:
 | [Security](security.md) | the invariants, the credential paths, what a repository can and cannot make the bot do |
 | [Examples](examples/) | a complete runner configuration, a scheduled GitLab job, a GitHub Actions workflow |
 
-For people who change pinup: [`plan.md`](plan.md) (architecture, phases,
-the test harness, the cutover) and [`tech-spec.md`](tech-spec.md) (the
-original specification, with the corrections measured since in its §0).
+For people who change pinup: the architecture notes (`plan.md`) and the
+specification with its measured corrections (`tech-spec.md`) live with the
+development repository on the author's GitLab, not in the public mirror.
