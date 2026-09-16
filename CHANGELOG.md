@@ -1,3 +1,9 @@
+## [0.25.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.3...v0.25.0) (2026-09-16)
+
+### :sparkles: Features
+
+* **config:** the runner's old project name stays an alias of its file ([1d91243](https://git.ole-hartwig.eu/pinup/pinup/commit/1d91243d767d4608c70cff2bcd4ee0388ab18f8e))
+
 ## [0.24.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.24.2...v0.24.3) (2026-09-16)
 
 ### :bug: Fixes
