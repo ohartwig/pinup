@@ -1,3 +1,13 @@
+## [0.27.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.27.1...v0.27.2) (2026-09-16)
+
+### :bug: Fixes
+
+* **report:** the fast lane finds consumers of a project's nested registry repositories ([ac5fad2](https://git.ole-hartwig.eu/pinup/pinup/commit/ac5fad2f2869c3e1d1c1b09ffaff6278c44c9962))
+
+### :repeat: Continuous Integrations
+
+* the bot user is pinup-bot ([53f025a](https://git.ole-hartwig.eu/pinup/pinup/commit/53f025a80821733005356c876c1ad659bb172ac8))
+
 ## [0.27.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.27.0...v0.27.1) (2026-09-16)
 
 ### :memo: Documentation
