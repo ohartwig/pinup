@@ -1,3 +1,25 @@
+## [0.27.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.26.0...v0.27.0) (2026-09-16)
+
+### :sparkles: Features
+
+* **runner:** a request whose update no longer exists is autoclosed ([7fd6231](https://git.ole-hartwig.eu/pinup/pinup/commit/7fd6231f28964b1246972074b499f1f215826c61))
+* **classify:** the effective label - a helm-chart analyzer, matchEffective, trustEffective ([8e82e4a](https://git.ole-hartwig.eu/pinup/pinup/commit/8e82e4a1a47d3bff44d7547bbe07d460a78f7645))
+
+### :bug: Fixes
+
+* **analyzer:** lowercase the Chart.yaml parse error (staticcheck ST1005) ([708d9f8](https://git.ole-hartwig.eu/pinup/pinup/commit/708d9f89f64bb72f9ae2b587bd7b24d672bc6f61))
+
+### :memo: Documentation
+
+* **examples:** pin the actions to commits, give the chart rule its own release age ([a263343](https://git.ole-hartwig.eu/pinup/pinup/commit/a2633433f31fb5be849ad43be3d0db8f29108f01))
+* **readme:** a quickstart, the road from Renovate, and example configurations ([31b9fda](https://git.ole-hartwig.eu/pinup/pinup/commit/31b9fdaa98dc3d025eb3a71ae2df175af42f0a0b))
+* satisfy markdownlint (fence language, escaped pipe, list spacing) ([9e14585](https://git.ole-hartwig.eu/pinup/pinup/commit/9e14585552659c640da4cc2d76d65eac37b593da))
+* a documentation set for people who run pinup ([c3e72ac](https://git.ole-hartwig.eu/pinup/pinup/commit/c3e72ac99dac71896935006add623a210f46671d))
+
+### :barber: Styles
+
+* gofmt ([74a5dbd](https://git.ole-hartwig.eu/pinup/pinup/commit/74a5dbd8127c6892e989e10f1f0b0adde9ac779d))
+
 ## [0.26.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.25.1...v0.26.0) (2026-09-16)
 
 ### :sparkles: Features
