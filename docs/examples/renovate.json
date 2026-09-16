@@ -20,6 +20,7 @@
       "description": "Helm charts from a vendor that raises the major on every release: ask the analyzer what changed, and trust it.",
       "matchDatasources": ["docker", "helm"],
       "matchPackageNames": ["registry-1.docker.io/bitnamicharts/**"],
+      "minimumReleaseAge": "7 days",
       "analyze": true
     },
     {
