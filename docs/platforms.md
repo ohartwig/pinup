@@ -21,7 +21,8 @@ Proven in production across an estate of two hundred repositories.
 | `PINUP_REGISTRY_HOST` / `CI_REGISTRY` | the instance's container registry, where the token is exchanged for a pull token |
 
 What the platform does: merge requests found by source branch (open
-only; a closed one is history and is not reopened), created and updated
+only; one a person closed without merging holds the same edits as
+`closedByHand` and is not reopened), created and updated
 with title, description, labels and merge-when-pipeline-succeeds;
 automerge refused by permission is reported beside the request, not as
 a failure; a request whose branch the plan no longer names is closed as

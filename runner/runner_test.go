@@ -518,3 +518,69 @@ func TestARequestNoLongerPlannedIsAutoclosed(t *testing.T) {
 		}
 	}
 }
+
+func TestARequestClosedByHandIsNotReopened(t *testing.T) {
+	_, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := context.Background()
+	branch := model.Branch{
+		Name: "renovate/alpine-3.x", Title: "chore(deps): update alpine docker tag to v3.21",
+		UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}, Automerge: true,
+	}
+	if _, err := Execute(ctx, plan(branch), options(repo, pf)); err != nil {
+		t.Fatal(err)
+	}
+	if len(pf.MRs) != 1 || pf.MRs[0].State != "opened" {
+		t.Fatalf("first run: %+v", pf.MRs)
+	}
+	// A person closes it: this bump is not wanted.
+	pf.MRs[0].State = "closed"
+	pf.Calls = nil
+
+	// The same plan again: nothing is pushed, nothing is opened, and the
+	// plan says which request answered the question.
+	p2 := plan(branch)
+	outs, err := Execute(ctx, p2, options(repo, pf))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(pf.MRs) != 1 {
+		t.Fatalf("the closed request must not come back: %+v", pf.MRs)
+	}
+	if len(outs) != 1 || outs[0].Action != "held" || outs[0].MRIID != 1 {
+		t.Errorf("outcome %+v", outs)
+	}
+	if b := p2.Updates[0].Blocks; len(b) != 1 || b[0].Reason != model.BlockClosedByHand || !strings.Contains(b[0].Note, "!1") {
+		t.Errorf("blocks %+v", b)
+	}
+	for _, c := range pf.Calls {
+		if strings.HasPrefix(c, "Create ") {
+			t.Errorf("must not create: %v", pf.Calls)
+		}
+	}
+
+	// A changed update is a new question: the version moved on, and the
+	// branch opens again.
+	moved := branch
+	moved.Title = "chore(deps): update alpine docker tag to v3.22"
+	moved.Edits = []model.Edit{edit("3.20", "3.22")}
+	p3 := plan(moved)
+	outs, err = Execute(ctx, p3, options(repo, pf))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(outs) != 1 || outs[0].Action != "created" || len(pf.MRs) != 2 || pf.MRs[1].State != "opened" {
+		t.Errorf("a changed update must open: %+v / %+v", outs, pf.MRs)
+	}
+
+	// A request the run closed itself is not a person's answer.
+	pf.MRs[1].State = "closed"
+	pf.MRs[1].Title += " - autoclosed"
+	outs, err = Execute(ctx, plan(moved), options(repo, pf))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(outs) != 1 || outs[0].Action != "created" || len(pf.MRs) != 3 {
+		t.Errorf("after autoclose the branch opens again: %+v / %+v", outs, pf.MRs)
+	}
+}

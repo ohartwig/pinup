@@ -147,6 +147,21 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			continue
 		}
 
+		if !hasMR {
+			// A request a person closed is an answer, not a gap. The same
+			// edits are not pushed again and not reopened; a changed
+			// update (another version, another file) is a new question
+			// and opens as usual. Renovate's `recreateWhen: auto`.
+			if prior, ok := closedBefore(ctx, o, b, plan.Updates); ok {
+				hold(plan, b, model.Block{
+					Reason: model.BlockClosedByHand, Org: model.Origin{Source: "platform", Rule: model.NoRule},
+					Note: fmt.Sprintf("!%d carried exactly these edits and was closed without merging; reopen it or change the update", prior),
+				})
+				outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "held", MRIID: prior, Message: "closed by hand"})
+				continue
+			}
+		}
+
 		sha, pushed, err := pushBranch(ctx, o, b)
 		if err != nil {
 			outcomes = append(outcomes, fail(plan, b, "push", err))
@@ -292,6 +307,31 @@ func mergedBefore(ctx context.Context, o Options, b *model.Branch, updates []mod
 		if theirs := editRows(m.Description); len(theirs) == len(mine) && theirs == mine {
 			return m.IID, true
 		}
+	}
+	return 0, false
+}
+
+// closedBefore reports the newest request on the branch when a person
+// closed it without merging and its edits are exactly this branch's. Only
+// the newest counts: a closed request followed by a merged one is history
+// that ended in a merge, and mergedBefore reads that.
+func closedBefore(ctx context.Context, o Options, b *model.Branch, updates []model.Update) (int, bool) {
+	history, err := o.Platform.History(ctx, o.Project, b.Name)
+	if err != nil || len(history) == 0 || history[0].State != "closed" {
+		return 0, false
+	}
+	// A request the run closed itself (autoclosed: the update was no
+	// longer planned) is not a person's answer; the plan naming the
+	// branch again is what changed.
+	if strings.HasSuffix(history[0].Title, " - autoclosed") {
+		return 0, false
+	}
+	mine := editRows(description(b, updates, ""))
+	if len(mine) == 0 {
+		return 0, false
+	}
+	if theirs := editRows(history[0].Description); len(theirs) == len(mine) && theirs == mine {
+		return history[0].IID, true
 	}
 	return 0, false
 }

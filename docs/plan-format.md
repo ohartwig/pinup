@@ -60,7 +60,9 @@ cache's first-seen record), `securityFix` with the advisory, and:
   Reasons: `minimumReleaseAge`, `schedule`, `dependencyDashboardApproval`,
   `disabled`, `allowedVersions`, `internalChecksFilter`, `hourlyLimit`,
   `concurrentLimit`, `rollingMajor`, `pluginRequired`, `taskRefused`,
-  `nothingToRefresh`, `publishFailed`.
+  `nothingToRefresh`, `publishFailed`, `closedByHand` (the newest
+  request on the branch was closed by a person without merging and
+  carried exactly these edits; a changed update opens again).
 - `suppressedBy`: the first reason, for readers that need one word.
 - `notes`, `compareUrl`: the release notes between the versions and the
   forge's compare page, where the source is known.

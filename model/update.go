@@ -195,6 +195,14 @@ const (
 	// error; the branch carries the reason so that a reader of the plan
 	// does not take it for one nobody acted on.
 	BlockPublishFailed BlockReason = "publishFailed"
+	// BlockClosedByHand marks a branch whose merge request a person closed
+	// without merging, and whose edits are still exactly what the plan
+	// would open again. Renovate calls that request ignored and does not
+	// recreate it until the update changes - a newer version, another
+	// file. Until 2026-09-17 the run only read the history for reverts
+	// (mergedBefore) and would have reopened nozzleops/platform!41-45 the
+	// hour after they were closed on purpose.
+	BlockClosedByHand BlockReason = "closedByHand"
 )
 
 // Evidence is one observation an analyzer made between two versions: what
