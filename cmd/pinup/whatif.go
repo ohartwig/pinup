@@ -534,6 +534,7 @@ func (r *whatifRun) extractAll() error {
 			plan.Deps = append(plan.Deps, applyDepRules(r.engine, resolved.Raw, d))
 		}
 	}
+	plan.Warnings = append(plan.Warnings, orphanAnnotations(r.contents, plan.Deps)...)
 
 	// A nearly empty first-seen record makes every release look brand new,
 	// and minimumReleaseAge then holds everything for the full duration.

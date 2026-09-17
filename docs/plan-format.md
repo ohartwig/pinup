@@ -84,6 +84,15 @@ reached, a preset that resolves to nothing, a task whose output left its
 scope, a cache too young to judge release ages: warnings, never a failed
 run for the rest of the repository.
 
+One of them is about a pin that is not being updated at all: a
+`# renovate:` or `# pinup:` annotation that no dependency claims. The
+annotation managers allow exactly one whitespace character between the
+comment and the pinned line; a blank line or a comment in between does not
+hold the update, it removes the dependency from the plan. The run warns per
+annotation (`extract`, with file and line) instead of staying silent - the
+shape found on three of fifty golden-image Containerfiles on 2026-09-17,
+one of them a package with a fixed CVE waiting in the index.
+
 ## Reading a plan
 
 ```sh
