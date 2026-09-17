@@ -22,15 +22,15 @@ include:
   # and an SPDX header without the job that reads them is decoration, not a
   # gate - so they are included by name.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.36.10
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.36.14
     inputs:
       stage: quick
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.36.10
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.36.14
     inputs:
       stage: quick
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.36.10
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.36.14
     inputs:
       stage: quick
 
@@ -127,7 +127,7 @@ include:
   # second artefact under the same name, and the signature over SHA256SUMS
   # cannot be rebuilt at all. Same component as yasrt and s3mail.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-release@1.4.2
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-release@1.5.0
     inputs:
       stage: .post
       release-target: 'ohartwig/pinup'
@@ -151,7 +151,7 @@ include:
   # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
   # ends. Same component and same reasoning as S3mail.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/build-provenance
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.155
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.159
     inputs:
       stage: release
       artifact-file: SHA256SUMS
