@@ -1,3 +1,13 @@
+## [0.30.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.29.1...v0.30.0) (2026-09-17)
+
+### :sparkles: Features
+
+* **publish:** a request a person closed is not reopened ([f6d5c26](https://git.ole-hartwig.eu/pinup/pinup/commit/f6d5c266320c6ab578ae1bd3600e6ff905ad2d3d))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update ci components ([9c655e1](https://git.ole-hartwig.eu/pinup/pinup/commit/9c655e1ff76d2a98b962bce6c6b0b8a8473f77fd))
+
 ## [0.29.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.29.0...v0.29.1) (2026-09-17)
 
 ### :repeat: Chores
