@@ -1,3 +1,9 @@
+## [0.30.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.30.0...v0.30.1) (2026-09-17)
+
+### :fast_forward: Performance
+
+* **publish:** read a branch's request history once ([9c8937e](https://git.ole-hartwig.eu/pinup/pinup/commit/9c8937e526d2a042e20102932c8f00fe14fdf314))
+
 ## [0.30.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.29.1...v0.30.0) (2026-09-17)
 
 ### :sparkles: Features
