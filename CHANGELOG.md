@@ -1,3 +1,9 @@
+## [0.28.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.27.2...v0.28.0) (2026-09-17)
+
+### :sparkles: Features
+
+* **extract:** an annotation no dependency claims is a warning ([3ac7515](https://git.ole-hartwig.eu/pinup/pinup/commit/3ac7515e725de896abfa8c00afa4a2f5bf03ade4))
+
 ## [0.27.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.27.1...v0.27.2) (2026-09-16)
 
 ### :bug: Fixes
