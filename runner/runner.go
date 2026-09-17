@@ -147,12 +147,17 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			continue
 		}
 
+		// The branch's request history, read once per branch that has no
+		// open request: what a person closed and what merged before both
+		// come out of the same list.
+		var history []publish.MergeRequest
 		if !hasMR {
+			history, _ = o.Platform.History(ctx, o.Project, b.Name)
 			// A request a person closed is an answer, not a gap. The same
 			// edits are not pushed again and not reopened; a changed
 			// update (another version, another file) is a new question
 			// and opens as usual. Renovate's `recreateWhen: auto`.
-			if prior, ok := closedBefore(ctx, o, b, plan.Updates); ok {
+			if prior, ok := closedBefore(history, b, plan.Updates); ok {
 				hold(plan, b, model.Block{
 					Reason: model.BlockClosedByHand, Org: model.Origin{Source: "platform", Rule: model.NoRule},
 					Note: fmt.Sprintf("!%d carried exactly these edits and was closed without merging; reopen it or change the update", prior),
@@ -188,7 +193,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			// of the same module in other files carried the same title
 			// (devops/wolfi-packages!404, 2026-09-14). The comparison
 			// here is the edits themselves.
-			if prior, ok := mergedBefore(ctx, o, b, plan.Updates); ok {
+			if prior, ok := mergedBefore(history, b, plan.Updates); ok {
 				automerge = false
 				note := fmt.Sprintf("Automerge withheld: !%d merged exactly these edits before and the base no longer carries them; merge by hand if the revert is over.", prior)
 				footer = note + "\n\n" + footer
@@ -291,9 +296,8 @@ func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
 // this branch's. That is a change that landed and was taken back; a bump
 // that merely shares the title (the same module and version in other
 // files) is not.
-func mergedBefore(ctx context.Context, o Options, b *model.Branch, updates []model.Update) (int, bool) {
-	history, err := o.Platform.History(ctx, o.Project, b.Name)
-	if err != nil || len(history) == 0 {
+func mergedBefore(history []publish.MergeRequest, b *model.Branch, updates []model.Update) (int, bool) {
+	if len(history) == 0 {
 		return 0, false
 	}
 	mine := editRows(description(b, updates, ""))
@@ -315,9 +319,8 @@ func mergedBefore(ctx context.Context, o Options, b *model.Branch, updates []mod
 // closed it without merging and its edits are exactly this branch's. Only
 // the newest counts: a closed request followed by a merged one is history
 // that ended in a merge, and mergedBefore reads that.
-func closedBefore(ctx context.Context, o Options, b *model.Branch, updates []model.Update) (int, bool) {
-	history, err := o.Platform.History(ctx, o.Project, b.Name)
-	if err != nil || len(history) == 0 || history[0].State != "closed" {
+func closedBefore(history []publish.MergeRequest, b *model.Branch, updates []model.Update) (int, bool) {
+	if len(history) == 0 || history[0].State != "closed" {
 		return 0, false
 	}
 	// A request the run closed itself (autoclosed: the update was no
