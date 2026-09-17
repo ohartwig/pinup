@@ -1,3 +1,9 @@
+## [0.29.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.28.0...v0.29.0) (2026-09-17)
+
+### :sparkles: Features
+
+* **plan:** a branch with an open request is kept current outside its schedule ([bf2d7dd](https://git.ole-hartwig.eu/pinup/pinup/commit/bf2d7ddcb4e6b834bc315de3270022a42be41986))
+
 ## [0.28.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.27.2...v0.28.0) (2026-09-17)
 
 ### :sparkles: Features
