@@ -813,6 +813,62 @@ func TestADashboardBoxLiftsTheHoldItNames(t *testing.T) {
 	}
 }
 
+// A schedule gates the creation of a branch, not its life: a branch whose
+// merge request is already open is kept current and automerged outside the
+// window too (Renovate's updateNotScheduled default), and the plan records
+// the open request as the origin of the lift. A hold that is a decision -
+// an approval, a release age - is not lifted by an open request.
+func TestAnOpenRequestLiftsTheScheduleAlone(t *testing.T) {
+	at := time.Date(2026, 9, 13, 3, 5, 0, 0, time.UTC) // outside the 4-hourly window
+	base, err := whatif(context.Background(), ciToolsOptions(t, at))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var scheduled, decided string
+	for _, b := range base.Branches {
+		switch b.SuppressedBy {
+		case model.BlockSchedule:
+			if scheduled == "" {
+				scheduled = b.Name
+			}
+		case model.BlockDashboardApproval, model.BlockMinimumReleaseAge:
+			if decided == "" {
+				decided = b.Name
+			}
+		}
+	}
+	if scheduled == "" {
+		t.Skip("no branch held by schedule at this moment in ci-tools")
+	}
+	opts := ciToolsOptions(t, at)
+	opts.Open = map[string]bool{scheduled: true, decided: true}
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, b := range plan.Branches {
+		switch b.Name {
+		case scheduled:
+			if b.SuppressedBy != "" || len(b.Edits) == 0 {
+				t.Fatalf("the branch with an open request is still held or carries no edits: %+v", b)
+			}
+			if len(b.Prov) == 0 || b.Prov[len(b.Prov)-1].Source != "existing" {
+				t.Errorf("the lift is not recorded as the open request: %+v", b.Prov)
+			}
+		case decided:
+			if b.SuppressedBy == "" {
+				t.Errorf("%s: an open request lifted a hold that is a decision, not timing", b.Name)
+			}
+		default:
+			for _, ob := range base.Branches {
+				if ob.Name == b.Name && ob.SuppressedBy == model.BlockSchedule && b.SuppressedBy == "" {
+					t.Errorf("%s was lifted without an open request", b.Name)
+				}
+			}
+		}
+	}
+}
+
 // The runner project the repositories extend by alias comes from --config
 // when that is a local> name, from PINUP_RUNNER_PROJECT otherwise, and is
 // the estate's default when neither says.

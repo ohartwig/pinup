@@ -191,6 +191,14 @@ type whatifOptions struct {
 	// Checks are the dashboard's ticked boxes, read before the run; a
 	// dry run has none.
 	Checks report.Checks
+	// Open names the branches that already have an open merge request. A
+	// schedule gates the creation of a branch, not its life: a request
+	// that exists is kept current and automerged outside the window as
+	// well, as Renovate does by default (updateNotScheduled). Without it a
+	// request opened at the end of a window sat green for four hours
+	// (measured 2026-09-17, aws-cli in three images). nil means nothing
+	// is known, and the schedule holds every branch.
+	Open map[string]bool
 	// Advisories asks the advisory database about current versions when
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
@@ -693,6 +701,7 @@ func (r *whatifRun) planUpdates() error {
 	// so "why did this open" has an answer.
 	for i := range branches {
 		liftByDashboard(&branches[i], plan.Updates, o.Checks)
+		liftForOpen(&branches[i], plan.Updates, o.Open)
 	}
 	r.branches = branches
 	return nil
@@ -1441,7 +1450,25 @@ func liftByDashboard(b *model.Branch, updates []model.Update, checks report.Chec
 	if b.SuppressedBy == "" || !checks.Lifted(b.Name, b.SuppressedBy) {
 		return
 	}
-	reason := b.SuppressedBy
+	lift(b, updates, b.SuppressedBy, model.Origin{Source: "dashboard", Pointer: string(b.SuppressedBy), Rule: model.NoRule})
+}
+
+// liftForOpen clears a schedule hold on a branch whose merge request is
+// already open: the window gates creation, and a request that exists is
+// rebased and automerged whatever the hour, as Renovate's
+// updateNotScheduled default does. Any other hold - an approval, a release
+// age - stays; those are decisions, not timing.
+func liftForOpen(b *model.Branch, updates []model.Update, open map[string]bool) {
+	if b.SuppressedBy != model.BlockSchedule || !open[b.Name] {
+		return
+	}
+	lift(b, updates, model.BlockSchedule, model.Origin{Source: "existing", Pointer: "schedule", Rule: model.NoRule})
+}
+
+// lift removes the named block from every member update of the branch,
+// recomputes the branch's suppression from what remains and records why
+// on the branch.
+func lift(b *model.Branch, updates []model.Update, reason model.BlockReason, why model.Origin) {
 	keys := map[string]bool{}
 	for _, k := range b.UpdateKeys {
 		keys[k] = true
@@ -1472,7 +1499,7 @@ func liftByDashboard(b *model.Branch, updates []model.Update, checks report.Chec
 	if reason == model.BlockSchedule {
 		b.Schedule.Active = true
 	}
-	b.Prov = append(b.Prov, model.Origin{Source: "dashboard", Pointer: string(reason), Rule: model.NoRule})
+	b.Prov = append(b.Prov, why)
 }
 
 // holdBranch marks a branch held for one reason: every update on it gets

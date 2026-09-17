@@ -588,6 +588,18 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		} else if ok {
 			opts.Checks = report.ParseChecks(body)
 		}
+		// The open requests, read before planning too: a branch that has
+		// one is kept current outside its schedule window.
+		if open, err := o.platform.OpenMergeRequests(ctx, proj, "renovate/"); err != nil {
+			fmt.Fprintf(errw, "warning: %s: open merge requests: %v\n", proj.Path, err)
+		} else {
+			opts.Open = map[string]bool{}
+			for _, m := range open {
+				if m.State == "opened" {
+					opts.Open[m.SourceBranch] = true
+				}
+			}
+		}
 	}
 	advisories := &osv.Client{}
 	if o.cache != nil {
