@@ -86,6 +86,123 @@ pinup migrate --config renovate.json --runner "local>pinup/runner" \
 git rm renovate.json   # pinup refuses two configuration files
 ```
 
+## advise
+
+Analyse a configuration as a run resolves it - defaults, presets, file -
+and report what to change, in four categories: **compat** (what this
+version of pinup does not read, cannot evaluate, rewrote or would refuse),
+**hygiene** (what the file says twice or for nothing), **performance**
+(work a run does for nothing) and **security** (what widens the blast
+radius of an update nobody looked at). Every finding names its pointer,
+the layer that wrote the value - the file, a preset, the builtin defaults -
+and, where the file owns the value, a fix.
+
+| Flag | Meaning |
+|---|---|
+| `--config` | the configuration to analyse (required) |
+| `--runner` | as for print-config: the runner's configuration a `local>` extends resolves to |
+| `--plan` | a plan `whatif` wrote (repeatable); enables the checks that read what runs found |
+| `--skip` | a check ID to leave out of the report and the fixes (repeatable) |
+| `--json` | the report as JSON |
+| `--strict` | exit 1 when any finding is an `error`; warnings never fail |
+| `--fix` | apply the fixes in memory and verify the result - a dry run unless `--out` or `--write` |
+| `--out` | with `--fix`: write the fixed file here |
+| `--write` | with `--fix`: write the fixed file in place, keeping its mode |
+
+Without `--strict` the exit code is 0: advice is not a gate unless a job
+asks for one. The text report groups findings by severity, then category:
+
+```text
+renovate.json  (2 plans)
+
+warn (2)
+  performance
+    perf/ignore-paths-replaced  /ignorePaths
+      ignorePaths replaces the inherited list; **/node_modules/**, … are walked again
+      fix:  set /ignorePaths = ["**/node_modules/**", …, "**/prometheus-exporter/**"]
+      from: file:renovate.json
+  …
+skipped: 6 plan checks (no --plan)
+```
+
+`--json` prints `{"file", "plans", "skipped", "counts": {error, warn,
+info}, "findings": [{id, category, severity, pointer, frame, origin, msg,
+fix}], "fix": {applied, skipped, wrote}}`. A finding's `frame` says which
+document its pointer indexes: `file` for the document as written, `resolved`
+for what a run reads - the presets' `packageRules` stand before the file's
+in the resolved frame, so the two numberings differ. A fix always points
+into the file.
+
+### The fixes
+
+A fix is `{pointer, op: set | remove | append, value, changes}`. `--fix`
+applies every fix the findings carry to the file's bytes - comments, key
+order and formatting untouched - from the highest pointer down, so a
+removal never moves what a later fix points at. Two fixes at one pointer
+are both skipped; a fix under a pointer another removes is skipped.
+
+Nothing is written until the result has passed the gate: the file is
+resolved before and after, both are flattened as `print-config` prints
+them, and every line that differs must lie under a pointer some applied fix
+declared in `changes`. A fix that declares nothing must leave the
+resolution byte-identical - removing a key a preset already sets, say. A
+rewrite that changes anything else is refused, named, and not written.
+
+`--fix` alone is a dry run and prints what would be applied. `--fix --out
+path` writes there; `--fix --write` writes in place. JSON, JSONC and JSON5
+files are rewritten; a fix on a YAML file is reported with the line to
+write by hand, until the YAML rewriter lands.
+
+### The checks
+
+| ID | Severity | Fires when | Fix |
+|---|---|---|---|
+| `compat/preset-inert` | warn | the file extends a preset that resolves to nothing | remove the entry |
+| `compat/migrated` | info | the run rewrote a value the file wrote (`minimumReleaseAge: "0"` → null) | write the migrated value |
+| `compat/rule-not-evaluable` | warn | a rule carries a matcher the engine does not evaluate; it never fires | — |
+| `compat/rules-not-compilable` | error | a rule carries a matcher the engine has never heard of | — |
+| `compat/key-unsupported` | warn | a key nothing in pinup reads | remove it |
+| `compat/key-partial` | info | a key pinup honours in part | — |
+| `compat/manager-unknown` | warn | an enabled manager nothing implements | remove it |
+| `compat/datasource-unknown` | warn | a `matchDatasources` or `datasourceTemplate` no lookup serves | — |
+| `compat/schedule-invalid` | error | a schedule or timezone that does not parse | — |
+| `compat/regex-not-re2` | error | a regex with a lookaround or backreference (tech-spec §0.2) | — |
+| `hygiene/redundant-inherited` | info | a top-level key repeating what a preset sets | remove it |
+| `hygiene/redundant-default` | info | a top-level key set to the builtin default | remove it |
+| `hygiene/null-clears-nothing` | warn | a `null` over a key no preset sets | remove it |
+| `hygiene/schedule-anytime-explicit` | info | a schedule spelling out "at any time" | remove it, unless it opens an inherited window |
+| `hygiene/extends-duplicate` | warn | a preset extended twice | remove the second |
+| `hygiene/extends-transitive` | info | a preset another entry already reaches | remove it |
+| `hygiene/duplicate-entry` | info | a string listed twice in a set-like list | remove the second |
+| `hygiene/rule-no-matchers` | warn | a rule matching every dependency | — |
+| `hygiene/rule-no-effect` | warn | a rule setting nothing | remove it |
+| `hygiene/rule-duplicate-matchers` | info | two rules selecting the same dependencies | remove the shadowed one |
+| `hygiene/custom-manager-duplicate` | warn | two identical custom managers | remove the second |
+| `perf/ignore-paths-replaced` | warn | `ignorePaths` replacing the inherited list (arrays replace) | set the union |
+| `perf/lock-file-maintenance-unscheduled` | warn | a lock refresh with no window | set a weekly window |
+| `perf/pr-limit-unbounded` | info | `prHourlyLimit` or `prConcurrentLimit` at 0 | — |
+| `perf/file-pattern-catch-all` | info | a custom manager reading every file | — |
+| `sec/automerge-major` | error | an automerge that covers major updates | restrict `matchUpdateTypes`, or `major.automerge: false` |
+| `sec/trust-effective` | warn | a rule letting the analyzer's label relax an automerge | — |
+| `sec/match-effective-without-trust` | info | a rule on the analyzer's label without `trustEffective` | — |
+| `sec/registry-http` | warn | a registry over plaintext | `https://` |
+| `sec/vulnerability-alerts-off` | warn / info | advisories switched off / never on | switch on |
+| `sec/pin-digests-off` | info | container images in use and none pinned by digest | extend `docker:pinDigests` |
+| `sec/post-upgrade-tasks-unallowed` | info | tasks the configuration's `allowedCommands` does not admit | — |
+| `sec/allowed-commands-catch-all` | error | an allowlist admitting every command | — |
+| `sec/minimum-release-age-unset` | info | no `minimumReleaseAge` anywhere | `3 days` |
+| `sec/ignore-unstable-false` | warn | prereleases let in wholesale | switch on |
+| `plan/rule-never-matched` | info | a rule of the file's no dependency in the plans reached | — |
+| `plan/manager-idle` | info | an enabled manager that produced nothing | remove it |
+| `plan/custom-manager-idle` | info | a custom manager that produced nothing | — |
+| `plan/all-held` | warn | a plan whose every update one setting holds | — |
+| `plan/limit-holds` | info | updates the two caps held | — |
+| `plan/datasource-failing` | warn | a custom datasource whose lookups the plans record as failed | — |
+
+The `plan/*` checks run only with `--plan`; the report counts them as
+skipped otherwise. Every check has a test case that makes it fire, and a
+test asserts that every check in the catalogue has one.
+
 ## advisories
 
 Ask OSV about every dependency the consumer index carries and report the

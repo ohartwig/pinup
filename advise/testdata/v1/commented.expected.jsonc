@@ -1,0 +1,17 @@
+// the runner's file
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json", /* kept */
+  "extends": [
+    "config:recommended", // trailing
+    "p:base",
+    "docker:pinDigests"
+  ],
+  "packageRules": [
+    // above
+    { "matchDatasources": ["docker"], "automerge": true, "matchUpdateTypes": ["minor", "patch"] },
+  ],
+  "prConcurrentLimit": 4,
+  "major": {
+    "automerge": false
+  },
+}

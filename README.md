@@ -170,7 +170,11 @@ new writes nothing.
   classifies every key as supported, partial or unsupported, with the
   difference spelled out ([configuration](docs/configuration.md)). Nothing
   in the repositories changes; `pinup migrate --to yaml` rewrites a file
-  as `.pinup.yaml` if you want it to, and only then.
+  as `.pinup.yaml` if you want it to, and only then. `pinup advise` then
+  says what the file could do better - an `ignorePaths` that dropped the
+  preset's list, an automerge over majors, a preset extended twice - and
+  `--fix` applies it, byte for byte, behind a check that the resolution
+  changed only where the fixes said.
 - **Keep the branches.** The same branch names and titles, so an open
   Renovate merge request is adopted, not duplicated. A branch somebody
   else committed to is left alone.
@@ -194,6 +198,7 @@ pinup run --autodiscover '["group/**"]' --config … --report 'reports/%s.json'
 pinup run --released group/library@1.4.0 --config …                # the fast lane: only that dependency's consumers
 pinup print-config --config renovate.json --explain                # what a configuration resolves to, and which rule set each value
 pinup migrate --config renovate.json [--to yaml]                   # which keys pinup supports; a YAML rewrite
+pinup advise --config renovate.json [--plan plan.json] [--fix]     # what to change - performance, security, hygiene - and why
 pinup advisories --index '.pinup/consumers.json'                   # OSV over everything the runs have seen, no clone
 pinup shadow --plans 'reports/*.json'                              # compare with the merge requests another tool has open
 ```

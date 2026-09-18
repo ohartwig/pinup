@@ -36,7 +36,7 @@ var layerOf = map[string]int{
 	"plugin": 3, "analyzer": 3,
 
 	// L4 - orchestration.
-	"runner": 4, "report": 4,
+	"runner": 4, "report": 4, "advise": 4,
 
 	// L5 - wiring. The only place that knows every implementation.
 	"wire": 5,

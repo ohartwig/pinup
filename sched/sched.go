@@ -78,7 +78,7 @@ func Parse(exprs []string, timezone string) (*Schedule, error) {
 	}
 	for _, e := range exprs {
 		trimmed := strings.TrimSpace(e)
-		if isAnyTime(trimmed) {
+		if IsAnyTime(trimmed) {
 			s.always = true
 			continue
 		}
@@ -108,7 +108,9 @@ func MustParse(exprs []string, timezone string) *Schedule {
 	return s
 }
 
-func isAnyTime(s string) bool {
+// IsAnyTime reports whether one schedule expression means "no schedule":
+// the spellings Renovate accepts for an always-open window.
+func IsAnyTime(s string) bool {
 	switch strings.ToLower(s) {
 	case "at any time", "any time", "anytime", "always":
 		return true
@@ -170,7 +172,7 @@ func (s *Schedule) String() string {
 func Kind(e string) string {
 	e = strings.TrimSpace(e)
 	switch {
-	case isAnyTime(e):
+	case IsAnyTime(e):
 		return "natural"
 	case looksLikeCron(e):
 		return "cron"
