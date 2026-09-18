@@ -105,10 +105,14 @@ func Decide(u model.Update, p Policy, now time.Time) (model.Update, error) {
 	}
 	u.Blocks = kept
 	if u.Type == model.UpdateMajorAvailable {
+		note := "a rolling major reference is reported, never rewritten; adopting the major is a deliberate act"
+		if u.Stream != "" {
+			note = fmt.Sprintf("the series is the package name; %s carries %s in the same index, and changing series is a deliberate act - this one may no longer be built", u.Stream, u.NewValue)
+		}
 		u.Blocks = append(u.Blocks, model.Block{
 			Reason: model.BlockRollingMajor,
 			Org:    model.Origin{Source: "pinup", Rule: model.NoRule},
-			Note:   "a rolling major reference is reported, never rewritten; adopting the major is a deliberate act",
+			Note:   note,
 		})
 	}
 	if !p.Enabled {

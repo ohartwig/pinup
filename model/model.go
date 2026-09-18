@@ -223,6 +223,20 @@ type ReleaseSet struct {
 	// Err records a soft failure. A datasource that fails degrades to a plan
 	// warning; it never fails the run for the whole repository.
 	Err string `json:"err,omitempty"`
+	// NewerStream names a sibling package of a higher series where the
+	// package is one of a series - kubectl-1.36 beside kubectl-1.37,
+	// valkey-cli beside valkey-9.1-cli. A series pin cannot see the next
+	// series through its own releases: the name is the series. Set by
+	// datasources whose index carries the whole family (apk).
+	NewerStream *Stream `json:"newerStream,omitempty"`
+}
+
+// Stream is a sibling package of a higher series and its versions, in
+// the index's order; the planner picks the newest with the dependency's
+// own versioning.
+type Stream struct {
+	Package  string   `json:"package"`
+	Versions []string `json:"versions"`
 }
 
 // CustomDatasource is one `customDatasources` entry from the configuration:

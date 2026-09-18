@@ -50,8 +50,11 @@ rule disabled says which rule in `disabled`.
 One entry per move: `dep` (the dependency as above), `newValue` (the
 bytes written), `newVersion`, `newDigest`, `updateType` (`major`,
 `minor`, `patch`, `digest`, `pin`, `pinDigest`, `rollback`,
-`lockFileMaintenance`, `majorAvailable`), `declared` and `effective`
-risk, the `analyzer` and its `evidence` where one ran
+`lockFileMaintenance`, `majorAvailable`), `stream` on a `majorAvailable`
+of a series pin (the sibling package of the higher series, `kubectl-1.37`
+for a `kubectl-1.36` pin; `newValue` is its newest version, and the
+update is held with `rollingMajor`: reported, never written), `declared`
+and `effective` risk, the `analyzer` and its `evidence` where one ran
 ([effective classification](effective-classification.md)),
 `releaseTime` with its `timeSource` (the datasource's timestamp or the
 cache's first-seen record), `securityFix` with the advisory, and:

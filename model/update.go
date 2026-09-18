@@ -271,6 +271,11 @@ type Update struct {
 	// so the lock file is what moves - through the manager's lock-refresh
 	// task, naming this dependency.
 	LockOnly bool `json:"lockOnly,omitempty"`
+	// Stream, on a majorAvailable update, names the sibling package of a
+	// higher series the dependency's index carries (kubectl-1.37 beside
+	// kubectl-1.36): the series is the name, so the move is reported, never
+	// written. NewValue is that package's newest version.
+	Stream string `json:"stream,omitempty"`
 
 	// AgeWaived marks an update internalChecksFilter "flexible" offered
 	// although no release satisfied the minimum age: the policy does not

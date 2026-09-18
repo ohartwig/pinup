@@ -21,6 +21,9 @@ type RollingMajor struct {
 	// Newest is the newest major available, "" when the reference is
 	// current.
 	Newest string
+	// Stream names the sibling package of a higher series, for a series
+	// pin (kubectl-1.36 -> kubectl-1.37); "" for a bare-major reference.
+	Stream string
 }
 
 // RollingMajors collects every bare-major reference across the plans and
@@ -46,6 +49,16 @@ func RollingMajors(plans []*model.Plan) (refs []RollingMajor, notices int) {
 				continue
 			}
 			key := p.Repo.Path + "|" + u.Dep.File + "|" + u.Dep.DepName + "|" + u.Dep.CurrentValue
+			if u.Stream != "" {
+				// A series pin: one row per pin, the sibling series named.
+				if _, ok := seen[key]; ok {
+					continue
+				}
+				seen[key] = len(refs)
+				refs = append(refs, RollingMajor{Repo: p.Repo.Path, File: u.Dep.File, DepName: u.Dep.DepName, Current: u.Dep.CurrentValue, Newest: u.NewVersion, Stream: u.Stream})
+				notices++
+				continue
+			}
 			i, ok := seen[key]
 			if !ok {
 				continue
@@ -80,8 +93,13 @@ func RollingMajorIssue(refs []RollingMajor, notices int) string {
 	fmt.Fprintf(&b, "This notice lists every such reference pinup found - %d across the estate - and the %d that have a newer major available. pinup never rewrites them.\n\n", len(refs), notices)
 	byDep := map[string][]RollingMajor{}
 	var deps []string
+	var streams []RollingMajor
 	for _, r := range refs {
 		if r.Newest == "" {
+			continue
+		}
+		if r.Stream != "" {
+			streams = append(streams, r)
 			continue
 		}
 		if _, ok := byDep[r.DepName]; !ok {
@@ -94,6 +112,16 @@ func RollingMajorIssue(refs []RollingMajor, notices int) string {
 		fmt.Fprintf(&b, "## %s\n\n| Repository | File | Pinned to | Newest major |\n|---|---|---|---|\n", d)
 		for _, r := range byDep[d] {
 			fmt.Fprintf(&b, "| %s | `%s` | `@%s` | %s |\n", r.Repo, r.File, r.Current, r.Newest)
+		}
+		b.WriteString("\n")
+	}
+	if len(streams) > 0 {
+		b.WriteString("## Series pins with a newer series\n\n")
+		b.WriteString("A package named after its series (`kubectl-1.36`, `valkey-cli`) cannot see the next series through its own releases: the name is the series. ")
+		b.WriteString("These pins have a sibling of a higher series in the same index; the series they are on may no longer be built, and its security feed may name fixes that never ship. Moving is a decision, and pinup does not make it.\n\n")
+		b.WriteString("| Repository | File | Package | Pinned | Newer series | Newest there |\n|---|---|---|---|---|---|\n")
+		for _, r := range streams {
+			fmt.Fprintf(&b, "| %s | `%s` | `%s` | %s | `%s` | %s |\n", r.Repo, r.File, r.DepName, r.Current, r.Stream, r.Newest)
 		}
 		b.WriteString("\n")
 	}

@@ -839,3 +839,41 @@ func TestInternalChecksFilterChoosesByAge(t *testing.T) {
 		t.Errorf("timestamp-optional strict picked %s", got)
 	}
 }
+
+// A series pin whose index carries a higher series: the pin itself is up
+// to date (its own releases stop where the series stops), and the plan
+// still says the family moved on - as a notice, never as an edit.
+func TestASeriesWithANewerSiblingIsReportedNotRewritten(t *testing.T) {
+	rs := releases("1.36.4", "1.36.3")
+	rs.NewerStream = &model.Stream{Package: "kubectl-1.37", Versions: []string{"1.37.0", "1.37.2", "not-a-version"}}
+	res := plan(t, dep("kubectl-1.36", "1.36.4", "semver"), rs)
+	if res.Deps[0].SkipReason == "" || !strings.Contains(res.Deps[0].SkipReason, "up to date") {
+		t.Errorf("the pin is up to date within its series: %q", res.Deps[0].SkipReason)
+	}
+	if len(res.Updates) != 1 {
+		t.Fatalf("one notice expected, got %+v", res.Updates)
+	}
+	u := res.Updates[0]
+	if u.Type != model.UpdateMajorAvailable || u.Stream != "kubectl-1.37" || u.NewValue != "1.37.2" {
+		t.Errorf("notice %+v", u)
+	}
+	decided, err := Decide(u, PolicyOf(map[string]any{"enabled": true}, func(string) model.Origin { return model.Origin{Source: "test"} }), now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(decided.Blocks) != 1 || decided.Blocks[0].Reason != model.BlockRollingMajor || !strings.Contains(decided.Blocks[0].Note, "kubectl-1.37 carries 1.37.2") {
+		t.Errorf("the notice must be held as a rolling major naming the sibling: %+v", decided.Blocks)
+	}
+	// Beside an ordinary update the notice is a second update of its own.
+	rs = releases("1.36.5", "1.36.4")
+	rs.NewerStream = &model.Stream{Package: "kubectl-1.37", Versions: []string{"1.37.0"}}
+	res = plan(t, dep("kubectl-1.36", "1.36.4", "semver"), rs)
+	if len(res.Updates) != 2 {
+		t.Fatalf("an update and a notice expected, got %+v", res.Updates)
+	}
+	// No sibling, no notice.
+	res = plan(t, dep("kubectl-1.36", "1.36.4", "semver"), releases("1.36.4"))
+	if len(res.Updates) != 0 {
+		t.Errorf("without a sibling nothing is reported: %+v", res.Updates)
+	}
+}

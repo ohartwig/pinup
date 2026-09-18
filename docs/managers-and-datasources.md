@@ -45,6 +45,18 @@ Both `# renovate:` and `# pinup:` annotation prefixes are read.
 | `git-tags`, `git-refs` | `git ls-remote` | any repository git can reach; `git-refs` for a branch pinned by commit |
 | `custom.*` | what `customDatasources` declares | `defaultRegistryUrlTemplate`, `format`, `transformTemplates`; apk indexes (`custom.wolfi` and the ones `PINUP_APK_VIEWS` names) are served natively from the APKINDEX |
 
+An apk index carries whole families, and a package named after its series
+(`kubectl-1.36`, `mysql-9.7-client`, `valkey-cli`) cannot see the next
+series through its own releases - the name is the series. When the index
+carries a sibling of a higher series (`kubectl-1.37`, `valkey-9.1-cli`),
+the plan says so as a `majorAvailable` update naming it in `stream`, held
+like a rolling major and listed by `notify rolling-major`. Wolfi retires
+a series by removing its recipe: the index keeps serving the last build
+and the security feed goes on naming fixes that are never built
+(`mariadb-11.8-client` at 11.8.3-r0 against thirteen CVEs "fixed" in a
+11.8.9-r1 that does not exist, 2026-09-18). The notice is how that stops
+being invisible.
+
 A datasource's failure is a warning on the plan against that dependency,
 never a failed run for the repository.
 

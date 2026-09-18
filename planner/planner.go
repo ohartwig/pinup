@@ -84,6 +84,9 @@ func Plan(req Request) Result {
 			d.SkipReason = skip
 		}
 		res.Deps = append(res.Deps, d)
+		if n := streamNotice(req, &d); n != nil {
+			ups = append(ups, *n)
+		}
 		// Two buckets can name one value - a minor and a "major" of a 0.x
 		// range written the same way. One update per value: the plan
 		// refuses a key that appears twice, and it was a whole
@@ -98,6 +101,49 @@ func Plan(req Request) Result {
 		}
 	}
 	return res
+}
+
+// streamNotice is the majorAvailable update for a dependency whose index
+// carries a higher series of the same family (kubectl-1.37 beside
+// kubectl-1.36, valkey-9.1-cli beside valkey-cli). The series is the
+// package name; nothing in the dependency's own releases can show the
+// next one, and a series the distribution retired ages in silence -
+// measured 2026-09-18: Wolfi's mariadb-11.8-client stood at 11.8.3-r0
+// against thirteen CVEs whose fix was named and never built. Reported
+// like a rolling major, never written: moving a series is a decision.
+func streamNotice(req Request, d *model.Dependency) *model.Update {
+	rs := req.Releases(*d)
+	if rs == nil || rs.NewerStream == nil || len(rs.NewerStream.Versions) == 0 {
+		return nil
+	}
+	scheme := d.Versioning
+	if scheme == "" && req.DefaultVersioning != nil {
+		scheme = req.DefaultVersioning(d.Datasource)
+	}
+	if scheme == "" {
+		scheme = "semver"
+	}
+	v, err := req.Versionings.Get(scheme)
+	if err != nil {
+		return nil
+	}
+	newest := ""
+	for _, c := range rs.NewerStream.Versions {
+		if !v.IsVersion(c) {
+			continue
+		}
+		if newest == "" || v.Compare(c, newest) > 0 {
+			newest = c
+		}
+	}
+	if newest == "" {
+		return nil
+	}
+	return &model.Update{
+		DepKey: d.Key(), Dep: *d, NewValue: newest, NewVersion: newest,
+		Type: model.UpdateMajorAvailable, Declared: declaredRisk(model.UpdateMajorAvailable),
+		TimeSource: model.TimeUnknown, Stream: rs.NewerStream.Package,
+	}
 }
 
 // planOne decides one dependency. It writes back the versioning scheme it

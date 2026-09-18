@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ohartwig/pinup/apkindex"
 	"github.com/ohartwig/pinup/fake/harness"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/lookup"
@@ -152,5 +153,57 @@ func TestEmptyIndexAndFailingMirrorAreErrors(t *testing.T) {
 	ds2 := New("custom.wolfi", client(rt2), View{Mirrors: []string{"https://down.example.org"}, Arches: []string{"x86_64"}})
 	if _, err := ds2.Releases(context.Background(), lookup.Ref{PackageName: "x"}); err == nil || !strings.Contains(err.Error(), "503") {
 		t.Errorf("a mirror that is down is an error naming the status, got %v", err)
+	}
+}
+
+func TestSeriesNameAndNewerStream(t *testing.T) {
+	for _, c := range []struct{ in, base, series, suffix string }{
+		{"kubectl-1.36", "kubectl", "1.36", ""},
+		{"mysql-9.7-client", "mysql", "9.7", "-client"},
+		{"valkey-9.1-cli", "valkey", "9.1", "-cli"},
+		{"valkey-cli", "valkey", "", "-cli"},
+		{"npm", "npm", "", ""},
+		{"npm-12", "npm", "12", ""},
+		{"php-8.5", "php", "8.5", ""},
+		{"mariadb-11.8-client", "mariadb", "11.8", "-client"},
+		{"ca-certificates-bundle", "ca", "", "-certificates-bundle"}, // no series: the split is arbitrary and only has to be consistent
+		{"go-1.27", "go", "1.27", ""},
+	} {
+		base, series, suffix, ok := seriesName(c.in)
+		if !ok || base != c.base || series != c.series || suffix != c.suffix {
+			t.Errorf("%s: %q %q %q %v, want %q %q %q", c.in, base, series, suffix, ok, c.base, c.series, c.suffix)
+		}
+	}
+	idx, err := apkindex.Parse(bytes.NewReader(indexOf(t, map[string][]string{
+		"kubectl-1.36": {"1.36.4-r8"}, "kubectl-1.37": {"1.37.0-r0"},
+		"mysql-9.6-client": {"9.6.1-r0"}, "mysql-9.7-client": {"9.7.0-r0"}, "mysql-9.7": {"9.7.0-r0"},
+		"valkey-cli": {"8.1.2-r0"}, "valkey-9.1-cli": {"9.1.1-r2", "9.1.2-r0", "9.1.10-r0"}, "valkey-9.1": {"9.1.2-r0"},
+		"npm": {"12.0.2-r0"}, "npm-12": {"12.0.2-r3"},
+		"php-8.5": {"8.5.10-r2"}, "php-8.4": {"8.4.20-r1"},
+		"ca-certificates-bundle": {"20260611-r1"},
+	})))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		pkg, want string
+		n         int
+	}{
+		{"kubectl-1.36", "kubectl-1.37", 1},
+		{"kubectl-1.37", "", 0},
+		{"mysql-9.6-client", "mysql-9.7-client", 1},
+		{"mysql-9.7-client", "", 0}, // the newest series; mysql-9.7 is not a -client
+		{"valkey-cli", "valkey-9.1-cli", 3},
+		{"npm", "npm-12", 1},
+		{"php-8.5", "", 0},
+		{"ca-certificates-bundle", "", 0},
+	} {
+		got := newerStream(idx, c.pkg)
+		switch {
+		case c.want == "" && got != nil:
+			t.Errorf("%s: unexpected stream %+v", c.pkg, got)
+		case c.want != "" && (got == nil || got.Package != c.want || len(got.Versions) != c.n):
+			t.Errorf("%s: %+v, want %s with %d versions", c.pkg, got, c.want, c.n)
+		}
 	}
 }
