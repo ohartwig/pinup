@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/ohartwig/pinup/advise"
@@ -37,8 +38,9 @@ func cmdAdvise(args []string, out, errw io.Writer) error {
 	fix := fs.Bool("fix", false, "apply the fixes to the file in memory and verify the result; a dry run unless --out or --write")
 	outPath := fs.String("out", "", "with --fix: write the fixed file here")
 	write := fs.Bool("write", false, "with --fix: write the fixed file in place")
-	var plans multiFlag
+	var plans, skip multiFlag
 	fs.Var(&plans, "plan", "a plan whatif wrote, for the checks that read what runs found (repeatable)")
+	fs.Var(&skip, "skip", "a check ID to leave out of the report and the fixes (repeatable)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -79,7 +81,14 @@ func cmdAdvise(args []string, out, errw io.Writer) error {
 		}
 		in.Plans = append(in.Plans, plan)
 	}
-	findings, skipped := advise.Run(in, advise.Catalogue())
+	checks := advise.Catalogue()
+	for _, id := range skip {
+		if !slices.ContainsFunc(checks, func(c advise.Check) bool { return c.ID == id }) {
+			return fmt.Errorf("advise: --skip %s: no such check", id)
+		}
+	}
+	checks = slices.DeleteFunc(checks, func(c advise.Check) bool { return slices.Contains(skip, c.ID) })
+	findings, skipped := advise.Run(in, checks)
 
 	report := adviceReport{File: *cfgPath, Plans: plans, Skipped: skipped, Findings: findings, Counts: map[advise.Severity]int{}}
 	for _, f := range findings {

@@ -74,6 +74,31 @@ func TestAdviseReportsTheRunnerConfiguration(t *testing.T) {
 	}
 }
 
+// --skip leaves a check out of the report and of the fixes; an unknown ID
+// is a typo, not a no-op.
+func TestAdviseSkipLeavesACheckOut(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "renovate.json")
+	os.WriteFile(path, []byte(`{"schedule": ["at any time"], "nonesuchKey": 1}`), 0o644)
+	r, err := adviseJSON(t, "--config", path, "--fix", "--skip", "hygiene/schedule-anytime-explicit", "--skip", "sec/minimum-release-age-unset")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range r.Findings {
+		if f.ID == "hygiene/schedule-anytime-explicit" || f.ID == "sec/minimum-release-age-unset" {
+			t.Errorf("skipped check reported: %s", f.ID)
+		}
+	}
+	for _, a := range r.Fix.Applied {
+		if a.Fix.Pointer == "/schedule" || a.Fix.Pointer == "/minimumReleaseAge" {
+			t.Errorf("skipped check fixed: %s", a.Fix.Pointer)
+		}
+	}
+	if _, err := adviseJSON(t, "--config", path, "--skip", "nonesuch/check"); err == nil || !strings.Contains(err.Error(), "no such check") {
+		t.Errorf("an unknown --skip must fail, got %v", err)
+	}
+}
+
 func TestAdviseStrictFailsOnAnError(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "renovate.json")

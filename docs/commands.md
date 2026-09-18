@@ -102,6 +102,7 @@ and, where the file owns the value, a fix.
 | `--config` | the configuration to analyse (required) |
 | `--runner` | as for print-config: the runner's configuration a `local>` extends resolves to |
 | `--plan` | a plan `whatif` wrote (repeatable); enables the checks that read what runs found |
+| `--skip` | a check ID to leave out of the report and the fixes (repeatable) |
 | `--json` | the report as JSON |
 | `--strict` | exit 1 when any finding is an `error`; warnings never fail |
 | `--fix` | apply the fixes in memory and verify the result - a dry run unless `--out` or `--write` |
