@@ -141,6 +141,7 @@
       "name": "renovate/https-github.com-crowdsecurity-hub-digest",
       "slug": "https-github.com-crowdsecurity-hub-digest",
       "title": "chore(deps): update https://github.com/crowdsecurity/hub digest to 4a9e186",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: digest",
       "updateKeys": [
         "crowdsec-hub.yaml|custom.regex#27|https://github.com/crowdsecurity/hub|master|333>master@4a9e186dc93e642bf8b33fe5fcc7c319a276676e"
       ],
@@ -190,6 +191,7 @@
       "name": "renovate/pin-dependencies",
       "slug": "pin-dependencies",
       "title": "ci(deps): pin node.js to 50c8e8c",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: pinDigest",
       "groupName": "Pin Dependencies",
       "updateKeys": [
         ".gitlab-ci.yml|gitlabci|node|24-alpine|219>24-alpine@sha256:50c8e8ca1d27439048670df5883f32d57cf81cff6233222c893fd0d9884cbd81"

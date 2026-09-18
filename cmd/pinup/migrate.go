@@ -55,7 +55,7 @@ var keySupport = map[string]support{
 	"fetchChangeLogs": supported, "internalChecksFilter": supported, "dependencyDashboard": supported,
 	"dependencyDashboardTitle": supported,
 	// Publishing.
-	"commitBody": partial, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
+	"commitBody": supported, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
 	"semanticCommitType": supported, "semanticCommitScope": supported, "commitMessageTopic": supported,
 	"commitMessageExtra": supported, "commitMessageAction": supported, "branchPrefix": supported, "branchPrefixOld": supported, "branchTopic": supported,
 	"additionalBranchPrefix": supported, "commitMessagePrefix": supported, "commitMessageSuffix": supported,

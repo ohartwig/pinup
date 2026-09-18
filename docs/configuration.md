@@ -124,7 +124,7 @@ unsupported means nothing reads it and the run says so.
 | `trustEffective` | supported (pinup's own) |
 | `versioning` | supported |
 | `vulnerabilityAlerts` | supported |
-| `commitBody` | partial: read, not templated |
+| `commitBody` | supported: rendered per branch with the update's variables (`updateType`, `depName`, …) |
 | `executionTimeout` | partial: the runner's `PINUP_EXECUTION_TIMEOUT` decides, never a repository |
 | `matchCurrentVersion` | partial: matched as a version, not as a range |
 | `matchJsonata` | partial: `isLockfileUpdate` and `sourceUrl` only, what the reference estate uses |

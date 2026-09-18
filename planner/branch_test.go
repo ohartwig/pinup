@@ -426,3 +426,33 @@ func TestPipelineOnlyBranchesAreCiCommits(t *testing.T) {
 		}
 	}
 }
+
+// The commit body is the configuration's, rendered with the update's
+// variables; a configuration without one leaves the branch without one,
+// and the runner then writes the update type alone.
+func TestCommitBodyIsRenderedFromTheConfiguration(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}}
+	cfg := with(base, map[string]any{"commitBody": "Refs: PINUP\n\nUpdate-Type: {{updateType}} ({{depName}})"})
+	n, err := Name(upd("regex", "github-releases", "k3s-io/k3s", "1.30.0", "1.31.0", "1.31.0", model.UpdateMinor), cfg, vs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n.CommitBody != "Refs: PINUP\n\nUpdate-Type: minor (k3s-io/k3s)" {
+		t.Errorf("commit body %q", n.CommitBody)
+	}
+	branches, err := Compose([]Named{n})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(branches) != 1 || branches[0].CommitBody != n.CommitBody {
+		t.Errorf("branch carries %q", branches[0].CommitBody)
+	}
+	none, err := Name(n.Update, with(base, map[string]any{"commitBody": nil}), vs)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if none.CommitBody != "" {
+		t.Errorf("without a commitBody the branch has %q", none.CommitBody)
+	}
+}

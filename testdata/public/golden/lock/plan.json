@@ -381,6 +381,7 @@
       "name": "renovate/js-tokens-10.x",
       "slug": "js-tokens-10.x",
       "title": "fix(deps): update dependency js-tokens to v10",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: major",
       "updateKeys": [
         "yarn/package.json|npm|js-tokens|^4.0.0|105>^10.0.0"
       ],
@@ -400,6 +401,7 @@
       "name": "renovate/lock-file-maintenance",
       "slug": "lock-file-maintenance",
       "title": "chore(deps): refresh lock file (transitive deps, e.g. guzzle)",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: lockFileMaintenance",
       "updateKeys": [
         "lockFileMaintenance|composer|composer.lock>#lockFileMaintenance",
         "lockFileMaintenance|npm|package-lock.json>#lockFileMaintenance",
@@ -422,6 +424,7 @@
       "name": "renovate/monolog-monolog-3.x",
       "slug": "monolog-monolog-3.x",
       "title": "fix(deps): update dependency monolog/monolog to v3.12.0",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "composer.json|composer|monolog/monolog|3.5.0|95>3.12.0"
       ],
@@ -477,6 +480,7 @@
       "name": "renovate/npm",
       "slug": "npm",
       "title": "fix(deps): update dependency minimist to v1.2.8",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: patch",
       "groupName": "npm packages",
       "updateKeys": [
         "package.json|npm|minimist|1.2.7|75>1.2.8"
@@ -531,6 +535,7 @@
       "name": "renovate/psr-log-3.x",
       "slug": "psr-log-3.x",
       "title": "fix(deps): update dependency psr/log to v3.0.2",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: patch",
       "updateKeys": [
         "composer.json|composer|psr/log|3.0.0|63>3.0.2"
       ],

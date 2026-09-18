@@ -41,8 +41,10 @@ type Options struct {
 	Platform publish.Platform
 	Project  publish.Project
 
-	// Labels are added to every merge request; the estate uses
-	// ["renovate"] and its consumers filter on it.
+	// Labels are added to every merge request on top of what the
+	// configuration's labels and addLabels put on the branch. The run
+	// sets none: until 2026-09-18 "renovate" was added here by name,
+	// whatever the configuration said.
 	Labels []string
 	// Footer is appended to every merge-request description.
 	Footer string
@@ -536,8 +538,14 @@ func (o Options) runTask(ctx context.Context, t model.Task) ([]string, error) {
 	return changed, nil
 }
 
+// commitBody is the configuration's commitBody as the planner rendered
+// it; without one, the update type alone. Until 2026-09-18 this was
+// "Refs: RENOVATE" by name, whatever the configuration said.
 func commitBody(b *model.Branch) string {
-	return "Refs: RENOVATE\n\nUpdate-Type: " + updateTypesOf(b)
+	if b.CommitBody != "" {
+		return b.CommitBody
+	}
+	return "Update-Type: " + updateTypesOf(b)
 }
 
 func updateTypesOf(b *model.Branch) string {

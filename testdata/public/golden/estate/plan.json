@@ -551,6 +551,7 @@
       "name": "renovate/pin-dependencies",
       "slug": "pin-dependencies",
       "title": "chore(deps): pin bash docker tag to 84e9597",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: pinDigest",
       "groupName": "Pin Dependencies",
       "updateKeys": [
         "Containerfile|dockerfile|bash|alpine3.22|724>alpine3.22@sha256:84e9597a44c52678823f5292b595004b0bccc722092b0764cb4269e2859f540a"
@@ -580,6 +581,7 @@
       "name": "renovate/terraform-aws-modules-vpc-aws-5.x",
       "slug": "terraform-aws-modules-vpc-aws-5.x",
       "title": "chore(deps): update dependency terraform-aws-modules/vpc/aws to v5.21.0",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "infra/versions.tf|terraform|terraform-aws-modules/vpc/aws|5.0.0|235>5.21.0"
       ],
@@ -599,6 +601,7 @@
       "name": "renovate/terraform-aws-modules-vpc-aws-6.x",
       "slug": "terraform-aws-modules-vpc-aws-6.x",
       "title": "chore(deps): update dependency terraform-aws-modules/vpc/aws to v6",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: major",
       "updateKeys": [
         "infra/versions.tf|terraform|terraform-aws-modules/vpc/aws|5.0.0|235>6.7.2"
       ],

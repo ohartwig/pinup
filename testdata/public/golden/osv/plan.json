@@ -671,6 +671,7 @@
       "name": "renovate/npm-lodash-vulnerability",
       "slug": "npm-lodash-vulnerability",
       "title": "fix(deps): update dependency lodash to v4.18.1 [security]",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "package.json|npm|lodash|4.17.20|82>4.18.1"
       ],
@@ -699,6 +700,7 @@
       "name": "renovate/npm-minimist-vulnerability",
       "slug": "npm-minimist-vulnerability",
       "title": "fix(deps): update dependency minimist to ^1.2.6 [security]",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: patch",
       "updateKeys": [
         "package.json|npm|minimist|^1.2.5|109>^1.2.6"
       ],
@@ -727,6 +729,7 @@
       "name": "renovate/packagist-guzzlehttp-guzzle-vulnerability",
       "slug": "packagist-guzzlehttp-guzzle-vulnerability",
       "title": "fix(deps): update dependency guzzlehttp/guzzle to v7.15.2 [security]",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "composer.json|composer|guzzlehttp/guzzle|7.4.4|43>7.15.2"
       ],
@@ -755,6 +758,7 @@
       "name": "renovate/packagist-symfony-http-kernel-vulnerability",
       "slug": "packagist-symfony-http-kernel-vulnerability",
       "title": "fix(deps): update dependency symfony/http-kernel to v6.0.20 [security]",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: patch",
       "updateKeys": [
         "composer.json|composer|symfony/http-kernel|6.0.0|79>6.0.20"
       ],

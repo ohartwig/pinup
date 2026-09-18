@@ -675,6 +675,7 @@
       "name": "renovate/alpine",
       "slug": "alpine",
       "title": "chore(deps): update alpine docker digest to 28bd5fe",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: digest",
       "updateKeys": [
         "overlays/prod/kustomization.yaml|kustomize|alpine||708>@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b"
       ],
@@ -695,6 +696,7 @@
       "name": "renovate/argoproj-argo-cd-2.x",
       "slug": "argoproj-argo-cd-2.x",
       "title": "chore(deps): update dependency argoproj/argo-cd to v2.14.21",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "overlays/prod/kustomization.yaml|kustomize|argoproj/argo-cd|v2.12.3|253>v2.14.21"
       ],
@@ -715,6 +717,7 @@
       "name": "renovate/argoproj-argo-cd-3.x",
       "slug": "argoproj-argo-cd-3.x",
       "title": "chore(deps): update dependency argoproj/argo-cd to v3",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: major",
       "updateKeys": [
         "overlays/prod/kustomization.yaml|kustomize|argoproj/argo-cd|v2.12.3|253>v3.5.3"
       ],
@@ -735,6 +738,7 @@
       "name": "renovate/grafana-10.x",
       "slug": "grafana-10.x",
       "title": "chore(deps): update dependency grafana to v10",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: major",
       "updateKeys": [
         "overlays/prod/kustomization.yaml|kustomize|grafana|8.5.1|992>10.5.15@c08c87969270402e7d5227edb8385af67cc32ee34817bff89773ad02303b5d79"
       ],
@@ -755,6 +759,7 @@
       "name": "renovate/grafana-8.x",
       "slug": "grafana-8.x",
       "title": "chore(deps): update dependency grafana to v8.15.0",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "overlays/prod/kustomization.yaml|kustomize|grafana|8.5.1|992>8.15.0@6c0e8435a5b3192caa76e56e144908dced3be5e03cab1de9efb7f83b91886b9b"
       ],
@@ -775,6 +780,7 @@
       "name": "renovate/hashicorp-terraform-1.x",
       "slug": "hashicorp-terraform-1.x",
       "title": "chore(deps): update dependency hashicorp/terraform to v1.16.2",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         ".terraform-version|terraform-version|hashicorp/terraform|1.9.8|0>1.16.2",
         "infra/.terraform-version|terraform-version|hashicorp/terraform|v1.7.0|0>v1.16.2"

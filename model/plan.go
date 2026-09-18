@@ -106,8 +106,11 @@ type Branch struct {
 	PlannedName string `json:"plannedName,omitempty"`
 	Slug        string `json:"slug"`
 	Title       string `json:"title"`
-	Body        string `json:"body,omitempty"`
-	GroupName   string `json:"groupName,omitempty"`
+	// CommitBody is what the commit carries under its title: the
+	// configuration's commitBody, rendered for the branch's first update.
+	CommitBody string `json:"commitBody,omitempty"`
+	Body       string `json:"body,omitempty"`
+	GroupName  string `json:"groupName,omitempty"`
 
 	UpdateKeys []string `json:"updateKeys"`
 	Edits      []Edit   `json:"edits,omitempty"`

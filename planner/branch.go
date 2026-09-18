@@ -130,11 +130,14 @@ type Named struct {
 	GroupTitle func(extra string) string
 	// Extra is the rendered commitMessageExtra of this update, for the
 	// group to compare.
-	Extra     string
-	GroupName string
-	GroupSlug string
-	Automerge bool
-	Labels    []string
+	Extra string
+	// CommitBody is the rendered commitBody, what goes under the title of
+	// the commit. Empty when the configuration sets none.
+	CommitBody string
+	GroupName  string
+	GroupSlug  string
+	Automerge  bool
+	Labels     []string
 	// Notes are the rendered prBodyNotes: what a person wrote next to the
 	// rule for whoever reads the merge request.
 	Notes    []string
@@ -236,9 +239,13 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 		return Named{}, err
 	}
 	extra := env.Values["commitMessageExtra"]
+	body, err := render(single, "commitBody")
+	if err != nil {
+		return Named{}, err
+	}
 
 	branchPrefix, _ := cfg["branchPrefix"].(string)
-	n := Named{Update: u, Branch: branch, Prefix: branchPrefix, Title: title, Extra: extra, GroupSlug: groupSlug}
+	n := Named{Update: u, Branch: branch, Prefix: branchPrefix, Title: title, Extra: extra, CommitBody: strings.TrimSpace(body), GroupSlug: groupSlug}
 	if grouped {
 		n.GroupName = groupName
 		n.GroupTitle = func(extra string) string {
@@ -336,6 +343,7 @@ func Compose(named []Named) ([]model.Branch, error) {
 			b := &model.Branch{
 				Name: n.Branch, Slug: strings.TrimPrefix(n.Branch, n.Prefix),
 				GroupName: n.GroupName, Automerge: n.Automerge, Labels: n.Labels,
+				CommitBody: n.CommitBody,
 			}
 			if n.Update.Blocked() {
 				b.SuppressedBy = n.Update.SuppressedBy
@@ -574,6 +582,7 @@ func variables(u model.Update, cfg map[string]any, vs versioning.Registry, group
 	}
 	d := u.Dep
 	set("depName", d.DepName)
+	set("updateType", u.Type.Renovate().String())
 	set("packageName", d.PackageName)
 	set("depNameSanitized", sanitizeDepName(d.DepName))
 	set("datasource", d.Datasource)

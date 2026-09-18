@@ -74,7 +74,8 @@ One entry per branch: `name` (Renovate-compatible, so an estate switches
 without duplicates; a branch whose request is open under `branchPrefixOld`
 keeps that name and says in `plannedName` what it would be called under
 the current prefix - a merge request cannot change its source branch, so
-the old name lasts as long as the request), `title`, `groupName`, the `updateKeys` it carries,
+the old name lasts as long as the request), `title`, `commitBody` (the
+configuration's, rendered), `groupName`, the `updateKeys` it carries,
 `edits` (file, byte range, old and new bytes, manager), `tasks` (the
 lock refreshes and post-upgrade commands with their scope), `automerge`,
 `labels`, `schedule` (the window and when it next opens), `existing`

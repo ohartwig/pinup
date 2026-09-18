@@ -286,6 +286,7 @@
       "name": "renovate/boto3-1.x",
       "slug": "boto3-1.x",
       "title": "chore(deps): update dependency boto3 to v1.43.94",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: patch",
       "updateKeys": [
         ".gitlab-ci.yml|custom.regex#1|boto3|1.43.93|262>1.43.94"
       ],
@@ -306,6 +307,7 @@
       "name": "renovate/git-filter-repo-2.x",
       "slug": "git-filter-repo-2.x",
       "title": "chore(deps): update dependency git-filter-repo to v2.47.0",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "templates/lint/template.yml|custom.regex#6|git-filter-repo|2.45.0|397>2.47.0"
       ],
@@ -326,6 +328,7 @@
       "name": "renovate/yamllint-1.x",
       "slug": "yamllint-1.x",
       "title": "chore(deps): update dependency yamllint to v1.38.0",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: minor",
       "updateKeys": [
         "templates/lint/template.yml|custom.regex#6|yamllint|1.35.1|289>1.38.0"
       ],
