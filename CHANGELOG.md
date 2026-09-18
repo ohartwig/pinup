@@ -1,3 +1,13 @@
+## [0.31.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.30.1...v0.31.0) (2026-09-18)
+
+### :sparkles: Features
+
+* **config:** the runner's file may be YAML ([4657ab9](https://git.ole-hartwig.eu/pinup/pinup/commit/4657ab9acb2f83c3f186750781c91cd227578386))
+* **migrate:** resolve a file against the runner, rename its extends, drop the schema ([e4c5c5f](https://git.ole-hartwig.eu/pinup/pinup/commit/e4c5c5f6c8e589cb6abf96f8d5c5bb3a4c868701))
+* **dashboard:** the issue's title comes from the configuration ([c6e2b93](https://git.ole-hartwig.eu/pinup/pinup/commit/c6e2b93769bce0458eeed81001bbb910dcd825b0))
+* **publish:** the label and the commit body come from the configuration ([fb8ca3e](https://git.ole-hartwig.eu/pinup/pinup/commit/fb8ca3e5ac36e738c6f09e423bbd070eb257ac16))
+* **publish:** the branch prefix comes from the configuration, with adoption across a rename ([efb16dd](https://git.ole-hartwig.eu/pinup/pinup/commit/efb16dd7f2c7515cb9dfcc427ae1eb72d0d66631))
+
 ## [0.30.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.30.0...v0.30.1) (2026-09-17)
 
 ### :fast_forward: Performance
