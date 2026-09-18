@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+
+	"github.com/ohartwig/pinup/model"
 )
 
 // The security checks find what widens the blast radius of an update the
@@ -170,6 +172,9 @@ func plaintext(raw string) bool {
 
 // vulnerabilityAlertsOff finds the advisory feed switched off or never on.
 func vulnerabilityAlertsOff(in *Input) []Finding {
+	if disabled(in) {
+		return nil
+	}
 	var out []Finding
 	if in.Resolved.Raw["osvVulnerabilityAlerts"] != true {
 		sev := Info
@@ -200,7 +205,7 @@ var dockerManagers = []string{"dockerfile", "docker-compose", "gitlabci", "helm-
 // pinDigestsOff finds container images in use and no rule pinning them by
 // digest: a tag is a moving target, a digest is not.
 func pinDigestsOff(in *Input) []Finding {
-	if in.Resolved.Raw["pinDigests"] == true {
+	if disabled(in) || in.Resolved.Raw["pinDigests"] == true {
 		return nil
 	}
 	for _, rule := range in.resolvedRules() {
@@ -237,28 +242,33 @@ func pinDigestsOff(in *Input) []Finding {
 	return []Finding{f}
 }
 
-// postUpgradeTasksUnallowed finds tasks the configuration's allowlist does
-// not admit. The runner may allow them from its environment; if it does
-// not, the run holds the branch and names the command, every time.
+// postUpgradeTasksUnallowed finds tasks the file itself names that the
+// configuration's allowlist does not admit. The runner may allow them from
+// its environment; if it does not, the run holds the branch and names the
+// command, every time. A preset's tasks are the preset's to allow.
 func postUpgradeTasksUnallowed(in *Input) []Finding {
 	if len(stringsOf(in.Resolved.Raw["allowedCommands"])) > 0 {
 		return nil
 	}
 	var out []Finding
-	report := func(pointer string, tasks any) {
+	report := func(pointer string, tasks any, rule int) {
 		obj, ok := tasks.(map[string]any)
 		if !ok || len(stringsOf(obj["commands"])) == 0 {
 			return
 		}
-		out = append(out, Finding{ID: "sec/post-upgrade-tasks-unallowed", Category: Security, Severity: Info, Pointer: pointer, Frame: FrameResolved, Origin: in.originAt(pointer),
+		out = append(out, Finding{ID: "sec/post-upgrade-tasks-unallowed", Category: Security, Severity: Info, Pointer: pointer, Frame: FrameFile, Origin: in.fileOrigin(pointer, rule),
 			Msg: "postUpgradeTasks names commands the configuration's allowedCommands does not admit; unless the runner's PINUP_ALLOWED_COMMANDS does, the branch is held with the command named"})
 	}
-	report("/postUpgradeTasks", in.Resolved.Raw["postUpgradeTasks"])
-	for i, rule := range in.resolvedRules() {
-		report(ptr("packageRules", i, "postUpgradeTasks"), rule["postUpgradeTasks"])
+	report("/postUpgradeTasks", in.Layer.Raw["postUpgradeTasks"], model.NoRule)
+	for i, rule := range in.ownRules() {
+		report(ptr("packageRules", i, "postUpgradeTasks"), rule["postUpgradeTasks"], in.base("packageRules")+i)
 	}
 	return out
 }
+
+// disabled reports a configuration that switches the repository off: what
+// it would do about advisories, release ages or digests is moot.
+func disabled(in *Input) bool { return in.Resolved.Raw["enabled"] == false }
 
 // allowedCommandsCatchAll finds an allowlist that allows everything.
 func allowedCommandsCatchAll(in *Input) []Finding {
@@ -279,6 +289,9 @@ func allowedCommandsCatchAll(in *Input) []Finding {
 // minimumReleaseAgeUnset finds a configuration that adopts a release the
 // hour it appears, everywhere.
 func minimumReleaseAgeUnset(in *Input) []Finding {
+	if disabled(in) {
+		return nil
+	}
 	if age, _ := in.Resolved.Raw["minimumReleaseAge"].(string); age != "" {
 		return nil
 	}
