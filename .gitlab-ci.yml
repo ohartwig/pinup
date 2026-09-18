@@ -22,15 +22,15 @@ include:
   # and an SPDX header without the job that reads them is decoration, not a
   # gate - so they are included by name.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.36.14
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.36.20
     inputs:
       stage: quick
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.36.14
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.36.20
     inputs:
       stage: quick
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.36.14
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.36.20
     inputs:
       stage: quick
 
@@ -151,7 +151,7 @@ include:
   # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
   # ends. Same component and same reasoning as S3mail.
   # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/build-provenance
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.159
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.161
     inputs:
       stage: release
       artifact-file: SHA256SUMS
