@@ -1,3 +1,14 @@
+## [0.31.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.31.0...v0.31.1) (2026-09-18)
+
+### :bug: Fixes
+
+* **preset:** an inert preset the library reaches itself does not warn ([23e1325](https://git.ole-hartwig.eu/pinup/pinup/commit/23e13259bb35d9f609c72d511704b14b1072090e))
+
+### :repeat: Continuous Integrations
+
+* the image tags on variables of their own, so the annotations name a dependency ([65f5bda](https://git.ole-hartwig.eu/pinup/pinup/commit/65f5bdafeda09b8093dc08730fca15f6b9bb744d))
+* **deps:** update ci components ([15db6e1](https://git.ole-hartwig.eu/pinup/pinup/commit/15db6e15915eafa199a0f5bc06f0d33f55ba6676))
+
 ## [0.31.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.30.1...v0.31.0) (2026-09-18)
 
 ### :sparkles: Features
