@@ -108,7 +108,8 @@ func rulesNotCompilable(in *Input) []Finding {
 }
 
 // keyUnsupported names the file's keys nothing in pinup reads. Removing one
-// changes nothing the run does, so the fix declares no change.
+// changes nothing the run does; the resolved document still carries the
+// key, so the fix declares it.
 func keyUnsupported(in *Input) []Finding {
 	return keysOfClass(in, "compat/key-unsupported", Warn, func(k string) bool {
 		cls, ok := KeySupport[k]
@@ -128,7 +129,7 @@ func keysOfClass(in *Input, id string, sev Severity, want func(string) bool, for
 	emit := func(pointer, key string, rule int) {
 		f := Finding{ID: id, Category: Compat, Severity: sev, Pointer: pointer, Frame: FrameFile, Origin: in.fileOrigin(pointer, rule), Msg: fmt.Sprintf(format, key)}
 		if fix {
-			f.Fix = &Fix{Pointer: pointer, Op: OpRemove}
+			f.Fix = &Fix{Pointer: pointer, Op: OpRemove, Changes: []string{pointer}}
 		}
 		out = append(out, f)
 	}

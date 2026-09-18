@@ -72,7 +72,7 @@ var cases = []struct {
 	{name: "a matcher the engine has never heard of", cfg: `{"packageRules": [{"matchNonesuch": ["x"]}]}`,
 		want: "compat/rules-not-compilable", pointer: "/packageRules"},
 	{name: "a key nothing reads", cfg: `{"nonesuchKey": 1}`,
-		want: "compat/key-unsupported", pointer: "/nonesuchKey", fix: &Fix{Pointer: "/nonesuchKey", Op: OpRemove}},
+		want: "compat/key-unsupported", pointer: "/nonesuchKey", fix: &Fix{Pointer: "/nonesuchKey", Op: OpRemove, Changes: []string{"/nonesuchKey"}}},
 	{name: "a key honoured in part", cfg: `{"rebaseWhen": "auto"}`,
 		want: "compat/key-partial", pointer: "/rebaseWhen"},
 	{name: "a manager nothing implements", cfg: `{"enabledManagers": ["nonesuch"]}`,
