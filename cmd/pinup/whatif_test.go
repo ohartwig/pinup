@@ -1313,3 +1313,53 @@ func names(p *model.Plan) []string {
 	}
 	return out
 }
+
+// The dashboard's title: PINUP_DASHBOARD_TITLE wins, then the
+// configuration's dependencyDashboardTitle, then pinup's own name. The
+// builtin layer's "Dependency Dashboard" is Renovate's default, not a
+// configuration - the provenance tells the two apart.
+func TestDashboardTitlePrecedence(t *testing.T) {
+	env := func(v string) func(string) string { return func(string) string { return v } }
+	for _, c := range []struct{ env, configured, want string }{
+		{"", "", "pinup Dashboard"},
+		{"", "Dependencies", "Dependencies"},
+		{"Ops board", "Dependencies", "Ops board"},
+	} {
+		if got := dashboardTitle(env(c.env), c.configured); got != c.want {
+			t.Errorf("env %q configured %q: %q, want %q", c.env, c.configured, got, c.want)
+		}
+	}
+	at := time.Date(2026, 9, 13, 4, 5, 0, 0, time.UTC)
+	base, err := whatif(context.Background(), ciToolsOptions(t, at))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if base.Dashboard.Title != "pinup Dashboard" {
+		t.Errorf("the builtin default names the issue %q", base.Dashboard.Title)
+	}
+	raw, err := os.ReadFile(fixture.Config(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cfg map[string]any
+	if err := json.Unmarshal(jsonc.Strip(raw), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	cfg["dependencyDashboardTitle"] = "Dependencies"
+	titled, _ := json.Marshal(cfg)
+	path := filepath.Join(t.TempDir(), "titled.json")
+	if err := os.WriteFile(path, titled, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	opts := ciToolsOptions(t, at)
+	opts.ConfigPath = path
+	var asked string
+	opts.ReadChecks = func(title string) (report.Checks, bool) { asked = title; return report.Checks{}, false }
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Dashboard.Title != "Dependencies" || asked != "Dependencies" {
+		t.Errorf("configured title %q, the boxes were read under %q", plan.Dashboard.Title, asked)
+	}
+}

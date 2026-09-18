@@ -189,8 +189,15 @@ type whatifOptions struct {
 	// nil means customDatasources are unknown. wire supplies it.
 	CustomDatasources func(map[string]model.CustomDatasource) lookup.Registry
 	// Checks are the dashboard's ticked boxes, read before the run; a
-	// dry run has none.
-	Checks report.Checks
+	// dry run has none. ReadChecks, when set, reads them once the
+	// configuration has named the issue (dependencyDashboardTitle) and
+	// takes precedence over Checks: the title is not known before the
+	// resolution, and reading under the wrong one finds nothing.
+	Checks     report.Checks
+	ReadChecks func(title string) (report.Checks, bool)
+	// checksRead receives what ReadChecks returned, for the caller that
+	// needs the boxes after the plan (the runner's rebase set).
+	checksRead *report.Checks
 	// Open names the branches that already have an open merge request. A
 	// schedule gates the creation of a branch, not its life: a request
 	// that exists is kept current and automerged outside the window as
@@ -429,8 +436,20 @@ func (r *whatifRun) configure() error {
 	}
 	if on, _ := resolved.Raw["dependencyDashboard"].(bool); on {
 		plan.Dashboard = model.Dashboard{Enabled: true, Title: stringOf(resolved.Raw["dependencyDashboardTitle"])}
-		if plan.Dashboard.Title == "" {
-			plan.Dashboard.Title = "Dependency Dashboard"
+		// Renovate's own default sits in the builtin layer; a title
+		// nobody configured is pinup's, not Renovate's. The provenance
+		// says which: a configured title has a file or a preset as its
+		// winner.
+		if plan.Dashboard.Title == "" || configuredBy(resolved, "/dependencyDashboardTitle") == config.DefaultsSource {
+			plan.Dashboard.Title = defaultDashboardTitle
+		}
+	}
+	if o.ReadChecks != nil {
+		if checks, ok := o.ReadChecks(plan.Dashboard.Title); ok {
+			r.o.Checks = checks
+			if o.checksRead != nil {
+				*o.checksRead = checks
+			}
 		}
 	}
 	for _, w := range engine.Warnings {
@@ -710,6 +729,16 @@ func (r *whatifRun) planUpdates() error {
 	}
 	r.branches = branches
 	return nil
+}
+
+// configuredBy names the layer that won a pointer: "builtin" for a value
+// nothing but the defaults set, else the file or preset.
+func configuredBy(r *config.Resolved, pointer string) string {
+	chain := r.Prov[pointer]
+	if len(chain) == 0 {
+		return ""
+	}
+	return chain[len(chain)-1].Source
 }
 
 // adoptOld keeps a branch under branchPrefixOld while a merge request is

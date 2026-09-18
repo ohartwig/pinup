@@ -11,7 +11,7 @@
   },
   "dashboard": {
     "enabled": true,
-    "title": "Dependency Dashboard"
+    "title": "pinup Dashboard"
   },
   "branching": {
     "prefix": "renovate/"

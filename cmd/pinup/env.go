@@ -293,12 +293,21 @@ func repositoryConcurrency(getenv func(string) string) int {
 	return 4
 }
 
-// dashboardTitle is the dashboard issue's title: PINUP_DASHBOARD_TITLE, or
-// "pinup Dashboard" - a name of its own while Renovate's "Dependency
-// Dashboard" still exists beside it.
-func dashboardTitle(getenv func(string) string) string {
+// defaultDashboardTitle names the dashboard issue when the configuration
+// does not: a name of its own, so that it lived beside Renovate's
+// "Dependency Dashboard" through the cutover.
+const defaultDashboardTitle = "pinup Dashboard"
+
+// dashboardTitle is the dashboard issue's title: PINUP_DASHBOARD_TITLE,
+// the operator's override, wins over the configuration's
+// dependencyDashboardTitle (configured, resolved per repository), and
+// the default stands where neither says anything.
+func dashboardTitle(getenv func(string) string, configured string) string {
 	if v := getenv("PINUP_DASHBOARD_TITLE"); v != "" {
 		return v
 	}
-	return "pinup Dashboard"
+	if configured != "" {
+		return configured
+	}
+	return defaultDashboardTitle
 }

@@ -156,7 +156,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	one := &runOptions{
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env, pkg: *pkg,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
-		dashboardTitle: dashboardTitle(os.Getenv),
+		dashboardTitle: os.Getenv("PINUP_DASHBOARD_TITLE"),
 	}
 	dsOpts, err := datasourceOptions(env, os.Getenv)
 	if err != nil {
@@ -325,7 +325,7 @@ func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platf
 		}
 		return os.WriteFile(strings.TrimSuffix(path, ".json")+".dashboard.md", []byte(body), 0o644)
 	}
-	issue, changed, err := platform.UpsertIssue(ctx, proj, o.dashboardTitle, body, []string{"pinup"})
+	issue, changed, err := platform.UpsertIssue(ctx, proj, dashboardTitle(func(string) string { return o.dashboardTitle }, plan.Dashboard.Title), body, []string{"pinup"})
 	if err != nil {
 		return err
 	}
@@ -356,10 +356,9 @@ type runOptions struct {
 	signing     git.Signing
 	platform    publish.Platform
 	now         time.Time
-	// dashboardTitle names the dashboard issue. "pinup Dashboard" until
-	// the cutover, so it lives beside Renovate's; PINUP_DASHBOARD_TITLE
-	// overrides, and the configuration's dependencyDashboardTitle takes
-	// over with D.16.
+	// dashboardTitle is PINUP_DASHBOARD_TITLE, the operator's override of
+	// the configuration's dependencyDashboardTitle; empty means the
+	// configuration names the issue (see dashboardTitle in env.go).
 	dashboardTitle string
 	// index is the consumer index, updated after every plan; nil means
 	// none is kept. indexMu serialises the projects that feed it.
@@ -520,7 +519,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			Prune:           o.pkg == "" && o.released == "",
 			Tasks:           plugin.TaskRunner{Runner: taskRunner(os.Getenv)},
 			Sleep:           time.Sleep,
-			Rebase:          rebaseSet(opts.Checks),
+			Rebase:          rebaseSet(*opts.checksRead),
 		})
 		if err != nil {
 			return err
@@ -593,13 +592,24 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		RunnerProject: o.runnerProject,
 	}
 	opts.CustomDatasources = customDatasourcesHook(o.client, o.dsOptions)
+	opts.checksRead = new(report.Checks)
 	// The dashboard's ticked boxes, read before planning: an approval, a
 	// window or a release age lifted by a person, a rebase asked for.
 	if !o.dryRun {
-		if _, body, ok, err := o.platform.ReadIssue(ctx, proj, o.dashboardTitle); err != nil {
-			fmt.Fprintf(errw, "warning: %s: dashboard: %v\n", proj.Path, err)
-		} else if ok {
-			opts.Checks = report.ParseChecks(body)
+		// Read once the configuration has named the issue: the title is
+		// resolved per repository, and a read under another name finds
+		// nothing and lifts nothing.
+		opts.ReadChecks = func(configured string) (report.Checks, bool) {
+			title := dashboardTitle(func(string) string { return o.dashboardTitle }, configured)
+			_, body, ok, err := o.platform.ReadIssue(ctx, proj, title)
+			if err != nil {
+				fmt.Fprintf(errw, "warning: %s: dashboard: %v\n", proj.Path, err)
+				return report.Checks{}, false
+			}
+			if !ok {
+				return report.Checks{}, false
+			}
+			return report.ParseChecks(body), true
 		}
 		// The open requests, read before planning too: a branch that has
 		// one is kept current outside its schedule window, and one open
