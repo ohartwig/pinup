@@ -22,8 +22,10 @@ func TestDecodeTheRealConfig(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(warnings) != 3 {
-		t.Errorf("want the three inert-preset warnings, got %v", warnings)
+	// The two inert presets the file names; the third, reached through
+	// config:recommended, is the library's own and stays quiet.
+	if len(warnings) != 2 {
+		t.Errorf("want the two inert-preset warnings, got %v", warnings)
 	}
 	want := fixture.Expect(t)
 	rules, _ := r.Raw["packageRules"].([]any)

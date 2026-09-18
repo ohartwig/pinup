@@ -23,5 +23,4 @@
 ## Warnings
 
 - **config**: preset "abandonments:recommended" has no effect: abandonment detection is not implemented; the preset resolves to nothing
-- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing
 - **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing

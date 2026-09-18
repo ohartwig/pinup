@@ -35,7 +35,6 @@
 ## Warnings
 
 - **config**: preset "abandonments:recommended" has no effect: abandonment detection is not implemented; the preset resolves to nothing
-- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing
 - **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing
 - **lookup**: development/acme/sitepackage:acme/sitepackage via gitlab-packages: gitlab-packages: development/acme/sitepackage: httpx: request failed: Get "https://git.acme.test/api/v4/projects/development%2Facme%2Fsitepackage/packages?package_name=acme%2Fsitepackage&per_page=100&page=1": dial tcp: lookup git.acme.test: no such host
 - **lookup**: devops/ci-cd-components/lint-tools via gitlab-releases: gitlab-releases: devops/ci-cd-components/lint-tools: httpx: request failed: Get "https://git.acme.test/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/releases?per_page=100&page=1": dial tcp: lookup git.acme.test: no such host

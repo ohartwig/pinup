@@ -33,7 +33,6 @@
 ## Warnings
 
 - **config**: preset "abandonments:recommended" has no effect: abandonment detection is not implemented; the preset resolves to nothing
-- **config**: preset "mergeConfidence:age-confidence-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself and contacts no third-party service, so the preset resolves to nothing
 - **config**: preset "mergeConfidence:all-badges" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing
 - **lookup**: https://git.acme.test/platform/gitops/manifests.git via git-tags: git-tags: ls-remote https://git.acme.test/platform/gitops/manifests.git: exit status 128: fatal: unable to access 'https://git.acme.test/platform/gitops/manifests.git/': Could not resolve host: git.acme.test
 - **lookup**: registry.acme.test/devops/charts/prometheus via docker: docker: request to registry.acme.test failed: Get "https://registry.acme.test/v2/devops/charts/prometheus/tags/list?n=1000": dial tcp: lookup registry.acme.test: no such host

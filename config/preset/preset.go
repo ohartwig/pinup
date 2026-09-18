@@ -47,6 +47,12 @@ type Library struct {
 }
 
 // Builtin returns the shipped library.
+// isBuiltin is whether the library carries a preset of that name.
+func isBuiltin(name string) bool {
+	_, _, ok, _ := Builtin().Get(name)
+	return ok
+}
+
 func Builtin() *Library {
 	lib, err := ParseLibrary(libraryJSON)
 	if err != nil {
@@ -157,7 +163,14 @@ func (r *Result) resolve(config map[string]any, src Source, stack []string, owne
 			return nil, nil, fmt.Errorf("preset %q is not known", name)
 		}
 		r.Visited = append(r.Visited, name)
-		if inert != "" {
+		// An inert preset is worth a warning where a configuration named
+		// it: a file, or a preset of the platform's. Reached through the
+		// library's own presets (config:recommended carries
+		// mergeConfidence:age-confidence-badges, as Renovate's does) it
+		// says nothing anyone can act on, and a runner file that extends
+		// config:recommended would warn on every run for the library's
+		// own doing.
+		if inert != "" && !(nested && isBuiltin(stack[len(stack)-1])) {
 			r.warnOnce(fmt.Sprintf("preset %q has no effect: %s", name, inert))
 		}
 		resolved, resolvedProv, err := r.resolve(def, src, append(stack, name), name)

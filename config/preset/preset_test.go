@@ -115,10 +115,11 @@ func TestResolvesTheConfiguration(t *testing.T) {
 	if len(cms) != len(ownCM)+2 {
 		t.Errorf("%d custom managers, want the file's %d after the two the presets add", len(cms), len(ownCM))
 	}
-	// The three inert presets - all-badges from the file itself,
-	// age-confidence-badges through config:recommended, abandonments -
-	// resolve but have no effect, and each is warned about once.
-	if len(got.Warnings) != 3 {
+	// The inert presets the file names itself - all-badges, abandonments -
+	// resolve but have no effect, and each is warned about once;
+	// age-confidence-badges, reached through the library's own
+	// config:recommended, is the library's doing and stays quiet.
+	if len(got.Warnings) != 2 {
 		t.Errorf("want one warning per inert preset, got %v", got.Warnings)
 	}
 	for _, name := range []string{"config:recommended", ":dependencyDashboard", ":semanticPrefixFixDepsChoreOthers",
@@ -157,6 +158,15 @@ func TestInertPresetResolvesButWarnsOnce(t *testing.T) {
 	}
 	if got.Config["x"] != 1 {
 		t.Error("the configuration's own keys survive an inert preset")
+	}
+	// Reached through the library's own config:recommended the inert
+	// preset is the library's doing, not the configuration's: no warning.
+	got, err = Resolve(map[string]any{"extends": []any{"config:recommended"}}, Builtin())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.Warnings) != 0 {
+		t.Errorf("config:recommended must not warn about its own inert member: %v", got.Warnings)
 	}
 }
 
