@@ -1,3 +1,9 @@
+## [0.33.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.33.0...v0.33.1) (2026-09-18)
+
+### :repeat: Chores
+
+* **license:** relicense from MIT to Apache-2.0 ([70dd559](https://git.ole-hartwig.eu/pinup/pinup/commit/70dd5595723ac7c1d3cdf96932fc043a8078918b))
+
 ## [0.33.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.32.0...v0.33.0) (2026-09-18)
 
 ### :sparkles: Features
