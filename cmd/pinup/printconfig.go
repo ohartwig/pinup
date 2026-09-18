@@ -4,6 +4,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,7 +12,6 @@ import (
 	"os"
 
 	"github.com/ohartwig/pinup/config"
-	"github.com/ohartwig/pinup/config/preset"
 )
 
 // cmdPrintConfig prints the resolved configuration - the file with its
@@ -26,14 +26,20 @@ func cmdPrintConfig(args []string, out, errw io.Writer) error {
 	asJSON := fs.Bool("json", false, "print the resolved document as JSON instead of flattened lines")
 	explain := fs.String("explain", "", "print every source that set this path, winner last (print-config notation, e.g. packageRules[25].automerge)")
 	diffPath := fs.String("diff", "", "compare against a resolved snapshot (JSON) and print the differing lines")
+	runner := fs.String("runner", "", "the runner's configuration a local> extends resolves to: a path, or local>project fetched through the platform")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *cfgPath == "" {
 		return fmt.Errorf("print-config: --config is required")
 	}
+	sources, cleanup, err := runnerChain(context.Background(), *runner, os.Getenv)
+	if err != nil {
+		return fmt.Errorf("print-config: %w", err)
+	}
+	defer cleanup()
 
-	r, warnings, err := config.ResolveFile(*cfgPath, preset.Builtin())
+	r, warnings, err := config.ResolveFile(*cfgPath, sources)
 	if err != nil {
 		return err
 	}

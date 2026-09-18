@@ -307,8 +307,7 @@ func scalar(v any) string {
 		if plainRE.MatchString(x) && !yamlWords[x] && !looksNumeric(x) {
 			return x
 		}
-		b, _ := json.Marshal(x)
-		return string(b)
+		return quoted(x)
 	case json.Number:
 		return x.String()
 	case float64:
@@ -327,6 +326,18 @@ func scalar(v any) string {
 		b, _ := json.Marshal(x)
 		return string(b)
 	}
+}
+
+// quoted is a double-quoted YAML scalar. json.Marshal would do, but it
+// escapes <, > and & as \u003c and friends for HTML's sake, and a preset
+// name written "local\u003epinup/runner" is not what anyone wants to read
+// or grep. YAML's double-quoted style takes the same escapes as JSON.
+func quoted(s string) string {
+	var b strings.Builder
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	_ = enc.Encode(s)
+	return strings.TrimSuffix(b.String(), "\n")
 }
 
 // looksNumeric is whether YAML would read the plain scalar as a number:

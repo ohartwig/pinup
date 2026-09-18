@@ -279,7 +279,7 @@ func TestMigrateToYAML(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := sameResolution(src, "default.json", converted); err != nil {
+	if err := sameResolution(src, "default.json", converted, preset.Builtin()); err != nil {
 		t.Fatal(err)
 	}
 	layer, err := config.Parse(converted, "default.pinup.yaml")
@@ -324,4 +324,94 @@ func TestNotifyEstateFromPlans(t *testing.T) {
 	if err := run([]string{"notify", "estate", "--plans", filepath.Join(dir, "*.json"), "--dry-run", "--min-refs", "10000"}, &out, &errw); err == nil {
 		t.Error("a scan with too few dependencies must fail")
 	}
+}
+
+// A repository file that extends the runner: migrate resolves it through
+// --runner as a run would, renames the extends entry it is told to,
+// drops the Renovate schema line, and refuses when the result would
+// resolve differently.
+func TestMigrateRewritesARepositoryFileAgainstTheRunner(t *testing.T) {
+	// --runner names a path here; the project the aliases answer for
+	// comes from the environment, as in the runner's own job.
+	t.Setenv("PINUP_RUNNER_PROJECT", "pinup/runner")
+	dir := t.TempDir()
+	src := "{\n  \"$schema\": \"https://docs.renovatebot.com/renovate-schema.json\",\n  // the runner's file, by its old name\n  \"extends\": [\"local>devops/renovate-runner\"],\n  \"packageRules\": [{\"matchDepNames\": [\"alpine\"], \"automerge\": true}]\n}\n"
+	path := filepath.Join(dir, "renovate.json")
+	if err := os.WriteFile(path, []byte(src), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	// Without a runner the extends is unknown, and that is an error, not
+	// a silent drop.
+	if err := run([]string{"migrate", "--config", path, "--json"}, io.Discard, io.Discard); err == nil {
+		t.Fatal("a local> extends without --runner must fail")
+	}
+	var out strings.Builder
+	if err := run([]string{"migrate", "--config", path, "--runner", fixture.Config(t), "--json"}, &out, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), `"packageRules.automerge"`) && !strings.Contains(out.String(), "automerge") {
+		t.Errorf("the repository's rule is not classified: %s", out.String())
+	}
+	yamlPath := filepath.Join(dir, ".pinup.yaml")
+	if err := run([]string{"migrate", "--config", path, "--runner", fixture.Config(t), "--to", "yaml",
+		"--extends", "local>devops/renovate-runner=local>pinup/runner", "--out", yamlPath}, io.Discard, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	got, err := os.ReadFile(yamlPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(got), "$schema") || strings.Contains(string(got), "devops/renovate-runner") || !strings.Contains(string(got), "local>pinup/runner") {
+		t.Errorf("rewritten file:\n%s", got)
+	}
+	// Resolved through the same runner, both files are one document
+	// (the extends entry and the schema aside).
+	sources := runnerSources(mustLoad(t, fixture.Config(t)), "pinup/runner", nil)
+	before, _, err := config.ResolveFile(path, sources)
+	if err != nil {
+		t.Fatal(err)
+	}
+	after, _, err := config.ResolveFile(yamlPath, sources)
+	if err != nil {
+		t.Fatal(err)
+	}
+	flat := func(r *config.Resolved) map[string]string {
+		m := map[string]string{}
+		for _, l := range config.Flatten(r.Raw) {
+			if l.Path == "$schema" || strings.HasPrefix(l.Path, "extends") || strings.Contains(l.Path, "description") {
+				continue
+			}
+			m[l.Path] = l.Value
+		}
+		return m
+	}
+	if b, a := flat(before), flat(after); len(b) != len(a) || len(b) == 0 {
+		t.Errorf("resolutions differ in size: %d before, %d after", len(b), len(a))
+	} else {
+		for k, v := range b {
+			if a[k] != v {
+				t.Errorf("%s: %q became %q", k, v, a[k])
+			}
+		}
+	}
+	// A rename that renames nothing is a typo.
+	if err := run([]string{"migrate", "--config", path, "--runner", fixture.Config(t), "--to", "yaml",
+		"--extends", "local>nobody=local>pinup/runner"}, io.Discard, io.Discard); err == nil {
+		t.Error("an extends entry that is not in the file must be refused")
+	}
+	// A rename to a name the chain does not answer changes the resolution
+	// and is refused by the guard.
+	if err := run([]string{"migrate", "--config", path, "--runner", fixture.Config(t), "--to", "yaml",
+		"--extends", "local>devops/renovate-runner=local>somewhere/else"}, io.Discard, io.Discard); err == nil {
+		t.Error("a rename to an unknown preset must be refused")
+	}
+}
+
+func mustLoad(t *testing.T, path string) map[string]any {
+	t.Helper()
+	l, err := config.LoadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return l.Raw
 }

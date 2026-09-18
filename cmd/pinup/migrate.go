@@ -4,11 +4,14 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -77,12 +80,20 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 	to := fs.String("to", "", "rewrite the file instead of classifying it: yaml (descriptions become comments, scalars YAML would misread are quoted)")
 	outPath := fs.String("out", "", "with --to: write here instead of stdout")
 	keep := fs.Bool("keep-descriptions", false, "with --to yaml: keep description keys as well as the comments")
+	runner := fs.String("runner", "", "the runner's configuration a local> extends resolves to: a path, or local>project fetched through the platform")
+	var renames renameFlag
+	fs.Var(&renames, "extends", "with --to: rename one extends entry, old=new (repeatable; the resolution must not change)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *cfgPath == "" {
 		return fmt.Errorf("migrate: --config is required")
 	}
+	sources, cleanup, err := runnerChain(context.Background(), *runner, os.Getenv)
+	if err != nil {
+		return fmt.Errorf("migrate: %w", err)
+	}
+	defer cleanup()
 	if *to != "" {
 		if *to != "yaml" {
 			return fmt.Errorf("migrate: --to %q: only yaml is written", *to)
@@ -91,13 +102,23 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 		if err != nil {
 			return err
 		}
-		converted, err := toyaml.Convert(src, *cfgPath, toyaml.Options{KeepDescriptions: *keep})
+		// What the rewrite changes on purpose: the extends entries it was
+		// told to rename, and the $schema line, which names Renovate's
+		// schema and would be a lie on a pinup file. Nothing else.
+		rewritten, err := renames.apply(src)
+		if err != nil {
+			return fmt.Errorf("migrate: %w", err)
+		}
+		rewritten = dropSchema(rewritten)
+		converted, err := toyaml.Convert(rewritten, *cfgPath, toyaml.Options{KeepDescriptions: *keep})
 		if err != nil {
 			return err
 		}
 		// The converted document must load to what the original loads
-		// to - checked here, every time, not only in the test.
-		if err := sameResolution(src, *cfgPath, converted); err != nil {
+		// to - checked here, every time, not only in the test. The
+		// renamed extends are aliases of one document, so the resolution
+		// is the same or the rename was wrong.
+		if err := sameResolution(src, *cfgPath, converted, sources); err != nil {
 			return fmt.Errorf("migrate: the conversion does not load to the same document: %w", err)
 		}
 		if *outPath == "" {
@@ -106,11 +127,14 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 		}
 		return os.WriteFile(*outPath, converted, 0o644)
 	}
+	if len(renames) > 0 {
+		return fmt.Errorf("migrate: --extends renames a file; it needs --to")
+	}
 	layer, err := config.LoadFile(*cfgPath)
 	if err != nil {
 		return err
 	}
-	r, warnings, err := config.ResolveLayer(layer, preset.Builtin())
+	r, warnings, err := config.ResolveLayer(layer, sources)
 	if err != nil {
 		return err
 	}
@@ -204,19 +228,24 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 
 // sameResolution parses both documents and compares their resolutions line
 // by line, the descriptions aside: those are comments in the conversion.
-func sameResolution(src []byte, name string, converted []byte) error {
+func sameResolution(src []byte, name string, converted []byte, sources preset.Source) error {
 	flat := func(b []byte, n string) (map[string]string, error) {
 		layer, err := config.Parse(b, n)
 		if err != nil {
 			return nil, err
 		}
-		r, _, err := config.ResolveLayer(layer, preset.Builtin())
+		r, _, err := config.ResolveLayer(layer, sources)
 		if err != nil {
 			return nil, err
 		}
 		out := map[string]string{}
 		for _, l := range config.Flatten(r.Raw) {
 			if l.Path == "description" || strings.Contains(l.Path, ".description") || strings.HasPrefix(l.Path, "description[") {
+				continue
+			}
+			// The extends entries and the schema are what the rewrite
+			// changes by design; what they resolve to is compared.
+			if l.Path == "$schema" || l.Path == "extends" || strings.HasPrefix(l.Path, "extends[") {
 				continue
 			}
 			out[l.Path] = l.Value
@@ -243,3 +272,40 @@ func sameResolution(src []byte, name string, converted []byte) error {
 	}
 	return nil
 }
+
+// renameFlag collects --extends old=new pairs.
+type renameFlag [][2]string
+
+func (r *renameFlag) String() string { return fmt.Sprint([][2]string(*r)) }
+
+func (r *renameFlag) Set(v string) error {
+	old, new, ok := strings.Cut(v, "=")
+	if !ok || old == "" || new == "" {
+		return fmt.Errorf("--extends wants old=new, got %q", v)
+	}
+	*r = append(*r, [2]string{old, new})
+	return nil
+}
+
+// apply renames the extends entries in the source text: the quoted
+// string, as JSON writes it, replaced byte for byte so comments and order
+// survive. A name that does not occur is an error - a rename that renames
+// nothing is a typo.
+func (r renameFlag) apply(src []byte) ([]byte, error) {
+	for _, pair := range r {
+		from, to := []byte(`"`+pair[0]+`"`), []byte(`"`+pair[1]+`"`)
+		if !bytes.Contains(src, from) {
+			return nil, fmt.Errorf("--extends %s: %q is not in the file", pair[0]+"="+pair[1], pair[0])
+		}
+		src = bytes.ReplaceAll(src, from, to)
+	}
+	return src, nil
+}
+
+// dropSchema removes the "$schema" member from a JSON(C) source, with
+// its comma, wherever it stands in the top-level object.
+func dropSchema(src []byte) []byte {
+	return schemaLine.ReplaceAll(src, nil)
+}
+
+var schemaLine = regexp.MustCompile(`(?m)^[ \t]*"\$schema"[ \t]*:[ \t]*"[^"]*"[ \t]*,?[ \t]*\r?\n`)

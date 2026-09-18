@@ -293,15 +293,7 @@ func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote pr
 		}
 		aliasDoc = def.Raw
 	}
-	aliases := preset.Aliases{}
-	for _, name := range runnerAliases(runnerProject) {
-		aliases[name] = aliasDoc
-	}
-	sources := preset.Chain{aliases}
-	if remote != nil {
-		sources = append(sources, remote)
-	}
-	sources = append(sources, preset.Builtin())
+	sources := runnerSources(aliasDoc, runnerProject, remote)
 
 	repoCfg, err := config.FindConfigFile(root)
 	if err != nil {
@@ -739,6 +731,58 @@ func configuredBy(r *config.Resolved, pointer string) string {
 		return ""
 	}
 	return chain[len(chain)-1].Source
+}
+
+// runnerSources is the preset chain every resolution uses: the runner's
+// document under its alias names, then the platform's local> presets, then
+// the builtin library. migrate and print-config build the same chain from
+// --runner, so a file that extends the runner resolves there as it does
+// in a run.
+func runnerSources(runnerDoc map[string]any, runnerProject string, remote preset.Source) preset.Chain {
+	aliases := preset.Aliases{}
+	if runnerDoc != nil {
+		for _, name := range runnerAliases(runnerProject) {
+			aliases[name] = runnerDoc
+		}
+	}
+	sources := preset.Chain{aliases}
+	if remote != nil {
+		sources = append(sources, remote)
+	}
+	return append(sources, preset.Builtin())
+}
+
+// runnerChain resolves --runner for migrate and print-config: a local
+// path, or local>project fetched through the platform in the environment.
+// Empty means the builtin library alone. The chain is returned with the
+// temporary file's cleanup.
+func runnerChain(ctx context.Context, runner string, getenv func(string) string) (preset.Chain, func(), error) {
+	if runner == "" {
+		return runnerSources(nil, "", nil), func() {}, nil
+	}
+	cleanup := func() {}
+	path := runner
+	if strings.HasPrefix(runner, "local>") {
+		env, err := platformFromEnv(getenv)
+		if err != nil {
+			return nil, nil, err
+		}
+		if env.Host == "" {
+			return nil, nil, fmt.Errorf("--runner %s needs the instance: set PINUP_GITLAB_URL or CI_SERVER_URL", runner)
+		}
+		local, err := fetchConfig(ctx, wire.Platform(env.Kind, env.URL, env.Token, env.Header), runner)
+		if err != nil {
+			return nil, nil, err
+		}
+		cleanup = func() { os.Remove(local) }
+		path = local
+	}
+	doc, err := config.LoadFile(path)
+	if err != nil {
+		cleanup()
+		return nil, nil, err
+	}
+	return runnerSources(doc.Raw, runnerProject(getenv, runner), nil), cleanup, nil
 }
 
 // adoptOld keeps a branch under branchPrefixOld while a merge request is

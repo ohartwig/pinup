@@ -54,6 +54,7 @@ Print the resolved configuration.
 | `--explain` | print every source that set this path, winner last (`packageRules[25].automerge`) |
 | `--diff` | compare against a resolved snapshot (JSON) and print the differing lines |
 | `--json` | the resolved document as JSON instead of flattened lines |
+| `--runner` | the runner's configuration a `local>` extends resolves to: a path, or `local>project` fetched through the platform; the aliases answer for `PINUP_RUNNER_PROJECT` (or the project named) and for `devops/renovate-runner` |
 
 The flattened lines are the format the parity tests compare Renovate's
 resolution against; rule order is part of the meaning, so it is a list,
@@ -72,6 +73,18 @@ no file unless asked to.
 | `--to yaml` | rewrite the file as YAML: descriptions become comments, scalars YAML would misread are quoted |
 | `--out` | with `--to`: write here instead of stdout |
 | `--keep-descriptions` | with `--to yaml`: keep the description keys as well as the comments |
+| `--runner` | as for print-config: without it a file that extends the runner is refused as unknown, not classified around the gap |
+| `--extends old=new` | with `--to`: rename one extends entry (repeatable); the rewrite must resolve to the same document, so a rename to a name the chain does not answer is refused |
+
+`--to yaml` also drops `$schema`: it names Renovate's schema, and on a
+`.pinup.yaml` that would be a lie. What a repository's move looks like:
+
+```bash
+pinup migrate --config renovate.json --runner "local>pinup/runner" \
+  --extends "local>devops/renovate-runner=local>pinup/runner" \
+  --to yaml --out .pinup.yaml
+git rm renovate.json   # pinup refuses two configuration files
+```
 
 ## advisories
 
