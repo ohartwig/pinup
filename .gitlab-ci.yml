@@ -186,13 +186,19 @@ workflow:
     - when: never
 
 variables:
-  # renovate: datasource=docker depName=devops/images/golang
-  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27"
+  # The tag on a variable of its own: the annotation manager reads a
+  # quoted version, not an image reference. Until 2026-09-18 the line
+  # annotated GO_IMAGE itself and named no dependency at all - pinup's
+  # own orphan-annotation warning found it, in pinup's own pipeline.
+  # pinup: datasource=docker depName=registry.ole-hartwig.eu/devops/images/golang
+  GOLANG_IMAGE_TAG: "1.27"
+  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:$GOLANG_IMAGE_TAG"
   # update:pinup runs on the toolchain image: gpg for the signature, git,
   # go for the go.sum refresh. The binary it runs is this tree's own, built
   # by build:linux-arm64 - the image's pinup is only a bystander.
-  # renovate: datasource=docker depName=devops/images/pinup-toolchain
-  PINUP_TOOLCHAIN_IMAGE: "registry.ole-hartwig.eu/devops/images/pinup-toolchain:0"
+  # pinup: datasource=docker depName=registry.ole-hartwig.eu/devops/images/pinup-toolchain
+  PINUP_TOOLCHAIN_TAG: "0"
+  PINUP_TOOLCHAIN_IMAGE: "registry.ole-hartwig.eu/devops/images/pinup-toolchain:$PINUP_TOOLCHAIN_TAG"
   # Do not quietly pull a different Go version: what is in the image is what
   # counts. go.mod says 1.27 and the image is 1.27; with `auto` a future bump
   # to the directive would silently download a toolchain the image does not
