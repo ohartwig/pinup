@@ -1,3 +1,30 @@
+## [0.33.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.32.0...v0.33.0) (2026-09-18)
+
+### :sparkles: Features
+
+* **cli:** advise --skip leaves a check out of the report and the fixes ([dc8fbaa](https://git.ole-hartwig.eu/pinup/pinup/commit/dc8fbaa8e18ef6ae9322e22bb59405cfb816ec29))
+* **cli:** pinup advise ([325bb45](https://git.ole-hartwig.eu/pinup/pinup/commit/325bb45c6292ec59a969e17f56a997e98451c873))
+* **advise:** apply fixes byte for byte, behind a gate on the resolution ([20c5e5a](https://git.ole-hartwig.eu/pinup/pinup/commit/20c5e5a1036e90ab87ded4cc07496bd0c059fcd2))
+* **advise:** a catalogue of findings over a resolved configuration ([5e1f938](https://git.ole-hartwig.eu/pinup/pinup/commit/5e1f9388499b554fa7254310a42de57c26450a2b))
+* **jsonc:** byte-level set, remove and append by pointer ([e999dd8](https://git.ole-hartwig.eu/pinup/pinup/commit/e999dd8f12806167272373012f93e245ddbfe80b))
+
+### :bug: Fixes
+
+* **advise:** two findings the estate run showed to be noise ([5b5c740](https://git.ole-hartwig.eu/pinup/pinup/commit/5b5c7404848e6466e217399efcd2a2863263f8b3))
+
+### :memo: Documentation
+
+* **advise:** the command, its checks and task D.26 ([af0a0af](https://git.ole-hartwig.eu/pinup/pinup/commit/af0a0affdcf99f32e5dbee8709e9d9e22e051c61))
+
+### :zap: Refactor
+
+* **migrate:** the key support table moves to advise ([8d4c6e4](https://git.ole-hartwig.eu/pinup/pinup/commit/8d4c6e4f4cd7a618c6407504150efff34cfb6033))
+
+### :repeat: Chores
+
+* **advise:** drop an unused helper staticcheck named ([c2d5fd5](https://git.ole-hartwig.eu/pinup/pinup/commit/c2d5fd53940992004824aa5ec32a152d5d0212d9))
+* **advise:** register the advise layer and export the helpers it needs ([ae824e1](https://git.ole-hartwig.eu/pinup/pinup/commit/ae824e18c9b9caf2751e61be7e85f0c7a172c3a6))
+
 ## [0.32.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.31.1...v0.32.0) (2026-09-18)
 
 ### :sparkles: Features
