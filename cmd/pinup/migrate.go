@@ -15,58 +15,13 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ohartwig/pinup/advise"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
 	"github.com/ohartwig/pinup/config/toyaml"
 	"github.com/ohartwig/pinup/rules"
 	"github.com/ohartwig/pinup/wire"
 )
-
-// Support classifies a configuration key by what this version of pinup does
-// with it. The table is the report: every key a configuration uses lands in
-// exactly one class, and an unsupported one is named rather than dropped.
-type support string
-
-const (
-	supported   support = "supported"
-	partial     support = "partial"
-	unsupported support = "unsupported"
-)
-
-// keySupport is the classification of top-level keys and packageRules keys.
-// A key not listed is unsupported: an unknown key is one nothing reads.
-var keySupport = map[string]support{
-	// Resolution and matching.
-	"extends": supported, "description": supported, "packageRules": supported, "customManagers": supported,
-	"customDatasources": supported, "enabledManagers": supported, "ignorePaths": supported,
-	"matchPackageNames": supported, "matchDepNames": supported, "matchDatasources": supported, "matchManagers": supported,
-	"matchDepTypes": supported, "matchUpdateTypes": supported, "matchCurrentValue": supported, "matchCurrentVersion": partial,
-	"matchFileNames": supported, "matchSourceUrls": partial, "matchJsonata": partial, "matchCategories": unsupported,
-	"matchEffective": supported, "analyze": supported, "trustEffective": supported,
-	// Decisions.
-	"enabled": supported, "minimumReleaseAge": supported, "minimumReleaseAgeBehaviour": supported, "schedule": supported,
-	"timezone": supported, "automerge": supported, "dependencyDashboardApproval": supported, "groupName": supported,
-	"groupSlug": supported, "versioning": supported, "registryUrls": supported, "extractVersion": supported,
-	"ignoreUnstable": supported, "prHourlyLimit": supported, "prConcurrentLimit": supported, "labels": supported,
-	"ignoreDeps": supported, "allowedVersions": supported, "rangeStrategy": supported, "separateMajorMinor": supported,
-	"separateMinorPatch": partial, "separateMultipleMajor": partial, "pinDigests": supported,
-	"lockFileMaintenance": supported, "osvVulnerabilityAlerts": supported, "vulnerabilityAlerts": supported,
-	"postUpgradeTasks": supported, "allowedCommands": supported,
-	// postUpdateOptions: gomodTidy is what the gomod lock refresh does anyway; the other options are unread.
-	"postUpdateOptions": partial, "prBodyDefinitions": supported, "prBodyNotes": supported, "addLabels": supported,
-	// Release notes come from the forge, never a third-party service; "off" per rule is honoured.
-	"fetchChangeLogs": supported, "internalChecksFilter": supported, "dependencyDashboard": supported,
-	"dependencyDashboardTitle": supported,
-	// Publishing.
-	"commitBody": supported, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
-	"semanticCommitType": supported, "semanticCommitScope": supported, "commitMessageTopic": supported,
-	"commitMessageExtra": supported, "commitMessageAction": supported, "branchPrefix": supported, "branchPrefixOld": supported, "branchTopic": supported,
-	"additionalBranchPrefix": supported, "commitMessagePrefix": supported, "commitMessageSuffix": supported,
-	"commitMessageLowerCase": supported, "semanticCommits": supported,
-	// Read into the template variables, decided by separateMajorMinor alone.
-	"separateMultipleMinor": partial,
-	"executionTimeout":      partial, "$schema": supported,
-}
 
 // cmdMigrate resolves a configuration as a run would and reports, key by
 // key, what pinup supports. It changes no file: the twenty renovate.json
@@ -139,7 +94,7 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 		return err
 	}
 
-	classes := map[support][]string{}
+	classes := map[advise.Support][]string{}
 	seen := map[string]bool{}
 	classify := func(where, key string) {
 		id := key
@@ -150,9 +105,9 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 			return
 		}
 		seen[id] = true
-		cls, ok := keySupport[key]
+		cls, ok := advise.KeySupport[key]
 		if !ok {
-			cls = unsupported
+			cls = advise.Unsupported
 		}
 		classes[cls] = append(classes[cls], id)
 	}
@@ -192,20 +147,20 @@ func cmdMigrate(args []string, out, errw io.Writer) error {
 		}
 	}
 
-	for _, cls := range []support{supported, partial, unsupported} {
+	for _, cls := range []advise.Support{advise.Supported, advise.Partial, advise.Unsupported} {
 		sort.Strings(classes[cls])
 	}
 	if *asJSON {
 		enc := json.NewEncoder(out)
 		enc.SetIndent("", "  ")
 		return enc.Encode(map[string]any{
-			"file": *cfgPath, "supported": classes[supported], "partial": classes[partial],
-			"x-unsupported": classes[unsupported], "managersNotImplemented": missingManagers,
+			"file": *cfgPath, "supported": classes[advise.Supported], "partial": classes[advise.Partial],
+			"x-unsupported": classes[advise.Unsupported], "managersNotImplemented": missingManagers,
 			"rulesNotEvaluable": ruleWarnings, "presetWarnings": warnings, "migrations": r.Migrations,
 		})
 	}
 	fmt.Fprintf(out, "%s\n", *cfgPath)
-	for _, cls := range []support{supported, partial, unsupported} {
+	for _, cls := range []advise.Support{advise.Supported, advise.Partial, advise.Unsupported} {
 		fmt.Fprintf(out, "\n%s (%d)\n", cls, len(classes[cls]))
 		for _, k := range classes[cls] {
 			fmt.Fprintf(out, "  %s\n", k)

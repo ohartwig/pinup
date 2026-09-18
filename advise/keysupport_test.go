@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: MIT
 
-package main
+package advise
 
 import (
 	"os"
@@ -32,7 +32,7 @@ func TestKeySupportKnowsEveryKeyTheCodeReads(t *testing.T) {
 	reads := regexp.MustCompile(`\b(?:raw|Raw|cfg|c|single|rule|obj)\["([a-zA-Z$]+)"\]`)
 	cases := regexp.MustCompile(`case ("match[A-Za-z]+"(?:,\s*"match[A-Za-z]+")*)`)
 	found := map[string]string{}
-	for _, dir := range []string{".", "../../planner", "../../rules", "../../config"} {
+	for _, dir := range []string{".", "../cmd/pinup", "../planner", "../rules", "../config"} {
 		entries, err := os.ReadDir(dir)
 		if err != nil {
 			t.Fatal(err)
@@ -64,12 +64,12 @@ func TestKeySupportKnowsEveryKeyTheCodeReads(t *testing.T) {
 		if nested[k] || len(k) < 2 {
 			continue
 		}
-		if _, ok := keySupport[k]; !ok {
+		if _, ok := KeySupport[k]; !ok {
 			missing = append(missing, k+" ("+where+")")
 		}
 	}
 	sort.Strings(missing)
 	if len(missing) > 0 {
-		t.Errorf("keys the code reads that migrate's table does not classify:\n  %s", strings.Join(missing, "\n  "))
+		t.Errorf("keys the code reads that the support table does not classify:\n  %s", strings.Join(missing, "\n  "))
 	}
 }
