@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -66,6 +67,11 @@ type FileReader interface {
 type Remote struct {
 	Reader FileReader
 	Ctx    context.Context
+	// Parse turns a fetched document into its map, by the file's name:
+	// config.Parse, handed in by the caller because preset sits beside
+	// the parsers and cannot import them. nil parses JSON with comments,
+	// the form every preset had until the runner's file became YAML.
+	Parse func(raw []byte, name string) (map[string]any, error)
 }
 
 // Get implements Source.
@@ -85,8 +91,16 @@ func (r Remote) Get(name string) (map[string]any, string, bool, error) {
 	if err != nil {
 		return nil, "", false, fmt.Errorf("fetching %s from %s: %w", path, project, err)
 	}
-	var doc map[string]any
-	if err := json.Unmarshal(stripComments(raw), &doc); err != nil {
+	parse := r.Parse
+	if parse == nil {
+		parse = func(raw []byte, _ string) (map[string]any, error) {
+			var doc map[string]any
+			err := json.Unmarshal(stripComments(raw), &doc)
+			return doc, err
+		}
+	}
+	doc, err := parse(raw, path)
+	if err != nil {
 		return nil, "", false, fmt.Errorf("%s in %s: %w", path, project, err)
 	}
 	return doc, "", true, nil
@@ -125,15 +139,27 @@ func ParseLocal(s string) (project, path, ref string, err error) {
 	}
 	// A name that already carries its extension is used as written:
 	// "local>devops/renovate-runner:default.json" is how the estate's own
-	// repositories spell it.
+	// repositories spell it, and "local>pinup/runner:default.yaml" is how
+	// the runner names its own file once it is YAML. Without one, .json -
+	// there is no probing of a project for the extension it uses.
 	path = name + ".json"
-	if strings.HasSuffix(name, ".json") || strings.HasSuffix(name, ".json5") {
+	if HasConfigExtension(name) {
 		path = name
 	}
 	if dir != "" {
 		path = dir + "/" + path
 	}
 	return project, path, ref, nil
+}
+
+// HasConfigExtension is whether a preset name spells its file's extension:
+// one pinup reads a configuration in.
+func HasConfigExtension(name string) bool {
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".json", ".json5", ".jsonc", ".yaml", ".yml":
+		return true
+	}
+	return false
 }
 
 // stripComments removes // and /* */ comments outside strings, enough for

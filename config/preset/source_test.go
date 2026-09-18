@@ -5,6 +5,7 @@ package preset
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -80,5 +81,53 @@ func TestChainAliasRemoteBuiltin(t *testing.T) {
 	_, err = Resolve(map[string]any{"extends": []any{"local>nowhere/nothing"}}, src)
 	if err == nil || !strings.Contains(err.Error(), "nowhere/nothing") {
 		t.Errorf("want an error naming the preset, got %v", err)
+	}
+}
+
+// A preset that spells its extension is fetched under that name and parsed
+// by it, through the parser the caller hands in; without one, JSON with
+// comments as before. No probing: "local>a/b" is a/b's default.json.
+func TestRemoteParsesByTheNameItWasGiven(t *testing.T) {
+	reader := &fakeReader{files: map[string]string{
+		"pinup/runner|default.yaml|": "prConcurrentLimit: 7\nlabels:\n  - pinup\n",
+		"pinup/runner|default.json|": `{"prConcurrentLimit": 3}`,
+	}}
+	parsed := []string{}
+	parse := func(raw []byte, name string) (map[string]any, error) {
+		parsed = append(parsed, name)
+		if strings.HasSuffix(name, ".yaml") {
+			return map[string]any{"prConcurrentLimit": float64(7), "labels": []any{"pinup"}}, nil
+		}
+		var doc map[string]any
+		return doc, json.Unmarshal(raw, &doc)
+	}
+	for _, c := range []struct {
+		name string
+		want float64
+	}{
+		{"local>pinup/runner:default.yaml", 7},
+		{"local>pinup/runner:default.json", 3},
+		{"local>pinup/runner", 3},
+	} {
+		doc, _, ok, err := Remote{Reader: reader, Parse: parse}.Get(c.name)
+		if err != nil || !ok || doc["prConcurrentLimit"] != c.want {
+			t.Errorf("%s: %v %v %v", c.name, doc, ok, err)
+		}
+	}
+	if strings.Join(parsed, ",") != "default.yaml,default.json,default.json" {
+		t.Errorf("parsed by name: %v", parsed)
+	}
+	// Without a parser the YAML is read as JSON, and that is an error
+	// naming the file, not an empty preset.
+	if _, _, _, err := (Remote{Reader: reader}).Get("local>pinup/runner:default.yaml"); err == nil {
+		t.Error("YAML without a parser must fail loudly")
+	}
+	for _, name := range []string{"default.yaml", "default.yml", "default.jsonc", "default.json5", "default.json"} {
+		if !HasConfigExtension(name) {
+			t.Errorf("%s: not recognised", name)
+		}
+	}
+	if HasConfigExtension("default") || HasConfigExtension("default.txt") {
+		t.Error("a bare or foreign name has no configuration extension")
 	}
 }

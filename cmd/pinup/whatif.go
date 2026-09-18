@@ -102,7 +102,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	// there is one to read from; without a token they stay unknown and the
 	// resolution says so.
 	if env.Host != "" {
-		opts.Presets = preset.Remote{Reader: wire.Platform(env.Kind, env.URL, env.Token, env.Header), Ctx: context.Background()}
+		opts.Presets = preset.Remote{Reader: wire.Platform(env.Kind, env.URL, env.Token, env.Header), Ctx: context.Background(), Parse: config.ParsePreset}
 	}
 	if *cachePath != "" {
 		store, err := cache.Open(*cachePath)
@@ -251,9 +251,14 @@ func runnerAliases(project string) []string {
 	if project == "" {
 		project = defaultRunnerProject
 	}
-	names := []string{"local>" + project, "local>" + project + ":default.json", "local>" + project + ":default"}
+	spell := func(project string) []string {
+		return []string{"local>" + project, "local>" + project + ":default",
+			"local>" + project + ":default.json", "local>" + project + ":default.yaml",
+			"local>" + project + ":default.yml", "local>" + project + ":default.jsonc"}
+	}
+	names := spell(project)
 	if project != defaultRunnerProject {
-		names = append(names, "local>"+defaultRunnerProject, "local>"+defaultRunnerProject+":default.json", "local>"+defaultRunnerProject+":default")
+		names = append(names, spell(defaultRunnerProject)...)
 	}
 	return names
 }

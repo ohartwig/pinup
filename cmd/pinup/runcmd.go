@@ -21,6 +21,7 @@ import (
 
 	"github.com/ohartwig/pinup/cache"
 	"github.com/ohartwig/pinup/changelog"
+	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
 	"github.com/ohartwig/pinup/git"
 	"github.com/ohartwig/pinup/glob"
@@ -129,8 +130,8 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		// whichever file of that project this run is configured with:
 		// release-fast.json extends it too.
 		project, path, _, _ := preset.ParseLocal(strings.TrimPrefix(*cfgPath, "local>"))
-		if path != "default.json" {
-			def, err := fetchConfig(ctx, platform, "local>"+project)
+		if !isDefaultName(path) {
+			def, err := fetchConfig(ctx, platform, "local>"+project+":"+defaultName)
 			if err != nil {
 				return err
 			}
@@ -138,9 +139,14 @@ func cmdRun(args []string, out, errw io.Writer) error {
 			runnerDefault = def
 		}
 		*cfgPath = local
-	} else if def := filepath.Join(filepath.Dir(*cfgPath), "default.json"); filepath.Base(*cfgPath) != "default.json" {
-		if _, err := os.Stat(def); err == nil {
-			runnerDefault = def
+	} else if !isDefaultName(*cfgPath) {
+		// The default beside the file, under whichever extension the
+		// runner keeps it in.
+		for _, ext := range []string{".json", ".yaml", ".yml", ".jsonc", ".json5"} {
+			if def := filepath.Join(filepath.Dir(*cfgPath), "default"+ext); fileExists(def) {
+				runnerDefault = def
+				break
+			}
 		}
 	}
 
@@ -585,7 +591,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		Datasources:   o.datasources,
 		Cache:         o.cache,
 		CacheTTL:      o.cacheTTL,
-		Presets:       preset.Remote{Reader: o.platform, Ctx: ctx},
+		Presets:       preset.Remote{Reader: o.platform, Ctx: ctx, Parse: config.ParsePreset},
 		Released:      o.released,
 		Package:       o.pkg,
 		RunnerDefault: o.runnerDefault,
@@ -733,6 +739,24 @@ func gitIdentityFromEnv(getenv func(string) string) (git.Identity, git.Signing, 
 	return id, git.Signing{}, fmt.Errorf("PINUP_SIGNING_FORMAT must be ssh, openpgp, or the explicit word none")
 }
 
+// defaultName is what the aliases resolve to when the run's own file is
+// not the project's default: "local>project" means its default.json, and
+// a project that keeps the file as YAML says so in PINUP_CONFIG
+// (local>project:default.yaml), which then names the alias document too.
+var defaultName = "default.json"
+
+// isDefaultName is whether a path is the project's default configuration,
+// whichever extension it carries.
+func isDefaultName(path string) bool {
+	base := filepath.Base(path)
+	return strings.TrimSuffix(base, filepath.Ext(base)) == "default" && preset.HasConfigExtension(base)
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
 // fetchConfig fetches a local> configuration through the platform into a
 // temporary file, named so provenance still reads as the preset it is.
 func fetchConfig(ctx context.Context, platform interface {
@@ -746,7 +770,10 @@ func fetchConfig(ctx context.Context, platform interface {
 	if err != nil {
 		return "", fmt.Errorf("run: %s: %w", name, err)
 	}
-	f, err := os.CreateTemp("", "pinup-config-*.json")
+	// The temporary file keeps the fetched file's extension: the parser is
+	// chosen by it, and a YAML runner file read as JSON is an error at
+	// best.
+	f, err := os.CreateTemp("", "pinup-config-*"+filepath.Ext(path))
 	if err != nil {
 		return "", err
 	}

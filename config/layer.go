@@ -46,6 +46,16 @@ func LoadFile(path string) (Layer, error) {
 	return l, nil
 }
 
+// ParsePreset is Parse for a fetched preset: the document alone, by the
+// file's name. Handed to preset.Remote, which sits beside the parsers.
+func ParsePreset(src []byte, name string) (map[string]any, error) {
+	l, err := Parse(src, name)
+	if err != nil {
+		return nil, err
+	}
+	return l.Raw, nil
+}
+
 // Parse parses a document, choosing the parser from the name.
 func Parse(src []byte, name string) (Layer, error) {
 	raw := map[string]any{}

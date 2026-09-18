@@ -14,8 +14,11 @@ repository.
 Three layers, resolved in this order:
 
 1. **The run's configuration**, `--config`: a file, or a `local>` preset
-   the platform serves (`local>group/runner`, `local>group/runner:release-fast`).
-   This is the estate's file: the rules, the custom managers, the presets.
+   the platform serves (`local>group/runner`, `local>group/runner:release-fast`,
+   `local>group/runner:default.yaml`). This is the estate's file: the
+   rules, the custom managers, the presets. A name without an extension
+   is `.json`; one that spells it (`.yaml`, `.yml`, `.jsonc`, `.json5`)
+   is fetched and parsed as written - there is no probing.
 2. **The repository's file**: `renovate.json`, `.renovaterc.json`,
    `.pinup.jsonc` or `.pinup.yaml` in the checkout. Its `extends` may name
    the run's file as `local><runner project>`; pinup answers that name from
