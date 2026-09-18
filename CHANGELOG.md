@@ -1,3 +1,13 @@
+## [0.32.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.31.1...v0.32.0) (2026-09-18)
+
+### :sparkles: Features
+
+* **apk:** a series pin with a newer series in the index is reported ([c4fdd07](https://git.ole-hartwig.eu/pinup/pinup/commit/c4fdd075f77d439ed9b295489d22d82eced9d685))
+
+### :bug: Fixes
+
+* **planner:** a sibling series is reported only when it is newer ([6d1f9f4](https://git.ole-hartwig.eu/pinup/pinup/commit/6d1f9f46fb1572c98d8e4d8a31228c37e501d5b6))
+
 ## [0.31.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.31.0...v0.31.1) (2026-09-18)
 
 ### :bug: Fixes
