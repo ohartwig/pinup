@@ -876,4 +876,12 @@ func TestASeriesWithANewerSiblingIsReportedNotRewritten(t *testing.T) {
 	if len(res.Updates) != 0 {
 		t.Errorf("without a sibling nothing is reported: %+v", res.Updates)
 	}
+	// A sibling that is older than the package itself is a pinned old
+	// series beside the main line, not a newer stream.
+	rs = releases("2.15.4")
+	rs.NewerStream = &model.Stream{Package: "libxml2-2.13-utils", Versions: []string{"2.13.9"}}
+	res = plan(t, dep("libxml2-utils", "2.15.4", "semver"), rs)
+	if len(res.Updates) != 0 {
+		t.Errorf("an older sibling series is no notice: %+v", res.Updates)
+	}
 }

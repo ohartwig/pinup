@@ -127,16 +127,29 @@ func streamNotice(req Request, d *model.Dependency) *model.Update {
 	if err != nil {
 		return nil
 	}
-	newest := ""
-	for _, c := range rs.NewerStream.Versions {
-		if !v.IsVersion(c) {
-			continue
+	top := func(vs []string) string {
+		best := ""
+		for _, c := range vs {
+			if v.IsVersion(c) && (best == "" || v.Compare(c, best) > 0) {
+				best = c
+			}
 		}
-		if newest == "" || v.Compare(c, newest) > 0 {
-			newest = c
-		}
+		return best
 	}
+	newest := top(rs.NewerStream.Versions)
 	if newest == "" {
+		return nil
+	}
+	// A name without a series is usually the family's main line, and a
+	// series beside it a pinned older one: libxml2-utils at 2.15 beside
+	// libxml2-2.13-utils. The sibling is newer only if its versions are -
+	// valkey-cli at 8.1 beside valkey-9.1-cli, npm 12.0.2-r0 beside npm-12
+	// 12.0.2-r3.
+	own := make([]string, 0, len(rs.Releases))
+	for _, r := range rs.Releases {
+		own = append(own, r.Version)
+	}
+	if cur := top(own); cur != "" && v.Compare(newest, cur) <= 0 {
 		return nil
 	}
 	return &model.Update{
