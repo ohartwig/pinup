@@ -49,6 +49,9 @@ var KeySupport = map[string]Support{
 	"commitMessageExtra": Supported, "commitMessageAction": Supported, "branchPrefix": Supported, "branchPrefixOld": Supported, "branchTopic": Supported,
 	"additionalBranchPrefix": Supported, "commitMessagePrefix": Supported, "commitMessageSuffix": Supported,
 	"commitMessageLowerCase": Supported, "semanticCommits": Supported,
+	// The per-update-type objects the planner overlays (planner.Overlay).
+	"major": Supported, "minor": Supported, "patch": Supported, "pin": Supported, "digest": Supported,
+	"pinDigest": Supported, "rollback": Supported, "replacement": Supported,
 	// Read into the template variables, decided by separateMajorMinor alone.
 	"separateMultipleMinor": Partial,
 	"executionTimeout":      Partial, "$schema": Supported,
