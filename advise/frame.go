@@ -77,12 +77,6 @@ func (in *Input) fileOrigin(pointer string, rule int) model.Origin {
 	return model.Origin{Source: in.Layer.Source, Pointer: pointer, Rule: rule}
 }
 
-// ownRuleOrigin is the file writing its rule i, in the resolved frame.
-func (in *Input) ownRuleOrigin(i int) model.Origin {
-	resolved := in.base("packageRules") + i
-	return model.Origin{Source: in.Layer.Source, Pointer: ptr("packageRules", resolved), Rule: resolved}
-}
-
 // ptr builds an RFC 6901 pointer from keys and indices.
 func ptr(segs ...any) string {
 	var b strings.Builder
