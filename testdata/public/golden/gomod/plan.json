@@ -13,6 +13,9 @@
     "enabled": true,
     "title": "Dependency Dashboard"
   },
+  "branching": {
+    "prefix": "renovate/"
+  },
   "deps": [
     {
       "manager": "gomod",

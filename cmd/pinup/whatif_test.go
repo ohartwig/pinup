@@ -21,6 +21,7 @@ import (
 	"github.com/ohartwig/pinup/classify"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/fake/fixture"
+	"github.com/ohartwig/pinup/jsonc"
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/report"
@@ -1213,4 +1214,102 @@ func TestAnAnalyzedMajorRelaxesAutomergeOnlyWhenTrusted(t *testing.T) {
 			t.Errorf("trusted: nothing to explain: %+v", u.Evidence)
 		}
 	}
+}
+
+func TestAdoptOldKeepsAnOpenRequestUnderItsOldName(t *testing.T) {
+	br := model.Branching{Prefix: "pinup/", PrefixOld: "renovate/"}
+	for _, c := range []struct {
+		name string
+		open map[string]bool
+		want string
+		plan string
+	}{
+		{"open under the old prefix", map[string]bool{"renovate/alpine-3.x": true}, "renovate/alpine-3.x", "pinup/alpine-3.x"},
+		{"open under the new prefix", map[string]bool{"pinup/alpine-3.x": true}, "pinup/alpine-3.x", ""},
+		{"open under both: the new one is the plan's", map[string]bool{"pinup/alpine-3.x": true, "renovate/alpine-3.x": true}, "pinup/alpine-3.x", ""},
+		{"nothing open", map[string]bool{}, "pinup/alpine-3.x", ""},
+	} {
+		b := &model.Branch{Name: "pinup/alpine-3.x"}
+		adoptOld(b, br, c.open)
+		if b.Name != c.want || b.PlannedName != c.plan {
+			t.Errorf("%s: name %q planned %q, want %q / %q", c.name, b.Name, b.PlannedName, c.want, c.plan)
+		}
+	}
+	// Without an old prefix nothing is adopted, whatever is open.
+	b := &model.Branch{Name: "pinup/alpine-3.x"}
+	adoptOld(b, model.Branching{Prefix: "pinup/"}, map[string]bool{"renovate/alpine-3.x": true})
+	if b.Name != "pinup/alpine-3.x" || b.PlannedName != "" {
+		t.Errorf("no old prefix: %+v", b)
+	}
+}
+
+func TestARenamedPrefixAdoptsTheOpenRequests(t *testing.T) {
+	at := time.Date(2026, 9, 13, 4, 5, 0, 0, time.UTC)
+	base, err := whatif(context.Background(), ciToolsOptions(t, at))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(base.Branches) == 0 {
+		t.Fatal("no branches planned")
+	}
+	if base.Branching.Prefix != "renovate/" || base.Branching.PrefixOld != "" {
+		t.Fatalf("the base configuration's branching: %+v", base.Branching)
+	}
+	// The same configuration, renamed: every branch would be pinup/…,
+	// except the one whose request is open under the old name.
+	raw, err := os.ReadFile(fixture.Config(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cfg map[string]any
+	if err := json.Unmarshal(jsonc.Strip(raw), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	cfg["branchPrefix"], cfg["branchPrefixOld"] = "pinup/", "renovate/"
+	renamed, err := json.Marshal(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(t.TempDir(), "renamed.json")
+	if err := os.WriteFile(path, renamed, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	adopted := base.Branches[0].Name
+	opts := ciToolsOptions(t, at)
+	opts.ConfigPath = path
+	opts.Open = map[string]bool{adopted: true}
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if plan.Branching != (model.Branching{Prefix: "pinup/", PrefixOld: "renovate/"}) {
+		t.Errorf("branching %+v", plan.Branching)
+	}
+	seen := false
+	for _, b := range plan.Branches {
+		switch {
+		case b.Name == adopted:
+			seen = true
+			if b.PlannedName != "pinup/"+strings.TrimPrefix(adopted, "renovate/") {
+				t.Errorf("adopted branch %q plans %q", b.Name, b.PlannedName)
+			}
+		case strings.HasPrefix(b.Name, "pinup/"):
+			if b.PlannedName != "" {
+				t.Errorf("%s: a new branch has no planned name: %q", b.Name, b.PlannedName)
+			}
+		default:
+			t.Errorf("branch %q is under neither prefix", b.Name)
+		}
+	}
+	if !seen {
+		t.Errorf("the open request's branch %q is not in the plan: %v", adopted, names(plan))
+	}
+}
+
+func names(p *model.Plan) []string {
+	var out []string
+	for _, b := range p.Branches {
+		out = append(out, b.Name)
+	}
+	return out
 }

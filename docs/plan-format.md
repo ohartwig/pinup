@@ -27,6 +27,7 @@ path. `schemaVersion` is 1; the fields below are the ones a reader acts on.
 | `repo.path` | the project |
 | `limits` | `prHourlyLimit`, `prConcurrentLimit` as resolved; the runner enforces them |
 | `dashboard` | whether the dashboard issue is kept and its title |
+| `branching` | `prefix` (`branchPrefix`) and, during a rename, `prefixOld` (`branchPrefixOld`); the runner counts and prunes under both |
 | `deps` | every dependency extracted |
 | `updates` | every update planned, held or not |
 | `branches` | the branches the updates compose into |
@@ -70,7 +71,10 @@ cache's first-seen record), `securityFix` with the advisory, and:
 ## branches
 
 One entry per branch: `name` (Renovate-compatible, so an estate switches
-without duplicates), `title`, `groupName`, the `updateKeys` it carries,
+without duplicates; a branch whose request is open under `branchPrefixOld`
+keeps that name and says in `plannedName` what it would be called under
+the current prefix - a merge request cannot change its source branch, so
+the old name lasts as long as the request), `title`, `groupName`, the `updateKeys` it carries,
 `edits` (file, byte range, old and new bytes, manager), `tasks` (the
 lock refreshes and post-upgrade commands with their scope), `automerge`,
 `labels`, `schedule` (the window and when it next opens), `existing`

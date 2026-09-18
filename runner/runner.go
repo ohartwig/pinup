@@ -18,6 +18,7 @@ package runner
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -50,12 +51,10 @@ type Options struct {
 	// Zero means no cap.
 	HourlyLimit int
 	// ConcurrentLimit caps the merge requests open at once, counting the
-	// ones already open under Prefix; further new branches are held with
+	// ones already open under the plan's prefixes; further new branches are held with
 	// Reason concurrentLimit. Zero means no cap.
 	ConcurrentLimit int
-	// Prefix is the branch prefix the open-request count looks at.
-	Prefix string
-	// Prune closes the open requests under Prefix whose branch the plan
+	// Prune closes the open requests under the plan's prefixes whose branch the plan
 	// no longer names - the value they carried reached the base by
 	// another road, or the rule behind them is gone - and deletes their
 	// branches. Only a full plan may say so: a run over one package or
@@ -107,11 +106,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 	created := 0
 	openNow := 0
 	if o.ConcurrentLimit > 0 {
-		prefix := o.Prefix
-		if prefix == "" {
-			prefix = "renovate/"
-		}
-		open, err := o.Platform.OpenMergeRequests(ctx, o.Project, prefix)
+		open, err := openUnder(ctx, o, plan)
 		if err != nil {
 			return nil, fmt.Errorf("runner: counting open merge requests: %w", err)
 		}
@@ -251,11 +246,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 // base through another request left its own open (koh-gitops!2647,
 // 2026-09-16), which the comparison then read as an update pinup misses.
 func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
-	prefix := o.Prefix
-	if prefix == "" {
-		prefix = "renovate/"
-	}
-	open, err := o.Platform.OpenMergeRequests(ctx, o.Project, prefix)
+	open, err := openUnder(ctx, o, plan)
 	if err != nil {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("prune: listing open merge requests: %v", err)})
 		return nil
@@ -289,6 +280,28 @@ func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
 		out = append(out, Outcome{Branch: m.SourceBranch, Action: "autoclosed", MRIID: m.IID, Message: "no longer planned"})
 	}
 	return out
+}
+
+// openUnder lists the open requests under every prefix the plan names -
+// the current one and, during a rename, the old one. A plan from before
+// the field existed names none and is read under Renovate's prefix, which
+// is what every branch of that time was called.
+func openUnder(ctx context.Context, o Options, plan *model.Plan) ([]publish.MergeRequest, error) {
+	prefixes := plan.Branching.Prefixes()
+	if len(prefixes) == 0 {
+		prefixes = []string{"renovate/"}
+	}
+	all, err := o.Platform.OpenMergeRequests(ctx, o.Project, "")
+	if err != nil {
+		return nil, err
+	}
+	var out []publish.MergeRequest
+	for _, m := range all {
+		if slices.ContainsFunc(prefixes, func(p string) bool { return strings.HasPrefix(m.SourceBranch, p) }) {
+			out = append(out, m)
+		}
+	}
+	return out, nil
 }
 
 // mergedBefore reports the newest merged request on the branch whose

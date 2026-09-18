@@ -57,7 +57,7 @@ var keySupport = map[string]support{
 	// Publishing.
 	"commitBody": partial, "prCreation": partial, "rebaseWhen": partial, "platformAutomerge": supported,
 	"semanticCommitType": supported, "semanticCommitScope": supported, "commitMessageTopic": supported,
-	"commitMessageExtra": supported, "commitMessageAction": supported, "branchPrefix": supported, "branchTopic": supported,
+	"commitMessageExtra": supported, "commitMessageAction": supported, "branchPrefix": supported, "branchPrefixOld": supported, "branchTopic": supported,
 	"additionalBranchPrefix": supported, "commitMessagePrefix": supported, "commitMessageSuffix": supported,
 	"commitMessageLowerCase": supported, "semanticCommits": supported,
 	// Read into the template variables, decided by separateMajorMinor alone.

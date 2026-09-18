@@ -121,6 +121,8 @@ func updateTypeKey(t model.UpdateType) string {
 type Named struct {
 	Update model.Update
 	Branch string
+	// Prefix is the configured branchPrefix, what Slug is Branch without.
+	Prefix string
 	// Title is the message for this update on its own. GroupTitle is the
 	// message when it shares a branch with others, taking the extra ("to
 	// v4") the members agree on, or none.
@@ -235,7 +237,8 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 	}
 	extra := env.Values["commitMessageExtra"]
 
-	n := Named{Update: u, Branch: branch, Title: title, Extra: extra, GroupSlug: groupSlug}
+	branchPrefix, _ := cfg["branchPrefix"].(string)
+	n := Named{Update: u, Branch: branch, Prefix: branchPrefix, Title: title, Extra: extra, GroupSlug: groupSlug}
 	if grouped {
 		n.GroupName = groupName
 		n.GroupTitle = func(extra string) string {
@@ -331,7 +334,7 @@ func Compose(named []Named) ([]model.Branch, error) {
 		}
 		if !ok {
 			b := &model.Branch{
-				Name: n.Branch, Slug: strings.TrimPrefix(n.Branch, "renovate/"),
+				Name: n.Branch, Slug: strings.TrimPrefix(n.Branch, n.Prefix),
 				GroupName: n.GroupName, Automerge: n.Automerge, Labels: n.Labels,
 			}
 			if n.Update.Blocked() {

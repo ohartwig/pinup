@@ -66,6 +66,7 @@ unsupported means nothing reads it and the run says so.
 | `analyze` | supported (pinup's own) |
 | `automerge` | supported |
 | `branchPrefix` | supported |
+| `branchPrefixOld` | supported: a request still open under the old prefix is adopted under its own name, not opened again |
 | `branchTopic` | supported |
 | `commitMessageAction` | supported |
 | `commitMessageExtra` | supported |

@@ -584,3 +584,52 @@ func TestARequestClosedByHandIsNotReopened(t *testing.T) {
 		t.Errorf("after autoclose the branch opens again: %+v / %+v", outs, pf.MRs)
 	}
 }
+
+func TestBothPrefixesAreCountedAndPrunedDuringARename(t *testing.T) {
+	remote, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := context.Background()
+	// Two branches opened under the old name, one under the new; then a
+	// plan that names only the new one and one of the old.
+	first := plan(
+		model.Branch{Name: "renovate/alpine-3.x", Title: "a", UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}},
+		model.Branch{Name: "renovate/golang-1.x", Title: "b", UpdateKeys: []string{"Containerfile|golang|1.26"}, Edits: []model.Edit{edit("1.26", "1.27")}},
+	)
+	if _, err := Execute(ctx, first, options(repo, pf)); err != nil {
+		t.Fatal(err)
+	}
+	pf.MRs = append(pf.MRs, publish.MergeRequest{IID: 50, State: "opened", SourceBranch: "someone/else"})
+
+	second := plan(model.Branch{Name: "renovate/alpine-3.x", Title: "a", UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}})
+	second.Branching = model.Branching{Prefix: "pinup/", PrefixOld: "renovate/"}
+	o := options(repo, pf)
+	o.Prune = true
+	o.ConcurrentLimit = 2 // the two old ones fill it; a human's branch does not count
+	outs, err := Execute(ctx, second, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var autoclosed []string
+	for _, out := range outs {
+		if out.Action == "autoclosed" {
+			autoclosed = append(autoclosed, out.Branch)
+		}
+	}
+	if !slices.Equal(autoclosed, []string{"renovate/golang-1.x"}) {
+		t.Errorf("pruned under the old prefix: %v", autoclosed)
+	}
+	// A third plan under the new prefix alone is held by the limit the
+	// old requests still fill.
+	third := plan(model.Branch{Name: "pinup/node-24.x", Title: "c", UpdateKeys: []string{"Containerfile|node|22"}, Edits: []model.Edit{edit("1.26", "1.27")}})
+	third.Branching = second.Branching
+	o.Prune = false
+	o.ConcurrentLimit = 1 // the old request that is still open fills it
+	outs, err = Execute(ctx, third, o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(outs) != 1 || outs[0].Action != "held" || !strings.Contains(third.Updates[0].Blocks[0].Note, "1 merge requests already open") {
+		t.Errorf("count under both prefixes after the prune: %+v / %+v", outs, third.Updates[0].Blocks)
+	}
+	_ = remote
+}

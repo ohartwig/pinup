@@ -423,6 +423,10 @@ func (r *whatifRun) configure() error {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "config", Msg: w})
 	}
 	plan.Limits = model.Limits{PRHourlyLimit: intOf(resolved.Raw["prHourlyLimit"]), PRConcurrentLimit: intOf(resolved.Raw["prConcurrentLimit"])}
+	plan.Branching = model.Branching{Prefix: stringOf(resolved.Raw["branchPrefix"]), PrefixOld: stringOf(resolved.Raw["branchPrefixOld"])}
+	if plan.Branching.PrefixOld == plan.Branching.Prefix {
+		plan.Branching.PrefixOld = ""
+	}
 	if on, _ := resolved.Raw["dependencyDashboard"].(bool); on {
 		plan.Dashboard = model.Dashboard{Enabled: true, Title: stringOf(resolved.Raw["dependencyDashboardTitle"])}
 		if plan.Dashboard.Title == "" {
@@ -700,11 +704,33 @@ func (r *whatifRun) planUpdates() error {
 	// a schedule, a release age. The plan records the lift on the branch,
 	// so "why did this open" has an answer.
 	for i := range branches {
+		adoptOld(&branches[i], plan.Branching, o.Open)
 		liftByDashboard(&branches[i], plan.Updates, o.Checks)
 		liftForOpen(&branches[i], plan.Updates, o.Open)
 	}
 	r.branches = branches
 	return nil
+}
+
+// adoptOld keeps a branch under branchPrefixOld while a merge request is
+// open there. GitLab cannot rename a request's source branch; closing it
+// and opening another loses its discussion and its number. So the old
+// name stays for as long as the request does, the plan records what the
+// branch would be called today, and everything downstream - push, update,
+// prune, the dashboard - sees one branch. A new branch, or one whose old
+// request is gone, takes the current prefix.
+func adoptOld(b *model.Branch, br model.Branching, open map[string]bool) {
+	if br.PrefixOld == "" || br.Prefix == "" || open[b.Name] {
+		return
+	}
+	slug, ok := strings.CutPrefix(b.Name, br.Prefix)
+	if !ok {
+		return
+	}
+	if old := br.PrefixOld + slug; open[old] {
+		b.PlannedName = b.Name
+		b.Name = old
+	}
 }
 
 // realise gives every actionable branch its edits and tasks, and every

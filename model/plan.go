@@ -98,11 +98,16 @@ type ExistingBranch struct {
 
 // Branch is one merge request's worth of work.
 type Branch struct {
-	Name      string `json:"name"`
-	Slug      string `json:"slug"`
-	Title     string `json:"title"`
-	Body      string `json:"body,omitempty"`
-	GroupName string `json:"groupName,omitempty"`
+	Name string `json:"name"`
+	// PlannedName is what the branch would be called under the current
+	// prefix when Name is the older one: a request that is open under
+	// branchPrefixOld is adopted under its own name rather than opened a
+	// second time - a merge request cannot change its source branch.
+	PlannedName string `json:"plannedName,omitempty"`
+	Slug        string `json:"slug"`
+	Title       string `json:"title"`
+	Body        string `json:"body,omitempty"`
+	GroupName   string `json:"groupName,omitempty"`
 
 	UpdateKeys []string `json:"updateKeys"`
 	Edits      []Edit   `json:"edits,omitempty"`
@@ -170,6 +175,10 @@ type Plan struct {
 	// and what it is titled: dependencyDashboard and
 	// dependencyDashboardTitle, resolved.
 	Dashboard Dashboard `json:"dashboard,omitzero"`
+	// Branching is the branch prefix the configuration set and, during a
+	// rename, the one it set before: branchPrefix and branchPrefixOld,
+	// resolved. The runner counts and prunes under both.
+	Branching Branching `json:"branching,omitzero"`
 
 	Deps     []Dependency `json:"deps"`
 	Updates  []Update     `json:"updates"`
@@ -183,6 +192,24 @@ type Plan struct {
 type Dashboard struct {
 	Enabled bool   `json:"enabled"`
 	Title   string `json:"title,omitempty"`
+}
+
+// Branching is the resolved branch naming. PrefixOld is empty unless the
+// configuration is in the middle of a rename.
+type Branching struct {
+	Prefix    string `json:"prefix,omitempty"`
+	PrefixOld string `json:"prefixOld,omitempty"`
+}
+
+// Prefixes lists the prefixes a run looks at, the current one first.
+func (b Branching) Prefixes() []string {
+	var out []string
+	for _, p := range []string{b.Prefix, b.PrefixOld} {
+		if p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 type Limits struct {
