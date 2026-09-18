@@ -96,6 +96,7 @@ unsupported means nothing reads it and the run says so.
 | `internalChecksFilter` | supported |
 | `labels` | supported |
 | `lockFileMaintenance` | supported |
+| `major`, `minor`, `patch`, `pin`, `digest`, `pinDigest`, `rollback`, `replacement` | supported: the per-update-type objects, overlaid on the resolved rules for an update of that type |
 | `matchCurrentValue` | supported |
 | `matchDatasources` | supported |
 | `matchDepNames` | supported |
