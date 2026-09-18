@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 //
 // Records how Renovate's matchSourceUrls treats a sourceUrl: which pattern
 // forms it accepts, whether case matters, and what a trailing slash does on

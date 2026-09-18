@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Captures matchSourceUrls behaviour by running sourceurls-probe.mjs inside
 # the pinned container. Refuses to overwrite an existing table.

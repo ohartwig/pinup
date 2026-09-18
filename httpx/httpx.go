@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package httpx is the HTTP client every datasource in pinup uses to reach
 // upstream registries and VCS hosts. It centralises three concerns that are

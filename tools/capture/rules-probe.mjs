@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 //
 // Drives Renovate's packageRules resolution over real dependency vectors and
 // records what it answers. It RUNS the program; it does not read it. The

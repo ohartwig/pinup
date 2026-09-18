@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package gods implements the Renovate "go" and "golang-version" datasources:
 // Go modules through a module proxy, and Go toolchain releases.

@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package apk implements Renovate's `apk` scheme: Alpine and Wolfi package
 // versions, which are numeric components plus a package revision.

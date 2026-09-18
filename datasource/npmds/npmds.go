@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package npmds implements the npm datasource against the npm Registry API
 // (github.com/npm/registry/blob/main/docs/REGISTRY-API.md), a public

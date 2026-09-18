@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package plugin compiles and runs the commands a branch needs beyond its
 // byte-range edits: the lock refresh pinup asks for itself when a manifest

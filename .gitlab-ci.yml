@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # pinup's own pipeline. Two traps govern the shape of this file, both recorded
 # in docs/plan.md section 6.2:

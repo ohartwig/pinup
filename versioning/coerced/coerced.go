@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package coerced implements Renovate's `semver-coerced` scheme: read whatever
 // leading numbers are there and make a three-part version out of them.

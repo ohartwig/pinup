@@ -1,7 +1,9 @@
 pinup
 Copyright (c) 2026 Kai Ole Hartwig
 
-Licensed under the MIT License; see LICENSE.
+Licensed under the Apache License, Version 2.0; see LICENSE.
+Relicensed from the MIT License on 2026-09-18; releases up to 0.33.0 remain
+available under MIT.
 
 --------------------------------------------------------------------------
 
@@ -23,5 +25,5 @@ in content to Renovate's preset data, including its curated monorepo and
 replacement lists. That library was replaced on 2026-09-14; see
 config/preset/README.md and docs/tech-spec.md section 0.1.
 
-This separation is what allows pinup to be MIT-licensed while reproducing the
-decisions of an AGPL-licensed program.
+This separation is what allows pinup to be permissively licensed while
+reproducing the decisions of an AGPL-licensed program.

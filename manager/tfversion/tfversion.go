@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package tfversion is Renovate's terraform-version manager: a
 // `.terraform-version` file (tfenv's) whose whole content is one version.

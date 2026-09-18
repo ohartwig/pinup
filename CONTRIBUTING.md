@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: Apache-2.0
 -->
 
 # Contributing
@@ -24,7 +24,7 @@ beyond `go vet` and `gofmt`, no test framework beyond the standard library.
 
 ## The one rule that is not negotiable
 
-**Nothing is copied from Renovate.** Renovate is AGPL-3.0 and pinup is MIT.
+**Nothing is copied from Renovate.** Renovate is AGPL-3.0 and pinup is Apache-2.0.
 Behaviour is *observed* — by running the pinned Renovate container over an
 input and recording what comes out — and re-implemented from the recorded
 pairs. A contribution that ports a Renovate function, a preset file or a
