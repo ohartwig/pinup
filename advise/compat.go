@@ -54,8 +54,10 @@ func presetInert(in *Input) []Finding {
 	return out
 }
 
-// migrated passes the migration notes through. A "0" release age the run
-// reads as null can be written as null; the other notes have no fix.
+// migrated passes the migration notes through, for what the file itself
+// wrote: a preset's migrations are the preset's business. A "0" release
+// age the run reads as null can be written as null; the other notes have
+// no fix.
 func migrated(in *Input) []Finding {
 	var out []Finding
 	for _, note := range in.Resolved.Migrations {
@@ -63,11 +65,13 @@ func migrated(in *Input) []Finding {
 		if !strings.HasPrefix(pointer, "/") {
 			pointer = "/" + strings.Fields(note)[0]
 		}
+		fp, own := in.filePointer(pointer)
+		if !own {
+			continue
+		}
 		f := Finding{ID: "compat/migrated", Category: Compat, Severity: Info, Pointer: pointer, Frame: FrameResolved, Origin: in.originAt(pointer), Msg: note}
 		if strings.Contains(note, `"0" migrated to null`) {
-			if fp, ok := in.filePointer(pointer); ok {
-				f.Fix = &Fix{Pointer: fp, Op: OpSet, Value: nil}
-			}
+			f.Fix = &Fix{Pointer: fp, Op: OpSet, Value: nil}
 		}
 		out = append(out, f)
 	}

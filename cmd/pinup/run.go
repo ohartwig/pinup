@@ -29,6 +29,7 @@ func commands() []command {
 		{"notify", "keep the estate-wide rolling-major notice in one issue (notify rolling-major)", cmdNotify},
 		{"advisories", "ask OSV about every dependency the index carries and report the new advisories, no clone", cmdAdvisories},
 		{"migrate", "convert a renovate config and report what is supported", cmdMigrate},
+		{"advise", "analyse a configuration and report what to change: performance, security, hygiene; --fix applies it", cmdAdvise},
 		{"token", "renew the bot's own token before it expires and store it (token rotate)", cmdToken},
 		{"version", "print the version", cmdVersion},
 		// askpass is git's credential prompt, answered from the environment.
