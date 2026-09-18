@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 """Extract the artefacts from a recorded Renovate run.
 
 Reads the NDJSON debug log the container produced and writes the pieces the

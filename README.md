@@ -1,6 +1,6 @@
 <!--
 SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-SPDX-License-Identifier: MIT
+SPDX-License-Identifier: Apache-2.0
 -->
 
 # pinup
@@ -52,7 +52,7 @@ dependencies, and without moving a line of anyone's `renovate.json`:
 - **A shadow mode.** `pinup shadow` compares pinup's plans with the merge
   requests Renovate has open, run after run, and refuses to call itself
   right until the two agree — with a control repository that must differ.
-- **Clean room.** Renovate is AGPL-3.0; pinup is MIT. Nothing was copied.
+- **Clean room.** Renovate is AGPL-3.0; pinup is Apache-2.0. Nothing was copied.
   Behaviour was observed by executing the pinned Renovate container and
   re-implemented from recorded input/output pairs, which are the test suite.
 
@@ -283,5 +283,5 @@ pull requests here are read.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Renovate, whose behaviour pinup reproduces,
+Apache-2.0 — see [LICENSE](LICENSE); releases up to 0.33.0 were MIT. Renovate, whose behaviour pinup reproduces,
 is AGPL-3.0 and none of it is included here; see [NOTICE](NOTICE).

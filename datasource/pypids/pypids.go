@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package pypids implements the pypi datasource: a project's releases from
 // the Python Package Index's JSON API (GET /pypi/<project>/json), the

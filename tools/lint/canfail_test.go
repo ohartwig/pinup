@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 package lint
 
@@ -18,7 +18,7 @@ import (
 // because several checks read raw source lines - a literal here would trip the
 // very check it is testing, in this file, on the real tree.
 
-const hdr = "// SPDX-FileCopyrightText: 2026 Test\n// SPDX-License-Identifier: MIT\n\n"
+const hdr = "// SPDX-FileCopyrightText: 2026 Test\n// SPDX-License-Identifier: Apache-2.0\n\n"
 
 // plant writes files into a fresh tree and returns its root.
 func plant(t *testing.T, files map[string]string) []File {

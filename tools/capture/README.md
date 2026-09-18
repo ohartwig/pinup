@@ -13,7 +13,7 @@ worth stating plainly rather than leaving implicit:
   is copied from upstream. If a capture step ever finds itself reading
   Renovate's source rather than running it, that step is wrong.
 
-Renovate is AGPL-3.0; pinup is MIT. The separation above is what makes those
+Renovate is AGPL-3.0; pinup is Apache-2.0. The separation above is what makes those
 two compatible here. See `NOTICE`.
 
 ## What is captured

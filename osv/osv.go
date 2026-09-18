@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package osv asks OSV (https://osv.dev), a public vulnerability database, which
 // advisories affect a dependency's current version and what the lowest fixing

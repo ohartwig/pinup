@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package nodeds implements the node-version datasource: the releases of
 // Node.js itself, as nodejs.org publishes them at dist/index.json - one

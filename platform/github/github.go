@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package github implements publish.Platform against the GitHub REST API
 // (docs.github.com/rest) and the one GraphQL mutation REST has no

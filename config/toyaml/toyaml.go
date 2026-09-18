@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package toyaml rewrites a JSON, JSONC or JSON5 configuration as YAML that
 // loads to the same document: keys in the order the file wrote them, every

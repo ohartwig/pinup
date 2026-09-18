@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package godirective implements Renovate's `go-mod-directive` scheme: the
 // version written after `go` or `toolchain` in a go.mod file.

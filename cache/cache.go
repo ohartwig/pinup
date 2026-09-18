@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package cache implements a single-file embedded store, backed by
 // go.etcd.io/bbolt, that pinup mounts as a CI cache volume.

@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 package lint
 
@@ -30,7 +30,7 @@ var (
 func CheckSPDXHeader(files []File) []Violation {
 	const (
 		wantCopyright = "// SPDX-FileCopyrightText:"
-		wantLicense   = "// SPDX-License-Identifier: MIT"
+		wantLicense   = "// SPDX-License-Identifier: Apache-2.0"
 	)
 	var vs []Violation
 	for _, f := range files {

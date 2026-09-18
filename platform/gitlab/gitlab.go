@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 // Package gitlab implements publish.Platform against the GitLab REST API v4,
 // a public specification (docs.gitlab.com/api). Nothing here is derived from
