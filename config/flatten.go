@@ -95,6 +95,33 @@ func Diff(a, b []Line) []string {
 	return out
 }
 
+// DiffPaths reports the paths whose value differs between two flattened
+// documents, or that only one of them has - a's order first, then b's
+// additions. It is Diff without the rendering, for a caller that decides
+// by path rather than prints.
+func DiffPaths(a, b []Line) []string {
+	av := make(map[string]string, len(a))
+	for _, l := range a {
+		av[l.Path] = l.Value
+	}
+	bv := make(map[string]string, len(b))
+	for _, l := range b {
+		bv[l.Path] = l.Value
+	}
+	var out []string
+	for _, l := range a {
+		if w, ok := bv[l.Path]; !ok || w != l.Value {
+			out = append(out, l.Path)
+		}
+	}
+	for _, l := range b {
+		if _, ok := av[l.Path]; !ok {
+			out = append(out, l.Path)
+		}
+	}
+	return out
+}
+
 // PointerOf turns a print-config path back into the RFC 6901 pointer the
 // provenance map is keyed by: "packageRules[25].automerge" ->
 // "/packageRules/25/automerge".

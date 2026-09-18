@@ -179,6 +179,17 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 	return r
 }
 
+// DatasourceNames lists the names Datasources would register for a
+// configuration, without a client: what a configuration may name in
+// matchDatasources or a datasourceTemplate.
+func DatasourceNames(custom map[string]model.CustomDatasource) map[string]bool {
+	names := map[string]bool{}
+	for name := range Datasources(nil, DatasourceOptions{CustomDatasources: custom}) {
+		names[name] = true
+	}
+	return names
+}
+
 // CustomDatasources returns the generic datasources for a configuration's
 // customDatasources, skipping the names served natively. The
 // configuration is known only once it is resolved, so this is called from

@@ -61,6 +61,7 @@ func TestLayerAssignment(t *testing.T) {
 		{"manager/dockerfile", 3, true},
 		{"datasource/docker", 3, true},
 		{"runner", 4, true},
+		{"advise", 4, true},
 		{"wire", 5, true},
 		{"cmd/pinup", 6, true},
 		{"tools/lint", 0, false}, // exempt

@@ -114,8 +114,10 @@ func FindConfigFile(dir string) (string, error) {
 	}
 }
 
-// escapePointer encodes a key for RFC 6901.
-func escapePointer(key string) string {
+// EscapePointer encodes one key as an RFC 6901 pointer segment.
+func EscapePointer(key string) string {
 	key = strings.ReplaceAll(key, "~", "~0")
 	return strings.ReplaceAll(key, "/", "~1")
 }
+
+func escapePointer(key string) string { return EscapePointer(key) }

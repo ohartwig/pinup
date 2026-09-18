@@ -65,6 +65,30 @@ func TestDiffSeesARuleSwap(t *testing.T) {
 	}
 }
 
+// DiffPaths is Diff by path: a changed value once, a removal and an
+// addition each once, in a's order then b's, and nothing for equal documents.
+func TestDiffPaths(t *testing.T) {
+	for _, c := range []struct {
+		name string
+		a, b map[string]any
+		want []string
+	}{
+		{"equal", map[string]any{"a": 1.0, "b": "x"}, map[string]any{"a": 1.0, "b": "x"}, nil},
+		{"changed", map[string]any{"a": 1.0, "b": "x"}, map[string]any{"a": 2.0, "b": "x"}, []string{"a"}},
+		{"removed", map[string]any{"a": 1.0, "b": "x"}, map[string]any{"b": "x"}, []string{"a"}},
+		{"added", map[string]any{"b": "x"}, map[string]any{"a": 1.0, "b": "x"}, []string{"a"}},
+		{"nested and ordered", map[string]any{"r": []any{"p", "q"}, "z": true}, map[string]any{"r": []any{"p"}, "y": 1.0},
+			[]string{"r[1]", "z", "y"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			got := DiffPaths(Flatten(c.a), Flatten(c.b))
+			if strings.Join(got, ",") != strings.Join(c.want, ",") {
+				t.Errorf("DiffPaths = %q, want %q", got, c.want)
+			}
+		})
+	}
+}
+
 // print-config parity: the configuration resolved here - defaults,
 // presets, file - flattened, against what the pinned container printed for
 // the same file, on every key but three. packageRules and customManagers
