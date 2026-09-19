@@ -13,24 +13,25 @@
 #      mismatch is caught at merge time rather than at the next upstream bump.
 
 include:
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/composed-default-pipelines
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@1.63.3
+  # Components by rolling major, as the handbook decides for every consumer
+  # (engineering/decisions/rolling-major-tag-for-pipelines.md): the catalogue
+  # resolves `@1` to the newest 1.x, the exact pins live inside the composed
+  # template where they are reviewed once. No `# renovate:` line above them -
+  # there is no patch version here for pinup to raise.
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@1
     inputs:
       working-directory: '.'
 
   # These three are NOT part of the go composed pipeline. Shipping .gitsigners
   # and an SPDX header without the job that reads them is decoration, not a
   # gate - so they are included by name.
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1.36.20
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1
     inputs:
       stage: quick
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1.36.20
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1
     inputs:
       stage: quick
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/lint-tools
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1.36.20
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1
     inputs:
       stage: quick
 
@@ -87,8 +88,7 @@ include:
   #
   # GITHUB_MIRROR_TOKEN is a fine-grained token with contents:write on the
   # mirror repository - about publishing the project, not about releasing it.
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1.5.0
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-mirror@1
     inputs:
       stage: .post
       mirror-target: 'ohartwig/pinup'
@@ -126,8 +126,7 @@ include:
   # binaries on GitHub is gone: a binary built a second time elsewhere is a
   # second artefact under the same name, and the signature over SHA256SUMS
   # cannot be rebuilt at all. Same component as yasrt and s3mail.
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/extension-clean-export
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-release@1.5.0
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/extension-clean-export/github-release@1
     inputs:
       stage: .post
       release-target: 'ohartwig/pinup'
@@ -150,8 +149,7 @@ include:
   # Signing the manifest comes from the estate: a detached cosign signature
   # over SHA256SUMS, key in KMS, role over OIDC, verified before the job
   # ends. Same component and same reasoning as S3mail.
-  # renovate: datasource=gitlab-tags depName=devops/ci-cd-components/build-provenance
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2.0.161
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/build-provenance/sign-artifact@2
     inputs:
       stage: release
       artifact-file: SHA256SUMS
