@@ -198,6 +198,7 @@ write by hand, until the YAML rewriter lands.
 | `plan/all-held` | warn | a plan whose every update one setting holds | — |
 | `plan/limit-holds` | info | updates the two caps held | — |
 | `plan/datasource-failing` | warn | a custom datasource whose lookups the plans record as failed | — |
+| `plan/component-pinned-exact` | info | a plan whose CI component includes are pinned to a patch version rather than a rolling major | — |
 
 The `plan/*` checks run only with `--plan`; the report counts them as
 skipped otherwise. Every check has a test case that makes it fire, and a

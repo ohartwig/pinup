@@ -52,6 +52,10 @@ func plan(deps []model.Dependency, updates []model.Update, warnings ...model.War
 
 var dockerDep = model.Dependency{Manager: "dockerfile", CustomManager: model.NoCustomManager, DepName: "alpine", Datasource: "docker", CurrentValue: "3.20"}
 
+// componentDep is a CI component include as manager/gitlabci records it:
+// a dependency on the PROJECT, pinned to the patch.
+var componentDep = model.Dependency{Manager: "gitlabci", File: ".gitlab-ci.yml", CustomManager: model.NoCustomManager, DepName: "devops/ci-cd-components/lint-tools", DepType: "repository", Datasource: "gitlab-tags", Versioning: "semver-partial", CurrentValue: "1.36.26", Locus: model.Locus{Line: 12}}
+
 // cases is the catalogue's proof: one firing configuration per check, with
 // the pointer and the fix it must produce. The gate below asserts every
 // check appears here.
@@ -179,6 +183,9 @@ var cases = []struct {
 	{name: "a custom datasource failing", cfg: `{"customDatasources": {"koh": {"defaultRegistryUrlTemplate": "https://x/{{packageName}}", "format": "plain"}}}`,
 		plans: []*model.Plan{plan(nil, nil, model.Warning{Stage: "lookup", Msg: "php via custom.koh: custom.koh: php: request failed"})},
 		want:  "plan/datasource-failing", pointer: "/customDatasources/koh"},
+	{name: "a component include pinned to a patch", cfg: `{}`,
+		plans: []*model.Plan{plan([]model.Dependency{componentDep, dockerDep}, nil)},
+		want:  "plan/component-pinned-exact", pointer: "/"},
 }
 
 func TestEachCheckFiresWhereItShould(t *testing.T) {
