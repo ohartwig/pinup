@@ -25,6 +25,7 @@ var planChecks = []Check{
 	{ID: "plan/all-held", Run: allHeld, Plan: true},
 	{ID: "plan/limit-holds", Run: limitHolds, Plan: true},
 	{ID: "plan/datasource-failing", Run: datasourceFailing, Plan: true},
+	{ID: "plan/component-pinned-exact", Run: componentPinnedExact, Plan: true},
 }
 
 // ruleNeverMatched replays the plans' dependencies and updates through the
@@ -189,6 +190,41 @@ func limitHolds(in *Input) []Finding {
 		pointer := blockKey[reason]
 		out = append(out, Finding{ID: "plan/limit-holds", Category: Performance, Severity: Info, Pointer: pointer, Frame: FrameResolved, Origin: in.originAt(pointer),
 			Msg: fmt.Sprintf("%s=%v held %d updates across %d plans", pointer[1:], in.Resolved.Raw[pointer[1:]], counts[reason], len(in.Plans))})
+	}
+	return out
+}
+
+var exactSemver = regexp.MustCompile(`^\d+\.\d+\.\d+$`)
+
+// componentPinnedExact names the plans whose CI component includes are
+// pinned to a patch version. A component follows its project by rolling
+// major (`@1`): the catalogue resolves it to the newest 1.x, every release
+// reaches the consumer without a merge request, and a newer major arrives
+// as majorAvailable - the decision stays with the consumer, the churn does
+// not. The estate's handbook decides this for every consumer
+// (rolling-major-tag-for-pipelines); a patch pin is what pinup raises
+// release by release. One finding per plan, the includes listed by file and
+// line; no fix, the file is the repository's, not the configuration.
+func componentPinnedExact(in *Input) []Finding {
+	var out []Finding
+	for _, p := range in.Plans {
+		var pinned []string
+		major := ""
+		for _, d := range p.Deps {
+			if d.Manager != "gitlabci" || d.DepType != "repository" || !exactSemver.MatchString(d.CurrentValue) {
+				continue
+			}
+			if major == "" {
+				major, _, _ = strings.Cut(d.CurrentValue, ".")
+			}
+			pinned = append(pinned, fmt.Sprintf("%s:%d %s@%s", d.File, d.Locus.Line, d.DepName, d.CurrentValue))
+		}
+		if len(pinned) == 0 {
+			continue
+		}
+		out = append(out, Finding{ID: "plan/component-pinned-exact", Category: Hygiene, Severity: Info, Pointer: "/", Frame: FrameResolved, Origin: in.originAt("/"),
+			Msg: fmt.Sprintf("plan %s: %d component includes pinned to a patch version; a rolling major (@%s) follows the project's releases and pinup reports a newer major as majorAvailable: %s",
+				p.Repo.Path, len(pinned), major, strings.Join(pinned, ", "))})
 	}
 	return out
 }
