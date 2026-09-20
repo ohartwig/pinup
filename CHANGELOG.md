@@ -1,3 +1,13 @@
+## [0.34.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.33.1...v0.34.0) (2026-09-20)
+
+### :sparkles: Features
+
+* **advise:** plan/component-pinned-exact names includes pinned to a patch ([eaa6fc8](https://git.ole-hartwig.eu/pinup/pinup/commit/eaa6fc8d776f7bfb5b31fe14b3c322384dab7ec0))
+
+### :repeat: Continuous Integrations
+
+* components by rolling major, as every consumer should ([094f936](https://git.ole-hartwig.eu/pinup/pinup/commit/094f93608e5767b7c901c7db46300ebfd1bc5d29))
+
 ## [0.33.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.33.0...v0.33.1) (2026-09-18)
 
 ### :repeat: Chores
