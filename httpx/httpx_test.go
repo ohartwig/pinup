@@ -483,7 +483,8 @@ func TestPathAllowedRefusesDotSegmentsAndJudgesTheWireForm(t *testing.T) {
 func TestRedirectToAForbiddenPathOnTheSameHostDropsTheCredential(t *testing.T) {
 	var seen []string
 	var tokens []string
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// A TLS server, because a credential now goes over https or not at all.
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		seen = append(seen, r.URL.Path)
 		tokens = append(tokens, r.Header.Get("PRIVATE-TOKEN"))
 		if r.URL.Path == "/api/v4/projects/1/releases" {
@@ -493,8 +494,8 @@ func TestRedirectToAForbiddenPathOnTheSameHostDropsTheCredential(t *testing.T) {
 		_, _ = w.Write([]byte(`[]`))
 	}))
 	defer srv.Close()
-	host := strings.TrimPrefix(srv.URL, "http://")
-	c := New(Options{Now: time.Now, Sleep: func(time.Duration) {}, HostRules: []HostRule{{
+	host := strings.TrimPrefix(srv.URL, "https://")
+	c := New(Options{Now: time.Now, Sleep: func(time.Duration) {}, Transport: srv.Client().Transport, HostRules: []HostRule{{
 		MatchHost: host, HeaderName: "PRIVATE-TOKEN", Token: "SECRET",
 		PathPattern: `^/api/v4/projects/[^/]+/releases`,
 	}}})
@@ -509,5 +510,41 @@ func TestRedirectToAForbiddenPathOnTheSameHostDropsTheCredential(t *testing.T) {
 	}
 	if tokens[1] != "" {
 		t.Errorf("%s received the token across a same-host redirect", seen[1])
+	}
+}
+
+// A credential leaves this machine over TLS or not at all. Loopback is the
+// exception, because it never crosses an interface - and only as a literal
+// address, since a name that resolves to loopback can be made to resolve
+// elsewhere.
+func TestCredentialNeedsTLSOffLoopback(t *testing.T) {
+	c := New(Options{Now: time.Now, Sleep: func(time.Duration) {}, HostRules: []HostRule{
+		{MatchHost: "git.example", HeaderName: "PRIVATE-TOKEN", Token: "s"},
+		{MatchHost: "127.0.0.1", HeaderName: "PRIVATE-TOKEN", Token: "s"},
+		{MatchHost: "localhost", HeaderName: "PRIVATE-TOKEN", Token: "s"},
+	}})
+	for _, c2 := range []struct {
+		raw  string
+		want bool
+	}{
+		{"https://git.example/x", true},
+		{"http://git.example/x", false},
+		{"http://127.0.0.1:8080/x", true},
+		{"https://127.0.0.1:8080/x", true},
+		{"http://localhost:8080/x", false},
+	} {
+		t.Run(c2.raw, func(t *testing.T) {
+			u, err := url.Parse(c2.raw)
+			if err != nil {
+				t.Fatal(err)
+			}
+			rule, ok := c.ruleFor(u.Host)
+			if !ok {
+				t.Fatalf("no rule for %s", u.Host)
+			}
+			if got := c.pathAllowed(rule, u); got != c2.want {
+				t.Errorf("pathAllowed = %v, want %v", got, c2.want)
+			}
+		})
 	}
 }

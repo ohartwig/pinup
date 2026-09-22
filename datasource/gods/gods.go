@@ -511,7 +511,33 @@ func encodeModulePath(path string) string {
 			b.WriteRune(r)
 		}
 	}
-	return b.String()
+	// And escaped per segment on top of the case encoding, which only
+	// lowercases. A module path comes from the repository's go.mod, and a
+	// proxy origin can be the instance - so a path carrying a dot segment,
+	// a query marker or a percent would otherwise describe a URL rather
+	// than name a module. The slashes between segments stay: they are the
+	// module path's own structure.
+	return escapePathSegments(b.String())
+}
+
+// escapePathSegments escapes each slash-separated segment for a URL path,
+// leaving the slashes that separate them - and leaving "!" alone, which
+// PathEscape would encode: after the case encoding above "!" is the
+// marker for what was an upper-case letter, and a proxy reads it as such.
+// A module path cannot contain a literal "!", so nothing else is meant by
+// it here.
+//
+// What this does and does not buy: "?" "#" "%" and a space stop being
+// able to change the URL's structure. A ".." segment is NOT escaped -
+// dots are unreserved, PathEscape leaves them - and it does not have to
+// be: httpx refuses any path carrying a dot segment before the request is
+// made.
+func escapePathSegments(p string) string {
+	parts := strings.Split(p, "/")
+	for i, seg := range parts {
+		parts[i] = strings.ReplaceAll(url.PathEscape(seg), "%21", "!")
+	}
+	return strings.Join(parts, "/")
 }
 
 // sourceURLFor applies the one measured naming convention: for a module path

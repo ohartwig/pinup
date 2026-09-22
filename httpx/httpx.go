@@ -17,6 +17,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -305,6 +306,22 @@ func applyHostRule(req *http.Request, rule HostRule) {
 // token - api-scoped, so able to read CI variables - went to a URL a
 // scanned repository had named in registryUrls or customDatasources.
 func (c *Client) pathAllowed(rule HostRule, u *url.URL) bool {
+	// A credential leaves this machine over TLS or not at all. A
+	// registryUrls entry is a whole URL a repository configuration wrote,
+	// so `http://<instance>/api/v4/projects/1/releases` put the platform
+	// token on the wire in cleartext - and the host matched, so nothing
+	// else objected. The registry-credential callback already refused a
+	// non-https realm; this holds the platform token to the same standard.
+	//
+	// Loopback is the exception, and only loopback: a credential that
+	// never crosses an interface cannot be read off one, and a registry or
+	// instance served on 127.0.0.1 for a test or a local run is a real
+	// shape. A hostname that merely RESOLVES to loopback does not count -
+	// the literal address does, because that is what cannot be redirected
+	// by DNS.
+	if !strings.EqualFold(u.Scheme, "https") && !isLoopback(u.Hostname()) {
+		return false
+	}
 	re, ok := c.paths[strings.ToLower(rule.MatchHost)]
 	if !ok {
 		return true
@@ -314,6 +331,12 @@ func (c *Client) pathAllowed(rule HostRule, u *url.URL) bool {
 		return false
 	}
 	return re.MatchString(p)
+}
+
+// isLoopback reports whether host is a literal loopback address.
+func isLoopback(host string) bool {
+	ip, err := netip.ParseAddr(host)
+	return err == nil && ip.IsLoopback()
 }
 
 // hasDotSegment reports whether the path contains a "." or ".." segment,
