@@ -31,7 +31,7 @@ Two images per release, `linux/amd64` and `linux/arm64`:
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
-  whatif --repo . --config renovate.json --report plan.json
+  pinup whatif --repo . --config renovate.json --report plan.json
 ```
 
 Tags are the exact version (`0.34.0`), the minor line (`0.34`), the major
