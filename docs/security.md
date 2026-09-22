@@ -54,6 +54,16 @@ configuration names on the instance - a `customDatasources` template, a
 on any scanned repository could point the bot's `api`-scoped token at
 `/api/v4/groups/<id>/variables` and read the result as a "release list".
 
+The binding is to the path **as it goes on the wire**, and it is checked
+on every hop. The pattern is matched against the escaped path, so an
+escaped project path is the one segment it is; a path carrying a `.` or
+`..` segment, in any encoding a server might decode first, is refused
+rather than cleaned - whether the instance resolves it before routing is
+the instance's decision, not ours; and a redirect re-earns the credential
+or loses it, because net/http copies the first request's headers onto
+every hop and a same-host 3xx would otherwise carry the token to a path
+the pattern never admitted.
+
 The container registry credential exists only for the estate's own
 registry (`PINUP_REGISTRY_HOST`), exchanged at the instance's token realm
 over TLS, scoped to the one repository a lookup needs. Every other
