@@ -12,6 +12,10 @@
 //   - values: the keys of values.yaml, flattened to paths; a key that the
 //     new chart no longer has is a value a consumer may have set that now
 //     does nothing - "breaking-values", the strictest label;
+//   - images: the references the chart's own values place, which appear in no
+//     file of the consumer's repository and are therefore updated by nothing
+//     and pinned by nothing - reported as evidence, not weighed (see images.go
+//     for why, and for what reading values alone cannot see);
 //   - kubeVersion and the subcharts: reported as evidence, not weighed.
 //
 // The chart comes from where the dependency does: a Helm repository's
@@ -95,6 +99,7 @@ type chart struct {
 	kubeVersion  string
 	dependencies map[string]string // subchart name -> version
 	values       []string          // flattened value paths, sorted
+	images       []placedImage     // image references the values spell out
 }
 
 // Analyze compares the chart at from with the chart at to.
@@ -146,6 +151,10 @@ func compare(old, new chart) classify.Effective {
 		risk = model.Stricter(risk, model.RiskPatch)
 	}
 	e.Evidence = append([]model.Evidence{{Kind: "appVersion", From: old.appVersion, To: new.appVersion, Note: appNote}}, e.Evidence...)
+
+	for _, note := range imagesEvidence(old.images, new.images) {
+		e.Evidence = append(e.Evidence, model.Evidence{Kind: "images", Note: note})
+	}
 
 	if old.kubeVersion != new.kubeVersion {
 		e.Evidence = append(e.Evidence, model.Evidence{Kind: "kubeVersion", From: old.kubeVersion, To: new.kubeVersion, Note: "constraint changed"})
@@ -339,6 +348,7 @@ func readArchive(data []byte) (chart, error) {
 		}
 		flatten(values, "", &c.values)
 		sort.Strings(c.values)
+		c.images = collectImages(values)
 	}
 	return c, nil
 }

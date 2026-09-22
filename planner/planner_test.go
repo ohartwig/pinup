@@ -885,3 +885,70 @@ func TestASeriesWithANewerSiblingIsReportedNotRewritten(t *testing.T) {
 		t.Errorf("an older sibling series is no notice: %+v", res.Updates)
 	}
 }
+
+// A released version whose digest moved is not an update: the tag was
+// re-pushed. Without the warning the merge request reads "digest bump", which
+// is the same title a moving `latest` gets.
+func TestAMovedReleaseTagIsWarnedAbout(t *testing.T) {
+	digests := map[string]string{"2.10.0": "sha256:bbbb", "2": "sha256:dddd", "latest": "sha256:ffff"}
+	req := func(d model.Dependency, rs *model.ReleaseSet) Request {
+		return Request{
+			Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet { return rs },
+			Versionings: registry(), Now: now,
+			Digest: func(_ model.Dependency, v string) (string, error) {
+				if x, ok := digests[v]; ok {
+					return x, nil
+				}
+				return "", fmt.Errorf("no manifest for %s", v)
+			},
+		}
+	}
+
+	// The release moved: one update AND one warning saying what happened.
+	released := dep("app", "2.10.0", "semver")
+	released.CurrentDigest = "sha256:aaaa"
+	res := Plan(req(released, releases("2.10.0")))
+	if len(res.Updates) != 1 || res.Updates[0].Type != model.UpdateDigest {
+		t.Fatalf("expected one digest update: %+v", res.Updates)
+	}
+	if len(res.Warnings) != 1 || !strings.Contains(res.Warnings[0].Msg, "released version") ||
+		!strings.Contains(res.Warnings[0].Msg, "aaaa") || !strings.Contains(res.Warnings[0].Msg, "bbbb") {
+		t.Errorf("no warning naming both digests: %+v", res.Warnings)
+	}
+
+	// A major LINE moves by design - that is what asking for `2` means. The
+	// first version of this check warned here, and the golden estate caught it.
+	line := dep("app", "2", "semver")
+	line.CurrentDigest = "sha256:cccc"
+	res = Plan(req(line, releases("2")))
+	if len(res.Updates) != 1 {
+		t.Fatalf("the line still refreshes its digest: %+v", res.Updates)
+	}
+	if len(res.Warnings) != 0 {
+		t.Errorf("a moving line must not warn: %+v", res.Warnings)
+	}
+
+	// Neither does a tag that is no version at all.
+	rolling := dep("app", "", "semver")
+	rolling.CurrentDigest = "sha256:eeee"
+	res = Plan(req(rolling, releases("2.10.0")))
+	if len(res.Warnings) != 0 {
+		t.Errorf("latest is expected to move: %+v", res.Warnings)
+	}
+}
+
+func TestReleasedTagIsACompleteVersion(t *testing.T) {
+	for _, tc := range []struct {
+		tag  string
+		want bool
+	}{
+		{"latest", false}, {"stable", false}, {"edge", false}, {"main", false},
+		{"2", false}, {"24", false}, {"3.22", false}, {"3.22-alpine", false},
+		{"v2.10.0", true}, {"2.10.0", true}, {"1.36.4-k3s1", true}, {"v1.36.4+k3s1", true},
+		{"", false},
+	} {
+		if got := releasedTag(tc.tag); got != tc.want {
+			t.Errorf("releasedTag(%q) = %v, want %v", tc.tag, got, tc.want)
+		}
+	}
+}
