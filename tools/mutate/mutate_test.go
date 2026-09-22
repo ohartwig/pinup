@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): twenty named, deterministic
+// Package mutate is the mutation suite (H.7): twenty-five named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -93,8 +93,17 @@ var mutators = []mutator{
 		"\tif err := apply.InScope(t, changed); err != nil {\n\t\treturn nil, err\n\t}", "", []string{"./runner/"}, false},
 	{22, "delivery", "a held branch Renovate opened is not a failure", "report/shadow.go",
 		"\t\tc.r.HeldOpen++", "\t\tc.r.Held++", []string{"./report/"}, false},
+	// analyzer: what the effective label is read off. The layer had no
+	// entry until 2026-09-22, which by this suite's own premise means it
+	// was not known to gate at all.
+	{23, "analyzer", "a chart's placed images are never found", "analyzer/helmchart/images.go",
+		"\tif repo := str(m, \"repository\"); repo != \"\" {", "\tif repo := str(m, \"repository\"); false {", []string{"./analyzer/helmchart/"}, false},
+	{24, "analyzer", "a removed values key is not breaking", "analyzer/helmchart/helmchart.go",
+		"\tif len(removed) > 0 {\n\t\trisk = model.RiskBreakingValues", "\tif false {\n\t\trisk = model.RiskBreakingValues", []string{"./analyzer/helmchart/"}, false},
+	{25, "planner", "a re-pushed release passes as an ordinary digest bump", "planner/planner.go",
+		"\tif releasedTag(tag) {", "\tif false {", []string{"./planner/"}, false},
 	// the one change no test can see
-	{23, "sentinel", "a comment changes", "model/model.go",
+	{26, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true},
 }
 

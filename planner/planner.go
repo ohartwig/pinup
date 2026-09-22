@@ -21,6 +21,7 @@ import (
 
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/re2x"
+	"github.com/ohartwig/pinup/semverx"
 	"github.com/ohartwig/pinup/versioning"
 )
 
@@ -855,6 +856,29 @@ func digestRefresh(req Request, d *model.Dependency, tag string) ([]model.Update
 	if digest == d.CurrentDigest {
 		return nil, fmt.Sprintf("up to date: %s still resolves to the pinned digest", tag), nil
 	}
+	// A MOVED RELEASE IS NOT AN UPDATE, and until this warning the plan said
+	// it was: `latest@sha256:…` moving is the tag doing its job, and
+	// `v2.10.0@sha256:…` moving is a published version being rewritten under
+	// a pin that named it. Both arrive here as the same digest update, and a
+	// merge request titled "digest bump" reads the same either way.
+	//
+	// It matters most where nothing else can catch it. A registry with
+	// immutable tag rules refuses the second push; without them - the free
+	// tier does not have them - the only trace is that the digest a file
+	// pinned is no longer the one the tag resolves to, which is precisely
+	// what this function has just measured.
+	//
+	// A warning, not a refusal: re-publishing a tag is sometimes legitimate
+	// (a rebuild against a fixed base, a mirror re-copying an index), and the
+	// evidence belongs with the person reviewing the merge request rather
+	// than in a gate that would block the fix for the very CVE that caused
+	// the rebuild.
+	var warn *model.Warning
+	if releasedTag(tag) {
+		warn = &model.Warning{Stage: "plan", File: d.File, Msg: fmt.Sprintf(
+			"%s: %s is a released version and its digest moved (%s -> %s): the tag was re-pushed, this is not a new release",
+			d.DepName, tag, short(d.CurrentDigest), short(digest))}
+	}
 	return []model.Update{{
 		DepKey:     d.Key(),
 		Dep:        *d,
@@ -864,7 +888,51 @@ func digestRefresh(req Request, d *model.Dependency, tag string) ([]model.Update
 		Type:       model.UpdateDigest,
 		Declared:   declaredRisk(model.UpdateDigest),
 		TimeSource: model.TimeUnknown,
-	}}, "", nil
+	}}, "", warn
+}
+
+// releasedTag is whether a tag names a RELEASE rather than a line that is
+// meant to move.
+//
+// The distinction is the whole value of the warning, and the first run got it
+// wrong: a digit is not enough. `wolfi-base:2` carries one and is a major
+// LINE - it moves whenever 2.x does, which is what a consumer asking for `2`
+// asked for. The golden estate caught it on the first run, which is what that
+// fixture is for.
+//
+// The test is a complete version: major, minor and patch all present, a `v`
+// prefix and a prerelease suffix allowed. That makes
+//
+//	latest, stable, edge, main   no version at all        -> moves by design
+//	2, 24, 3.22, 3.22-alpine     a line, not a release    -> moves by design
+//	v2.10.0, 1.36.4-k3s1         a release                -> must not move
+//
+// A date-stamped rolling tag (2026.09.22) still reads as a release and would
+// be warned about once per move. That is the residual false positive and it is
+// the safe direction: the failure this exists for is silence while a published
+// version is rewritten.
+func releasedTag(tag string) bool {
+	v, ok := semverx.Parse(strings.TrimSpace(tag))
+	if !ok {
+		return false
+	}
+	// Parse pads what is missing, so "3.22" comes back as 3.22.0 and would
+	// pass. Count the components the tag actually wrote.
+	t := strings.TrimLeft(strings.TrimSpace(tag), "vV")
+	if i := strings.IndexAny(t, "-+"); i >= 0 {
+		t = t[:i]
+	}
+	_ = v
+	return strings.Count(t, ".") >= 2
+}
+
+// short spells a digest the way a merge request title does.
+func short(digest string) string {
+	d := strings.TrimPrefix(digest, "sha256:")
+	if len(d) > 7 {
+		return d[:7]
+	}
+	return d
 }
 
 // oldEnough is whether a release has reached the minimum age at now, by

@@ -277,3 +277,53 @@ func TestRegistryRunSkipsWhatDoesNotApply(t *testing.T) {
 		t.Errorf("an image answered by nobody: %v %q %v", ok, name, err)
 	}
 }
+
+// The image a chart places is in no file of the consumer's repository, so
+// nothing else in pinup would ever mention it. Through Analyze, end to end.
+func TestTheImagesAChartPlacesAreEvidence(t *testing.T) {
+	newValues := strings.Replace(oldValues, "tag: 7.4.2", "tag: 8.0.0", 1)
+	r := &repo{
+		index: `apiVersion: v1
+entries:
+  redis:
+  - version: 20.14.0
+    appVersion: 7.4.2
+    urls: [redis-20.14.0.tgz]
+  - version: 20.13.4
+    appVersion: 7.4.2
+    urls: [redis-20.13.4.tgz]
+`,
+		archives: map[string][]byte{
+			"/charts/redis-20.13.4.tgz": archive(t, "redis", oldChart, oldValues),
+			"/charts/redis-20.14.0.tgz": archive(t, "redis", oldChart, newValues),
+		},
+	}
+	client, rec := newClient(t, map[string]http.Handler{"charts.example": r})
+	dep := model.Dependency{DepName: "redis", Datasource: "helm", RegistryURLs: []string{"https://charts.example/charts"}}
+	e, err := New(client, nil).Analyze(context.Background(), dep, "20.13.4", "20.14.0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Failed() {
+		t.Fatalf("the transport was unhappy: %s", rec.String())
+	}
+
+	var notes []string
+	for _, ev := range e.Evidence {
+		if ev.Kind == "images" {
+			notes = append(notes, ev.Note)
+		}
+	}
+	joined := strings.Join(notes, " | ")
+	if !strings.Contains(joined, "1 image(s) placed by the chart's own values, 1 without a digest") {
+		t.Errorf("no summary: %s", joined)
+	}
+	if !strings.Contains(joined, "image docker.io/bitnami/redis:7.4.2 -> docker.io/bitnami/redis:8.0.0") {
+		t.Errorf("the image moved and nothing said so: %s", joined)
+	}
+	// It is evidence, not a verdict: the application stood still, so this stays
+	// a patch however the image moved.
+	if e.Risk != model.RiskPatch {
+		t.Errorf("risk = %s, want patch: a placed image must not colour the label", e.Risk)
+	}
+}

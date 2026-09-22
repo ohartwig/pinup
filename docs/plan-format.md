@@ -103,6 +103,22 @@ annotation (`extract`, with file and line) instead of staying silent - the
 shape found on three of fifty golden-image Containerfiles on 2026-09-17,
 one of them a package with a fixed CVE waiting in the index.
 
+Another is about a pin that IS being updated, and should not have had to
+be: a `digest` update whose value did not move and whose tag names a
+complete version - `v2.10.0@sha256:…`, not `latest` and not the major line
+`2`. A released tag that resolves somewhere new was re-pushed; the content
+behind a reference someone pinned by name has been rewritten. As an update
+alone it is indistinguishable from `latest` doing exactly what `latest` is
+for, and the merge request carries the same title for both.
+
+It is a warning and not a refusal. Re-publishing a tag is sometimes
+legitimate (a rebuild against a patched base, a mirror re-copying an
+index), and a gate here would block the fix for the very advisory that
+caused the rebuild. Where it earns its place is a registry without immutable tag
+rules, where nothing else notices at all: the only trace is that the digest
+a file pinned is no longer the one the tag answers with, which is what the
+planner has just measured on its way to the update.
+
 ## Reading a plan
 
 ```sh
