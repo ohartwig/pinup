@@ -434,3 +434,80 @@ func TestPathPatternBindsTheCredential(t *testing.T) {
 	check("/api/v4/groups/1/variables", "")
 	check("/api/v4/projects/1/variables", "")
 }
+
+// The pattern scopes a prefix; it cannot judge a path that still has to be
+// normalised, and whether the instance normalises before routing is not
+// ours to assume. So a dot segment - in any encoding a server might decode
+// first - takes the credential off the request before the pattern is even
+// consulted. Without this, `/api/v4/projects/1/releases/../../groups/5/
+// variables` satisfied the estate's pattern and the api-scoped platform
+// token went to a URL a scanned repository had named.
+func TestPathAllowedRefusesDotSegmentsAndJudgesTheWireForm(t *testing.T) {
+	c := New(Options{Now: time.Now, Sleep: func(time.Duration) {}, HostRules: []HostRule{{
+		MatchHost: "git.example", HeaderName: "PRIVATE-TOKEN", Token: "s",
+		PathPattern: `^/api/v4/(projects/[^/]+/releases|group/[^/]+/-/packages/composer)`,
+	}}})
+	rule, ok := c.ruleFor("git.example")
+	if !ok {
+		t.Fatal("no rule")
+	}
+	for _, c2 := range []struct {
+		name, raw string
+		want      bool
+	}{
+		{"the admitted path", "https://git.example/api/v4/projects/1/releases", true},
+		{"an escaped project path is one segment", "https://git.example/api/v4/projects/a%2Fb/releases", true},
+		{"plain traversal", "https://git.example/api/v4/projects/1/releases/../../groups/5/variables", false},
+		{"traversal after an open-ended prefix", "https://git.example/api/v4/group/1/-/packages/composer/p2/../../../../groups/5/variables", false},
+		{"encoded traversal", "https://git.example/api/v4/projects/1/releases/%2e%2e/%2e%2e/groups/5/variables", false},
+		{"a single dot", "https://git.example/api/v4/projects/1/releases/./x", false},
+		{"an unrelated path", "https://git.example/api/v4/groups/5/variables", false},
+	} {
+		t.Run(c2.name, func(t *testing.T) {
+			u, err := url.Parse(c2.raw)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := c.pathAllowed(rule, u); got != c2.want {
+				t.Errorf("pathAllowed = %v, want %v (escaped %q)", got, c2.want, u.EscapedPath())
+			}
+		})
+	}
+}
+
+// pathAllowed used to run once, on the first URL, while net/http copies
+// the initial request's headers onto every hop. One 3xx from an admitted
+// path to a forbidden one - same host, so the cross-host stripping did not
+// fire - carried the api-scoped platform token anywhere on the instance.
+// The rule is re-evaluated per hop now.
+func TestRedirectToAForbiddenPathOnTheSameHostDropsTheCredential(t *testing.T) {
+	var seen []string
+	var tokens []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = append(seen, r.URL.Path)
+		tokens = append(tokens, r.Header.Get("PRIVATE-TOKEN"))
+		if r.URL.Path == "/api/v4/projects/1/releases" {
+			http.Redirect(w, r, "/api/v4/groups/5/variables", http.StatusFound)
+			return
+		}
+		_, _ = w.Write([]byte(`[]`))
+	}))
+	defer srv.Close()
+	host := strings.TrimPrefix(srv.URL, "http://")
+	c := New(Options{Now: time.Now, Sleep: func(time.Duration) {}, HostRules: []HostRule{{
+		MatchHost: host, HeaderName: "PRIVATE-TOKEN", Token: "SECRET",
+		PathPattern: `^/api/v4/projects/[^/]+/releases`,
+	}}})
+	if _, err := c.Get(t.Context(), srv.URL+"/api/v4/projects/1/releases", ReqOptions{}); err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	if len(seen) != 2 {
+		t.Fatalf("hops: %v", seen)
+	}
+	if tokens[0] != "SECRET" {
+		t.Errorf("the admitted path must carry the token, got %q", tokens[0])
+	}
+	if tokens[1] != "" {
+		t.Errorf("%s received the token across a same-host redirect", seen[1])
+	}
+}

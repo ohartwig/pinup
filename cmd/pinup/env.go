@@ -213,7 +213,14 @@ func apkViews(getenv func(string) string) (map[string]apkds.View, error) {
 // is one of these; the bot's api scope reads CI variables, and a
 // Developer on any scanned repository must not be able to make it
 // (decision record dependency-bot-credential-scope, review S4).
-const instancePaths = `^/api/v4/(projects/.+/(releases|repository/tags|repository/files/.+/raw|packages)(/|$)|group/.+/-/packages/composer|user$|personal_access_tokens/self)`
+// Every wildcard is [^/]+, one path segment: `.+` spans `/`, which let
+// `projects/1/releases/../../groups/5/variables` satisfy a pattern written
+// for a project's releases. httpx refuses dot segments outright now, and
+// this is the second lock on the same door - a segment wildcard cannot
+// walk out of the path it was written for whatever the instance does with
+// the bytes. The file path keeps `.+` deliberately: a repository file path
+// contains slashes, and the `/raw` suffix bounds it.
+const instancePaths = `^/api/v4/(projects/[^/]+/(releases|repository/tags|repository/files/.+/raw|packages)(/|$)|group/[^/]+/-/packages/composer|user$|personal_access_tokens/self)`
 
 // httpClient builds the one HTTP client every datasource shares. The token
 // is bound to the instance's host and nothing else: httpx sends a host rule's
