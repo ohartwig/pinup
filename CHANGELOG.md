@@ -1,3 +1,17 @@
+## [0.35.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.3...v0.35.0) (2026-09-22)
+
+### :sparkles: Features
+
+* **packaging:** pinup and pinup-toolchain as public container images ([b795dd1](https://git.ole-hartwig.eu/pinup/pinup/commit/b795dd1a7f8777dccac6f12cccdd4948c4ba4b0d))
+
+### :bug: Fixes
+
+* **datasource,httpx:** what a repository may contribute to a URL ([937cf29](https://git.ole-hartwig.eu/pinup/pinup/commit/937cf291d609d8c548f2054596f84a689ec875f9))
+
+### :memo: Documentation
+
+* a page for the container images, with the links and the reasons ([2424d08](https://git.ole-hartwig.eu/pinup/pinup/commit/2424d082596a7bb85aef6cd27224084cab02279a))
+
 ## [0.34.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.2...v0.34.3) (2026-09-22)
 
 ### :bug: Fixes
