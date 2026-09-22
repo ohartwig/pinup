@@ -291,3 +291,116 @@ func TestBloblessCloneKeepsHistoryAndAdopts(t *testing.T) {
 		t.Errorf("foreign authors = %v, %v; want the seed's one author", foreign, err)
 	}
 }
+
+// A task runs in the checkout as the same user and `.git/` is writable.
+// Every configuration key below makes git execute a program, and the
+// checkout's own .git/config could otherwise supply it; a -c on the
+// command line beats it. The test writes the hostile config and asserts
+// git did not run the payload - remove a pin and it goes red.
+func TestCheckoutConfigCannotMakeGitExecuteAnything(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	dir := t.TempDir()
+	r := &Repo{Dir: dir}
+	ctx := t.Context()
+	for _, a := range [][]string{{"init", "--quiet", "-b", "main", "."}, {"config", "user.name", "T"}, {"config", "user.email", "t@e"}} {
+		if _, err := r.run(ctx, a...); err != nil {
+			t.Fatalf("%v: %v", a, err)
+		}
+	}
+	// The payload: a hook that writes a file, and the config a task could
+	// append to .git/config to have git run it.
+	hooks := filepath.Join(dir, "evil-hooks")
+	if err := os.MkdirAll(hooks, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	marker := filepath.Join(dir, "PAYLOAD-RAN")
+	hook := "#!/bin/sh\necho ran > " + marker + "\n"
+	if err := os.WriteFile(filepath.Join(hooks, "pre-commit"), []byte(hook), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cfg := filepath.Join(dir, ".git", "config")
+	existing, err := os.ReadFile(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	hostile := string(existing) + "[core]\n\thooksPath = " + hooks + "\n\tfsmonitor = " + filepath.Join(hooks, "pre-commit") + "\n"
+	if err := os.WriteFile(cfg, []byte(hostile), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.run(ctx, "add", "--", "a.txt"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := r.run(ctx, "status", "--porcelain"); err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := r.Commit(ctx, Identity{Name: "T", Email: "t@e"}, Signing{}, "m", "a.txt"); err != nil {
+		t.Fatalf("commit: %v", err)
+	}
+	if _, err := os.Stat(marker); err == nil {
+		t.Fatal("the checkout's .git/config made git execute a program")
+	}
+}
+
+// The fingerprint has to notice exactly the writes the scope check cannot:
+// a config key that makes git execute something, and a hook dropped into
+// .git/hooks. It must not notice an ordinary working-tree change, or every
+// task would be discarded.
+func TestControlFingerprintNoticesWhatStatusCannot(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	dir := t.TempDir()
+	r := &Repo{Dir: dir}
+	if _, err := r.run(t.Context(), "init", "--quiet", "-b", "main", "."); err != nil {
+		t.Fatal(err)
+	}
+	base, err := ControlFingerprint(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("x\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := ControlFingerprint(dir); err != nil || got != base {
+		t.Errorf("a working-tree write moved the fingerprint: %v %q", err, got)
+	}
+	for _, c := range []struct {
+		name string
+		do   func() error
+	}{
+		{"a config key", func() error {
+			p := filepath.Join(dir, ".git", "config")
+			b, err := os.ReadFile(p)
+			if err != nil {
+				return err
+			}
+			return os.WriteFile(p, append(b, []byte("[core]\n\thooksPath = /tmp/x\n")...), 0o600)
+		}},
+		{"a hook", func() error {
+			return os.WriteFile(filepath.Join(dir, ".git", "hooks", "pre-commit"), []byte("#!/bin/sh\n"), 0o755)
+		}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			before, err := ControlFingerprint(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := c.do(); err != nil {
+				t.Fatal(err)
+			}
+			after, err := ControlFingerprint(dir)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if after == before {
+				t.Error("the fingerprint did not move")
+			}
+		})
+	}
+}

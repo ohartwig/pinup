@@ -25,6 +25,21 @@ pinup holds, and what a repository can and cannot make the bot do.
   the runner's `PINUP_PLUGIN_ENV` names; never the platform token, never
   the signing key. A read-only `.netrc` for private modules is written into
   the task's scratch `HOME`, not handed over as a variable.
+
+  Said precisely, because the filtered environment on its own does not
+  carry the claim: a task runs as the same user, in the same process tree,
+  so on Linux it can read the parent's `/proc/<pid>/environ` directly. The
+  environment filter is hygiene. What holds the line is that a task has
+  nothing to *execute* the credential with: the commands it may run are an
+  operator allowlist, a package manager it names is hardened so it cannot
+  run code out of the checkout (`--no-scripts`, `--no-plugins`,
+  `--ignore-scripts`, appended before the allowlist is consulted), and the
+  git configuration that makes git execute a program - `core.hooksPath`,
+  `core.fsmonitor`, `gpg.program` - is pinned on every invocation and the
+  `.git` control surface is fingerprinted around every task. Real isolation
+  (a separate uid, a namespace) is what would make the environment filter a
+  boundary; it is not there today, and this list should not read as if it
+  were.
 - **A plan explains why nothing happens.** A held update carries its
   reason and the rule that held it; a refused command is named, not
   skipped.

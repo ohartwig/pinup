@@ -515,8 +515,27 @@ func (o Options) runTask(ctx context.Context, t model.Task) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	// The scope check below reads `git status --porcelain`, which never
+	// reports anything under `.git/`. A task runs inside the checkout as
+	// the same user, so it can rewrite the machinery git executes -
+	// core.hooksPath, a hook, gpg.program - and the scope check would see
+	// a clean tree while the next `git commit -S` ran the payload with the
+	// job's environment, platform token included. So the control surface
+	// is fingerprinted around the task and a change discards its whole
+	// result, exactly as a path outside the scope does.
+	control, err := git.ControlFingerprint(o.Repo.Dir)
+	if err != nil {
+		return nil, err
+	}
 	if err := o.Tasks.Run(ctx, o.Repo.Dir, t); err != nil {
 		return nil, err
+	}
+	switch after, err := git.ControlFingerprint(o.Repo.Dir); {
+	case err != nil:
+		return nil, err
+	case after != control:
+		return nil, fmt.Errorf("%s: the task changed .git (config or hooks); its result is discarded",
+			strings.Join(t.Command, " "))
 	}
 	after, err := o.Repo.Changed(ctx)
 	if err != nil {

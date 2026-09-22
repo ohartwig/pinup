@@ -20,8 +20,11 @@ package git
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -114,6 +117,44 @@ func Clone(ctx context.Context, url, dir string, opts CloneOptions, env []string
 	return r, nil
 }
 
+// pinned are the -c options every invocation carries, and they are here
+// for one reason: a postUpgradeTasks command runs IN the checkout, as the
+// same user, and `.git/` is writable. `git status --porcelain` never
+// reports anything under `.git/`, so the scope check cannot see a write
+// there and `Discard` does not undo it - the guard in runner.TaskDirty
+// closes that, and these options make the window harmless even while it
+// is open.
+//
+// Every one of them names a configuration key that makes git EXECUTE
+// something, and every one of them can otherwise be set from the
+// checkout's own `.git/config`:
+//
+//	core.hooksPath   a directory of scripts git runs on commit
+//	core.fsmonitor   a program git runs on status
+//	gpg.program      the program `commit -S` shells out to
+//	gpg.ssh.program  the same for the ssh signing format
+//
+// A command-line -c beats the repository's config, so pinning them here
+// takes the decision away from the checkout. http.sslVerify is the fifth:
+// it does not execute anything, but `[http] sslVerify=false` plus a proxy
+// turns the push - which carries the platform token - into something an
+// attacker can read, and the askpass host check cannot notice because the
+// host is unchanged.
+//
+// nonexistentHooks is deliberately a path that cannot exist rather than
+// an empty value: git reads an empty core.hooksPath as "use the default".
+const nonexistentHooks = "/nonexistent/pinup-hooks-are-disabled"
+
+func pinned() []string {
+	return []string{
+		"-c", "core.hooksPath=" + nonexistentHooks,
+		"-c", "core.fsmonitor=false",
+		"-c", "gpg.program=gpg",
+		"-c", "gpg.ssh.program=ssh-keygen",
+		"-c", "http.sslVerify=true",
+	}
+}
+
 // run executes git in the repository and returns stdout. stderr is folded
 // into the error, with anything that looks like a credential removed.
 func (r *Repo) run(ctx context.Context, args ...string) (string, error) {
@@ -125,7 +166,7 @@ func (r *Repo) runWith(ctx context.Context, env []string, args ...string) (strin
 	if bin == "" {
 		bin = "git"
 	}
-	cmd := exec.CommandContext(ctx, bin, args...)
+	cmd := exec.CommandContext(ctx, bin, append(pinned(), args...)...)
 	cmd.Dir = r.Dir
 	cmd.Env = append(append(os.Environ(), r.Env...), env...)
 	var out bytes.Buffer
@@ -539,4 +580,48 @@ func publicKey(key string) (string, error) {
 		return "", fmt.Errorf("git: %q is not an ssh public key", key)
 	}
 	return fields[0] + " " + fields[1], nil
+}
+
+// ControlFingerprint summarises the parts of `.git` that decide what git
+// EXECUTES: the repository's own config, and the hooks directory. It
+// exists because a task runs inside the checkout as the same user, and
+// `git status --porcelain` - which is what the task's scope check reads -
+// never reports anything under `.git/`. A write there is therefore
+// invisible to the scope check and survives Discard.
+//
+// The fingerprint is compared before and after a task; a difference means
+// the task rewrote the machinery rather than the files it declared, and
+// the caller discards its whole result. Content for the config (the keys
+// that matter are in it), names and sizes for the hooks directory (a hook
+// only has to exist and be executable to run).
+//
+// A missing .git is not an error: a caller may hand in a directory that
+// is not a repository, and "nothing to compare" is the honest answer.
+func ControlFingerprint(dir string) (string, error) {
+	var b strings.Builder
+	cfg, err := os.ReadFile(filepath.Join(dir, ".git", "config"))
+	switch {
+	case err == nil:
+		b.Write(cfg)
+	case errors.Is(err, fs.ErrNotExist):
+	default:
+		return "", fmt.Errorf("git: read .git/config: %w", err)
+	}
+	b.WriteString("\x00hooks\x00")
+	entries, err := os.ReadDir(filepath.Join(dir, ".git", "hooks"))
+	switch {
+	case err == nil:
+		for _, e := range entries {
+			info, err := e.Info()
+			if err != nil {
+				return "", fmt.Errorf("git: stat hook %s: %w", e.Name(), err)
+			}
+			fmt.Fprintf(&b, "%s:%d:%o\x00", e.Name(), info.Size(), info.Mode().Perm())
+		}
+	case errors.Is(err, fs.ErrNotExist):
+	default:
+		return "", fmt.Errorf("git: read .git/hooks: %w", err)
+	}
+	sum := sha256.Sum256([]byte(b.String()))
+	return hex.EncodeToString(sum[:]), nil
 }
