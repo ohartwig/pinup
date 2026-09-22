@@ -74,9 +74,11 @@ cosign verify-blob --key <public-key> --signature SHA256SUMS.sig \
 sha256sum -c SHA256SUMS
 ```
 
-Or as a container image — `ghcr.io/ohartwig/pinup` (git, gpg, nothing else)
-and `ghcr.io/ohartwig/pinup-toolchain` (plus composer, npm, node, go, yarn
-for lock refreshes), `linux/amd64` and `linux/arm64`, signed keyless:
+Or as a container image — [`ghcr.io/ohartwig/pinup`](https://github.com/ohartwig/pinup/pkgs/container/pinup)
+(git, gpg, nothing else) and
+[`ghcr.io/ohartwig/pinup-toolchain`](https://github.com/ohartwig/pinup/pkgs/container/pinup-toolchain)
+(plus composer, npm, node, go, yarn for lock refreshes), `linux/amd64` and
+`linux/arm64`, signed keyless:
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
@@ -84,9 +86,9 @@ docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
 ```
 
 The image carries the released binary, checked against `SHA256SUMS`; it is
-not compiled a second time there either. [Getting
-started](docs/getting-started.md#the-container-image) has the tags and the
-`cosign verify` line.
+not compiled a second time there either.
+[Container images](docs/container-images.md) has the tags, the verification
+and what each one is for.
 
 ## Quickstart
 
