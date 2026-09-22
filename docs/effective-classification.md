@@ -77,7 +77,7 @@ consumer sees; the image set behind it is the vendor's to change.
 
 The evidence is a count and a diff:
 
-```
+```text
 images   3 image(s) placed by the chart's own values, 2 without a digest
 images   image docker.io/bitnami/redis:7.4.2 -> docker.io/bitnami/redis:8.0.0
 images   metrics.image added quay.io/exporter@sha256:…
