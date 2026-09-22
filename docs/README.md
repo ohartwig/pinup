@@ -12,6 +12,7 @@ For people who run pinup. The same pages, as a website:
 | Page | What it answers |
 |---|---|
 | [Getting started](getting-started.md) | the binary, a token, the first plan, the first run, a CI job |
+| [Container images](container-images.md) | the two published images, their tags, what is in them, how to verify one |
 | [Commands](commands.md) | every subcommand and its flags |
 | [Configuration](configuration.md) | where configuration comes from, how it merges, which keys pinup reads |
 | [Managers, datasources, versionings](managers-and-datasources.md) | what pinup extracts, where it looks versions up, how it orders them |

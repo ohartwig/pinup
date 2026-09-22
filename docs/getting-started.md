@@ -43,18 +43,11 @@ five times the size.
 The binary in the image is the one from the release - the workflow that
 builds the image downloads it and checks it against `SHA256SUMS` rather
 than compiling its own. Both images are signed keyless, so the signature
-is verifiable without a key from us:
+is verifiable without a key from us. The image runs as uid 1000 in
+`/workspace`.
 
-```sh
-cosign verify ghcr.io/ohartwig/pinup:0.34.0 \
-  --certificate-identity-regexp '^https://github.com/ohartwig/pinup/' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com
-```
-
-The image runs as uid 1000 and works in `/workspace`. A run that writes
-needs the platform token in the environment, and a signing run needs the
-key handed in - see [security](security.md) for which of those a
-repository can reach.
+[Container images](container-images.md) has the package pages, the
+`cosign verify` line, what each image carries and what running one needs.
 
 ## A plan of a checkout, without a token
 
