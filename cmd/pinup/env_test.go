@@ -5,9 +5,13 @@ package main
 
 import (
 	"io"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/ohartwig/pinup/config/preset"
 )
 
 func envOf(m map[string]string) func(string) string {
@@ -245,5 +249,37 @@ func TestApkViewsFromEnv(t *testing.T) {
 		if _, err := apkViews(env(bad)); err == nil {
 			t.Errorf("%s: accepted", bad)
 		}
+	}
+}
+
+// The allowlist a postUpgradeTasks command must match is the RUNNER's.
+// resolveConfig resolves the repository's layer whenever the repository
+// carries a configuration file, so reading allowedCommands back out of the
+// resolved document handed a repository the list that polices it. Two
+// locks: config.GlobalOnly strips the key from a repository's layer, and
+// resolveConfig returns the runner's list separately.
+func TestAllowedCommandsComeFromTheRunnerNotTheRepository(t *testing.T) {
+	dir := t.TempDir()
+	runner := filepath.Join(dir, "runner.json")
+	if err := os.WriteFile(runner, []byte(`{"allowedCommands":["^composer update [^;&|]+$"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	repo := filepath.Join(dir, "repo")
+	if err := os.MkdirAll(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	// The repository tries to authorise itself.
+	if err := os.WriteFile(filepath.Join(repo, "renovate.json"), []byte(`{"allowedCommands":[".*"]}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	_, resolved, _, runnerAllowed, err := resolveConfig(repo, runner, "", "", preset.Builtin())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(runnerAllowed) != 1 || runnerAllowed[0] != "^composer update [^;&|]+$" {
+		t.Errorf("the runner's list is %q", runnerAllowed)
+	}
+	if got := stringList(resolved.Raw["allowedCommands"]); len(got) != 0 {
+		t.Errorf("the repository's allowedCommands survived into the resolved document: %q", got)
 	}
 }

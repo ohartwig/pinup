@@ -82,7 +82,12 @@ prompt for the platform's host.
 A repository's `renovate.json` can disable itself, change versionings
 and registries, add rules, ask for tasks. It cannot:
 
-- run a command the runner's `PINUP_ALLOWED_COMMANDS` does not admit
+- run a command the runner's `PINUP_ALLOWED_COMMANDS` - or, absent that
+  variable, the runner's own configuration file - does not admit. The list
+  is never read from a repository's document: `allowedCommands` is a
+  global-only key, stripped from anything a repository brings, because a
+  repository that could set it would be authorising its own commands.
+  Neither source set means every task is refused
   (matched against the compiled command, after templating);
 - raise `executionTimeout` (the runner's `PINUP_EXECUTION_TIMEOUT`);
 - reach the platform token through a URL it names;

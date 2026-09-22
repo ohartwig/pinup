@@ -285,35 +285,44 @@ func runnerProject(getenv func(string) string, cfgPath string) string {
 // Renovate composes them in production, where the repository's own keys
 // and rules come last and decide (testdata/renovate/.../presets/README.md).
 // A repository without one runs under the runner's file alone.
-func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote preset.Source) (config.Decoded, *config.Resolved, []string, error) {
+// resolveConfig returns the repository's resolved document and, separately,
+// the RUNNER's own allowedCommands. The two must not be confused: `layer`
+// below is the repository's file whenever it has one, so a value read back
+// out of the resolved document is the repository's - and allowedCommands
+// is the list that decides whether the repository's own postUpgradeTasks
+// command may run. It comes from the runner's file and nowhere else.
+func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote preset.Source) (config.Decoded, *config.Resolved, []string, []string, error) {
 	global, err := config.LoadFile(cfgPath)
 	if err != nil {
-		return config.Decoded{}, nil, nil, err
+		return config.Decoded{}, nil, nil, nil, err
 	}
 	aliasDoc := global.Raw
+	runnerDoc := global.Raw
 	if runnerDefault != "" && runnerDefault != cfgPath {
 		def, err := config.LoadFile(runnerDefault)
 		if err != nil {
-			return config.Decoded{}, nil, nil, err
+			return config.Decoded{}, nil, nil, nil, err
 		}
 		aliasDoc = def.Raw
+		runnerDoc = def.Raw
 	}
+	runnerAllowed := stringList(runnerDoc["allowedCommands"])
 	sources := runnerSources(aliasDoc, runnerProject, remote)
 
 	repoCfg, err := config.FindConfigFile(root)
 	if err != nil {
-		return config.Decoded{}, nil, nil, err
+		return config.Decoded{}, nil, nil, nil, err
 	}
 	layer := global
 	if repoCfg != "" {
 		layer, err = config.LoadFile(repoCfg)
 		if err != nil {
-			return config.Decoded{}, nil, nil, err
+			return config.Decoded{}, nil, nil, nil, err
 		}
 	}
 	r, warnings, err := config.ResolveLayer(layer, sources)
 	if err != nil {
-		return config.Decoded{}, nil, nil, err
+		return config.Decoded{}, nil, nil, nil, err
 	}
 	if repoCfg == "" {
 		// A repository without a configuration file runs under the
@@ -333,7 +342,7 @@ func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote pr
 		}
 	}
 	d, err := config.Decode(r.Raw)
-	return d, r, warnings, err
+	return d, r, warnings, runnerAllowed, err
 }
 
 // whatif runs everything up to the plan. It writes nothing to the repository,
@@ -363,10 +372,13 @@ type whatifRun struct {
 
 	decoded  config.Decoded
 	resolved *config.Resolved
-	engine   *rules.Engine
-	managers extract.Registry
-	found    discover.Result
-	plan     *model.Plan
+	// runnerAllowed is the runner file's allowedCommands - never the
+	// repository's, which is what `resolved` would give.
+	runnerAllowed []string
+	engine        *rules.Engine
+	managers      extract.Registry
+	found         discover.Result
+	plan          *model.Plan
 	// contents is one read per file, however many managers claim it.
 	contents map[string][]byte
 	// locks maps "manager|dir" to the lock file present there, so the
@@ -394,7 +406,7 @@ type whatifRun struct {
 // files and opens the plan.
 func (r *whatifRun) configure() error {
 	o := r.o
-	decoded, resolved, presetWarnings, err := resolveConfig(o.Root, o.ConfigPath, o.RunnerDefault, o.RunnerProject, o.Presets)
+	decoded, resolved, presetWarnings, runnerAllowed, err := resolveConfig(o.Root, o.ConfigPath, o.RunnerDefault, o.RunnerProject, o.Presets)
 	if err != nil {
 		return fmt.Errorf("config: %w", err)
 	}
@@ -403,7 +415,7 @@ func (r *whatifRun) configure() error {
 	if err != nil {
 		return fmt.Errorf("packageRules: %w", err)
 	}
-	r.decoded, r.resolved, r.engine = decoded, resolved, engine
+	r.decoded, r.resolved, r.engine, r.runnerAllowed = decoded, resolved, engine, runnerAllowed
 	r.managers = wire.Managers()
 	found, err := discover.Discover(discover.Request{
 		Root:            o.Root,
@@ -820,9 +832,17 @@ func (r *whatifRun) realise() error {
 	// bytes it extracted from. A conflict - two managers claiming the same
 	// bytes - is reported on the plan and the branch carries no edits, so
 	// nothing downstream can write half of it.
+	// PINUP_ALLOWED_COMMANDS first, the runner's configuration file second,
+	// and nothing else - never r.resolved, which is the REPOSITORY's
+	// document whenever it carries a configuration file. Reading it there
+	// let a repository ship `"allowedCommands": [".*"]` and authorise its
+	// own postUpgradeTasks command; config.GlobalOnly now also strips the
+	// key from anything a repository brings, so this is the second lock.
+	// Both empty means every task is refused: an allowlist nobody set is
+	// not an invitation.
 	allowed := o.AllowedCommands
 	if allowed == nil {
-		allowed = stringList(r.resolved.Raw["allowedCommands"])
+		allowed = r.runnerAllowed
 	}
 	for i := range branches {
 		if branches[i].SuppressedBy != "" {
