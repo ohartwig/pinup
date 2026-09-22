@@ -66,18 +66,66 @@ func TestCompileMatchesTheEstateAllowlist(t *testing.T) {
 			t.Errorf("depName %q was admitted: %v", bad, err)
 		}
 	}
-	// A pattern is anchored whatever its author wrote: "composer update"
-	// admits exactly that, not "composer update --scripts-hook=x".
-	loose := []string{"composer update"}
+	// A pattern is anchored whatever its author wrote: it admits exactly
+	// what it spells out, not a longer command. The pattern has to spell
+	// out the mandatory flags too - they are appended before the match, so
+	// that what is checked is what runs.
+	loose := []string{"composer update --no-plugins --no-scripts"}
 	if tasks, err := Compile(PostUpgrade{Commands: []string{"composer update"}}, ups[:1], loose); err != nil || len(tasks) != 1 {
 		t.Errorf("the exact command: %v %+v", err, tasks)
 	}
 	if _, err := Compile(PostUpgrade{Commands: []string{"composer update --scripts-hook=x"}}, ups[:1], loose); err == nil {
 		t.Error("an unanchored pattern admitted a longer command")
 	}
+	// And a pattern that does NOT admit them refuses the task rather than
+	// running it unhardened: the safe direction, and the error names the
+	// command with the flags in it so the pattern can be corrected.
+	if _, err := Compile(PostUpgrade{Commands: []string{"composer update"}}, ups[:1], []string{"composer update"}); err == nil {
+		t.Error("a pattern that excludes the mandatory flags admitted the task")
+	}
 	// An unlisted command is refused by name, never dropped silently.
 	if _, err := Compile(PostUpgrade{Commands: []string{"make lock"}}, ups[:1], estateAllowed); err == nil || !strings.Contains(err.Error(), `"make lock"`) {
 		t.Errorf("unlisted command: %v", err)
+	}
+}
+
+// The flags that stop a package manager running code out of the checkout
+// are appended to a repository's own command, not left to the operator's
+// pattern. Without them `composer update` executes scripts.pre-update-cmd
+// from the checkout's composer.json - the attacker's file - as the bot.
+func TestRepositoryCommandsAreHardened(t *testing.T) {
+	ups := []model.Update{upd("composer.json", "a/b", "1", "2")}
+	admitAnything := []string{".*"}
+	for _, c := range []struct {
+		name, command string
+		want          string
+	}{
+		{"composer gains both flags", "composer update a/b",
+			"composer update a/b --no-plugins --no-scripts"},
+		{"a flag already there is not repeated", "composer update a/b --no-scripts",
+			"composer update a/b --no-scripts --no-plugins"},
+		{"npm", "npm install --package-lock-only a/b",
+			"npm install --package-lock-only a/b --ignore-scripts"},
+		{"yarn", "yarn install", "yarn install --ignore-scripts"},
+		{"a path is still composer", "/usr/bin/composer update",
+			"/usr/bin/composer update --no-plugins --no-scripts"},
+		{"anything else is left alone", "node tools/x.mjs", "node tools/x.mjs"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			tasks, err := Compile(PostUpgrade{Commands: []string{c.command}}, ups, admitAnything)
+			if err != nil || len(tasks) != 1 {
+				t.Fatalf("%v %+v", err, tasks)
+			}
+			if got := strings.Join(tasks[0].Command, " "); got != c.want {
+				t.Errorf("got %q, want %q", got, c.want)
+			}
+		})
+	}
+	// The core's own refresh already carries them; hardening must not
+	// double them up there either.
+	c, _ := LockRefresh("composer", "", "composer.lock", []string{"a/b"}, false)
+	if n := strings.Count(strings.Join(c.Command, " "), "--no-scripts"); n != 1 {
+		t.Errorf("LockRefresh carries --no-scripts %d times", n)
 	}
 }
 

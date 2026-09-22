@@ -30,6 +30,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -162,6 +163,7 @@ func Compile(pu PostUpgrade, updates []model.Update, allowed []string) ([]model.
 			if len(argv) == 0 {
 				continue
 			}
+			argv = harden(argv)
 			by, err := Allowed(strings.Join(argv, " "), patterns)
 			if err != nil {
 				return nil, err
@@ -173,6 +175,43 @@ func Compile(pu PostUpgrade, updates []model.Update, allowed []string) ([]model.
 		}
 	}
 	return out, nil
+}
+
+// mandatoryFlags are the flags that stop a package manager executing code
+// out of the checkout it is pointed at. LockRefresh passes them for the
+// commands the core itself builds; a repository's own postUpgradeTasks
+// command reached exec without them, and the allowlist could not tell the
+// difference - a pattern like `^composer update [^;&|]+$` (the estate's)
+// admits `composer update x` just as readily as `composer update x
+// --no-scripts`. composer then runs `scripts.pre-update-cmd` from the
+// checkout's own composer.json, which is the attacker's file.
+//
+// Appended rather than refused: a lock refresh is what these commands are
+// for, and the flags do not change that. Appended BEFORE the allowlist is
+// consulted, so the string that is matched is byte-for-byte the argv that
+// runs - the property that makes the allowlist mean anything.
+var mandatoryFlags = map[string][]string{
+	"composer": {"--no-plugins", "--no-scripts"},
+	"npm":      {"--ignore-scripts"},
+	"yarn":     {"--ignore-scripts"},
+	"pnpm":     {"--ignore-scripts"},
+}
+
+// harden appends the flags argv[0] needs to stay a lock refresh, leaving a
+// command that already carries them untouched. argv[0] is compared by its
+// base name: the allowlist may admit a path, and /usr/bin/composer is
+// composer.
+func harden(argv []string) []string {
+	want, ok := mandatoryFlags[filepath.Base(argv[0])]
+	if !ok {
+		return argv
+	}
+	for _, f := range want {
+		if !slices.Contains(argv, f) {
+			argv = append(argv, f)
+		}
+	}
+	return argv
 }
 
 // Allowed reports which pattern admits a compiled command, or an error
