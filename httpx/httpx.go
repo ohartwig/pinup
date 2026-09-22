@@ -220,11 +220,25 @@ func (c *Client) checkRedirect(req *http.Request, via []*http.Request) error {
 	if len(via) >= defaultMaxRedirects {
 		return errors.New("httpx: stopped after too many redirects")
 	}
-	if !strings.EqualFold(req.URL.Host, via[0].URL.Host) {
+	// Two reasons to take the credential off a redirect, and only the
+	// first used to be checked.
+	//
+	// A different host: net/http drops Authorization itself but knows
+	// nothing of a host rule's own header - PRIVATE-TOKEN, JOB-TOKEN -
+	// which the instance's redirects to object storage would replay.
+	//
+	// The same host at a path the rule does not admit: pathAllowed ran
+	// once, on the first URL, and net/http copies the initial request's
+	// headers onto every hop. One 3xx from an allowed path was enough to
+	// carry the token anywhere on the instance - and an instance that
+	// cleans dot segments answers exactly that redirect for the traversal
+	// the check above now refuses. So the rule is re-evaluated per hop.
+	rule, hasRule := c.ruleFor(req.URL.Host)
+	if !strings.EqualFold(req.URL.Host, via[0].URL.Host) || !hasRule || !c.pathAllowed(rule, req.URL) {
 		req.Header.Del("Authorization")
-		for _, rule := range c.hostRules {
-			if rule.HeaderName != "" {
-				req.Header.Del(rule.HeaderName)
+		for _, r := range c.hostRules {
+			if r.HeaderName != "" {
+				req.Header.Del(r.HeaderName)
 			}
 		}
 	}
@@ -275,13 +289,43 @@ func applyHostRule(req *http.Request, rule HostRule) {
 	}
 }
 
-// pathAllowed tells whether the rule's credential may go to path.
-func (c *Client) pathAllowed(rule HostRule, path string) bool {
+// pathAllowed tells whether the rule's credential may go to u.
+//
+// Three things decide it, and the first two are the ones that were
+// missing. The pattern is matched against the path as it will go ON THE
+// WIRE (EscapedPath), not against the decoded form: `%2e%2e%2f` decodes to
+// `../` and would otherwise be matched as a literal segment while the
+// server receives traversal. And a path carrying dot segments is refused
+// outright rather than cleaned, because whether `..` is resolved before or
+// after the allowlist is the instance's decision, not ours - a path that
+// needs cleaning to be judged is a path we decline to judge.
+//
+// Without this, `/api/v4/projects/1/releases/../../groups/5/variables`
+// matched the estate's pattern (the `.+` spans `/`), and the platform
+// token - api-scoped, so able to read CI variables - went to a URL a
+// scanned repository had named in registryUrls or customDatasources.
+func (c *Client) pathAllowed(rule HostRule, u *url.URL) bool {
 	re, ok := c.paths[strings.ToLower(rule.MatchHost)]
 	if !ok {
 		return true
 	}
-	return re.MatchString(path)
+	p := u.EscapedPath()
+	if hasDotSegment(p) {
+		return false
+	}
+	return re.MatchString(p)
+}
+
+// hasDotSegment reports whether the path contains a "." or ".." segment,
+// in any encoding a server might decode before routing.
+func hasDotSegment(p string) bool {
+	for seg := range strings.SplitSeq(p, "/") {
+		switch strings.ToLower(seg) {
+		case ".", "..", "%2e", "%2e%2e", ".%2e", "%2e.":
+			return true
+		}
+	}
+	return false
 }
 
 // parseRetryAfter interprets a Retry-After header value, which is either a
@@ -377,7 +421,7 @@ func (c *Client) attempt(ctx context.Context, rawURL string, opt ReqOptions, rul
 	if opt.LastModified != "" {
 		req.Header.Set("If-Modified-Since", opt.LastModified)
 	}
-	if hasRule && c.pathAllowed(rule, req.URL.Path) {
+	if hasRule && c.pathAllowed(rule, req.URL) {
 		applyHostRule(req, rule)
 	}
 
@@ -453,7 +497,7 @@ func (c *Client) Stream(ctx context.Context, rawURL string, read func(io.Reader)
 	if c.userAgent != "" {
 		req.Header.Set("User-Agent", c.userAgent)
 	}
-	if hasRule && c.pathAllowed(rule, req.URL.Path) {
+	if hasRule && c.pathAllowed(rule, req.URL) {
 		applyHostRule(req, rule)
 	}
 	resp, err := c.hc.Do(req)

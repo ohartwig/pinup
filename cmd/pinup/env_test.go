@@ -156,9 +156,13 @@ func TestAskpassAnswersFromTheEnvironment(t *testing.T) {
 func TestInstancePathsAdmitTheDatasourcesAndNothingElse(t *testing.T) {
 	re := regexp.MustCompile(instancePaths)
 	for _, p := range []string{
-		"/api/v4/projects/devops/ci-cd-components/lint-tools/releases",
-		"/api/v4/projects/devops/images/pinup/repository/tags",
-		"/api/v4/projects/devops/renovate-runner/repository/files/default.json/raw",
+		// As the datasources build them: url.PathEscape(project), so a
+		// project path is ONE segment on the wire. The pattern is matched
+		// against EscapedPath for exactly this reason - the decoded form
+		// has slashes in it and cannot be told from traversal.
+		"/api/v4/projects/devops%2Fci-cd-components%2Flint-tools/releases",
+		"/api/v4/projects/devops%2Fimages%2Fpinup/repository/tags",
+		"/api/v4/projects/devops%2Frenovate-runner/repository/files/default.json/raw",
 		"/api/v4/projects/790/packages/npm/@koh/x",
 		"/api/v4/projects/1/packages",
 		"/api/v4/group/1210/-/packages/composer/packages.json",
@@ -169,6 +173,13 @@ func TestInstancePathsAdmitTheDatasourcesAndNothingElse(t *testing.T) {
 			t.Errorf("%s must carry the token", p)
 		}
 	}
+	// What this pattern does NOT decide: a dot segment appended AFTER an
+	// admitted prefix (`.../releases/../../groups/5/variables`). The
+	// suffix is deliberately open - a package path continues past
+	// `packages`, a composer path past `composer` - so the pattern cannot
+	// tell traversal from a legitimate tail. httpx.pathAllowed refuses any
+	// path carrying a dot segment before this pattern is ever consulted;
+	// the cases live there, in TestPathAllowedRefusesDotSegments...
 	for _, p := range []string{
 		"/api/v4/groups/1210/variables",
 		"/api/v4/projects/826/variables",
@@ -178,6 +189,11 @@ func TestInstancePathsAdmitTheDatasourcesAndNothingElse(t *testing.T) {
 		"/api/v4/projects/826/members",
 		"/api/v4/projects/826/pipelines",
 		"/devops/images/pinup/-/raw/main/Containerfile",
+		// Traversal THROUGH a wildcard: `.+` spanned `/`, so a path that
+		// walked out and came back to an admitted suffix satisfied the
+		// pattern. `[^/]+` is one segment and refuses it.
+		"/api/v4/projects/1/../../groups/5/variables/releases",
+		"/api/v4/group/1/../../projects/9/variables/-/packages/composer",
 	} {
 		if re.MatchString(p) {
 			t.Errorf("%s must not carry the token", p)
