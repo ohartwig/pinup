@@ -14,7 +14,7 @@ Two images per release, `linux/amd64` and `linux/arm64`:
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
-  whatif --repo . --config renovate.json --report plan.json
+  pinup whatif --repo . --config renovate.json --report plan.json
 ```
 
 ## Which one
@@ -96,15 +96,18 @@ signed, so a missing signature is a statement and not an oversight.
 
 ## Running it
 
-The image runs as uid 1000 in `/workspace`, with no entrypoint: the command
-is `pinup`, and a CI runner that starts a shell in the container gets one.
+The image runs as uid 1000 in `/workspace`. **There is no entrypoint**, so
+`pinup` is part of the command — `docker run … pinup whatif …`, not
+`docker run … whatif …`, which fails with `executable file not found`. That
+is deliberate: a CI runner starts the job script with `sh` in the container,
+and an entrypoint of `pinup` would answer that with "unknown command sh".
 
 ```sh
 docker run --rm \
   -v "$PWD:/workspace" \
   -e PINUP_GITLAB_URL -e PINUP_GITLAB_TOKEN \
   ghcr.io/ohartwig/pinup:0 \
-  run --project group/project --config 'local>group/runner' --report plan.json
+  pinup run --project group/project --config 'local>group/runner' --report plan.json
 ```
 
 - **Credentials** come from the environment, one per platform
