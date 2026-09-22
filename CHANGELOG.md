@@ -1,3 +1,13 @@
+## [0.34.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.1...v0.34.2) (2026-09-22)
+
+### :bug: Fixes
+
+* **httpx:** bind the platform token to the path on the wire, per hop ([e280f76](https://git.ole-hartwig.eu/pinup/pinup/commit/e280f76c9886f4ce08bd6e6de0b31bfda660a9a0))
+
+### :memo: Documentation
+
+* **security:** say that the path binding is to the wire form, per hop ([2fd57f2](https://git.ole-hartwig.eu/pinup/pinup/commit/2fd57f2760064c171fe8333eba5fdd7b63b0bf26))
+
 ## [0.34.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.0...v0.34.1) (2026-09-22)
 
 ### :bug: Fixes
