@@ -20,6 +20,42 @@ go install github.com/ohartwig/pinup/cmd/pinup@latest
 
 `pinup version` prints what you have.
 
+## The container image
+
+Two images per release, `linux/amd64` and `linux/arm64`:
+
+| Image | What is in it |
+|---|---|
+| `ghcr.io/ohartwig/pinup` | pinup, git, gpg, ssh-keygen. No Node, no PHP - the build fails if either turns up. |
+| `ghcr.io/ohartwig/pinup-toolchain` | the same, plus composer, npm, node, go and yarn for lock-file refreshes and `postUpgradeTasks` |
+
+```sh
+docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
+  whatif --repo . --config renovate.json --report plan.json
+```
+
+Tags are the exact version (`0.34.0`), the minor line (`0.34`), the major
+line (`0`) and `latest`. Take the slim one unless the repositories you
+scan carry composer, npm or Go locks: pinup only needs a package manager
+when an update has a lock file to regenerate, and the toolchain image is
+five times the size.
+
+The binary in the image is the one from the release - the workflow that
+builds the image downloads it and checks it against `SHA256SUMS` rather
+than compiling its own. Both images are signed keyless, so the signature
+is verifiable without a key from us:
+
+```sh
+cosign verify ghcr.io/ohartwig/pinup:0.34.0 \
+  --certificate-identity-regexp '^https://github.com/ohartwig/pinup/' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+The image runs as uid 1000 and works in `/workspace`. A run that writes
+needs the platform token in the environment, and a signing run needs the
+key handed in - see [security](security.md) for which of those a
+repository can reach.
+
 ## A plan of a checkout, without a token
 
 The first thing to run is `whatif`: it resolves the configuration,
@@ -81,7 +117,7 @@ masked variable, the plan is an artefact.
 
 ```yaml
 pinup:scan:
-  image: registry.example.org/images/pinup-toolchain:0
+  image: ghcr.io/ohartwig/pinup-toolchain:0
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   variables:
