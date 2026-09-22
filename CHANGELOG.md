@@ -1,3 +1,9 @@
+## [0.34.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.2...v0.34.3) (2026-09-22)
+
+### :bug: Fixes
+
+* **config,cmd:** allowedCommands is the runner's, never a repository's ([b51b2dc](https://git.ole-hartwig.eu/pinup/pinup/commit/b51b2dc9d11f81fb323844b2a82ebde3766e4051))
+
 ## [0.34.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.1...v0.34.2) (2026-09-22)
 
 ### :bug: Fixes
