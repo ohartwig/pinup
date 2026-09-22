@@ -21,6 +21,7 @@ package helmds
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -147,9 +148,33 @@ func (d *Datasource) index(ctx context.Context, repo string) (map[string]any, er
 	return fn()
 }
 
+// indexURL appends index.yaml to a repository URL through the parser
+// rather than by string concatenation. `repo` is a registryUrls entry, so
+// a repository configuration wrote it: `https://host/x?a=` + "/index.yaml"
+// puts the suffix in the QUERY and leaves the request pointing at
+// `https://host/x`, which is not the document this datasource thinks it
+// asked for. Parsing puts it on the path, where it belongs, and a URL
+// that does not parse is refused by name instead of being fetched.
+func indexURL(repo string) (string, error) {
+	u, err := url.Parse(repo)
+	if err != nil {
+		return "", fmt.Errorf("helm: repository URL %q: %w", repo, err)
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return "", fmt.Errorf("helm: repository URL %q: want http or https, got %q", repo, u.Scheme)
+	}
+	u.Path = strings.TrimSuffix(u.Path, "/") + "/index.yaml"
+	u.RawQuery, u.Fragment = "", ""
+	return u.String(), nil
+}
+
 // fetchIndex retrieves and parses one repository's index.yaml.
 func fetchIndex(ctx context.Context, client *httpx.Client, repo string) (map[string]any, error) {
-	resp, err := client.Get(ctx, repo+"/index.yaml", httpx.ReqOptions{})
+	idx, err := indexURL(repo)
+	if err != nil {
+		return nil, err
+	}
+	resp, err := client.Get(ctx, idx, httpx.ReqOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("helm: index of %s: %w", repo, err)
 	}

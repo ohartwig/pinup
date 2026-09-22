@@ -198,13 +198,34 @@ func (d *Datasource) lookupP2(ctx context.Context, base, pkg, metadataURLTemplat
 	return buildReleaseSet(base, pkg, entries), true, nil
 }
 
+// escapePackage escapes a composer package name for a URL path, segment
+// by segment: `vendor/name` keeps its slash, everything else - a dot
+// segment, a query or fragment marker, a percent - is encoded so the
+// registry receives the name the manifest wrote rather than a path the
+// name described.
+func escapePackage(name string) string {
+	parts := strings.Split(name, "/")
+	for i, p := range parts {
+		parts[i] = url.PathEscape(p)
+	}
+	return strings.Join(parts, "/")
+}
+
 // fetchP2 fetches and expands one metadata-url document, for either pkg
 // itself or its "pkg~dev" variant.
 func (d *Datasource) fetchP2(ctx context.Context, base, metadataURLTemplate, pkgVariant string) ([]releaseEntry, bool, error) {
 	// metadata-url is relative to the repository root on most registries
 	// ("/p2/%package%.json") and absolute on packagist.org itself
 	// ("https://repo.packagist.org/p2/%package%.json"); measured live.
-	url := resolveMetadataURL(base, strings.ReplaceAll(metadataURLTemplate, "%package%", pkgVariant))
+	// Escaped per segment, not substituted raw. A composer require key is
+	// whatever the repository wrote in its composer.json, and the estate's
+	// metadata-url points into the instance ("/api/v4/group/<id>/-/
+	// packages/composer/p2/%package%.json") - a path the platform token is
+	// bound to. A name like `x/../../../../groups/5/variables?` would
+	// otherwise build a URL that walks out of the registry's own prefix.
+	// The vendor/name slash is kept: it is part of the package name, not
+	// traversal, and every registry expects it there.
+	url := resolveMetadataURL(base, strings.ReplaceAll(metadataURLTemplate, "%package%", escapePackage(pkgVariant)))
 	resp, err := d.client.Get(ctx, url, httpx.ReqOptions{Accept: "application/json"})
 	if err != nil {
 		if isNotFound(err) {
