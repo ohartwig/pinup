@@ -34,7 +34,7 @@ docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
   pinup whatif --repo . --config renovate.json --report plan.json
 ```
 
-Tags are the exact version (`0.34.0`), the minor line (`0.34`), the major
+Tags are the exact version (`0.35.0`), the minor line (`0.35`), the major
 line (`0`) and `latest`. Take the slim one unless the repositories you
 scan carry composer, npm or Go locks: pinup only needs a package manager
 when an update has a lock file to regenerate, and the toolchain image is

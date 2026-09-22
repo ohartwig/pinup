@@ -5,7 +5,8 @@ SPDX-License-Identifier: Apache-2.0
 
 # Container images
 
-Two images per release, `linux/amd64` and `linux/arm64`:
+Two images per release, `linux/amd64` and `linux/arm64`. The first release
+with images is **0.35.0**; the binaries on the release page go back further.
 
 | Image | Package page | What is in it |
 |---|---|---|
@@ -40,8 +41,8 @@ the image exists for, and it is checked on every build.
 
 | Tag | Moves | Use it for |
 |---|---|---|
-| `0.34.0` | never | reproducible pipelines, and anything you audit |
-| `0.34` | with each patch | a minor line you want fixes for |
+| `0.35.0` | never | reproducible pipelines, and anything you audit |
+| `0.35` | with each patch | a minor line you want fixes for |
 | `0` | with each minor | pinup is pre-1.0, so this line can carry behaviour changes |
 | `latest` | with each release | trying it out |
 
@@ -77,7 +78,7 @@ Both images are signed **keyless**: the signature is made against the
 workflow's OIDC identity, so it verifies without a key from us.
 
 ```sh
-cosign verify ghcr.io/ohartwig/pinup:0.34.0 \
+cosign verify ghcr.io/ohartwig/pinup:0.35.0 \
   --certificate-identity-regexp '^https://github.com/ohartwig/pinup/' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
 ```
@@ -86,7 +87,7 @@ Each image also carries an SBOM and build provenance, attached by BuildKit
 as attestations in the image index:
 
 ```sh
-docker buildx imagetools inspect ghcr.io/ohartwig/pinup:0.34.0 \
+docker buildx imagetools inspect ghcr.io/ohartwig/pinup:0.35.0 \
   --format '{{ json .SBOM }}'
 ```
 
