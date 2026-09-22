@@ -1,3 +1,9 @@
+## [0.34.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.0...v0.34.1) (2026-09-22)
+
+### :bug: Fixes
+
+* **plugin,git:** a task cannot turn the checkout into an execution vector ([1f063cd](https://git.ole-hartwig.eu/pinup/pinup/commit/1f063cd1cc8817899abd650473125194323146a7))
+
 ## [0.34.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.33.1...v0.34.0) (2026-09-20)
 
 ### :sparkles: Features
