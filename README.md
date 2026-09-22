@@ -42,10 +42,16 @@ dependencies, and without moving a line of anyone's `renovate.json`:
 - **An effective label beside the declared one.** A rule with `analyze:
   true` asks an analyzer what actually changed: for a Helm chart, the
   application's own version, the values keys the new chart no longer has
-  (`breaking-values`), the subcharts. `matchEffective` rules read the
-  label, the merge request shows the evidence, and the stricter of the two
-  labels decides automerge unless a rule says `trustEffective: true` -
-  for the chart vendor that raises the major on every release.
+  (`breaking-values`), the subcharts, and the container images the chart
+  places out of its own values - which are in no file of the consumer's
+  repository, so nothing else updates or pins them. `matchEffective` rules
+  read the label, the merge request shows the evidence, and the stricter of
+  the two labels decides automerge unless a rule says `trustEffective: true`
+  - for the chart vendor that raises the major on every release.
+- **A released tag that moved is not an update.** A digest that no longer
+  matches the tag a file pinned means the tag was re-pushed. For `latest` that
+  is the tag doing its job; for `v2.10.0` it is a published version rewritten
+  under a pin that named it, and the plan says which of the two it saw.
 - **Renovate-compatible branches.** The same branch names and titles, so an
   estate switches without a single duplicated merge request; open branches
   are adopted.
