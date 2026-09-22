@@ -271,16 +271,23 @@ func postUpgradeTasksUnallowed(in *Input) []Finding {
 func disabled(in *Input) bool { return in.Resolved.Raw["enabled"] == false }
 
 // allowedCommandsCatchAll finds an allowlist that allows everything.
+//
+// Read from the file as written, not from the resolved document: since
+// 2026-09-22 allowedCommands is a GlobalOnly key, so migration strips it
+// from a repository's layer and the resolved document would never show it
+// there. The runner's own file is where the key belongs and where a `.*`
+// pattern is a real finding - and a repository that writes it anyway gets
+// told, next to the compat/migrated note saying the key is inert there.
 func allowedCommandsCatchAll(in *Input) []Finding {
 	var out []Finding
-	for j, c := range stringsOf(in.Resolved.Raw["allowedCommands"]) {
+	for j, c := range stringsOf(in.Layer.Raw["allowedCommands"]) {
 		switch c {
 		case ".*", "^.*$", ".+", "^.+$", "^.*", ".*$":
 		default:
 			continue
 		}
 		p := ptr("allowedCommands", j)
-		out = append(out, Finding{ID: "sec/allowed-commands-catch-all", Category: Security, Severity: Error, Pointer: p, Frame: FrameResolved, Origin: in.originAt(p),
+		out = append(out, Finding{ID: "sec/allowed-commands-catch-all", Category: Security, Severity: Error, Pointer: p, Frame: FrameFile, Origin: in.fileOrigin(p, model.NoRule),
 			Msg: fmt.Sprintf("allowedCommands[%d] admits every command", j)})
 	}
 	return out

@@ -3,7 +3,11 @@
 
 package config
 
-import "fmt"
+import (
+	"fmt"
+	"maps"
+	"slices"
+)
 
 // Migrate applies the normalisations Renovate performs on a configuration
 // before it is used, each one measured on the estate file against the
@@ -20,16 +24,28 @@ import "fmt"
 func Migrate(doc map[string]any) (map[string]any, []string) {
 	var notes []string
 	out := migrateObject(doc, "", &notes)
-	if _, ok := out["executionTimeout"]; ok {
-		delete(out, "executionTimeout")
-		notes = append(notes, "executionTimeout is a global option and is dropped from the repository configuration")
+	for _, k := range slices.Sorted(maps.Keys(GlobalOnly)) {
+		if _, ok := out[k]; ok {
+			delete(out, k)
+			notes = append(notes, k+" is a global option and is dropped from the repository configuration")
+		}
 	}
 	return out, notes
 }
 
-// GlobalOnly names keys that configure the runner rather than a
-// repository. They are read from the file before migration.
-var GlobalOnly = map[string]bool{"executionTimeout": true}
+// GlobalOnly names keys that configure the RUNNER rather than a
+// repository. They are read from the runner's file before migration and
+// dropped from anything a repository brings, because a repository setting
+// one of them decides something about the bot rather than about itself.
+//
+// allowedCommands is the one that matters: it is the allowlist a
+// postUpgradeTasks command must match, so a repository that could set it
+// would be authorising its own commands. Until 2026-09-22 nothing dropped
+// it - this map existed but only executionTimeout was ever deleted, by
+// name, in the loop above - and the fallback in cmd/pinup read the
+// allowlist out of the RESOLVED document, which is the repository's layer
+// whenever the repository carries a configuration file.
+var GlobalOnly = map[string]bool{"executionTimeout": true, "allowedCommands": true}
 
 func migrateObject(obj map[string]any, path string, notes *[]string) map[string]any {
 	out := make(map[string]any, len(obj))
