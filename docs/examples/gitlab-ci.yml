@@ -12,7 +12,7 @@ stages: [update]
 
 pinup:run:
   stage: update
-  image: registry.example.org/images/pinup-toolchain:0
+  image: ghcr.io/ohartwig/pinup-toolchain:0
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   variables:
@@ -39,7 +39,7 @@ pinup:run:
 # configuration - shows what would change, writes nothing.
 pinup:whatif:
   stage: update
-  image: registry.example.org/images/pinup-toolchain:0
+  image: ghcr.io/ohartwig/pinup-toolchain:0
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
   script:

@@ -74,6 +74,20 @@ cosign verify-blob --key <public-key> --signature SHA256SUMS.sig \
 sha256sum -c SHA256SUMS
 ```
 
+Or as a container image — `ghcr.io/ohartwig/pinup` (git, gpg, nothing else)
+and `ghcr.io/ohartwig/pinup-toolchain` (plus composer, npm, node, go, yarn
+for lock refreshes), `linux/amd64` and `linux/arm64`, signed keyless:
+
+```sh
+docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
+  whatif --repo . --config renovate.json --report plan.json
+```
+
+The image carries the released binary, checked against `SHA256SUMS`; it is
+not compiled a second time there either. [Getting
+started](docs/getting-started.md#the-container-image) has the tags and the
+`cosign verify` line.
+
 ## Quickstart
 
 Four steps, each complete on its own. Stop where you have what you need.

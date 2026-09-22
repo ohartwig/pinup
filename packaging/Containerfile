@@ -1,0 +1,85 @@
+# SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
+# SPDX-License-Identifier: Apache-2.0
+
+# pinup, packaged for the job it runs in.
+#
+# Wolfi, not distroless: pinup needs a real git binary, because it drives git
+# through os/exec so that signing, credential handling and push semantics are
+# git's own. No Node, no PHP - the runtime pinup replaces carried both, and the
+# smoke test below keeps that true. What a lock refresh needs lives in the
+# toolchain image beside this one (Containerfile.toolchain).
+#
+# THE BINARY IS NOT BUILT HERE. It comes from the release: the workflow that
+# builds this image downloads the four signed binaries of the tag, checks them
+# against SHA256SUMS and copies one in. That split is deliberate and it is
+# older than this file - a workflow that rebuilt the binary produced a second
+# artefact under the release's name with nobody's signature on it, and was
+# removed for exactly that reason. Packaging a signed binary is not building
+# one.
+#
+# The base is Chainguard's public wolfi-base, pinned by digest: the tag alone
+# moves, and an image that cannot say which base it was built on cannot be
+# rebuilt. The digest is what a bump changes, in a reviewed diff.
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:1d95114038f76513a9ace6fca107d5582b08c65981f81f61cb56bf7fd2ef216d
+
+# Set by BuildKit for each leg of a multi-platform build.
+ARG TARGETARCH
+
+USER root
+
+# Packages by the command they provide, not by name: Wolfi's meta-packages
+# install an SBOM entry and no binary. gpg AND its agent for the GPG signing
+# path - Wolfi ships the agent as its own package, and an import without it
+# fails with "No agent running"; ssh-keygen for the SSH one. Nothing pinned
+# here: Wolfi rolls forward, and the base digest above is what fixes this
+# image in time.
+RUN apk add --no-cache \
+      cmd:git \
+      cmd:gpg \
+      cmd:gpg-agent \
+      cmd:ssh-keygen \
+      ca-certificates-bundle
+
+COPY dist/pinup-linux-${TARGETARCH} /usr/local/bin/pinup
+
+# safe.directory: a CI runner mounts the checkout with a different owner than
+# the job user, and git then refuses to touch it.
+RUN chmod 0755 /usr/local/bin/pinup \
+ && git config --system --add safe.directory '*' \
+ && adduser -D -u 1000 pinup
+
+# Smoke test: pinup answers, gpg can make and import a key, git can drive a
+# repository - and neither node nor php is here. The last block is the
+# invariant, not a curiosity: "no foreign runtime in the core" is a promise
+# this image either keeps or fails the build on.
+#
+# The runtime check is a loop with an explicit exit, and not the `! command
+# -v node` it reads like, because that form cannot fail for anything but the
+# last line: POSIX disables `set -e` for a command whose status is inverted
+# with `!`, so a present node would make that line return 1, be ignored, and
+# leave the RUN's status to the line after it. Measured in /bin/sh:
+# `set -eu; ! command -v ls; echo REACHED` prints REACHED and exits 0.
+RUN set -eu; \
+    pinup version; \
+    gpg --version > /dev/null; \
+    printf 'Key-Type: eddsa\nKey-Curve: ed25519\nName-Real: smoke\nName-Email: smoke@invalid\n%%no-protection\n%%commit\n' | gpg --batch --quiet --gen-key; \
+    gpg --batch --quiet --export-secret-keys smoke@invalid | gpg --batch --quiet --import 2>/dev/null || true; \
+    test "$(gpg --batch --list-secret-keys --with-colons | grep -c '^sec')" -ge 1; \
+    gpgconf --kill gpg-agent; \
+    rm -rf ~/.gnupg; \
+    ssh-keygen -t ed25519 -N "" -C smoke -f /tmp/smoke_key -q; \
+    d="$(mktemp -d)"; \
+    git -C "$d" init -q -b main; \
+    git -C "$d" -c user.email=smoke@invalid -c user.name=Smoke commit -q --allow-empty -m "feat: smoke"; \
+    test "$(git -C "$d" log -1 --format=%s)" = "feat: smoke"; \
+    rm -rf "$d" /tmp/smoke_key /tmp/smoke_key.pub; \
+    for forbidden in node php; do \
+      if command -v "$forbidden" > /dev/null 2>&1; then \
+        echo "smoke: $forbidden is in this image; the core carries no foreign runtime" >&2; \
+        exit 1; \
+      fi; \
+    done
+
+USER 1000
+WORKDIR /workspace
+CMD ["pinup", "--help"]

@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
+# SPDX-License-Identifier: Apache-2.0
+
+# pinup plus the tools a lock refresh or a postUpgradeTask runs on the job's
+# PATH: composer, npm, go, yarn.
+#
+# A SECOND IMAGE, not tools in the first one. "No foreign runtime in the core"
+# is what the base image's `! command -v node` smoke test proves, and a task
+# runs on the job image's PATH - pinup's plugin runner execs it, there is no
+# container-in-container. Not run-time installs either, the way the runtime
+# pinup replaces did them: those fetch unpinned tools over the network on
+# every run, and pinned, reviewed provenance is the whole point. Use this
+# image where the repositories carry composer, npm or Go module locks; the
+# slim one everywhere else.
+#
+# The base is the pinup image built from the same release, handed in by
+# digest. It is an ARG rather than a written-out pin because the two images
+# are cut in one run from one tag: a digest written here would name the
+# previous release for the length of every build. The workflow passes the
+# digest it just pushed, and the label below records what was used.
+ARG BASE=ghcr.io/ohartwig/pinup:latest
+FROM ${BASE}
+
+USER root
+
+# Address selection before apk: without /etc/gai.conf, apk tries the A records
+# first on a host with no public IPv4 and waits a minute per step. The base
+# image's own line does not carry into this stage; every stage that calls apk
+# writes it.
+RUN printf 'label     ::1/128       0\nlabel     ::/0          1\nlabel     ::ffff:0:0/96 4\nprecedence ::1/128       50\nprecedence ::/0          40\nprecedence ::ffff:0:0/96 10\n' > /etc/gai.conf
+
+# Each toolchain pinned to a Wolfi package and version, so a bump is a
+# reviewed diff rather than whatever the mirror served that morning. The LTS
+# line for node, the current line for php and go. composer resolves with
+# --ignore-platform-reqs, so the PHP here needs no extension the target
+# runtime has: it is composer's interpreter, not the application's.
+#
+# Wolfi rolls forward and keeps only the newest revision of a package, so an
+# exact pin stops resolving once the next one lands - the bump is not
+# optional maintenance, it is how this file keeps building. pinup proposes it
+# from the annotations.
+# pinup: datasource=custom.wolfi depName=php-8.5 versioning=apk
+ARG PHP_VERSION=8.5.10-r2
+# pinup: datasource=custom.wolfi depName=composer versioning=apk
+ARG COMPOSER_VERSION=2.10.3-r0
+# pinup: datasource=custom.wolfi depName=nodejs-24 versioning=apk
+ARG NODEJS_VERSION=24.21.0-r1
+# npm-12, not npm: Wolfi's `npm` is the retired name of the family, `npm-12`
+# the maintained series with the same binary.
+# pinup: datasource=custom.wolfi depName=npm-12 versioning=apk
+ARG NPM_VERSION=12.0.2-r3
+# pinup: datasource=custom.wolfi depName=go-1.27 versioning=apk
+ARG GO_VERSION=1.27.1-r0
+# yarn classic, for the repositories whose lock is a yarn.lock.
+# pinup: datasource=custom.wolfi depName=yarn versioning=apk
+ARG YARN_VERSION=1.22.22-r8
+
+RUN apk add --no-cache \
+      php-8.5=${PHP_VERSION} \
+      php-8.5-curl=${PHP_VERSION} \
+      composer=${COMPOSER_VERSION} \
+      nodejs-24=${NODEJS_VERSION} \
+      npm-12=${NPM_VERSION} \
+      go-1.27=${GO_VERSION} \
+      yarn=${YARN_VERSION}
+
+# Smoke test: every tool answers, and pinup is still the one from the base.
+# `php -m | grep curl` because composer without the curl extension fails at
+# the first download, with a message about the platform rather than about
+# the extension.
+RUN set -eu; \
+    pinup version; \
+    php --version > /dev/null; \
+    php -m | grep -qi '^curl$'; \
+    composer --version --no-ansi > /dev/null; \
+    node --version > /dev/null; \
+    npm --version > /dev/null; \
+    yarn --version | grep -q '^1\.'; \
+    go version > /dev/null
+
+USER 1000
+WORKDIR /workspace
+CMD ["pinup", "--help"]

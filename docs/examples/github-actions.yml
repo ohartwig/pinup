@@ -3,6 +3,12 @@
 # token needs contents, pull requests and issues read/write on the
 # repositories it should update. GITHUB_TOKEN of the workflow works for
 # the repository the workflow runs in.
+#
+# On the image instead of `go install`: add
+#   container: ghcr.io/ohartwig/pinup:0
+# to the job and drop the setup-go and go install steps. The image carries
+# git and nothing pinup does not need; use pinup-toolchain where a lock
+# file has to be regenerated.
 
 name: dependency updates
 on:
