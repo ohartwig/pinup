@@ -15,7 +15,7 @@ not run, and `custom.regex` must be named to run the custom managers.
 
 | Name | Reads | Notes |
 |---|---|---|
-| `dockerfile` | `Dockerfile`, `Containerfile`, `*.Dockerfile` | `FROM`, `COPY --from`, `# syntax=`; ARG-interpolated images; digest pins kept or added with `pinDigests` |
+| `dockerfile` | `Dockerfile`, `Containerfile`, `*.Dockerfile` | `FROM`, `COPY --from`, `# syntax=`; ARG-interpolated images; digest pins kept or added with `pinDigests`; warns about an unmanaged version pin (see below) |
 | `gitlabci` | `.gitlab-ci.yml` | `image:` and `services:` at every nesting, string and object form; `include: component:` pins (`gitlab-tags` on the component's project); `$VAR` tags are reported as unresolvable rather than guessed |
 | `kustomize` | `kustomization.yaml` | `images:` with `newTag`/`digest`, remote `resources` and `components` with `?ref=`, `helmCharts:` |
 | `npm` | `package.json`, lock files | dependencies of every type, `engines.node` (`node-version`), `packageManager`, `pnpm.overrides`; workspaces read and refresh the root lock |
@@ -26,6 +26,18 @@ not run, and `custom.regex` must be named to run the custom managers.
 | `custom.regex` | what `managerFilePatterns` name | [configuration](configuration.md) |
 
 Both `# renovate:` and `# pinup:` annotation prefixes are read.
+
+An `ARG` or `ENV` whose name ends in `_VERSION`, `_TAG` or `_REF`, whose
+value is shaped like a release (three numeric components at least,
+optionally `-rN` or `@sha256:…`) and which carries no annotation is
+reported as an **unmanaged version pin**. It is a warning on the plan, not
+an update: the value has no datasource, so nothing can be proposed for it
+— which is exactly why it ages unseen. Measured on 2026-09-22 in a
+customer's scheduler image: the pin one line above it was annotated and
+current, this one had stood still for four upstream releases, and the
+sixteen findings a container scan reported were all its Go standard
+library. Two numeric components (`8.5`, `1.27`) name a line rather than a
+release and stay quiet, as does a checksum beside a pin.
 
 ## Datasources
 
