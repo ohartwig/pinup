@@ -174,7 +174,12 @@ func (m *Manager) Extract(_ context.Context, f extract.File, cfg extract.Manager
 	}
 
 	applyManagerDefaults(deps, cfg)
-	return extract.Result{Deps: deps}, nil
+	return extract.Result{
+		Deps: deps,
+		// A pin nobody manages is reported next to the ones that are - see
+		// unmanaged.go for the incident that put it there.
+		Warnings: unmanagedPins(f.Path, lines, deps),
+	}, nil
 }
 
 // applyManagerDefaults stamps ManagerConfig's fallback registry URLs and
