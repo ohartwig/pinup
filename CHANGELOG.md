@@ -1,3 +1,14 @@
+## [0.36.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.35.0...v0.36.0) (2026-09-22)
+
+### :sparkles: Features
+
+* **dockerfile:** report a version pin that no datasource manages ([633749e](https://git.ole-hartwig.eu/pinup/pinup/commit/633749ee58629394db1afd7281df3e972dc1e548))
+* **analyzer,planner:** name the images a chart places, and catch a re-pushed release ([c30f530](https://git.ole-hartwig.eu/pinup/pinup/commit/c30f53036978cb56965f395379d013a00a409719))
+
+### :memo: Documentation
+
+* a fence without a language, and a wrapped line that read as a list ([c58f0cc](https://git.ole-hartwig.eu/pinup/pinup/commit/c58f0cc121ad06e91db3fe9239fcb30f266624c7))
+
 ## [0.35.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.34.3...v0.35.0) (2026-09-22)
 
 ### :sparkles: Features
