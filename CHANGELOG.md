@@ -1,3 +1,21 @@
+## [0.39.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.38.0...v0.39.0) (2026-09-23)
+
+### :sparkles: Features
+
+* **npm:** read and refresh pnpm-lock.yaml ([71224bf](https://git.ole-hartwig.eu/pinup/pinup/commit/71224bf050ae1070f4202825a38b6b4bc38cd005))
+
+### :bug: Fixes
+
+* **planner,runner:** hold a bump its lock would fall behind, close what the config retired ([e4fa7fe](https://git.ole-hartwig.eu/pinup/pinup/commit/e4fa7fe6bf34addaaa25ca6ea2fbe8802dcf9965))
+
+### :white_check_mark: Tests
+
+* **whatif:** a test that plants its own tree does not need the ci-tools checkout ([1750a16](https://git.ole-hartwig.eu/pinup/pinup/commit/1750a16526d75d7d6051c918708f48b3a3ed53d6))
+
+### :repeat: Continuous Integrations
+
+* **images:** wait for the release's files, and move rolling tags only forward ([f4600ad](https://git.ole-hartwig.eu/pinup/pinup/commit/f4600adb546e0a4f5727c1d3b06c4fde01436180))
+
 ## [0.38.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.37.0...v0.38.0) (2026-09-23)
 
 ### :sparkles: Features
