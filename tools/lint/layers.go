@@ -100,6 +100,27 @@ func group(pkg string) string {
 	return pkg
 }
 
+// CheckEveryPackageHasALayer refuses a package the layer map does not know.
+// CheckImportLayering skips a package it cannot place - as the importer and
+// as the import - so without this a new package stands outside the layering
+// rule from the day it is created, and nothing says so. sandbox did, for
+// the length of one local test run (2026-09-23).
+func CheckEveryPackageHasALayer(files []File) []Violation {
+	var vs []Violation
+	seen := map[string]bool{}
+	for _, f := range files {
+		if f.IsTest || exempt(f.Pkg) || seen[f.Pkg] {
+			continue
+		}
+		seen[f.Pkg] = true
+		if _, ok := Layer(f.Pkg); !ok {
+			vs = append(vs, Violation{f.Path, 1,
+				fmt.Sprintf("package %q has no layer in tools/lint/layers.go; without one it is outside the layering rule", f.Pkg)})
+		}
+	}
+	return vs
+}
+
 // CheckImportLayering enforces the layer rule and its single exception.
 func CheckImportLayering(files []File) []Violation {
 	var vs []Violation

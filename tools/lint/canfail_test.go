@@ -82,6 +82,14 @@ func TestEveryCheckCanFail(t *testing.T) {
 			wantMsg: "the only L2 import permitted here is \"extract\"",
 		},
 		{
+			// A package the layer map does not know: CheckImportLayering
+			// would skip it on both sides of every import.
+			check:   "EveryPackageHasALayer",
+			files:   map[string]string{"nonesuch/a.go": hdr + "package nonesuch\n"},
+			wantIn:  "nonesuch/a.go",
+			wantMsg: "has no layer",
+		},
+		{
 			check:   "RunnerHasNoImplementations",
 			files:   map[string]string{"runner/a.go": imp("runner", "manager/dockerfile")},
 			wantIn:  "runner/a.go",
