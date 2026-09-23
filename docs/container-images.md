@@ -15,15 +15,17 @@ with images is **0.35.0**; the binaries on the release page go back further.
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
-  pinup whatif --repo . --config .pinup.json --report plan.json
+  pinup whatif --repo . --config .pinup.yaml --report plan.json
 ```
 
 `--config` names the file the run is configured by. pinup's own names are
-`.pinup.yaml`, `.pinup.yml`, `.pinup.json` and `.pinup.jsonc`; it reads
-Renovate's `renovate.json`, `renovate.json5`, `.renovaterc` and
-`.renovaterc.json` just as well, in
-[Renovate's configuration language](configuration.md) either way — coming
-from Renovate means pointing at the file that is already there.
+`.pinup.yaml`, `.pinup.yml`, `.pinup.json` and `.pinup.jsonc` — YAML first
+because it is the one that takes comments, and a configuration full of
+rules is a thing you explain to the next reader. It reads Renovate's
+`renovate.json`, `renovate.json5`, `.renovaterc` and `.renovaterc.json`
+just as well, in [Renovate's configuration language](configuration.md)
+either way: coming from Renovate means pointing at the file that is already
+there.
 
 ## Which one
 
