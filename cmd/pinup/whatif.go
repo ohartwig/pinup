@@ -388,6 +388,10 @@ type whatifRun struct {
 	// versions were read from - beside it or, for terraform, an ancestor's
 	// - for the edit that moves the lock with the manifest.
 	lockPaths map[string]string
+	// foreignLocks maps "manager|dir" to a lock pinup finds there but can
+	// neither read nor refresh (unrefreshableLocks); a branch that edits
+	// such a manifest is held rather than pushed without its lock.
+	foreignLocks map[string]string
 
 	datasources   lookup.Registry
 	fetcher       *lookup.Fetcher
@@ -504,6 +508,7 @@ func (r *whatifRun) extractAll() error {
 	// directory: a manifest edit there needs a lock refresh task.
 	r.locks = map[string]string{}
 	r.lockPaths = map[string]string{}
+	r.foreignLocks = map[string]string{}
 	for _, match := range r.found.Matches {
 		body, ok := r.contents[match.Path]
 		if !ok {
@@ -526,6 +531,11 @@ func (r *whatifRun) extractAll() error {
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		lock := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
+		if lock.versions == nil {
+			if f := foreignLock(o.Root, match.Path, wire.ManagerNameOf(match.Manager)); f != "" {
+				r.foreignLocks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = f
+			}
+		}
 		if lock.versions != nil {
 			r.lockPaths[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = filepath.Join(lock.dir, lock.name)
 		}
@@ -878,7 +888,7 @@ func (r *whatifRun) realise() error {
 		// postUpgradeTasks. A command the allowlist refuses or a toolchain
 		// this machine lacks holds the branch by name; the edits are then
 		// dropped, since half a branch is worse than none.
-		tasks, hold := tasksFor(branches[i], plan.Updates, r.postUpgrade, r.locks, allowed, o.LookPath)
+		tasks, hold := tasksFor(branches[i], plan.Updates, r.postUpgrade, r.locks, r.foreignLocks, allowed, o.LookPath)
 		branches[i].Tasks = tasks
 		if hold != nil {
 			holdBranch(&branches[i], plan.Updates, *hold)
@@ -1306,8 +1316,9 @@ func lockedVersions(root, manifest, manager string, lockFiles []string, plan *mo
 	}
 	dirs := []string{filepath.Dir(manifest)}
 	// terraform: init ran at the manifest's directory or an ancestor. npm:
-	// a workspace member's versions are in the root's lock (measured:
-	// nozzleops/platform, four package.json under one package-lock.json).
+	// a workspace member's versions are in the root's lock (measured
+	// 2026-09-15: nozzleops/platform, four package.json under one
+	// package-lock.json - a pnpm-lock.yaml since, see unrefreshableLocks).
 	if manager == "terraform" || manager == "npm" {
 		for d := dirs[0]; d != "." && d != "/" && d != ""; {
 			d = filepath.Dir(d)
@@ -1334,6 +1345,37 @@ func lockedVersions(root, manifest, manager string, lockFiles []string, plan *mo
 		}
 	}
 	return lockFile{}
+}
+
+// unrefreshableLocks are the lock files of a manager's ecosystem that pinup
+// can neither read nor regenerate. Where one sits beside or above a
+// manifest, an edit to the manifest leaves it behind: the manifest names
+// one version, the lock another, and the next frozen install fails. That is
+// what a manifest-only branch did to nozzleops/platform from 2026-09-17 -
+// a pnpm workspace, four package.json and one pnpm-lock.yaml, the lock two
+// bumps behind within a week.
+var unrefreshableLocks = map[string][]string{
+	"npm": {"pnpm-lock.yaml", "bun.lock", "bun.lockb"},
+}
+
+// foreignLock is the path of an unrefreshable lock governing manifest: in
+// its directory or, for npm, where a workspace root may keep it, an
+// ancestor's. Empty when there is none.
+func foreignLock(root, manifest, manager string) string {
+	names := unrefreshableLocks[manager]
+	if len(names) == 0 {
+		return ""
+	}
+	for d := filepath.Dir(manifest); ; d = filepath.Dir(d) {
+		for _, name := range names {
+			if _, err := os.Stat(filepath.Join(root, d, name)); err == nil {
+				return filepath.Join(d, name)
+			}
+		}
+		if d == "." || d == "/" || d == "" {
+			return ""
+		}
+	}
 }
 
 // postUpgradeOf reads an update's resolved postUpgradeTasks object.
@@ -1374,8 +1416,8 @@ func stringList(v any) []string {
 // directory) whose lock the run read and whose manifest the branch edits,
 // then the postUpgradeTasks of its updates, deduplicated by command. The
 // hold, when set, names the first thing that stops the branch: a refused
-// command or a missing toolchain.
-func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plugin.PostUpgrade, locks map[string]string, allowed []string, lookPath func(string) (string, error)) ([]model.Task, *model.Block) {
+// command, a missing toolchain, or a lock the branch would leave behind.
+func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plugin.PostUpgrade, locks, foreign map[string]string, allowed []string, lookPath func(string) (string, error)) ([]model.Task, *model.Block) {
 	keys := map[string]bool{}
 	for _, k := range b.UpdateKeys {
 		keys[k] = true
@@ -1406,6 +1448,13 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 			continue
 		}
 		if locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)] == "" {
+			// No lock pinup reads: a manifest-only edit is the whole
+			// change - unless a lock it cannot refresh governs this
+			// manifest, in which case the edit alone would break it.
+			if f := foreign[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)]; f != "" {
+				return nil, &model.Block{Reason: model.BlockPluginRequired, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
+					Note: fmt.Sprintf("%s governs %s and pinup cannot refresh it; the branch would leave the lock behind its manifest", f, u.Dep.File)}
+			}
 			continue
 		}
 		if _, seen := names[k]; !seen {

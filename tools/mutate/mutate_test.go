@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): thirty-two named, deterministic
+// Package mutate is the mutation suite (H.7): thirty-four named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -135,8 +135,16 @@ var mutators = []mutator{
 		"\treturn filepath.Join(cache, \".pinup-repos\", hex.EncodeToString(sum[:8]))", "\treturn filepath.Join(cache, hex.EncodeToString(sum[:0]))", []string{"./sandbox/"}, false, ""},
 	{32, "delivery", "the task runner forgets which variables are caches", "cmd/pinup/env.go",
 		"\tsb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state), Caches: taskCaches}", "\tsb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state)}", []string{"./cmd/pinup/"}, false, ""},
+	// planning and pruning (2026-09-23): a manifest bump pushed without the
+	// pnpm lock that governs it, and a request the configuration retired
+	// left open - both measured in the estate the same day.
+	{33, "delivery", "a branch is pushed without the lock that governs it", "cmd/pinup/whatif.go",
+		"\t\t\tif f := foreign[u.Dep.Manager+\"|\"+filepath.Dir(u.Dep.File)]; f != \"\" {",
+		"\t\t\tif f := foreign[u.Dep.Manager+\"|\"+filepath.Dir(u.Dep.File)]; f != \"\" && false {", []string{"./cmd/pinup/"}, false, ""},
+	{34, "delivery", "a request the configuration retired stays open", "runner/runner.go",
+		"\t\tif b.SuppressedBy.Settled() {", "\t\tif false && b.SuppressedBy.Settled() {", []string{"./runner/"}, false, ""},
 	// the one change no test can see
-	{33, "sentinel", "a comment changes", "model/model.go",
+	{35, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

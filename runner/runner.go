@@ -244,10 +244,15 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 
 // prune closes the open requests whose branch the plan does not name, as
 // autoclosed, and deletes their branches. A branch somebody committed to
-// is theirs and stays, with a warning; a branch the plan names - held or
-// not - stays whatever its state. The measured case: a bump merged to the
-// base through another request left its own open (koh-gitops!2647,
-// 2026-09-16), which the comparison then read as an update pinup misses.
+// is theirs and stays, with a warning. A branch the plan names stays
+// whatever its state while it is only waiting - an age, a window, an
+// approval; one the configuration has settled against (BlockReason.Settled)
+// is named only to say why, and its request goes like one the plan
+// dropped. The measured cases: a bump merged to the base through another
+// request left its own open (koh-gitops!2647, 2026-09-16), which the
+// comparison then read as an update pinup misses; and two component pins
+// that `enabled: false` had retired stayed open for days, each one merge
+// away from undoing the rollout that retired them (2026-09-23).
 func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
 	open, err := openUnder(ctx, o, plan)
 	if err != nil {
@@ -255,7 +260,12 @@ func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
 		return nil
 	}
 	named := map[string]bool{}
+	settled := map[string]model.BlockReason{}
 	for _, b := range plan.Branches {
+		if b.SuppressedBy.Settled() {
+			settled[b.Name] = b.SuppressedBy
+			continue
+		}
 		named[b.Name] = true
 	}
 	var out []Outcome
@@ -280,7 +290,11 @@ func prune(ctx context.Context, o Options, plan *model.Plan) []Outcome {
 		if err := o.Repo.DeleteRemoteBranch(ctx, o.Remote, m.SourceBranch); err != nil {
 			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: !%d closed, the branch stays: %v", m.SourceBranch, m.IID, err)})
 		}
-		out = append(out, Outcome{Branch: m.SourceBranch, Action: "autoclosed", MRIID: m.IID, Message: "no longer planned"})
+		why := "no longer planned"
+		if r, ok := settled[m.SourceBranch]; ok {
+			why = "the configuration settled against it: " + string(r)
+		}
+		out = append(out, Outcome{Branch: m.SourceBranch, Action: "autoclosed", MRIID: m.IID, Message: why})
 	}
 	return out
 }

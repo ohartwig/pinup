@@ -205,6 +205,19 @@ const (
 	BlockClosedByHand BlockReason = "closedByHand"
 )
 
+// Settled reports whether a reason is the configuration's verdict on an
+// update rather than a wait: `enabled: false`, a version outside
+// allowedVersions. Every other reason passes - an age is reached, a window
+// opens, a limit frees up, somebody approves, a plugin arrives. A branch
+// held for a settled reason will not be written as it stands, so a request
+// already open for it proposes what the configuration now refuses
+// (measured 2026-09-23: yasrt/cli!46 and pinup/pinup!16 pinned CI
+// components that the rolling-major rollout had moved to @1 and @2, open
+// for five days under branches the plan named as disabled).
+func (r BlockReason) Settled() bool {
+	return r == BlockDisabled || r == BlockAllowedVersions
+}
+
 // Evidence is one observation an analyzer made between two versions: what
 // it compared, the two values, and what it concluded from them. A row of
 // the evidence table in the merge request.

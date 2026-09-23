@@ -91,6 +91,22 @@ func ciToolsOptions(t *testing.T, at time.Time) whatifOptions {
 	}
 }
 
+// treeOptions is ciToolsOptions for a test that plants its own tree: the
+// estate configuration and the canned answers, the checkout not needed.
+// Until 2026-09-23 such tests took ciToolsOptions and replaced Root - and
+// skipped wherever the ci-tools checkout was absent, which is CI: eight of
+// them - six older than that day, the lock-file maintenance hold and the
+// terraform lock move among them - had never run there. The mutation suite
+// found it: a mutator red on a laptop and green in CI. A test that reads
+// files out of the checkout still needs ciTools, and still skips.
+func treeOptions(t *testing.T, root, repo string, at time.Time) whatifOptions {
+	t.Helper()
+	return whatifOptions{
+		Root: root, ConfigPath: fixture.Config(t),
+		RepoName: repo, Now: at, Datasources: canned(),
+	}
+}
+
 // ciTools is the estate's ci-tools checkout, the repository the canned
 // answers above were written for; the test skips where the estate root
 // does not name it or the checkout is not on this machine.
@@ -561,8 +577,7 @@ func TestRepositoryConfigExtendsTheRunnerFileByAlias(t *testing.T) {
   "packageRules": [{"description": "the fixture's own rule", "matchPackageNames": ["*"], "enabled": false}]
 }`), 0o644)
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(t, at)
-	opts.Root = root
+	opts := treeOptions(t, root, "devops/images/ci-tools", at)
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
 		t.Fatal(err)
@@ -724,8 +739,7 @@ func TestARepositoryWithoutConfigIgnoresNodeModules(t *testing.T) {
 	os.WriteFile(root+"/package.json", []byte(`{"name":"root","dependencies":{"lodash":"4.17.20"}}`), 0o644)
 	os.WriteFile(root+"/node_modules/dropzone/package.json", []byte(`{"name":"dropzone","version":"6.0.0","devDependencies":{"karma":"^6.1.0"}}`), 0o644)
 	at := time.Date(2026, 9, 13, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(t, at)
-	opts.Root = root
+	opts := treeOptions(t, root, "devops/images/ci-tools", at)
 	plan, err := whatif(context.Background(), opts)
 	if err != nil {
 		t.Fatal(err)
@@ -921,8 +935,7 @@ func TestAnNpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
   "apps/web/node_modules/react": {"version":"18.3.1"}}}`), 0o644)
 	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
 	at := time.Date(2026, 9, 15, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(t, at)
-	opts.Root, opts.RepoName = root, "nozzleops/platform"
+	opts := treeOptions(t, root, "nozzleops/platform", at)
 	opts.Datasources["npm"] = cannedDS{name: "npm", scheme: "npm", releases: map[string][]string{
 		"lodash": {"4.17.20", "4.17.21"}, "react": {"18.3.1", "19.1.0"},
 	}}
@@ -962,6 +975,69 @@ func TestAnNpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
 				t.Errorf("a workspace refresh names a package: %v", task.Command)
 			}
 		}
+	}
+}
+
+// A pnpm workspace: pinup reads neither pnpm-lock.yaml nor regenerates it,
+// so a bump in a member's package.json is held, naming the lock, instead of
+// pushed without it - the manifest-only branch left nozzleops/platform's
+// lock two bumps behind its manifests (2026-09-17, 2026-09-23). Without any
+// lock the same bump is a manifest edit and nothing more, as before.
+func TestABumpUnderALockPinupCannotRefreshIsHeld(t *testing.T) {
+	for _, tc := range []struct {
+		name, lock string
+		held       bool
+	}{
+		{"pnpm workspace", "pnpm-lock.yaml", true},
+		{"bun workspace", "bun.lock", true},
+		{"no lock at all", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			os.MkdirAll(root+"/apps/web", 0o755)
+			os.WriteFile(root+"/package.json", []byte(`{"name":"platform","private":true}`), 0o644)
+			os.WriteFile(root+"/apps/web/package.json", []byte(`{"name":"web","dependencies":{"lodash":"4.17.20"}}`), 0o644)
+			if tc.lock != "" {
+				os.WriteFile(root+"/"+tc.lock, []byte("lockfileVersion: '9.0'\n"), 0o644)
+			}
+			os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
+			opts := treeOptions(t, root, "nozzleops/platform", time.Date(2026, 9, 23, 14, 5, 0, 0, time.UTC))
+			opts.Datasources["npm"] = cannedDS{name: "npm", scheme: "npm", releases: map[string][]string{"lodash": {"4.17.20", "4.17.21"}}}
+			opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
+			plan, err := whatif(context.Background(), opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var found *model.Branch
+			for i, b := range plan.Branches {
+				if strings.Contains(strings.Join(b.UpdateKeys, " "), "lodash") {
+					found = &plan.Branches[i]
+				}
+			}
+			if found == nil {
+				t.Fatalf("no lodash branch; branches: %+v", plan.Branches)
+			}
+			if !tc.held {
+				if found.SuppressedBy != "" {
+					t.Errorf("a manifest without a lock was held: %q", found.SuppressedBy)
+				}
+				return
+			}
+			if found.SuppressedBy != model.BlockPluginRequired {
+				t.Fatalf("suppressedBy = %q, want %q: the branch would be pushed without %s", found.SuppressedBy, model.BlockPluginRequired, tc.lock)
+			}
+			named := false
+			for _, u := range plan.Updates {
+				for _, blk := range u.Blocks {
+					if blk.Reason == model.BlockPluginRequired && strings.Contains(blk.Note, tc.lock) {
+						named = true
+					}
+				}
+			}
+			if !named {
+				t.Errorf("the hold does not name %s", tc.lock)
+			}
+		})
 	}
 }
 
@@ -1008,8 +1084,7 @@ func TestATerraformProviderBumpMovesTheLock(t *testing.T) {
 `), 0o644)
 	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
 	at := time.Date(2026, 9, 15, 14, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(t, at)
-	opts.Root, opts.RepoName = root, "devops/koh-infra"
+	opts := treeOptions(t, root, "devops/koh-infra", at)
 	ds := &hashingDS{cannedDS: cannedDS{name: "terraform-provider", scheme: "hashicorp", releases: map[string][]string{"hashicorp/aws": {"6.64.0", "6.65.0"}}},
 		hashes: map[string][]string{"6.65.0": {"h1:new=", "zh:bbbb"}}}
 	opts.Datasources["terraform-provider"] = ds
@@ -1057,8 +1132,7 @@ func TestALockMaintenanceBranchRaisesNoApplyWarning(t *testing.T) {
 	os.WriteFile(root+"/composer.lock", []byte(`{"packages":[{"name":"monolog/monolog","version":"3.8.0"}],"packages-dev":[]}`), 0o644)
 	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"], "lockFileMaintenance": {"enabled": true, "schedule": ["at any time"]}}`), 0o644)
 	at := time.Date(2026, 9, 16, 1, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(t, at)
-	opts.Root, opts.RepoName = root, "development/moselwal/site"
+	opts := treeOptions(t, root, "development/moselwal/site", at)
 	opts.Datasources["packagist"] = cannedDS{name: "packagist", scheme: "composer", releases: map[string][]string{"monolog/monolog": {"3.8.0"}}}
 	opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
 	plan, err := whatif(context.Background(), opts)
@@ -1106,8 +1180,7 @@ func TestALockMaintenanceWithoutARefreshIsHeldAsPluginRequired(t *testing.T) {
 `), 0o644)
 	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"], "lockFileMaintenance": {"enabled": true, "schedule": ["at any time"]}}`), 0o644)
 	at := time.Date(2026, 9, 16, 1, 5, 0, 0, time.UTC)
-	opts := ciToolsOptions(t, at)
-	opts.Root, opts.RepoName = root, "devops/koh-infra"
+	opts := treeOptions(t, root, "devops/koh-infra", at)
 	opts.Datasources["terraform-provider"] = cannedDS{name: "terraform-provider", scheme: "hashicorp", releases: map[string][]string{"hashicorp/aws": {"6.64.0"}}}
 	opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
 	plan, err := whatif(context.Background(), opts)
@@ -1170,8 +1243,7 @@ func TestAnAnalyzedMajorRelaxesAutomergeOnlyWhenTrusted(t *testing.T) {
   ]
 }`), 0o644)
 		at := time.Date(2026, 9, 16, 12, 0, 0, 0, time.UTC)
-		opts := ciToolsOptions(t, at)
-		opts.Root, opts.RepoName = root, "acme/platform"
+		opts := treeOptions(t, root, "acme/platform", at)
 		opts.Datasources["helm"] = cannedDS{name: "helm", scheme: "semver", releases: map[string][]string{"redis": {"20.13.4", "21.0.0"}}}
 		an := &chartAnalyzer{}
 		opts.Analyzers = classify.Registry{an}
