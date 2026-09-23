@@ -30,6 +30,8 @@
 package sandbox
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
@@ -59,6 +61,18 @@ type Sandbox struct {
 	// starts is skipped; a directory is covered by an empty one, anything
 	// else by /dev/null.
 	Hide []string
+	// Caches are the environment variables that name a package manager's
+	// cache (COMPOSER_HOME, npm_config_cache, GOMODCACHE, ...). The job
+	// shares one of each between every repository it works on, and every
+	// tool that reads one trusts what it finds: a task that writes into it
+	// poisons the next repository's lock refresh. So a task gets the
+	// directory of its own repository in place of each one it is handed -
+	// the same path, a per-repository content.
+	Caches []string
+	// Repo names the repository the task works on, and so the cache it
+	// gets: the branches of one repository share one, two repositories
+	// never do. Empty gives every task a cache of its own.
+	Repo string
 }
 
 // spec is what the shim is told, as its second argument.
@@ -71,9 +85,10 @@ type spec struct {
 }
 
 // op is one bind mount. Src is bound over Path: an empty directory or
-// /dev/null for a hidden path, the path itself for a kept one - opened by
-// the shim before anything is hidden, because afterwards it may be
-// unreachable by name.
+// /dev/null for a hidden path, the path itself for a kept one, the
+// repository's own directory for a cache - opened by the shim before
+// anything is hidden, because afterwards it may be unreachable by name.
+// Keep makes the shim create Path when an earlier mount has covered it.
 type op struct {
 	Path string `json:"path"`
 	Src  string `json:"src"`
@@ -105,7 +120,11 @@ type check struct {
 // the directories named in the task's environment: kept when they lie inside
 // a hidden tree, dropped when they would uncover one (TMPDIR names the very
 // directory that is hidden).
-func plan(hide, keep, handed []string, stat func(string) (fs.FileInfo, error)) ([]op, error) {
+//
+// caches are the cache directories the task is handed; each is covered by
+// its repository's own directory beneath it (repoDir), and nothing handed
+// inside one is kept - it would reach past the cover into the shared cache.
+func plan(hide, keep, handed, caches []string, key string, stat func(string) (fs.FileInfo, error)) ([]op, error) {
 	var ops []op
 	hidden := map[string]bool{}
 	for _, p := range hide {
@@ -137,6 +156,34 @@ func plan(hide, keep, handed []string, stat func(string) (fs.FileInfo, error)) (
 		}
 		return false
 	}
+	within := func(p string, set []string) bool {
+		for _, c := range set {
+			if p == c || strings.HasPrefix(p, c+"/") {
+				return true
+			}
+		}
+		return false
+	}
+	var cached []string
+	for _, c := range caches {
+		if !filepath.IsAbs(c) {
+			continue
+		}
+		c = filepath.Clean(c)
+		switch {
+		case slices.Contains(cached, c):
+			continue
+		case c == "/" || hidden[c]:
+			return nil, fmt.Errorf("sandbox: %s cannot be a cache: it is hidden", c)
+		}
+		for _, k := range keep {
+			if filepath.IsAbs(k) && within(filepath.Clean(k), []string{c}) {
+				return nil, fmt.Errorf("sandbox: %s cannot be a cache per repository: the task runs in it", c)
+			}
+		}
+		cached = append(cached, c)
+		ops = append(ops, op{Path: c, Src: repoDir(c, key), Keep: true})
+	}
 	kept := map[string]bool{}
 	add := func(p string, must bool) error {
 		if !filepath.IsAbs(p) {
@@ -145,6 +192,8 @@ func plan(hide, keep, handed []string, stat func(string) (fs.FileInfo, error)) (
 		p = filepath.Clean(p)
 		switch {
 		case kept[p]:
+			return nil
+		case !must && within(p, cached):
 			return nil
 		case hidden[p] && must:
 			return fmt.Errorf("sandbox: cannot hide %s: the task runs in it", p)
@@ -187,6 +236,13 @@ func plan(hide, keep, handed []string, stat func(string) (fs.FileInfo, error)) (
 	return ops, nil
 }
 
+// repoDir is where a repository's own cache lives: beneath the shared one,
+// which the task never sees once its own is bound over it.
+func repoDir(cache, key string) string {
+	sum := sha256.Sum256([]byte(key))
+	return filepath.Join(cache, ".pinup-repos", hex.EncodeToString(sum[:8]))
+}
+
 // handedPaths are the directories the task's environment names: PATH and
 // its entries, the caches (COMPOSER_HOME, GOMODCACHE, npm_config_cache), its
 // scratch HOME. A value may be a list, as PATH is.
@@ -225,10 +281,6 @@ func (s *Sandbox) prepare(cmd *exec.Cmd, keep []string, c *check) (cleanup func(
 	if err != nil {
 		return cleanup, err
 	}
-	ops, err := plan(s.Hide, keep, handedPaths(cmd.Env), os.Stat)
-	if err != nil {
-		return cleanup, err
-	}
 	// Under the temporary directory, which is itself hidden: the shim
 	// reaches the stand-ins through descriptors it opens before hiding.
 	work, err := os.MkdirTemp("", "pinup-sandbox-")
@@ -236,11 +288,25 @@ func (s *Sandbox) prepare(cmd *exec.Cmd, keep []string, c *check) (cleanup func(
 		return cleanup, fmt.Errorf("sandbox: %w", err)
 	}
 	cleanup = func() { os.RemoveAll(work) }
+	key := s.Repo
+	if key == "" {
+		key = work // a cache of this task's own
+	}
+	ops, err := plan(s.Hide, keep, handedPaths(cmd.Env), s.caches(cmd.Env), key, os.Stat)
+	if err != nil {
+		cleanup()
+		return func() {}, err
+	}
 	for i := range ops {
-		if ops[i].Src != "" {
-			continue
+		switch o := ops[i]; {
+		case o.Src == "":
+			ops[i].Src, err = os.MkdirTemp(work, "empty-")
+		case o.Keep && o.Src != o.Path:
+			// A repository's cache: made on first use, and with it the
+			// shared directory above it if that did not exist yet.
+			err = os.MkdirAll(o.Src, 0o700)
 		}
-		if ops[i].Src, err = os.MkdirTemp(work, "empty-"); err != nil {
+		if err != nil {
 			cleanup()
 			return func() {}, fmt.Errorf("sandbox: %w", err)
 		}
@@ -254,6 +320,18 @@ func (s *Sandbox) prepare(cmd *exec.Cmd, keep []string, c *check) (cleanup func(
 	cmd.Path = s.Self
 	cmd.SysProcAttr = attr
 	return cleanup, nil
+}
+
+// caches are the directories the task's environment names under one of
+// the cache variables.
+func (s *Sandbox) caches(env []string) []string {
+	var out []string
+	for _, kv := range env {
+		if name, v, ok := strings.Cut(kv, "="); ok && slices.Contains(s.Caches, name) && filepath.IsAbs(v) {
+			out = append(out, v)
+		}
+	}
+	return out
 }
 
 // Check runs the sandbox on itself, as a task would run, and returns an
