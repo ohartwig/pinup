@@ -1353,9 +1353,10 @@ func lockedVersions(root, manifest, manager string, lockFiles []string, plan *mo
 // one version, the lock another, and the next frozen install fails. That is
 // what a manifest-only branch did to nozzleops/platform from 2026-09-17 -
 // a pnpm workspace, four package.json and one pnpm-lock.yaml, the lock two
-// bumps behind within a week.
+// bumps behind within a week. pnpm's lock has been read and refreshed
+// since; bun's is the one left, and a lock added here is held, not broken.
 var unrefreshableLocks = map[string][]string{
-	"npm": {"pnpm-lock.yaml", "bun.lock", "bun.lockb"},
+	"npm": {"bun.lock", "bun.lockb"},
 }
 
 // foreignLock is the path of an unrefreshable lock governing manifest: in

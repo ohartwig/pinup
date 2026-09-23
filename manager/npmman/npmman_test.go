@@ -104,8 +104,8 @@ func TestSyntheticPackageJSON(t *testing.T) {
 		if d.SkipReason != tc.skipReason {
 			t.Errorf("%s: SkipReason = %q, want %q", tc.depName, d.SkipReason, tc.skipReason)
 		}
-		if !slices.Equal(d.LockFiles, []string{"package-lock.json", "npm-shrinkwrap.json", "yarn.lock"}) {
-			t.Errorf("%s: LockFiles = %v, want npm's locks then yarn's", tc.depName, d.LockFiles)
+		if !slices.Equal(d.LockFiles, []string{"package-lock.json", "npm-shrinkwrap.json", "yarn.lock", "pnpm-lock.yaml"}) {
+			t.Errorf("%s: LockFiles = %v, want npm's locks, then yarn's, then pnpm's", tc.depName, d.LockFiles)
 		}
 
 		// The Locus is the contract: it must bracket exactly CurrentValue,
@@ -122,8 +122,8 @@ func TestSyntheticPackageJSON(t *testing.T) {
 		}
 	}
 
-	if res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{}); err != nil || len(res.LockFiles) != 3 || res.LockFiles[0] != "package-lock.json" || res.LockFiles[2] != "yarn.lock" {
-		t.Errorf("Result.LockFiles = %v, err = %v, want npm's locks then yarn's", res.LockFiles, err)
+	if res, err := (&Manager{}).Extract(context.Background(), f, extract.ManagerConfig{}); err != nil || len(res.LockFiles) != 4 || res.LockFiles[0] != "package-lock.json" || res.LockFiles[2] != "yarn.lock" || res.LockFiles[3] != "pnpm-lock.yaml" {
+		t.Errorf("Result.LockFiles = %v, err = %v, want npm's locks, then yarn's, then pnpm's", res.LockFiles, err)
 	}
 }
 

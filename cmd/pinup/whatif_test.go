@@ -978,18 +978,18 @@ func TestAnNpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
 	}
 }
 
-// A pnpm workspace: pinup reads neither pnpm-lock.yaml nor regenerates it,
-// so a bump in a member's package.json is held, naming the lock, instead of
-// pushed without it - the manifest-only branch left nozzleops/platform's
-// lock two bumps behind its manifests (2026-09-17, 2026-09-23). Without any
-// lock the same bump is a manifest edit and nothing more, as before.
+// A lock pinup can neither read nor regenerate - bun's - holds a bump in a
+// manifest it governs, naming the lock, instead of pushing the manifest
+// without it: the manifest-only branch left nozzleops/platform's pnpm lock
+// two bumps behind its manifests (2026-09-17, 2026-09-23) before pnpm was
+// read. Without any lock the same bump is a manifest edit, as before.
 func TestABumpUnderALockPinupCannotRefreshIsHeld(t *testing.T) {
 	for _, tc := range []struct {
 		name, lock string
 		held       bool
 	}{
-		{"pnpm workspace", "pnpm-lock.yaml", true},
 		{"bun workspace", "bun.lock", true},
+		{"bun workspace, binary lock", "bun.lockb", true},
 		{"no lock at all", "", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1038,6 +1038,64 @@ func TestABumpUnderALockPinupCannotRefreshIsHeld(t *testing.T) {
 				t.Errorf("the hold does not name %s", tc.lock)
 			}
 		})
+	}
+}
+
+// A pnpm workspace, nozzleops/platform's shape: the members' versions come
+// from the root pnpm-lock.yaml's importers, and a bump in a member
+// refreshes that lock where it is, with pnpm, without letting pnpm fetch a
+// pnpm of its own (--pm-on-fail: the setting that stops pnpm 11's version
+// switch, measured against the real repository).
+func TestAPnpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(root+"/apps/web", 0o755)
+	os.WriteFile(root+"/package.json", []byte(`{"name":"platform","private":true,"packageManager":"pnpm@11.27.0"}`), 0o644)
+	os.WriteFile(root+"/apps/web/package.json", []byte(`{"name":"web","dependencies":{"lodash":"4.17.20"}}`), 0o644)
+	os.WriteFile(root+"/pnpm-workspace.yaml", []byte("packages:\n  - apps/*\n"), 0o644)
+	os.WriteFile(root+"/pnpm-lock.yaml", []byte(`lockfileVersion: '9.0'
+
+importers:
+
+  .: {}
+
+  apps/web:
+    dependencies:
+      lodash:
+        specifier: 4.17.20
+        version: 4.17.20
+`), 0o644)
+	os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
+	opts := treeOptions(t, root, "nozzleops/platform", time.Date(2026, 9, 23, 14, 5, 0, 0, time.UTC))
+	opts.Datasources["npm"] = cannedDS{name: "npm", scheme: "npm", releases: map[string][]string{"lodash": {"4.17.20", "4.17.21"}}}
+	opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
+	plan, err := whatif(context.Background(), opts)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range plan.Deps {
+		if d.File == "apps/web/package.json" && d.DepName == "lodash" && d.LockedVersion != "4.17.20" {
+			t.Errorf("lodash locked %q, want 4.17.20 from the root importer", d.LockedVersion)
+		}
+	}
+	var refresh *model.Task
+	for _, b := range plan.Branches {
+		if b.SuppressedBy != "" {
+			continue
+		}
+		for i, task := range b.Tasks {
+			if task.Kind == model.TaskLockRefresh {
+				refresh = &b.Tasks[i]
+			}
+		}
+	}
+	if refresh == nil {
+		t.Fatalf("no pnpm lock refresh planned; branches: %+v", plan.Branches)
+	}
+	cmd := strings.Join(refresh.Command, " ")
+	if refresh.Dir != "" || !strings.HasPrefix(cmd, "pnpm install --lockfile-only") ||
+		!strings.Contains(cmd, "--ignore-scripts") || !strings.Contains(cmd, "--pm-on-fail=warn") ||
+		!slices.Equal(refresh.FileFilters, []string{"pnpm-lock.yaml"}) {
+		t.Errorf("refresh = %q in %q, filters %v", cmd, refresh.Dir, refresh.FileFilters)
 	}
 }
 

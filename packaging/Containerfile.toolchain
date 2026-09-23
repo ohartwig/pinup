@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # pinup plus the tools a lock refresh or a postUpgradeTask runs on the job's
-# PATH: composer, npm, go, yarn.
+# PATH: composer, npm, go, yarn, pnpm.
 #
 # A SECOND IMAGE, not tools in the first one. "No foreign runtime in the core"
 # is what the base image's `! command -v node` smoke test proves, and a task
@@ -54,6 +54,11 @@ ARG GO_VERSION=1.27.1-r0
 # yarn classic, for the repositories whose lock is a yarn.lock.
 # pinup: datasource=custom.wolfi depName=yarn versioning=apk
 ARG YARN_VERSION=1.22.22-r8
+# pnpm, for the repositories whose lock is a pnpm-lock.yaml. The major is
+# the package name; pinup runs it with --pm-on-fail=warn, so a project's
+# packageManager field naming another 11.x does not make it download one.
+# pinup: datasource=custom.wolfi depName=pnpm-11 versioning=apk
+ARG PNPM_VERSION=11.8.0-r0
 
 RUN apk add --no-cache \
       php-8.5=${PHP_VERSION} \
@@ -62,7 +67,8 @@ RUN apk add --no-cache \
       nodejs-24=${NODEJS_VERSION} \
       npm-12=${NPM_VERSION} \
       go-1.27=${GO_VERSION} \
-      yarn=${YARN_VERSION}
+      yarn=${YARN_VERSION} \
+      pnpm-11=${PNPM_VERSION}
 
 # Smoke test: every tool answers, and pinup is still the one from the base.
 # `php -m | grep curl` because composer without the curl extension fails at
@@ -76,6 +82,7 @@ RUN set -eu; \
     node --version > /dev/null; \
     npm --version > /dev/null; \
     yarn --version | grep -q '^1\.'; \
+    pnpm --version | grep -q '^11\.'; \
     go version > /dev/null
 
 USER 1000
