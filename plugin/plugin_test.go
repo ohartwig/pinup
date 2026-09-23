@@ -154,6 +154,22 @@ func TestLockRefreshCommands(t *testing.T) {
 	if _, ok := LockRefresh("dockerfile", "", "", nil, false); ok {
 		t.Error("dockerfile has no lock to refresh")
 	}
+
+	// pnpm: install regenerates the workspace lock as the manifests read,
+	// update moves it within the ranges; neither names a package, neither
+	// runs a script, and neither lets pnpm fetch another pnpm.
+	for _, tc := range []struct {
+		maintenance bool
+		want        string
+	}{
+		{false, "pnpm install --lockfile-only --ignore-scripts --pm-on-fail=warn"},
+		{true, "pnpm update --lockfile-only --ignore-scripts --pm-on-fail=warn"},
+	} {
+		pn, ok := LockRefresh("npm", "", "pnpm-lock.yaml", []string{"lodash"}, tc.maintenance)
+		if got := strings.Join(pn.Command, " "); !ok || got != tc.want || !slices.Equal(pn.FileFilters, []string{"pnpm-lock.yaml"}) {
+			t.Errorf("pnpm (maintenance %t): %q, filters %v", tc.maintenance, got, pn.FileFilters)
+		}
+	}
 }
 
 // P1d.3: a task sees exactly the allowlisted variables - never the

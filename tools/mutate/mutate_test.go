@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): thirty-four named, deterministic
+// Package mutate is the mutation suite (H.7): thirty-five named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -143,8 +143,12 @@ var mutators = []mutator{
 		"\t\t\tif f := foreign[u.Dep.Manager+\"|\"+filepath.Dir(u.Dep.File)]; f != \"\" && false {", []string{"./cmd/pinup/"}, false, ""},
 	{34, "delivery", "a request the configuration retired stays open", "runner/runner.go",
 		"\t\tif b.SuppressedBy.Settled() {", "\t\tif false && b.SuppressedBy.Settled() {", []string{"./runner/"}, false, ""},
+	// pnpm (2026-09-23): a pnpm-lock.yaml read as a yarn lock finds
+	// nothing, and every member's versions go missing again.
+	{35, "delivery", "a pnpm lock is read as a yarn lock", "manager/npmman/npmman.go",
+		"\t\tif bytes.HasPrefix(trimmed, []byte(\"lockfileVersion:\")) {", "\t\tif false && bytes.HasPrefix(trimmed, []byte(\"lockfileVersion:\")) {", []string{"./manager/npmman/"}, false, ""},
 	// the one change no test can see
-	{35, "sentinel", "a comment changes", "model/model.go",
+	{36, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

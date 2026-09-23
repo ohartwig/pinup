@@ -276,7 +276,8 @@
       "lockFiles": [
         "package-lock.json",
         "npm-shrinkwrap.json",
-        "yarn.lock"
+        "yarn.lock",
+        "pnpm-lock.yaml"
       ]
     },
     {
@@ -315,7 +316,8 @@
       "lockFiles": [
         "package-lock.json",
         "npm-shrinkwrap.json",
-        "yarn.lock"
+        "yarn.lock",
+        "pnpm-lock.yaml"
       ]
     }
   ],
@@ -603,7 +605,8 @@
         "lockFiles": [
           "package-lock.json",
           "npm-shrinkwrap.json",
-          "yarn.lock"
+          "yarn.lock",
+          "pnpm-lock.yaml"
         ]
       },
       "newValue": "4.18.1",
@@ -653,7 +656,8 @@
         "lockFiles": [
           "package-lock.json",
           "npm-shrinkwrap.json",
-          "yarn.lock"
+          "yarn.lock",
+          "pnpm-lock.yaml"
         ]
       },
       "newValue": "^1.2.6",

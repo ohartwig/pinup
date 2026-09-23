@@ -59,6 +59,31 @@ type PostUpgrade struct {
 func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance bool) (model.Task, bool) {
 	names := unique(depNames)
 	var argv []string
+	if manager == "npm" && lockFile == "pnpm-lock.yaml" {
+		// pnpm, the shape of nozzleops/platform: one lock at the workspace
+		// root for every member. install --lockfile-only regenerates it as
+		// the manifests now read and installs nothing; update moves every
+		// resolution within its range - what maintenance means. Scripts off
+		// as everywhere. And pnpm must not fetch a pnpm of its own: a
+		// packageManager field naming another version makes pnpm download
+		// and run that one - a tool entering the job at run time past the
+		// image's reviewed provenance. In pnpm 11 the switch is
+		// --pm-on-fail; manage-package-manager-versions, in any spelling,
+		// no longer stops it (measured 2026-09-23 on nozzleops/platform,
+		// packageManager pnpm@11.27.0, image pnpm 11.8.0: every other
+		// setting still ran 11.27.0). warn, not ignore: the task's output
+		// records that the versions differ. The two write byte-identical
+		// locks there, and the refresh is idempotent.
+		argv = []string{"pnpm", "install", "--lockfile-only", "--ignore-scripts", "--pm-on-fail=warn"}
+		if maintenance {
+			argv = []string{"pnpm", "update", "--lockfile-only", "--ignore-scripts", "--pm-on-fail=warn"}
+		}
+		return model.Task{
+			Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: argv,
+			ExecutionMode: model.ExecBranch, FileFilters: []string{"pnpm-lock.yaml"},
+			AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
+		}, true
+	}
 	if manager == "npm" && lockFile == "yarn.lock" {
 		// yarn classic, the one shape the estate carries (development/
 		// external-ext/blog): install rewrites the lock for a changed

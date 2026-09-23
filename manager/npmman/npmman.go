@@ -44,6 +44,7 @@ import (
 
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/yamlx"
 )
 
 // name is both the registry key (extract.Registry) and model.Dependency.Manager.
@@ -61,9 +62,15 @@ const lockFileName = "package-lock.json"
 // refreshes its yarn.lock the way it refreshes a package-lock.json.
 const yarnLockFileName = "yarn.lock"
 
+// pnpmLockFileName is pnpm's lock, one per workspace at its root, whose
+// importers carry every member's resolved versions. Measured on the estate:
+// nozzleops/platform, four package.json under one pnpm-lock.yaml
+// (lockfileVersion 9.0, written by pnpm 11).
+const pnpmLockFileName = "pnpm-lock.yaml"
+
 // lockFileNames are the lock files this manager's dependencies may be
 // paired with, in the order tried.
-var lockFileNames = []string{lockFileName, "npm-shrinkwrap.json", yarnLockFileName}
+var lockFileNames = []string{lockFileName, "npm-shrinkwrap.json", yarnLockFileName, pnpmLockFileName}
 
 // sectionDepTypes are the four object keys package.json uses for a versioned
 // dependency, and become DepType verbatim.
@@ -501,7 +508,7 @@ func (m *Manager) Edit(_ context.Context, f extract.File, up model.Update) (mode
 // dependency named bar, so it is excluded rather than silently overwriting
 // the real answer depending on map iteration order.
 //
-// A yarn.lock is read too, classic and berry; pnpm-lock.yaml is not.
+// A yarn.lock is read too, classic and berry, and a pnpm-lock.yaml.
 func LockedVersions(lock []byte) (map[string]string, error) {
 	return LockedVersionsFor(lock, "")
 }
@@ -517,6 +524,9 @@ func LockedVersions(lock []byte) (map[string]string, error) {
 // versions at all.
 func LockedVersionsFor(lock []byte, member string) (map[string]string, error) {
 	if trimmed := bytes.TrimSpace(lock); len(trimmed) > 0 && trimmed[0] != '{' {
+		if bytes.HasPrefix(trimmed, []byte("lockfileVersion:")) {
+			return pnpmLockedVersions(lock, member)
+		}
 		return yarnLockedVersions(lock)
 	}
 	var doc struct {
@@ -750,4 +760,51 @@ func lineAt(src []byte, pos int) int {
 		pos = len(src)
 	}
 	return 1 + bytes.Count(src[:pos], []byte{'\n'})
+}
+
+// pnpmLockedVersions reads a pnpm-lock.yaml. Since lockfileVersion 6 every
+// project of the workspace is an importer - "." for the root, its path for
+// a member - and each dependency there carries a specifier and the version
+// resolved for it. The version may end in the peer context pnpm resolved
+// it in - "5.7.1(react@19.2.4)", and before lockfileVersion 6
+// "5.6.3_react@19.2.4" - which is not part of the version (semver allows
+// no underscore, so the cut is safe); a
+// workspace sibling is "link:../shared", which is not a version at all.
+// A lock of the older shape, one project and no importers, carries the
+// same maps at its top level, the version a plain string.
+func pnpmLockedVersions(lock []byte, member string) (map[string]string, error) {
+	var doc map[string]any
+	if err := yamlx.Unmarshal(lock, &doc); err != nil {
+		return nil, fmt.Errorf("npmman: parsing pnpm-lock.yaml: %w", err)
+	}
+	if _, ok := doc["lockfileVersion"]; !ok {
+		return nil, fmt.Errorf("npmman: pnpm-lock.yaml: no lockfileVersion")
+	}
+	project := doc
+	if importers, ok := doc["importers"].(map[string]any); ok {
+		key := strings.Trim(filepath.ToSlash(member), "/")
+		if key == "" {
+			key = "."
+		}
+		if project, ok = importers[key].(map[string]any); !ok {
+			return nil, fmt.Errorf("npmman: pnpm-lock.yaml: no importer %q", key)
+		}
+	}
+	out := map[string]string{}
+	for _, section := range []string{"dependencies", "devDependencies", "optionalDependencies"} {
+		deps, _ := project[section].(map[string]any)
+		for depName, entry := range deps {
+			version, _ := entry.(string)
+			if e, ok := entry.(map[string]any); ok {
+				version, _ = e["version"].(string)
+			}
+			version, _, _ = strings.Cut(version, "(")
+			version, _, _ = strings.Cut(version, "_")
+			if version == "" || strings.Contains(version, ":") {
+				continue // link:, file:, workspace: - a path, not a version
+			}
+			out[depName] = version
+		}
+	}
+	return out, nil
 }
