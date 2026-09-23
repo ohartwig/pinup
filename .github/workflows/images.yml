@@ -53,6 +53,7 @@ jobs:
       - name: The tag being packaged
         id: tag
         env:
+          GH_TOKEN: ${{ github.token }}
           INPUT_TAG: ${{ inputs.tag }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: |
@@ -66,11 +67,33 @@ jobs:
           # Rolling tags, the way the estate's images carry them: the exact
           # version, the minor line, the major line. `latest` last, so a
           # pull without a tag gets the newest release and nothing else.
+          major="${version%%.*}"
+          minor="${version%.*}"
+          # A rolling tag moves only to the newest release it names: latest
+          # and the major line to the newest release overall, the minor line
+          # to the newest of that minor. Until 2026-09-23 all three moved on
+          # every run - which is right for the release that just happened
+          # and wrong for anything packaged later: a dispatch for a release
+          # whose run had failed would have turned latest back a version.
+          releases="$(gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 500 \
+            --json tagName --jq '.[].tagName' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//' | sort -V)"
+          newest_in() { printf '%s\n' "$releases" | grep -E "^${1//./\\.}\." | tail -1; }
+          rolling=""
+          if [ "$version" = "$(newest_in "$minor")" ]; then rolling="$rolling $minor"; fi
+          if [ "$version" = "$(newest_in "$major")" ]; then rolling="$rolling $major"; fi
+          if [ "$version" = "$(printf '%s\n' "$releases" | tail -1)" ]; then rolling="$rolling latest"; fi
+          echo "rolling tags for $version:${rolling:- none, a newer release carries them}"
           {
             echo "tag=$tag"
             echo "version=$version"
-            echo "major=${version%%.*}"
-            echo "minor=${version%.*}"
+            echo "core_tags<<TAGS_EOF"
+            echo "$CORE_IMAGE:$version"
+            for r in $rolling; do echo "$CORE_IMAGE:$r"; done
+            echo "TAGS_EOF"
+            echo "toolchain_tags<<TAGS_EOF"
+            echo "$TOOLCHAIN_IMAGE:$version"
+            for r in $rolling; do echo "$TOOLCHAIN_IMAGE:$r"; done
+            echo "TAGS_EOF"
           } >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -81,12 +104,32 @@ jobs:
       # The release's own binaries, and the manifest they were signed under.
       # `sha256sum -c` is the gate: a download that does not match what the
       # release published stops the build here, before anything is pushed.
+      #
+      # The release is published before its files are: the upstream job
+      # creates it, then uploads fourteen assets over the next 10-20
+      # seconds, and `published` starts this run within one. Whether the
+      # download found the binaries was a race - v0.36.0, v0.36.2 and
+      # v0.37.0 lost it ("no assets to download"), v0.36.1 and v0.38.0 won.
+      # So the files are waited for, each until GitHub reports it uploaded.
       - name: Fetch and verify the released binaries
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.tag.outputs.tag }}
         run: |
           set -euo pipefail
+          missing=""
+          for _ in $(seq 60); do
+            have=" $(gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" \
+              --jq '[.assets[] | select(.state == "uploaded") | .name] | join(" ")') "
+            missing=""
+            for f in SHA256SUMS pinup-linux-amd64 pinup-linux-arm64; do
+              case "$have" in *" $f "*) ;; *) missing="$missing $f" ;; esac
+            done
+            [ -z "$missing" ] && break
+            echo "waiting for the release's assets:$missing"
+            sleep 10
+          done
+          [ -z "$missing" ] || { echo "::error::after ten minutes the release still lacks:$missing"; exit 1; }
           mkdir -p dist
           gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir dist \
             --pattern 'pinup-linux-*' --pattern 'SHA256SUMS'
@@ -116,11 +159,7 @@ jobs:
           push: true
           sbom: true
           provenance: mode=max
-          tags: |
-            ${{ env.CORE_IMAGE }}:${{ steps.tag.outputs.version }}
-            ${{ env.CORE_IMAGE }}:${{ steps.tag.outputs.minor }}
-            ${{ env.CORE_IMAGE }}:${{ steps.tag.outputs.major }}
-            ${{ env.CORE_IMAGE }}:latest
+          tags: ${{ steps.tag.outputs.core_tags }}
           labels: |
             org.opencontainers.image.title=pinup
             org.opencontainers.image.description=Dependency updates across a fleet of repositories, as a single static binary
@@ -144,11 +183,7 @@ jobs:
           provenance: mode=max
           build-args: |
             BASE=${{ env.CORE_IMAGE }}@${{ steps.core.outputs.digest }}
-          tags: |
-            ${{ env.TOOLCHAIN_IMAGE }}:${{ steps.tag.outputs.version }}
-            ${{ env.TOOLCHAIN_IMAGE }}:${{ steps.tag.outputs.minor }}
-            ${{ env.TOOLCHAIN_IMAGE }}:${{ steps.tag.outputs.major }}
-            ${{ env.TOOLCHAIN_IMAGE }}:latest
+          tags: ${{ steps.tag.outputs.toolchain_tags }}
           labels: |
             org.opencontainers.image.title=pinup-toolchain
             org.opencontainers.image.description=pinup with composer, npm, go and yarn for lock-file refreshes
