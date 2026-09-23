@@ -1,3 +1,9 @@
+## [0.38.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.37.0...v0.38.0) (2026-09-23)
+
+### :sparkles: Features
+
+* **sandbox:** a package manager's cache belongs to one repository ([4db7c0f](https://git.ole-hartwig.eu/pinup/pinup/commit/4db7c0f2ae05c4d07b6975c825393c220595542f))
+
 ## [0.37.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.36.2...v0.37.0) (2026-09-23)
 
 ### :sparkles: Features
