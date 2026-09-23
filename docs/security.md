@@ -79,7 +79,7 @@ prompt for the platform's host.
 
 ## What a repository can decide
 
-A repository's `renovate.json` can disable itself, change versionings
+A repository's own configuration file can disable itself, change versionings
 and registries, add rules, ask for tasks. It cannot:
 
 - run a command the runner's `PINUP_ALLOWED_COMMANDS` - or, absent that

@@ -31,9 +31,9 @@ jobs:
       - run: go install github.com/ohartwig/pinup/cmd/pinup@latest
       # --config names the run's configuration (here: the repository's own
       # file, from the checkout); pinup clones the project it updates through
-      # the token and reads that clone's renovate.json on top.
+      # the token and reads that clone's own configuration file on top.
       - run: |
-          pinup run --project "$GITHUB_REPOSITORY" --config renovate.json --report plan.json
+          pinup run --project "$GITHUB_REPOSITORY" --config .pinup.json --report plan.json
         env:
           PINUP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PINUP_GIT_NAME: Dependency Bot

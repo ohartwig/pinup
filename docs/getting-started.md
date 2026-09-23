@@ -57,7 +57,7 @@ nothing and needs no platform token (private registries aside).
 
 ```sh
 cd a-repository
-pinup whatif --repo . --config renovate.json --report plan.json
+pinup whatif --repo . --config .pinup.json --report plan.json
 ```
 
 The plan says what pinup would do and, for everything it would not do,
@@ -88,7 +88,7 @@ and `--project owner/repository` ([platforms](platforms.md)).
 
 `--config` is a file or a `local>` preset the platform serves - a
 `default.json` in a runner project that every repository's own
-`renovate.json` extends. The repositories keep their files; pinup answers
+configuration file extends. The repositories keep their files; pinup answers
 the runner's name from the file it was started with, without a fetch
 ([configuration](configuration.md)).
 

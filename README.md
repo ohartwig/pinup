@@ -104,12 +104,14 @@ Four steps, each complete on its own. Stop where you have what you need.
 
 `whatif` resolves the configuration, reads the manifests, looks the
 versions up and writes a plan. It changes nothing and needs no token
-(private registries aside). Any repository with a `renovate.json` will do;
-without one, `{"extends": ["config:recommended"]}` is enough to start.
+(private registries aside). Any repository with a configuration will do -
+pinup's own `.pinup.json` or a `renovate.json` that is already there; with
+neither, a `.pinup.json` holding `{"extends": ["config:recommended"]}` is
+enough to start.
 
 ```sh
 cd a-repository
-pinup whatif --repo . --config renovate.json --report plan.json
+pinup whatif --repo . --config .pinup.json --report plan.json
 
 # what would move, and what is held back and why
 jq -r '.updates[] | "\(.dep.depName) \(.dep.currentValue) -> \(.newValue)  \(.blocks[0].reason // "ready") \(.blocks[0].origin | if . then "\(.source)[\(.rule)]" else "" end)"' plan.json
@@ -134,7 +136,7 @@ export PINUP_GITLAB_TOKEN=glpat-…              # scopes: api, write_repository
 export PINUP_GIT_NAME="Dependency Bot" PINUP_GIT_EMAIL=bot@example.org
 export PINUP_SIGNING_FORMAT=none               # or openpgp / ssh + PINUP_SIGNING_KEY
 
-pinup run --project group/project --config renovate.json --report plan.json
+pinup run --project group/project --config .pinup.json --report plan.json
 ```
 
 On GitHub the same command reads `PINUP_GITHUB_TOKEN` and
@@ -159,7 +161,7 @@ no file at all still gets the runner's defaults.
 // runner project: default.json
 { "extends": ["config:recommended"], "packageRules": [ … ] }
 
-// any repository: renovate.json
+// any repository: .pinup.json
 { "extends": ["local>group/pinup-runner"] }
 ```
 
@@ -170,7 +172,7 @@ pinup run --autodiscover '["group/**", "!group/archive/**"]' \
 
 `--autodiscover` runs every non-archived project the token can see that
 matches the globs, eight at a time; `%s` becomes the project path.
-[`docs/examples/renovate.json`](docs/examples/renovate.json) is a
+[`docs/examples/default.json`](docs/examples/default.json) is a
 complete runner configuration - automerge for patch and minor, dashboard
 approval for majors, an analyzer rule for a chart vendor that raises the
 major on every release.
@@ -214,13 +216,13 @@ new writes nothing.
 ## Commands
 
 ```sh
-pinup whatif --repo . --config renovate.json --report plan.json   # plan, write nothing
+pinup whatif --repo . --config .pinup.json --report plan.json     # plan, write nothing
 pinup run --project group/project --config … --report plan.json    # plan, apply, publish
 pinup run --autodiscover '["group/**"]' --config … --report 'reports/%s.json'
 pinup run --released group/library@1.4.0 --config …                # the fast lane: only that dependency's consumers
-pinup print-config --config renovate.json --explain                # what a configuration resolves to, and which rule set each value
+pinup print-config --config .pinup.json --explain                  # what a configuration resolves to, and which rule set each value
 pinup migrate --config renovate.json [--to yaml]                   # which keys pinup supports; a YAML rewrite
-pinup advise --config renovate.json [--plan plan.json] [--fix]     # what to change - performance, security, hygiene - and why
+pinup advise --config .pinup.json [--plan plan.json] [--fix]       # what to change - performance, security, hygiene - and why
 pinup advisories --index '.pinup/consumers.json'                   # OSV over everything the runs have seen, no clone
 pinup shadow --plans 'reports/*.json'                              # compare with the merge requests another tool has open
 ```
@@ -233,8 +235,10 @@ pages, at <https://ole-hartwig.eu/en/open-source/pinup> (German:
 
 ## Configure
 
-pinup reads `renovate.json`, `.renovaterc.json`, `.pinup.jsonc` or
-`.pinup.yaml` in the repository, resolved over the configuration the run was
+pinup reads the first of `.pinup.yaml`, `.pinup.yml`, `.pinup.json`,
+`.pinup.jsonc`, `renovate.json`, `renovate.json5`, `.renovaterc` and
+`.renovaterc.json` that the repository has - two of them is an error, not a
+silent choice - resolved over the configuration the run was
 started with (`--config`), which may itself be a `local>` preset fetched
 from the instance. The vocabulary is Renovate's; the merge semantics are
 Renovate's (objects deep-merge, arrays replace, `packageRules` concatenate,
