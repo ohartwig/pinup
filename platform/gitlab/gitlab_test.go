@@ -29,17 +29,24 @@ const testPageSize = 2
 
 // fakeMR is one merge request in the fake server's in-memory state.
 type fakeMR struct {
-	iid                  int
-	state                string
-	sourceBranch         string
-	targetBranch         string
-	title                string
-	description          string
-	labels               []string
-	sha                  string
-	webURL               string
-	automerge            bool
-	canMerge             bool // whether the /merge endpoint currently succeeds
+	iid          int
+	state        string
+	sourceBranch string
+	targetBranch string
+	title        string
+	description  string
+	labels       []string
+	sha          string
+	webURL       string
+	automerge    bool
+	canMerge     bool // whether the /merge endpoint currently succeeds
+	// detailedMergeStatus is GitLab's own "could this be merged now";
+	// "mergeable" is the only value that lets a direct merge proceed.
+	detailedMergeStatus string
+	// acceptsButDoesNotArm reproduces GitLab 19.4-ee: the merge endpoint
+	// answers 2xx to merge_when_pipeline_succeeds and arms nothing
+	// (measured on devops/koh-gitops!2808, 2026-09-22).
+	acceptsButDoesNotArm bool
 	staleHead            bool // the request still records the head before a rebase push
 	mayNotMerge          bool // the token's user lacks merge permission: GitLab answers 401
 	createdAt, updatedAt time.Time
@@ -51,7 +58,8 @@ func (m *fakeMR) toJSON() mrJSON {
 		IID: m.iid, State: m.state, SourceBranch: m.sourceBranch, TargetBranch: m.targetBranch,
 		Title: m.title, Description: m.description, Labels: append([]string(nil), m.labels...),
 		SHA: m.sha, WebURL: m.webURL, Automerge: m.automerge,
-		CreatedAt: m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
+		DetailedMergeStatus: m.detailedMergeStatus,
+		CreatedAt:           m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
 	}
 }
 
@@ -367,7 +375,7 @@ func (s *gitlabServer) serveOneMergeRequest(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	if sub == "merge" && r.Method == http.MethodPut {
-		s.mergeMergeRequest(w, mr)
+		s.mergeMergeRequest(w, mr, body)
 		return
 	}
 	if sub == "cancel_merge_when_pipeline_succeeds" && r.Method == http.MethodPost {
@@ -414,7 +422,14 @@ func (s *gitlabServer) updateMergeRequest(w http.ResponseWriter, mr *fakeMR, bod
 	writeJSON(w, http.StatusOK, out)
 }
 
-func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR) {
+// mergeMergeRequest is GitLab's one merge endpoint, which does two jobs
+// depending on the payload: with merge_when_pipeline_succeeds it arms, and
+// without it it merges now.
+func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR, body []byte) {
+	var payload map[string]any
+	_ = json.Unmarshal(body, &payload)
+	arming, _ := payload["merge_when_pipeline_succeeds"].(bool)
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if mr.staleHead {
@@ -434,7 +449,19 @@ func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	mr.automerge = true
+	switch {
+	case arming && mr.acceptsButDoesNotArm:
+		// 2xx, and nothing changes. This is the case the platform used to
+		// believe and report as armed.
+		writeJSON(w, http.StatusOK, mr.toJSON())
+		return
+	case arming:
+		mr.automerge = true
+	default:
+		mr.state = "merged"
+		mr.automerge = false
+		mr.mergedAt = mr.updatedAt.Add(time.Minute)
+	}
 	mr.updatedAt = mr.updatedAt.Add(time.Minute)
 	writeJSON(w, http.StatusOK, mr.toJSON())
 }
@@ -979,5 +1006,113 @@ func TestCloseMergeRequestRetitlesAndCloses(t *testing.T) {
 	}
 	if _, ok, _ := p.FindMergeRequest(context.Background(), publish.Project{Path: "group/app"}, "renovate/x"); ok {
 		t.Error("a closed request is not found as open")
+	}
+}
+
+// GitLab 19.4-ee answers 2xx to merge_when_pipeline_succeeds and arms
+// nothing. Measured on devops/koh-gitops!2808 (2026-09-22): the run reported
+// "[automerge]", the request stayed open with a green pipeline, and it took
+// 125 minutes and two later runs before one of them merged it outright — a
+// comparable request in the same project had gone through in thirteen.
+//
+// With the pipeline already finished there is nothing left for arming to
+// wait for, so the request is merged now.
+func TestAutomergeAcceptedButNotArmedIsMergedDirectly(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	req := publish.Request{
+		SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x",
+		Automerge: true, AutomergeDirect: true,
+	}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	srv.mu.Lock()
+	proj.mrs[0].canMerge = true
+	proj.mrs[0].acceptsButDoesNotArm = true
+	proj.mrs[0].detailedMergeStatus = "mergeable"
+	srv.mu.Unlock()
+
+	out, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if out.State != "merged" {
+		t.Errorf("state = %q, want merged (the pipeline had already passed)", out.State)
+	}
+	if !slices.Contains(changed, "automerge") {
+		t.Errorf("changed = %v, want automerge among them", changed)
+	}
+	if out.AutomergeRefused != "" {
+		t.Errorf("refusal = %q, want none: it was merged", out.AutomergeRefused)
+	}
+}
+
+// The same situation with automergeDirect off: the request is left open, and
+// the run says so instead of reporting an automerge that did not happen.
+// This is the behaviour of every version before the direct merge existed,
+// which is what the switch is for.
+func TestAutomergeDirectOffLeavesTheRequestOpenAndSaysWhy(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	req := publish.Request{
+		SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x",
+		Automerge: true, AutomergeDirect: false,
+	}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	srv.mu.Lock()
+	proj.mrs[0].canMerge = true
+	proj.mrs[0].acceptsButDoesNotArm = true
+	proj.mrs[0].detailedMergeStatus = "mergeable"
+	srv.mu.Unlock()
+
+	out, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if out.State != "opened" || out.Automerge {
+		t.Errorf("state = %q automerge = %v, want the request left alone", out.State, out.Automerge)
+	}
+	if slices.Contains(changed, "automerge") {
+		t.Errorf("changed = %v, want no automerge claim", changed)
+	}
+	if !strings.Contains(out.AutomergeRefused, "not armed") {
+		t.Errorf("refusal = %q, want it to name what happened", out.AutomergeRefused)
+	}
+}
+
+// A request GitLab does not call mergeable is not merged directly, whatever
+// the switch says: checks may still be running, a thread may be open. That
+// judgement stays GitLab's, and the next run asks again.
+func TestDirectMergeWaitsWhileGitLabSaysTheRequestIsNotMergeable(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	req := publish.Request{
+		SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x",
+		Automerge: true, AutomergeDirect: true,
+	}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	srv.mu.Lock()
+	proj.mrs[0].canMerge = true
+	proj.mrs[0].acceptsButDoesNotArm = true
+	proj.mrs[0].detailedMergeStatus = "ci_still_running"
+	srv.mu.Unlock()
+
+	out, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+	if err != nil {
+		t.Fatalf("update: %v", err)
+	}
+	if out.State != "opened" || out.Automerge || slices.Contains(changed, "automerge") {
+		t.Errorf("state = %q automerge = %v changed = %v, want it left for the next run", out.State, out.Automerge, changed)
 	}
 }

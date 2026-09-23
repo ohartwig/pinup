@@ -137,7 +137,10 @@ type Named struct {
 	GroupName  string
 	GroupSlug  string
 	Automerge  bool
-	Labels     []string
+	// AutomergeDirect mirrors model.Branch.AutomergeDirect: nil is the
+	// default (on), and it only ever matters where Automerge is set.
+	AutomergeDirect *bool
+	Labels          []string
 	// Notes are the rendered prBodyNotes: what a person wrote next to the
 	// rule for whoever reads the merge request.
 	Notes    []string
@@ -268,6 +271,12 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 		}
 	}
 	n.Automerge, _ = cfg["automerge"].(bool)
+	// Absent means on: the alternative is a request pinup reported as
+	// automerging that then waits for the next run, which is the defect
+	// this exists to close. `automergeDirect: false` restores the wait.
+	if v, ok := cfg["automergeDirect"].(bool); ok {
+		n.AutomergeDirect = &v
+	}
 	n.Labels = append(stringsOf(cfg["labels"]), stringsOf(cfg["addLabels"])...)
 	for _, note := range stringsOf(cfg["prBodyNotes"]) {
 		out, _, err := hbs.RenderString(note, env)
@@ -342,7 +351,8 @@ func Compose(named []Named) ([]model.Branch, error) {
 		if !ok {
 			b := &model.Branch{
 				Name: n.Branch, Slug: strings.TrimPrefix(n.Branch, n.Prefix),
-				GroupName: n.GroupName, Automerge: n.Automerge, Labels: n.Labels,
+				GroupName: n.GroupName, Automerge: n.Automerge,
+				AutomergeDirect: n.AutomergeDirect, Labels: n.Labels,
 				CommitBody: n.CommitBody,
 			}
 			if n.Update.Blocked() {
@@ -370,8 +380,13 @@ func Compose(named []Named) ([]model.Branch, error) {
 			order = append(order, n.Branch)
 		}
 		m.branch.UpdateKeys = append(m.branch.UpdateKeys, n.Update.Key())
-		// A group merges automatically only if every member may.
+		// A group merges automatically only if every member may, and it
+		// merges directly only if no member forbids that.
 		m.branch.Automerge = m.branch.Automerge && n.Automerge
+		if n.AutomergeDirect != nil && !*n.AutomergeDirect {
+			off := false
+			m.branch.AutomergeDirect = &off
+		}
 		// A note is said once, whichever members carry it.
 		for _, note := range n.Notes {
 			if !strings.Contains(m.branch.Body, note) {

@@ -68,6 +68,7 @@ unsupported means nothing reads it and the run says so.
 | `allowedVersions` | supported |
 | `analyze` | supported (pinup's own) |
 | `automerge` | supported |
+| `automergeDirect` | pinup's own; default on, see [automerge](#automerge) |
 | `branchPrefix` | supported |
 | `branchPrefixOld` | supported: a request still open under the old prefix is adopted under its own name, not opened again |
 | `branchTopic` | supported |
@@ -150,6 +151,32 @@ A key not in this table is not read; `migrate` lists it as unsupported.
 | `analyze` | a rule | ask an analyzer what actually changed for this dependency's updates; off by default, since it fetches both versions ([effective classification](effective-classification.md)) |
 | `matchEffective` | a rule | match the analyzer's label: `patch`, `minor`, `major`, `breaking-values`; never fires while the label is unknown |
 | `trustEffective` | a rule | let an automerge a `matchEffective` rule switched on stand although the declared label is stricter; without it the stricter label wins |
+
+## Automerge
+
+`automerge: true` asks the platform to merge the request once its checks
+pass. On GitLab that is one call to the merge endpoint with
+`merge_when_pipeline_succeeds`, and pinup makes it on the run after the one
+that opened the request — the request needs a pipeline before GitLab will
+arm anything.
+
+**`automergeDirect`** (default `true`) decides what happens when that call is
+accepted and arms nothing. GitLab 19.4-ee does exactly that: it answers 2xx,
+`merge_when_pipeline_succeeds` stays `false`, and the request sits there.
+Measured on `devops/koh-gitops!2808` (2026-09-22) — reported as automerging,
+open for 125 minutes with a green pipeline, and finally merged outright by a
+later run. With `automergeDirect`, pinup instead merges it there and then,
+but only where GitLab itself reports `detailed_merge_status: mergeable`: with
+the pipeline already finished, arming would have had nothing left to wait
+for.
+
+Turn it off — `"automergeDirect": false`, globally or in a `packageRules`
+entry — to keep the older behaviour: the request stays open for a later run,
+and the run reports that it was not armed rather than claiming an automerge
+that did not happen. Turning it off never turns automerge *on*; it only
+changes how one that is already allowed is carried out.
+
+`automerge: false` remains the way to stop pinup merging at all.
 
 ## Custom managers
 

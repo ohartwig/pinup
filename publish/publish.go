@@ -57,6 +57,14 @@ type Request struct {
 	// Automerge asks the platform to merge when the pipeline succeeds -
 	// GitLab's merge-when-pipeline-succeeds. Cleared when false.
 	Automerge bool
+	// AutomergeDirect allows the platform to merge a request outright when
+	// it would not arm automerge and says the request is mergeable now -
+	// every check already passed, so there is nothing left to wait for.
+	// Without it such a request stays open until a later run.
+	//
+	// It only ever applies where Automerge is set: it changes how an
+	// automerge is carried out, never whether one happens.
+	AutomergeDirect bool
 	// RemoveSourceBranch is set on the request so a merge cleans up.
 	RemoveSourceBranch bool
 }

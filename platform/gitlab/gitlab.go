@@ -207,7 +207,7 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 
 	refused := ""
 	if r.Automerge {
-		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, mr.IID, mr.SHA)
+		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, mr.IID, mr.SHA, r.AutomergeDirect)
 		if err != nil {
 			return publish.MergeRequest{}, err
 		}
@@ -278,7 +278,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	// stopped allowing automerge must be able to take it back.
 	switch {
 	case r.Automerge && !cur.Automerge:
-		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, iid, cur.SHA)
+		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, iid, cur.SHA, r.AutomergeDirect)
 		if err != nil {
 			return publish.MergeRequest{}, nil, err
 		}
@@ -556,7 +556,21 @@ func (p *Platform) ListProjects(ctx context.Context) ([]string, error) {
 // request had been created a second before): ok=false, no error, and the
 // refusal returned for the run to report beside the request. Any other
 // non-2xx is an error.
-func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid int, sha string) (mrJSON, bool, string, error) {
+//
+// A 2xx is not taken at its word. Measured on GitLab 19.4-ee
+// (devops/koh-gitops!2808, 2026-09-22): the endpoint answered 2xx and the
+// request was afterwards neither merged nor armed - merge_when_pipeline_succeeds
+// false, auto_merge_enabled null, state opened, pipeline green. pinup had
+// reported "[automerge]" for it, so the log claimed something that had not
+// happened, and the request waited 125 minutes for a later run to merge it
+// outright. A request the platform will not arm is therefore reported as such.
+//
+// direct decides what happens next in that case. With it, and only when
+// GitLab itself says the request is mergeable now, the merge is performed
+// immediately - which is what arming would have achieved anyway, since there
+// is no pipeline left to wait for. Without it, the request is left open for
+// a later run, which is the behaviour every version before this had.
+func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid int, sha string, direct bool) (mrJSON, bool, string, error) {
 	u := fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d/merge", p.base, url.PathEscape(projectPath), iid)
 	payload := map[string]any{
 		"merge_when_pipeline_succeeds": true,
@@ -578,10 +592,24 @@ func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid 
 		if err := json.Unmarshal(resp.body, &mr); err != nil {
 			return mrJSON{}, false, "", fmt.Errorf("gitlab: decode merge response for %q !%d: %w", projectPath, iid, err)
 		}
-		// The response is not guaranteed to echo the flag back consistently
-		// across GitLab versions; the call succeeding is what matters.
-		mr.Automerge = true
-		return mr, true, "", nil
+		switch {
+		case mr.State == "merged":
+			// The pipeline had already finished, so GitLab merged instead
+			// of arming. Nothing was left to wait for.
+			return mr, true, "", nil
+		case mr.Automerge:
+			return mr, true, "", nil
+		case direct && mr.DetailedMergeStatus == "mergeable":
+			return p.mergeNow(ctx, projectPath, iid, mr.SHA)
+		case direct:
+			// Mergeable "not yet" for a reason of GitLab's own - checks
+			// running, an unresolved thread. The next run asks again.
+			return mrJSON{}, false, "", nil
+		default:
+			return mrJSON{}, false, fmt.Sprintf(
+				"automerge accepted by %q !%d but not armed (GitLab answered 2xx, merge_when_pipeline_succeeds stayed false); automergeDirect is off, so it waits for a later run",
+				projectPath, iid), nil
+		}
 	case resp.status == http.StatusUnauthorized || resp.status == http.StatusForbidden:
 		return mrJSON{}, false, fmt.Sprintf("automerge refused by %q (status %d): the bot may not merge here, a Maintainer merges", projectPath, resp.status), nil
 	case resp.status == http.StatusBadRequest || resp.status == http.StatusMethodNotAllowed ||
@@ -594,6 +622,50 @@ func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid 
 		// rebase push, while the request still records the old head
 		// (pinup/pinup!1, 2026-09-13). All mean "not yet", and the next
 		// run asks again.
+		return mrJSON{}, false, "", nil
+	default:
+		return mrJSON{}, false, "", classify(resp, projectPath)
+	}
+}
+
+// mergeNow merges a request GitLab has just called mergeable, for the case
+// where arming it would have been meaningless: there is no pipeline left to
+// wait for. It is only ever reached from trySetAutomerge, so a request that
+// was never allowed to automerge cannot be merged by it.
+//
+// The head SHA is passed for the same reason as above: if the branch moved
+// between the two calls, GitLab refuses, and refusing is correct - the run
+// asked to merge what it had seen.
+func (p *Platform) mergeNow(ctx context.Context, projectPath string, iid int, sha string) (mrJSON, bool, string, error) {
+	u := fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d/merge", p.base, url.PathEscape(projectPath), iid)
+	payload := map[string]any{"should_remove_source_branch": true}
+	if sha != "" {
+		payload["sha"] = sha
+	}
+
+	resp, err := p.do(ctx, http.MethodPut, u, payload)
+	if err != nil {
+		return mrJSON{}, false, "", err
+	}
+	switch {
+	case resp.status >= 200 && resp.status < 300:
+		var mr mrJSON
+		if err := json.Unmarshal(resp.body, &mr); err != nil {
+			return mrJSON{}, false, "", fmt.Errorf("gitlab: decode merge response for %q !%d: %w", projectPath, iid, err)
+		}
+		if mr.State != "merged" {
+			return mrJSON{}, false, fmt.Sprintf(
+				"direct merge accepted by %q !%d but the request is still %s", projectPath, iid, mr.State), nil
+		}
+		return mr, true, "", nil
+	case resp.status == http.StatusUnauthorized || resp.status == http.StatusForbidden:
+		return mrJSON{}, false, fmt.Sprintf(
+			"merge refused by %q (status %d): the bot may not merge here, a Maintainer merges", projectPath, resp.status), nil
+	case resp.status == http.StatusBadRequest || resp.status == http.StatusMethodNotAllowed ||
+		resp.status == http.StatusNotAcceptable || resp.status == http.StatusUnprocessableEntity ||
+		resp.status == http.StatusConflict:
+		// The same family of "not yet" as arming: the branch moved, a check
+		// started, the diff is still being prepared.
 		return mrJSON{}, false, "", nil
 	default:
 		return mrJSON{}, false, "", classify(resp, projectPath)
@@ -634,19 +706,24 @@ func (p *Platform) listMergeRequests(ctx context.Context, projectPath string, qu
 // mrJSON is the shape of one merge request as GitLab's REST v4 API returns
 // it, trimmed to the fields publish.MergeRequest needs.
 type mrJSON struct {
-	IID          int       `json:"iid"`
-	State        string    `json:"state"`
-	SourceBranch string    `json:"source_branch"`
-	TargetBranch string    `json:"target_branch"`
-	Title        string    `json:"title"`
-	Description  string    `json:"description"`
-	Labels       []string  `json:"labels"`
-	SHA          string    `json:"sha"`
-	WebURL       string    `json:"web_url"`
-	Automerge    bool      `json:"merge_when_pipeline_succeeds"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
-	MergedAt     time.Time `json:"merged_at"`
+	IID          int      `json:"iid"`
+	State        string   `json:"state"`
+	SourceBranch string   `json:"source_branch"`
+	TargetBranch string   `json:"target_branch"`
+	Title        string   `json:"title"`
+	Description  string   `json:"description"`
+	Labels       []string `json:"labels"`
+	SHA          string   `json:"sha"`
+	WebURL       string   `json:"web_url"`
+	Automerge    bool     `json:"merge_when_pipeline_succeeds"`
+	// DetailedMergeStatus is GitLab's own answer to "could this be merged
+	// right now": "mergeable" only once every check it enforces has passed.
+	// It is what the direct merge below is allowed to act on, rather than
+	// pinup forming its own opinion about a pipeline it did not run.
+	DetailedMergeStatus string    `json:"detailed_merge_status"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+	MergedAt            time.Time `json:"merged_at"`
 }
 
 func toPublish(m mrJSON) publish.MergeRequest {
