@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/sandbox"
 
 	// The binary carries the zone database: every schedule in the estate
 	// is written in Europe/Berlin, and a job image without tzdata turned
@@ -23,6 +24,12 @@ import (
 var version = "dev"
 
 func main() {
+	// The task sandbox's shim is this binary under another first argument,
+	// and it becomes the task: nothing of pinup's own start-up - the HTTP
+	// transport below, the flags, the configuration - belongs in it.
+	if len(os.Args) > 1 && os.Args[1] == sandbox.Arg {
+		os.Exit(sandbox.Main(os.Args[1:]))
+	}
 	// Every client in the process leaves over IPv6 where it can, and says
 	// who it is (httpx.DialPreferringIPv6, httpx.WithUserAgent say why).
 	if t, ok := http.DefaultTransport.(*http.Transport); ok {

@@ -6,14 +6,20 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ohartwig/pinup/datasource/apkds"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/plugin"
+	"github.com/ohartwig/pinup/sandbox"
 	"github.com/ohartwig/pinup/wire"
 )
 
@@ -257,8 +263,9 @@ func httpClient(p platformEnv) *httpx.Client {
 // PINUP_TASK_NETRC is a .netrc a task's toolchain fetches first-party
 // modules with (`machine <host> login <user> password <read-only token>`),
 // written into the task's scratch HOME and never seen as a variable.
-func taskRunner(getenv func(string) string) *plugin.Runner {
-	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC")}
+// isolate is taskIsolation's, made once per process.
+func taskRunner(getenv func(string) string, isolate func(*exec.Cmd, []string) (func(), error)) *plugin.Runner {
+	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC"), Isolate: isolate}
 	for _, name := range strings.Split(getenv("PINUP_PLUGIN_ENV"), ",") {
 		if name = strings.TrimSpace(name); name != "" {
 			r.PassEnv = append(r.PassEnv, name)
@@ -270,6 +277,59 @@ func taskRunner(getenv func(string) string) *plugin.Runner {
 		}
 	}
 	return r
+}
+
+// taskIsolation decides how tasks run. By default in the sandbox (package
+// sandbox), which the process checks once, before its first task: a check
+// that fails refuses every task with its reason, and the branches that
+// needed one are held with it. PINUP_TASK_ISOLATION=off runs tasks
+// unisolated - by name, and said on errw - and never because isolation
+// happened not to be available: off Linux, under a seccomp profile that
+// refuses user namespaces, on a kernel that strips them of capabilities
+// (Ubuntu 24.04's apparmor_restrict_unprivileged_userns), tasks are refused.
+//
+// state are pinup's own files - the lookup cache, whose first-seen records
+// decide minimumReleaseAge, and the consumer index the fast lane reads - so
+// that a task cannot rewrite what pinup decides by next.
+func taskIsolation(getenv func(string) string, errw io.Writer, state ...string) func(*exec.Cmd, []string) (func(), error) {
+	if getenv("PINUP_TASK_ISOLATION") == "off" {
+		fmt.Fprintln(errw, "warning: PINUP_TASK_ISOLATION=off: tasks run unisolated, under the job's uid, with everything it owns in reach")
+		return nil
+	}
+	self, err := os.Executable()
+	if err != nil {
+		return func(*exec.Cmd, []string) (func(), error) {
+			return func() {}, fmt.Errorf("task isolation: %w", err)
+		}
+	}
+	sb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state)}
+	checked := sync.OnceValue(sb.Check)
+	return func(cmd *exec.Cmd, keep []string) (func(), error) {
+		if err := checked(); err != nil {
+			return func() {}, fmt.Errorf("task isolation does not hold here, so no task runs: %w (PINUP_TASK_ISOLATION=off runs tasks unisolated)", err)
+		}
+		return sb.Wrap(cmd, keep)
+	}
+}
+
+// taskHide is what a task must not see. The temporary directory first: the
+// other repositories' checkouts live there, and so, in the estate's runner,
+// does the imported key. Then the job's HOME, the key's directory and the
+// agent sockets wherever they are, and pinup's state files.
+func taskHide(getenv func(string) string, state []string) []string {
+	hide := []string{os.TempDir()}
+	for _, name := range []string{"HOME", "GNUPGHOME", "SSH_AUTH_SOCK", "XDG_RUNTIME_DIR"} {
+		if v := getenv(name); v != "" {
+			hide = append(hide, v)
+		}
+	}
+	hide = append(hide, fmt.Sprintf("/run/user/%d", os.Getuid()))
+	for _, p := range state {
+		if abs, err := filepath.Abs(p); p != "" && err == nil {
+			hide = append(hide, abs)
+		}
+	}
+	return hide
 }
 
 // allowedCommands reads PINUP_ALLOWED_COMMANDS, a JSON array of anchored

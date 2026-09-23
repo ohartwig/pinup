@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): twenty-six named, deterministic
+// Package mutate is the mutation suite (H.7): thirty named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -39,78 +40,96 @@ type mutator struct {
 	// Sentinel marks the one change no test can see: a comment. The suite
 	// must report it as not detected, or it cannot tell red from green.
 	Sentinel bool
+	// OS, when set, is the only system the gate can be seen red on - the
+	// task sandbox exists on Linux alone. Elsewhere the mutator is reported
+	// as not measurable, never as detected; CI's test:mutation runs Linux.
+	OS string
 }
 
 var mutators = []mutator{
 	// config: presets, rules, templates, globs, schedules
 	{1, "config", "rules: negation ignored", "rules/pattern.go",
 		"\tfor _, p := range l.negative {\n\t\tif p.matches(s) {\n\t\t\treturn false",
-		"\tfor _, p := range l.negative {\n\t\tif p.matches(s) {\n\t\t\treturn true", []string{"./rules/"}, false},
+		"\tfor _, p := range l.negative {\n\t\tif p.matches(s) {\n\t\t\treturn true", []string{"./rules/"}, false, ""},
 	{2, "config", "rules: the first rule wins instead of the last", "rules/rules.go",
-		"\tfor _, r := range e.Rules {", "\tfor _, r := range slices.Backward(e.Rules) {", []string{"./rules/"}, false},
+		"\tfor _, r := range e.Rules {", "\tfor _, r := range slices.Backward(e.Rules) {", []string{"./rules/"}, false, ""},
 	{3, "config", "packageRules replace instead of concatenating", "config/merge.go",
-		"\t\"packageRules\": true,\n}", "}", []string{"./config/"}, false},
+		"\t\"packageRules\": true,\n}", "}", []string{"./config/"}, false, ""},
 	{4, "config", "globstar matches nothing", "glob/glob.go",
-		"func (m *Matcher) Match(name string) bool {", "func (m *Matcher) Match(name string) bool {\n\tif strings.Contains(m.pattern, \"**\") {\n\t\treturn false\n\t}", []string{"./glob/"}, false},
+		"func (m *Matcher) Match(name string) bool {", "func (m *Matcher) Match(name string) bool {\n\tif strings.Contains(m.pattern, \"**\") {\n\t\treturn false\n\t}", []string{"./glob/"}, false, ""},
 	{5, "config", "triple-stash escapes", "hbs/hbs.go",
-		"\t\t\t\tsb.WriteString(html.EscapeString(v))", "\t\t\t\tsb.WriteString(v)", []string{"./hbs/"}, false},
+		"\t\t\t\tsb.WriteString(html.EscapeString(v))", "\t\t\t\tsb.WriteString(v)", []string{"./hbs/"}, false, ""},
 	{6, "config", "schedule window inverted", "sched/natural.go",
-		"\treturn m >= n.afterMin && m < n.beforeMin\n}", "\treturn m < n.afterMin || m >= n.beforeMin\n}", []string{"./sched/"}, false},
+		"\treturn m >= n.afterMin && m < n.beforeMin\n}", "\treturn m < n.afterMin || m >= n.beforeMin\n}", []string{"./sched/"}, false, ""},
 	// versioning: the captured tables
 	{7, "versioning", "docker compatibility ignores the suffix", "versioning/docker/docker.go",
-		"return len(tc.nums) == len(tr.nums) && tc.suffix == tr.suffix", "return len(tc.nums) == len(tr.nums)", []string{"./versioning/docker/"}, false},
+		"return len(tc.nums) == len(tr.nums) && tc.suffix == tr.suffix", "return len(tc.nums) == len(tr.nums)", []string{"./versioning/docker/"}, false, ""},
 	{8, "versioning", "a partial satisfies nothing", "versioning/partial/partial.go",
-		"func (s *Scheme) Satisfies(version, rng string) bool {", "func (s *Scheme) Satisfies(version, rng string) bool {\n\treturn false", []string{"./versioning/partial/"}, false},
+		"func (s *Scheme) Satisfies(version, rng string) bool {", "func (s *Scheme) Satisfies(version, rng string) bool {\n\treturn false", []string{"./versioning/partial/"}, false, ""},
 	// extract: managers against the corpus
 	{9, "extract", "the pinup annotation prefix is not read", "manager/regexm/regexm.go",
-		"\treturn strings.ReplaceAll(pattern, legacyPrefix, widenedGroup)", "\treturn pattern", []string{"./manager/regexm/"}, false},
+		"\treturn strings.ReplaceAll(pattern, legacyPrefix, widenedGroup)", "\treturn pattern", []string{"./manager/regexm/"}, false, ""},
 	{10, "extract", ".terraform-version loses its v", "manager/tfversion/tfversion.go",
-		"\t\tCurrentValue:  src[start:end],", "\t\tCurrentValue:  strings.TrimPrefix(src[start:end], \"v\"),", []string{"./manager/tfversion/"}, false},
+		"\t\tCurrentValue:  src[start:end],", "\t\tCurrentValue:  strings.TrimPrefix(src[start:end], \"v\"),", []string{"./manager/tfversion/"}, false, ""},
 	// lookup: cache and datasource contract
 	{11, "lookup", "the cache is never fresh", "cache/cache.go",
-		"\treturn payload, fresh, err\n}", "\treturn payload, false, err\n}", []string{"./cache/"}, false},
+		"\treturn payload, fresh, err\n}", "\treturn payload, false, err\n}", []string{"./cache/"}, false, ""},
 	{12, "lookup", "a declined lookup warns", "lookup/lookup.go",
-		"\t\tif !errors.As(err, &declined) {", "\t\tif true {", []string{"./lookup/"}, false},
+		"\t\tif !errors.As(err, &declined) {", "\t\tif true {", []string{"./lookup/"}, false, ""},
 	// planner: selection, policy, naming
 	{13, "planner", "majors join the minor bucket", "planner/planner.go",
-		"\t\t\t\tc.majors = append(c.majors, cand)", "\t\t\t\tc.others = append(c.others, cand)", []string{"./planner/"}, false},
+		"\t\t\t\tc.majors = append(c.majors, cand)", "\t\t\t\tc.others = append(c.others, cand)", []string{"./planner/"}, false, ""},
 	{14, "planner", "deprecated releases offered", "planner/planner.go",
-		"\t\tif r.Deprecated {", "\t\tif r.Deprecated && false {", []string{"./planner/"}, false},
+		"\t\tif r.Deprecated {", "\t\tif r.Deprecated && false {", []string{"./planner/"}, false, ""},
 	{15, "planner", "release age never holds", "planner/policy.go",
-		"\tif age > 0 && !u.AgeWaived && u.Type != model.UpdateLockFileMaintenance && u.Type != model.UpdateDigest && u.Type != model.UpdatePinDigest {", "\tif age > 0 && false {", []string{"./planner/"}, false},
+		"\tif age > 0 && !u.AgeWaived && u.Type != model.UpdateLockFileMaintenance && u.Type != model.UpdateDigest && u.Type != model.UpdatePinDigest {", "\tif age > 0 && false {", []string{"./planner/"}, false, ""},
 	{16, "planner", "titles keep their case", "planner/branch.go",
-		"\tlower := true\n", "\tlower := false\n", []string{"./planner/"}, false},
+		"\tlower := true\n", "\tlower := false\n", []string{"./planner/"}, false, ""},
 	{17, "planner", "an unchanged value is still an update", "planner/planner.go",
-		"\t\tif newValue == cur {\n\t\t\treturn model.Update{}, unchangedPrefix + target\n\t\t}", "", []string{"./cmd/pinup/"}, false},
+		"\t\tif newValue == cur {\n\t\t\treturn model.Update{}, unchangedPrefix + target\n\t\t}", "", []string{"./cmd/pinup/"}, false, ""},
 	// delivery: apply, tasks, runner, shadow
 	{18, "delivery", "a new tag lands on the old digest", "extract/edit.go",
-		"\tcase hasDigest && valueChanges && !digestKnown:", "\tcase hasDigest && valueChanges && !digestKnown && false:", []string{"./extract/", "./manager/gitlabci/"}, false},
+		"\tcase hasDigest && valueChanges && !digestKnown:", "\tcase hasDigest && valueChanges && !digestKnown && false:", []string{"./extract/", "./manager/gitlabci/"}, false, ""},
 	{19, "delivery", "overlapping edits pass", "apply/apply.go",
-		"\t\t\tif edits[i].Overlaps(edits[j]) {", "\t\t\tif false && edits[i].Overlaps(edits[j]) {", []string{"./apply/"}, false},
+		"\t\t\tif edits[i].Overlaps(edits[j]) {", "\t\t\tif false && edits[i].Overlaps(edits[j]) {", []string{"./apply/"}, false, ""},
 	{20, "delivery", "every command is allowed", "plugin/plugin.go",
-		"\treturn -1, fmt.Errorf(\"command %q is not on the allowedCommands list\", command)", "\treturn 0, nil", []string{"./plugin/"}, false},
+		"\treturn -1, fmt.Errorf(\"command %q is not on the allowedCommands list\", command)", "\treturn 0, nil", []string{"./plugin/"}, false, ""},
 	{21, "delivery", "a task's result is committed whatever it touched", "runner/runner.go",
-		"\tif err := apply.InScope(t, changed); err != nil {\n\t\treturn nil, err\n\t}", "", []string{"./runner/"}, false},
+		"\tif err := apply.InScope(t, changed); err != nil {\n\t\treturn nil, err\n\t}", "", []string{"./runner/"}, false, ""},
 	{22, "delivery", "a held branch Renovate opened is not a failure", "report/shadow.go",
-		"\t\tc.r.HeldOpen++", "\t\tc.r.Held++", []string{"./report/"}, false},
+		"\t\tc.r.HeldOpen++", "\t\tc.r.Held++", []string{"./report/"}, false, ""},
 	// analyzer: what the effective label is read off. The layer had no
 	// entry until 2026-09-22, which by this suite's own premise means it
 	// was not known to gate at all.
 	{23, "analyzer", "a chart's placed images are never found", "analyzer/helmchart/images.go",
-		"\tif repo := str(m, \"repository\"); repo != \"\" {", "\tif repo := str(m, \"repository\"); false {", []string{"./analyzer/helmchart/"}, false},
+		"\tif repo := str(m, \"repository\"); repo != \"\" {", "\tif repo := str(m, \"repository\"); false {", []string{"./analyzer/helmchart/"}, false, ""},
 	{24, "analyzer", "a removed values key is not breaking", "analyzer/helmchart/helmchart.go",
-		"\tif len(removed) > 0 {\n\t\trisk = model.RiskBreakingValues", "\tif false {\n\t\trisk = model.RiskBreakingValues", []string{"./analyzer/helmchart/"}, false},
+		"\tif len(removed) > 0 {\n\t\trisk = model.RiskBreakingValues", "\tif false {\n\t\trisk = model.RiskBreakingValues", []string{"./analyzer/helmchart/"}, false, ""},
 	{25, "planner", "a re-pushed release passes as an ordinary digest bump", "planner/planner.go",
-		"\tif releasedTag(tag) {", "\tif false {", []string{"./planner/"}, false},
+		"\tif releasedTag(tag) {", "\tif false {", []string{"./planner/"}, false, ""},
 	// delivery again: the value filter on a task's environment. Added
 	// 2026-09-23 with the filter itself - the runner had handed the
 	// platform token to every task under two names the name filter did
 	// not know, and a filter nobody has seen red is not known to filter.
 	{26, "delivery", "a platform credential crosses under another name", "plugin/plugin.go",
-		"\tif err := r.carriesSecret(); err != nil {\n\t\treturn Result{}, err\n\t}\n", "", []string{"./plugin/"}, false},
+		"\tif err := r.carriesSecret(); err != nil {\n\t\treturn Result{}, err\n\t}\n", "", []string{"./plugin/"}, false, ""},
+	// delivery: the task sandbox (2026-09-23). The shim that covers
+	// nothing still starts, still execs the task, still exits 0 - only a
+	// test that looks for the hidden paths from inside can tell. The
+	// default that quietly runs unisolated is the other way to lose it.
+	{27, "delivery", "the sandbox hides nothing", "sandbox/linux.go",
+		"\t\t} else if _, err := os.Lstat(o.Path); err != nil {\n\t\t\tcontinue // already inside an earlier stand-in\n\t\t}",
+		"\t\t} else {\n\t\t\tcontinue\n\t\t}", []string{"./sandbox/"}, false, "linux"},
+	{28, "delivery", "tasks run unisolated by default", "cmd/pinup/env.go",
+		"\tif getenv(\"PINUP_TASK_ISOLATION\") == \"off\" {", "\tif true {", []string{"./cmd/pinup/"}, false, ""},
+	{29, "delivery", "a secret inside a kept checkout comes back into view", "sandbox/sandbox.go",
+		"\t\tif d := strings.Count(a.Path, \"/\") - strings.Count(b.Path, \"/\"); d != 0 {\n\t\t\treturn d",
+		"\t\tif d := strings.Count(a.Path, \"/\") - strings.Count(b.Path, \"/\"); d != 0 {\n\t\t\treturn -d", []string{"./sandbox/"}, false, ""},
+	{30, "delivery", "the task keeps the shim's capabilities", "sandbox/linux.go",
+		"\tif err := dropPrivileges(); err != nil {", "\tif err := error(nil); err != nil {", []string{"./sandbox/"}, false, "linux"},
 	// the one change no test can see
-	{27, "sentinel", "a comment changes", "model/model.go",
-		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true},
+	{31, "sentinel", "a comment changes", "model/model.go",
+		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {
@@ -173,7 +192,15 @@ func TestEveryMutatorIsDetected(t *testing.T) {
 	work := t.TempDir()
 	copyTracked(t, root, work)
 	var detected, missed []string
+	elsewhere := 0
 	for _, m := range mutators {
+		if m.OS != "" && m.OS != runtime.GOOS {
+			// Not measurable here, and not counted as seen: the gate is
+			// untested on this machine, which is what the log says.
+			t.Logf("mutator %d (%s) can be seen red on %s only; not measured here", m.ID, m.Name, m.OS)
+			elsewhere++
+			continue
+		}
 		path := filepath.Join(work, m.File)
 		orig, err := os.ReadFile(path)
 		if err != nil {
@@ -211,7 +238,7 @@ func TestEveryMutatorIsDetected(t *testing.T) {
 		}
 	}
 	sort.Strings(detected)
-	t.Logf("detected %d/%d: %s", len(detected), len(mutators)-1, strings.Join(detected, "; "))
+	t.Logf("detected %d/%d: %s", len(detected), len(mutators)-1-elsewhere, strings.Join(detected, "; "))
 	if len(missed) > 0 {
 		t.Logf("missed: %s", strings.Join(missed, "; "))
 	}

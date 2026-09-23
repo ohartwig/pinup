@@ -164,6 +164,9 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: os.Getenv("PINUP_DASHBOARD_TITLE"),
 	}
+	if !*dryRun {
+		one.isolate = taskIsolation(os.Getenv, errw, *cachePath, *indexPath)
+	}
 	dsOpts, err := datasourceOptions(env, os.Getenv)
 	if err != nil {
 		return err
@@ -378,6 +381,8 @@ type runOptions struct {
 	released string
 	// pkg narrows a run to one external package, "datasource|name".
 	pkg string
+	// isolate is how every task of the process runs; see taskIsolation.
+	isolate func(*exec.Cmd, []string) (func(), error)
 	// base, when set, replaces the project's default branch as the
 	// branch the run reads and branches from.
 	base string
@@ -523,7 +528,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			ConcurrentLimit: plan.Limits.PRConcurrentLimit,
 			Now:             o.now,
 			Prune:           o.pkg == "" && o.released == "",
-			Tasks:           plugin.TaskRunner{Runner: taskRunner(os.Getenv)},
+			Tasks:           plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate)},
 			Sleep:           time.Sleep,
 			Rebase:          rebaseSet(*opts.checksRead),
 		})

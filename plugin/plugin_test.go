@@ -396,3 +396,36 @@ func TestSecretsAreBlockedByNameAsWell(t *testing.T) {
 		}
 	}
 }
+
+// Isolation wraps the command the task would have run, with the checkout
+// and the scratch HOME kept; a refusal from it is the task's error, and the
+// task never starts.
+func TestATaskRunsThroughIsolation(t *testing.T) {
+	root := t.TempDir()
+	var kept []string
+	var wrapped, cleaned, started bool
+	r := &Runner{
+		Getenv: func(string) string { return "" },
+		Isolate: func(c *exec.Cmd, keep []string) (func(), error) {
+			wrapped, kept = true, keep
+			return func() { cleaned = true }, nil
+		},
+		Exec: func(context.Context, *exec.Cmd) error { started = true; return nil },
+	}
+	if _, err := r.Run(t.Context(), root, model.Task{Command: []string{"composer", "update", "x"}}); err != nil {
+		t.Fatal(err)
+	}
+	if !wrapped || !started || !cleaned {
+		t.Errorf("wrapped=%t started=%t cleaned=%t", wrapped, started, cleaned)
+	}
+	if len(kept) != 2 || kept[0] != root || !strings.Contains(kept[1], "pinup-task-home-") {
+		t.Errorf("kept %v, want the checkout and the scratch home", kept)
+	}
+
+	started = false
+	r.Isolate = func(*exec.Cmd, []string) (func(), error) { return nil, errors.New("the sandbox does not hold here") }
+	_, err := r.Run(t.Context(), root, model.Task{Command: []string{"composer", "update", "x"}})
+	if err == nil || !strings.Contains(err.Error(), "the sandbox does not hold here") || started {
+		t.Errorf("refused isolation: err=%v started=%t", err, started)
+	}
+}

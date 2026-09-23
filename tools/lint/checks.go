@@ -223,6 +223,7 @@ type Check struct {
 func All() []Check {
 	return []Check{
 		{"ImportLayering", CheckImportLayering},
+		{"EveryPackageHasALayer", CheckEveryPackageHasALayer},
 		{"RunnerHasNoImplementations", CheckRunnerHasNoImplementations},
 		{"WireIsNotImported", CheckWireIsNotImported},
 		{"SPDXHeader", CheckSPDXHeader},
