@@ -88,7 +88,7 @@ Or as a container image — [`ghcr.io/ohartwig/pinup`](https://github.com/ohartw
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
-  pinup whatif --repo . --config renovate.json --report plan.json
+  pinup whatif --repo . --config .pinup.json --report plan.json
 ```
 
 The image carries the released binary, checked against `SHA256SUMS`; it is
