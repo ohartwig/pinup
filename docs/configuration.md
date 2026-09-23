@@ -19,8 +19,12 @@ Three layers, resolved in this order:
    rules, the custom managers, the presets. A name without an extension
    is `.json`; one that spells it (`.yaml`, `.yml`, `.jsonc`, `.json5`)
    is fetched and parsed as written - there is no probing.
-2. **The repository's file**: `renovate.json`, `.renovaterc.json`,
-   `.pinup.jsonc` or `.pinup.yaml` in the checkout. Its `extends` may name
+2. **The repository's file** in the checkout, the first of these that
+   exists: `.pinup.yaml`, `.pinup.yml`, `.pinup.json`, `.pinup.jsonc`,
+   `renovate.json`, `renovate.json5`, `.renovaterc`, `.renovaterc.json`.
+   **Two of them is an error**, not a silent choice: the one that lost
+   would be edited for weeks with no effect. So a repository carries one
+   file, under whichever name it likes. Its `extends` may name
    the run's file as `local><runner project>`; pinup answers that name from
    the file it was started with, without a fetch - and it keeps answering
    the project's old name after the file moved, so an estate migrates its
