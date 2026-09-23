@@ -965,6 +965,70 @@ func TestAnNpmWorkspaceReadsAndRefreshesTheRootLock(t *testing.T) {
 	}
 }
 
+// A pnpm workspace: pinup reads neither pnpm-lock.yaml nor regenerates it,
+// so a bump in a member's package.json is held, naming the lock, instead of
+// pushed without it - the manifest-only branch left nozzleops/platform's
+// lock two bumps behind its manifests (2026-09-17, 2026-09-23). Without any
+// lock the same bump is a manifest edit and nothing more, as before.
+func TestABumpUnderALockPinupCannotRefreshIsHeld(t *testing.T) {
+	for _, tc := range []struct {
+		name, lock string
+		held       bool
+	}{
+		{"pnpm workspace", "pnpm-lock.yaml", true},
+		{"bun workspace", "bun.lock", true},
+		{"no lock at all", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			os.MkdirAll(root+"/apps/web", 0o755)
+			os.WriteFile(root+"/package.json", []byte(`{"name":"platform","private":true}`), 0o644)
+			os.WriteFile(root+"/apps/web/package.json", []byte(`{"name":"web","dependencies":{"lodash":"4.17.20"}}`), 0o644)
+			if tc.lock != "" {
+				os.WriteFile(root+"/"+tc.lock, []byte("lockfileVersion: '9.0'\n"), 0o644)
+			}
+			os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"]}`), 0o644)
+			opts := ciToolsOptions(t, time.Date(2026, 9, 23, 14, 5, 0, 0, time.UTC))
+			opts.Root, opts.RepoName = root, "nozzleops/platform"
+			opts.Datasources["npm"] = cannedDS{name: "npm", scheme: "npm", releases: map[string][]string{"lodash": {"4.17.20", "4.17.21"}}}
+			opts.LookPath = func(string) (string, error) { return "/usr/bin/x", nil }
+			plan, err := whatif(context.Background(), opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var found *model.Branch
+			for i, b := range plan.Branches {
+				if strings.Contains(strings.Join(b.UpdateKeys, " "), "lodash") {
+					found = &plan.Branches[i]
+				}
+			}
+			if found == nil {
+				t.Fatalf("no lodash branch; branches: %+v", plan.Branches)
+			}
+			if !tc.held {
+				if found.SuppressedBy != "" {
+					t.Errorf("a manifest without a lock was held: %q", found.SuppressedBy)
+				}
+				return
+			}
+			if found.SuppressedBy != model.BlockPluginRequired {
+				t.Fatalf("suppressedBy = %q, want %q: the branch would be pushed without %s", found.SuppressedBy, model.BlockPluginRequired, tc.lock)
+			}
+			named := false
+			for _, u := range plan.Updates {
+				for _, blk := range u.Blocks {
+					if blk.Reason == model.BlockPluginRequired && strings.Contains(blk.Note, tc.lock) {
+						named = true
+					}
+				}
+			}
+			if !named {
+				t.Errorf("the hold does not name %s", tc.lock)
+			}
+		})
+	}
+}
+
 // hashingDS is a terraform-provider datasource that also answers the
 // lock's hashes, as the real one does.
 type hashingDS struct {

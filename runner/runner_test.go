@@ -519,6 +519,47 @@ func TestARequestNoLongerPlannedIsAutoclosed(t *testing.T) {
 	}
 }
 
+// A branch the plan still names, but that the configuration has settled
+// against, goes like one the plan dropped: its request proposes what the
+// configuration now refuses (yasrt/cli!46, pinup/pinup!16 - component pins
+// retired by `enabled: false`, open for days). A branch that is only
+// waiting - here for its schedule - keeps its request.
+func TestARequestTheConfigurationSettledAgainstIsAutoclosed(t *testing.T) {
+	_, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := context.Background()
+	alpine := model.Branch{Name: "renovate/alpine-3.x", Title: "a", UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}}
+	golang := model.Branch{Name: "renovate/ci-components", Title: "b", UpdateKeys: []string{"Containerfile|golang|1.26"}, Edits: []model.Edit{edit("1.26", "1.27")}}
+	if _, err := Execute(ctx, plan(alpine, golang), options(repo, pf)); err != nil {
+		t.Fatal(err)
+	}
+	if len(pf.MRs) != 2 {
+		t.Fatalf("two requests expected, %d", len(pf.MRs))
+	}
+
+	alpine.SuppressedBy, golang.SuppressedBy = model.BlockSchedule, model.BlockDisabled
+	o := options(repo, pf)
+	o.Prune = true
+	outs, err := Execute(ctx, plan(alpine, golang), o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var closed []Outcome
+	for _, out := range outs {
+		if out.Action == "autoclosed" {
+			closed = append(closed, out)
+		}
+	}
+	if len(closed) != 1 || closed[0].Branch != "renovate/ci-components" || !strings.Contains(closed[0].Message, "disabled") {
+		t.Errorf("autoclosed = %+v, want the disabled branch only, saying why", closed)
+	}
+	for _, m := range pf.MRs {
+		if m.SourceBranch == "renovate/alpine-3.x" && m.State != "opened" {
+			t.Errorf("a branch waiting for its schedule lost its request: %+v", m)
+		}
+	}
+}
+
 func TestARequestClosedByHandIsNotReopened(t *testing.T) {
 	_, repo := fixture(t)
 	pf := &platformfake.Platform{}
