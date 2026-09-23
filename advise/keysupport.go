@@ -31,7 +31,7 @@ var KeySupport = map[string]Support{
 	"matchEffective": Supported, "analyze": Supported, "trustEffective": Supported,
 	// Decisions.
 	"enabled": Supported, "minimumReleaseAge": Supported, "minimumReleaseAgeBehaviour": Supported, "schedule": Supported,
-	"timezone": Supported, "automerge": Supported, "dependencyDashboardApproval": Supported, "groupName": Supported,
+	"timezone": Supported, "automerge": Supported, "automergeDirect": Supported, "dependencyDashboardApproval": Supported, "groupName": Supported,
 	"groupSlug": Supported, "versioning": Supported, "registryUrls": Supported, "extractVersion": Supported,
 	"ignoreUnstable": Supported, "prHourlyLimit": Supported, "prConcurrentLimit": Supported, "labels": Supported,
 	"ignoreDeps": Supported, "allowedVersions": Supported, "rangeStrategy": Supported, "separateMajorMinor": Supported,

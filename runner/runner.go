@@ -200,7 +200,8 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		req := publish.Request{
 			SourceBranch: b.Name, TargetBranch: o.Base, Title: b.Title,
 			Description: description(b, plan.Updates, footer), Labels: union(o.Labels, b.Labels),
-			Automerge: automerge, RemoveSourceBranch: true,
+			Automerge: automerge, AutomergeDirect: b.AutomergeDirect == nil || *b.AutomergeDirect,
+			RemoveSourceBranch: true,
 		}
 		var out Outcome
 		switch {

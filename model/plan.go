@@ -116,9 +116,17 @@ type Branch struct {
 	Edits      []Edit   `json:"edits,omitempty"`
 	Tasks      []Task   `json:"tasks,omitempty"`
 
-	Automerge     bool     `json:"automerge"`
-	AutomergeType string   `json:"automergeType,omitempty"`
-	Labels        []string `json:"labels,omitempty"`
+	Automerge     bool   `json:"automerge"`
+	AutomergeType string `json:"automergeType,omitempty"`
+	// AutomergeDirect lets the platform merge the request outright when it
+	// will not arm automerge and reports the request mergeable now. Only
+	// read where Automerge is set; `automergeDirect: false` turns it off.
+	//
+	// A pointer, and absent from the plan unless a configuration said
+	// something: the default is on, and a plan that printed it everywhere
+	// would rewrite every golden file for a behaviour nobody changed.
+	AutomergeDirect *bool    `json:"automergeDirect,omitempty"`
+	Labels          []string `json:"labels,omitempty"`
 
 	// SuppressedBy is set on a branch the run will not push: every update
 	// on it is held, and this is the first reason. The shadow comparator
