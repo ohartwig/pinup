@@ -1,3 +1,9 @@
+## [0.36.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.36.1...v0.36.2) (2026-09-23)
+
+### :bug: Fixes
+
+* **plugin:** keep platform credentials out of a task by value, not only by name ([e60b26e](https://git.ole-hartwig.eu/pinup/pinup/commit/e60b26e5438ed979a099073dfa6007099f1b3b76)) ([!10](https://git.ole-hartwig.eu/pinup/pinup/merge_requests/10))
+
 ## [0.36.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.36.0...v0.36.1) (2026-09-23)
 
 ### :bug: Fixes
