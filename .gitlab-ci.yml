@@ -487,6 +487,10 @@ update:pinup:
       # is nowhere a task can read.
       GNUPGHOME=$(mktemp -d); export GNUPGHOME
       printf '%s\n' "$PINUP_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
+      # Imported, so the armored key has done its job: out of the
+      # environment before pinup starts, and so out of pinup's own
+      # /proc/<pid>/environ, which a task under the same uid can read.
+      unset PINUP_GPG_PRIVATE_KEY
       CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${CI_COMMIT_SHORT_SHA}" -o /tmp/pinup ./cmd/pinup
       /tmp/pinup version
       mode="run"

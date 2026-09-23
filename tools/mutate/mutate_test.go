@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): twenty-five named, deterministic
+// Package mutate is the mutation suite (H.7): twenty-six named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -102,8 +102,14 @@ var mutators = []mutator{
 		"\tif len(removed) > 0 {\n\t\trisk = model.RiskBreakingValues", "\tif false {\n\t\trisk = model.RiskBreakingValues", []string{"./analyzer/helmchart/"}, false},
 	{25, "planner", "a re-pushed release passes as an ordinary digest bump", "planner/planner.go",
 		"\tif releasedTag(tag) {", "\tif false {", []string{"./planner/"}, false},
+	// delivery again: the value filter on a task's environment. Added
+	// 2026-09-23 with the filter itself - the runner had handed the
+	// platform token to every task under two names the name filter did
+	// not know, and a filter nobody has seen red is not known to filter.
+	{26, "delivery", "a platform credential crosses under another name", "plugin/plugin.go",
+		"\tif err := r.carriesSecret(); err != nil {\n\t\treturn Result{}, err\n\t}\n", "", []string{"./plugin/"}, false},
 	// the one change no test can see
-	{26, "sentinel", "a comment changes", "model/model.go",
+	{27, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true},
 }
 
