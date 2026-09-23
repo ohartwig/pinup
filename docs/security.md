@@ -37,32 +37,74 @@ pinup holds, and what a repository can and cannot make the bot do.
   names the filter did not know.
 
   Said precisely, because the filtered environment on its own does not
-  carry the claim: a task runs as the same user, in the same process tree,
-  so on Linux it can read the parent's `/proc/<pid>/environ` directly, open
-  any file the job owns (the imported signing key among them), and - where
-  `kernel.yama.ptrace_scope` is 0, as measured on the estate's runners -
-  attach to the parent. The environment filter is hygiene, not a boundary.
+  carry the claim: a task runs as the same user, in the same process tree.
+  Unisolated, on Linux, it can read the parent's `/proc/<pid>/environ`,
+  open any file the job owns (the imported signing key and the gpg-agent
+  socket beside it among them), attach to the parent where
+  `kernel.yama.ptrace_scope` is 0 - as measured on the estate's runners -
+  and write into the checkouts of the other repositories the job is
+  working on at the same time, moments before pinup commits them under its
+  own signature. The filter alone is hygiene.
 
-  How much that matters depends on what the allowlist admits. A package
-  manager it names is hardened so it cannot run code out of the checkout
+  That matters because of what the allowlist admits. A package manager it
+  names is hardened so it cannot run code out of the checkout
   (`--no-scripts`, `--no-plugins`, `--ignore-scripts`, appended before the
   allowlist is consulted), and the git configuration that makes git execute
   a program - `core.hooksPath`, `core.fsmonitor`, `gpg.program` - is pinned
   on every invocation, with the `.git` control surface fingerprinted around
   every task. But an entry of the form `node scripts/<file>.mjs` runs code
-  **from the scanned repository** by design: for such a task, whoever can
-  write to that repository runs code under the job's uid, and only what the
-  task is handed and what that uid can read decide what they get.
+  **from the scanned repository** by design: whoever can write to that
+  repository runs code as the task.
 
-  Real isolation is what would turn the filter into a boundary, and it is
-  not there today. Measured on the estate's executor (2026-09-22, both the
-  toolchain and the golden image): the job runs as uid 1000 with no
-  capabilities, so dropping a task to another uid is not available; an
-  unprivileged user namespace is, and it denies the parent's `environ` and
-  `ptrace`, but not a file the same uid owns - hiding those takes a mount
-  inside the namespace before the task's `exec`. It is permitted only
-  because the executor applies no seccomp profile; isolation built on it
-  has to check at run time that it took effect.
+  So every task runs in a **sandbox** (package `sandbox`). pinup re-executes
+  itself as a shim in a new user and mount namespace; the shim binds an
+  empty directory over everything the task must not see, binds back what
+  it was handed, drops every capability, sets `no_new_privs`, and only then
+  executes the task under the job's own uid:
+
+  | Hidden | Why |
+  |---|---|
+  | the temporary directory | the other checkouts live there, and in the estate's runner the imported key |
+  | the job's `HOME`, `GNUPGHOME`, `SSH_AUTH_SOCK`, `XDG_RUNTIME_DIR`, `/run/user/<uid>` | keys, agent sockets, credentials wherever the job keeps them |
+  | pinup's lookup cache and consumer index | the first-seen records decide `minimumReleaseAge`; the index steers the fast lane |
+  | the parent's `environ`, `ptrace` | closed by the namespace boundary itself |
+
+  Kept visible: the task's own checkout, its scratch `HOME` with the
+  `.netrc`, and every directory its environment names - the caches
+  (`COMPOSER_HOME`, `GOMODCACHE`, `npm_config_cache`) and `PATH`. The task
+  gets a private temporary directory, discarded afterwards.
+
+  **It fails closed.** Before its first task a process runs the sandbox on
+  itself and checks from inside what a task must not manage - the parent's
+  environment unreadable, every hidden entry gone, no capability left - and
+  that a kept path is still there. If the check fails, every task is
+  refused with the reason and its branch held, never run as if isolation
+  had held. That happens off Linux, under a seccomp profile that refuses
+  user namespaces, and on a kernel that strips them of capabilities (Ubuntu
+  24.04's `apparmor_restrict_unprivileged_userns`). The estate's executor
+  permits the sandbox only because it applies no seccomp profile - a
+  property of the runner configuration, not a promise; `test:sandbox:*`
+  proves it in the images production runs tasks in, before a release.
+  `PINUP_TASK_ISOLATION=off` runs tasks unisolated, by name and said on
+  stderr.
+
+  **What it does not cover.** The network: a task that fetches packages
+  needs it, and can reach anything the job can. Files outside the hidden
+  paths that the uid can read stay readable; the hidden list is what the
+  job is known to keep secrets in, not a whitelist of the filesystem.
+
+  And the caches its environment names (`COMPOSER_HOME`,
+  `npm_config_cache`, `GOMODCACHE`): kept visible so lock refreshes stay
+  fast, shared between repositories, and **writable by every task**. That
+  is a way to poison the next repository's lock refresh, and none of the
+  three tools stops it: composer revalidates its metadata with
+  `If-Modified-Since` and keeps a poisoned entry until upstream changes,
+  with `dist.url` pointing anywhere and `shasum` usually empty; an npm
+  packument carries `resolved` and `integrity` together, so a poisoned one
+  brings a hash that matches the poisoned tarball; Go checks public modules
+  against the checksum database, but the estate's own are `GOPRIVATE` and
+  are not checked. Lock-file maintenance merges automatically. Not closed
+  yet; per-repository caches are the planned answer.
 - **A plan explains why nothing happens.** A held update carries its
   reason and the rule that held it; a refused command is named, not
   skipped.

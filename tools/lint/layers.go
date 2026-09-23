@@ -25,7 +25,7 @@ var layerOf = map[string]int{
 
 	// L1 - services.
 	"config": 1, "versioning": 1,
-	"httpx": 1, "cache": 1, "git": 1,
+	"httpx": 1, "cache": 1, "git": 1, "sandbox": 1,
 
 	// L2 - stages. Each declares the interface its implementations satisfy.
 	"discover": 2, "extract": 2, "lookup": 2, "rules": 2, "classify": 2,

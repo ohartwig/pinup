@@ -205,6 +205,11 @@ variables:
   # -mod=mod lets CI repair go.sum instead of reporting that it is wrong.
   GOFLAGS: "-mod=readonly"
   GOPATH: "${CI_PROJECT_DIR}/.go"
+  # The task sandbox's tests skip where the kernel refuses a user namespace.
+  # Here that would be a gate that does not gate, so every job that runs
+  # them - test:go, test:mutation, test:sandbox:* - turns the skip into a
+  # failure.
+  PINUP_SANDBOX_REQUIRED: "1"
   PACKAGE_URL: "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/pinup"
 
 default:
@@ -299,6 +304,51 @@ test:mutation:
     GIT_DEPTH: "1"
   script:
     - go test -count=1 -timeout 30m -v ./tools/mutate/
+
+# The task sandbox, proven in the images production runs tasks in. test:go
+# proves it in the golang image, as root; the runner's partitions and
+# update:pinup run tasks as uid 1000 in pinup-toolchain, and the estate's
+# golden image is the other place pinup executes. The kernel allows the
+# sandbox only because the executor applies no seccomp profile (measured
+# 2026-09-22) - a property of the runner configuration, not a promise - so
+# this is where a hardened executor shows up: red here, before a release
+# ships a pinup that would refuse every task.
+#
+# The binaries are built once and run without the repository: neither image
+# needs Go or git for it.
+test:sandbox:build:
+  stage: test
+  image: ${GO_IMAGE}
+  needs: []
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - CGO_ENABLED=0 go test -c -o sandbox.test ./sandbox/
+    - CGO_ENABLED=0 go test -c -o plugin.test ./plugin/
+  artifacts:
+    paths: [sandbox.test, plugin.test]
+    expire_in: 1 day
+
+.test:sandbox:
+  stage: test
+  needs: [test:sandbox:build]
+  cache: []
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - id
+    - ./sandbox.test -test.v -test.count=1
+    - ./plugin.test -test.v -test.count=1 -test.run 'Isolat'
+
+test:sandbox:toolchain:
+  extends: .test:sandbox
+  image: ${PINUP_TOOLCHAIN_IMAGE}
+
+# The rolling major, as the runner pulls it; no annotation, because there is
+# no patch version here for pinup to raise.
+test:sandbox:image:
+  extends: .test:sandbox
+  image: registry.ole-hartwig.eu/devops/images/pinup:0
 
 # --------------------------------------------------------------------------- #
 # Build - four platforms from one arm64 runner, nothing needs CGO

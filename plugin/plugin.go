@@ -288,6 +288,13 @@ type Runner struct {
 	Exec func(ctx context.Context, cmd *exec.Cmd) error
 	// Now is the clock for the duration a task took; nil leaves it zero.
 	Now func() time.Time
+	// Isolate, when set, rewrites the prepared command so the task runs
+	// where it cannot reach what the job holds (package sandbox), keeping
+	// the given paths - the checkout, the scratch HOME - visible. An error
+	// refuses the task; the cleanup runs after it. nil runs the task
+	// unisolated: tests that observe the command, and a runner that
+	// switched isolation off by name.
+	Isolate func(cmd *exec.Cmd, keep []string) (cleanup func(), err error)
 	// Netrc, when set, is written as .netrc into the task's scratch HOME,
 	// mode 0600, and gone with it: the credential a toolchain needs to
 	// fetch a first-party module over https - `go mod tidy` for a private
@@ -461,6 +468,13 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	cmd.Stdout, cmd.Stderr = stdout, stderr
 	// A hung tool is killed, not waited for: the timeout is the contract.
 	cmd.WaitDelay = 5 * time.Second
+	if r.Isolate != nil {
+		cleanup, err := r.Isolate(cmd, []string{root, home})
+		if err != nil {
+			return Result{}, fmt.Errorf("plugin: %s: %w", strings.Join(t.Command, " "), err)
+		}
+		defer cleanup()
+	}
 
 	run := r.Exec
 	if run == nil {
