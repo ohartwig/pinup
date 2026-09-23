@@ -26,20 +26,43 @@ pinup holds, and what a repository can and cannot make the bot do.
   the signing key. A read-only `.netrc` for private modules is written into
   the task's scratch `HOME`, not handed over as a variable.
 
+  The platform credentials are kept out twice: by **name** (`Blocked`) and
+  by **value** (`Secrets`). A task whose environment or `.netrc` would carry
+  the value of `PINUP_GITLAB_TOKEN`, `GITLAB_TOKEN`, `CI_JOB_TOKEN` or
+  `PINUP_GPG_PRIVATE_KEY` under any other name is refused before it starts,
+  and the refusal names the variable, never the value. The name check alone
+  did not hold: until 2026-09-23 the estate's runner built `COMPOSER_AUTH`
+  and `NPM_TOKEN` from the platform token and put both on
+  `PINUP_PLUGIN_ENV`, so every task held the estate's write token under two
+  names the filter did not know.
+
   Said precisely, because the filtered environment on its own does not
   carry the claim: a task runs as the same user, in the same process tree,
-  so on Linux it can read the parent's `/proc/<pid>/environ` directly. The
-  environment filter is hygiene. What holds the line is that a task has
-  nothing to *execute* the credential with: the commands it may run are an
-  operator allowlist, a package manager it names is hardened so it cannot
-  run code out of the checkout (`--no-scripts`, `--no-plugins`,
-  `--ignore-scripts`, appended before the allowlist is consulted), and the
-  git configuration that makes git execute a program - `core.hooksPath`,
-  `core.fsmonitor`, `gpg.program` - is pinned on every invocation and the
-  `.git` control surface is fingerprinted around every task. Real isolation
-  (a separate uid, a namespace) is what would make the environment filter a
-  boundary; it is not there today, and this list should not read as if it
-  were.
+  so on Linux it can read the parent's `/proc/<pid>/environ` directly, open
+  any file the job owns (the imported signing key among them), and - where
+  `kernel.yama.ptrace_scope` is 0, as measured on the estate's runners -
+  attach to the parent. The environment filter is hygiene, not a boundary.
+
+  How much that matters depends on what the allowlist admits. A package
+  manager it names is hardened so it cannot run code out of the checkout
+  (`--no-scripts`, `--no-plugins`, `--ignore-scripts`, appended before the
+  allowlist is consulted), and the git configuration that makes git execute
+  a program - `core.hooksPath`, `core.fsmonitor`, `gpg.program` - is pinned
+  on every invocation, with the `.git` control surface fingerprinted around
+  every task. But an entry of the form `node scripts/<file>.mjs` runs code
+  **from the scanned repository** by design: for such a task, whoever can
+  write to that repository runs code under the job's uid, and only what the
+  task is handed and what that uid can read decide what they get.
+
+  Real isolation is what would turn the filter into a boundary, and it is
+  not there today. Measured on the estate's executor (2026-09-22, both the
+  toolchain and the golden image): the job runs as uid 1000 with no
+  capabilities, so dropping a task to another uid is not available; an
+  unprivileged user namespace is, and it denies the parent's `environ` and
+  `ptrace`, but not a file the same uid owns - hiding those takes a mount
+  inside the namespace before the task's `exec`. It is permitted only
+  because the executor applies no seccomp profile; isolation built on it
+  has to check at run time that it took effect.
 - **A plan explains why nothing happens.** A held update carries its
   reason and the rule that held it; a refused command is named, not
   skipped.

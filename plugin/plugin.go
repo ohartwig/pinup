@@ -313,6 +313,23 @@ var Blocked = []string{
 	"GIT_ASKPASS", "HOME", "GNUPGHOME", "SSH_AUTH_SOCK", "GPG_AGENT_INFO", "GIT_CONFIG_GLOBAL", "GIT_CONFIG_PARAMETERS",
 }
 
+// Secrets are the Blocked names whose VALUES are credentials. Blocked keeps a
+// name from crossing; this keeps the value from crossing under another one.
+// That is not hypothetical: until 2026-09-23 the estate's runner built
+// COMPOSER_AUTH and NPM_TOKEN from PINUP_GITLAB_TOKEN and put both on
+// PassEnv, so every task - four of the allowed commands run a script out of
+// the scanned repository - held the estate's write token under names the
+// filter did not know.
+//
+// The paths among Blocked (HOME, GNUPGHOME, GIT_ASKPASS, ...) are not here: a
+// path is a substring of half the environment and says nothing about a leak.
+var Secrets = []string{"PINUP_GITLAB_TOKEN", "GITLAB_TOKEN", "CI_JOB_TOKEN", "PINUP_GPG_PRIVATE_KEY"}
+
+// minSecret is the shortest value compared. A platform token is 20 characters
+// and more; a shorter value is not one, and comparing it would find it inside
+// unrelated values and refuse tasks for nothing.
+const minSecret = 12
+
 // maxOutput bounds a task's stdout and stderr each.
 const maxOutput = 4 << 20
 
@@ -410,6 +427,9 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	if len(t.Command) == 0 {
 		return Result{}, errors.New("plugin: empty command")
 	}
+	if err := r.carriesSecret(); err != nil {
+		return Result{}, err
+	}
 	timeout := r.Timeout
 	if timeout == 0 {
 		timeout = 15 * time.Minute
@@ -462,6 +482,34 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 		return res, fmt.Errorf("plugin: %s: %w: %s", strings.Join(t.Command, " "), err, strings.TrimSpace(stderr.String()))
 	}
 	return res, nil
+}
+
+// carriesSecret refuses a task whose environment or .netrc would hold the
+// value of one of the Secrets, whatever name it travels under. Refused, not
+// dropped: a registry credential that silently went missing would surface as
+// a 401 from composer, far from the configuration that caused it. The error
+// names the variables and never a value.
+func (r *Runner) carriesSecret() error {
+	getenv := r.Getenv
+	if getenv == nil {
+		getenv = os.Getenv
+	}
+	handed := r.Environment("")
+	for _, secret := range Secrets {
+		value := getenv(secret)
+		if len(value) < minSecret {
+			continue
+		}
+		for _, kv := range handed {
+			if name, v, _ := strings.Cut(kv, "="); strings.Contains(v, value) {
+				return fmt.Errorf("plugin: %s carries the value of %s; a task gets no platform credential under any name - hand it a read-only one", name, secret)
+			}
+		}
+		if strings.Contains(r.Netrc, value) {
+			return fmt.Errorf("plugin: the task's .netrc carries the value of %s; a task gets no platform credential under any name - hand it a read-only one", secret)
+		}
+	}
+	return nil
 }
 
 // TaskRunner is the exec flavour for the runner's TaskRunner contract:

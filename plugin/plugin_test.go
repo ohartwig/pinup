@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -309,6 +310,89 @@ func TestNetrcIsWrittenIntoTheScratchHomeOnly(t *testing.T) {
 	for _, e := range seenEnv {
 		if strings.HasPrefix(e, "PINUP_TASK_NETRC=") {
 			t.Error("the netrc crossed as a variable")
+		}
+	}
+}
+
+// A platform credential does not reach a task under another name. The first
+// row is the estate's runner as it was until 2026-09-23: COMPOSER_AUTH and
+// NPM_TOKEN built from PINUP_GITLAB_TOKEN, both on PassEnv - every name
+// check passed, and every task held the estate's write token. The refusal
+// names the variables and never the value, and the task never starts.
+func TestAPlatformCredentialDoesNotCrossUnderAnotherName(t *testing.T) {
+	const platform = "glpat-platform-write-token"
+	const read = "glpat-read-only-api-token"
+	for _, tc := range []struct {
+		name    string
+		env     map[string]string
+		netrc   string
+		refused string
+	}{
+		{"the runner until 2026-09-23", map[string]string{
+			"PINUP_GITLAB_TOKEN": platform,
+			"COMPOSER_AUTH":      `{"gitlab-token":{"git.example.test":"` + platform + `"}}`,
+			"NPM_TOKEN":          platform,
+		}, "", "COMPOSER_AUTH carries the value of PINUP_GITLAB_TOKEN"},
+		{"the job token copied verbatim", map[string]string{
+			"CI_JOB_TOKEN": "glcbt-64_the-job-token",
+			"NPM_TOKEN":    "glcbt-64_the-job-token",
+		}, "", "NPM_TOKEN carries the value of CI_JOB_TOKEN"},
+		{"the signing key inside a variable", map[string]string{
+			"PINUP_GPG_PRIVATE_KEY": "-----BEGIN PGP PRIVATE KEY BLOCK-----\nlQcYBGabc\n-----END PGP PRIVATE KEY BLOCK-----",
+			"COMPOSER_AUTH":         "x -----BEGIN PGP PRIVATE KEY BLOCK-----\nlQcYBGabc\n-----END PGP PRIVATE KEY BLOCK----- y",
+		}, "", "COMPOSER_AUTH carries the value of PINUP_GPG_PRIVATE_KEY"},
+		{"the platform token in the netrc", map[string]string{
+			"PINUP_GITLAB_TOKEN": platform,
+		}, "machine git.example.test login pinup-bot password " + platform, "the task's .netrc carries the value of PINUP_GITLAB_TOKEN"},
+		{"the runner from 2026-09-23: a read token of its own", map[string]string{
+			"PINUP_GITLAB_TOKEN": platform,
+			"COMPOSER_AUTH":      `{"gitlab-token":{"git.example.test":"` + read + `"}}`,
+			"NPM_TOKEN":          read,
+		}, "machine git.example.test login pinup-bot password glpat-module-read", ""},
+		// Below minSecret nothing is compared: "tok" is inside "stock",
+		// and a refusal for that would be noise, not a finding.
+		{"a value too short to be a token", map[string]string{
+			"PINUP_GITLAB_TOKEN": "tok",
+			"NPM_TOKEN":          "stock",
+		}, "", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.env["PATH"] = "/usr/bin"
+			started := false
+			r := &Runner{
+				PassEnv: []string{"COMPOSER_AUTH", "NPM_TOKEN"}, Netrc: tc.netrc,
+				Getenv: func(k string) string { return tc.env[k] },
+				Exec:   func(context.Context, *exec.Cmd) error { started = true; return nil },
+			}
+			_, err := r.Run(t.Context(), t.TempDir(), model.Task{Command: []string{"composer", "update", "x"}})
+			if tc.refused == "" {
+				if err != nil || !started {
+					t.Fatalf("a clean environment was refused: started=%t err=%v", started, err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), tc.refused) {
+				t.Fatalf("err = %v, want it to say %q", err, tc.refused)
+			}
+			if started {
+				t.Error("the task started anyway")
+			}
+			for _, secret := range Secrets {
+				if v := tc.env[secret]; len(v) >= minSecret && strings.Contains(err.Error(), v) {
+					t.Errorf("the refusal printed the value of %s", secret)
+				}
+			}
+		})
+	}
+}
+
+// Every name whose value is compared is also a name that never crosses: a
+// secret that could still travel under its own name would make the value
+// check the only line, and a check of one line is not two.
+func TestSecretsAreBlockedByNameAsWell(t *testing.T) {
+	for _, s := range Secrets {
+		if !slices.Contains(Blocked, s) {
+			t.Errorf("%s is compared by value but not blocked by name", s)
 		}
 	}
 }
