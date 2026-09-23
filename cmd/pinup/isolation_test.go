@@ -45,11 +45,20 @@ func TestTasksAreIsolatedUnlessSwitchedOffByName(t *testing.T) {
 	if iso == nil {
 		t.Fatal("tasks run unisolated by default")
 	}
-	if taskRunner(env(nil), iso).Isolate == nil {
+	r := taskRunner(env(nil), iso, "development/moselwal/site")
+	if r.Isolate == nil {
 		t.Fatal("the task runner dropped the isolation it was handed")
 	}
+	if taskRunner(env(nil), nil, "x").Isolate != nil {
+		t.Error("no isolation handed, yet the runner isolates")
+	}
+	for _, name := range []string{"COMPOSER_HOME", "npm_config_cache", "GOMODCACHE", "GOPATH"} {
+		if !slices.Contains(iso.sb.Caches, name) {
+			t.Errorf("%s is shared between repositories: not among the sandbox's caches", name)
+		}
+	}
 	cmd := exec.Command("true")
-	cleanup, err := iso(cmd, []string{t.TempDir()})
+	cleanup, err := r.Isolate(cmd, []string{t.TempDir()})
 	defer cleanup()
 	switch {
 	case runtime.GOOS != "linux":

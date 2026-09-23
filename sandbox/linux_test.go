@@ -147,6 +147,8 @@ func TestHelperTask(t *testing.T) {
 			_, err = os.ReadFile(path)
 		case "write":
 			err = os.WriteFile(path, []byte("written by the task\n"), 0o600)
+		case "mkdir":
+			err = os.MkdirAll(path, 0o700)
 		case "umount":
 			err = syscall.Unmount(path, syscall.MNT_DETACH)
 		case "mount":
@@ -216,5 +218,57 @@ func TestATaskSeesItsCheckoutAndNothingElse(t *testing.T) {
 	}
 	if _, err := os.Stat(private); err == nil {
 		t.Error("the task's private /tmp leaked into the job's")
+	}
+}
+
+// The cache a task is handed is its repository's. Repository A writes into
+// its COMPOSER_HOME - the poisoned metadata of the review's attack - and
+// repository B, handed the very same path in the same job, does not see
+// it; a second branch of A does. The shared directory itself gains nothing
+// but the per-repository directories beneath it.
+func TestACacheIsNotSharedBetweenRepositories(t *testing.T) {
+	usable(t)
+	j := newJob(t)
+	shared := filepath.Join(j.root, "builds", ".pinup", "composer")
+	poison := filepath.Join(shared, "repo", "https---repo.packagist.org", "provider-typo3~cms-core.json")
+
+	task := func(repo, actions string) string {
+		t.Helper()
+		cmd := exec.Command(self(t), "-test.run=^TestHelperTask$")
+		cmd.Dir = j.checkout
+		cmd.Env = []string{"PATH=/usr/bin:/bin", "COMPOSER_HOME=" + shared, "PINUP_SANDBOX_TASK=" + actions}
+		sb := j.sandbox(t)
+		sb.Caches, sb.Repo = []string{"COMPOSER_HOME"}, repo
+		cleanup, err := sb.Wrap(cmd, []string{j.checkout})
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer cleanup()
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			t.Fatalf("%v:\n%s", err, out)
+		}
+		return string(out)
+	}
+	if err := os.MkdirAll(filepath.Dir(poison), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if got := task("development/a", "mkdir:"+filepath.Dir(poison)+";write:"+poison); !strings.Contains(got, "write:"+poison+"=ok") {
+		t.Fatalf("repository A could not write its own cache:\n%s", got)
+	}
+	if got := task("development/b", "read:"+poison); !strings.Contains(got, "read:"+poison+"=denied") {
+		t.Errorf("repository B read what A wrote into the cache:\n%s", got)
+	}
+	if got := task("development/a", "read:"+poison); !strings.Contains(got, "read:"+poison+"=ok") {
+		t.Errorf("a second branch of A lost A's cache:\n%s", got)
+	}
+	if _, err := os.Stat(poison); err == nil {
+		t.Error("the write landed in the shared cache, where every repository reads")
+	}
+	entries, _ := os.ReadDir(shared)
+	for _, e := range entries {
+		if e.Name() != ".pinup-repos" && e.Name() != "repo" {
+			t.Errorf("the shared cache gained %s", e.Name())
+		}
 	}
 }

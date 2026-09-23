@@ -5,6 +5,7 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"encoding/json"
 	"flag"
@@ -382,7 +383,7 @@ type runOptions struct {
 	// pkg narrows a run to one external package, "datasource|name".
 	pkg string
 	// isolate is how every task of the process runs; see taskIsolation.
-	isolate func(*exec.Cmd, []string) (func(), error)
+	isolate *isolation
 	// base, when set, replaces the project's default branch as the
 	// branch the run reads and branches from.
 	base string
@@ -528,7 +529,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			ConcurrentLimit: plan.Limits.PRConcurrentLimit,
 			Now:             o.now,
 			Prune:           o.pkg == "" && o.released == "",
-			Tasks:           plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate)},
+			Tasks:           plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate, cmp.Or(project, repoDir))},
 			Sleep:           time.Sleep,
 			Rebase:          rebaseSet(*opts.checksRead),
 		})

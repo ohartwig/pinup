@@ -70,9 +70,27 @@ pinup holds, and what a repository can and cannot make the bot do.
   | the parent's `environ`, `ptrace` | closed by the namespace boundary itself |
 
   Kept visible: the task's own checkout, its scratch `HOME` with the
-  `.netrc`, and every directory its environment names - the caches
-  (`COMPOSER_HOME`, `GOMODCACHE`, `npm_config_cache`) and `PATH`. The task
-  gets a private temporary directory, discarded afterwards.
+  `.netrc`, and every directory its environment names, `PATH` among them.
+  The task gets a private temporary directory, discarded afterwards.
+
+  **Caches are per repository.** A package manager's cache the task is
+  handed (`COMPOSER_HOME`, `npm_config_cache`, `GOPATH`, `GOMODCACHE`,
+  `GOCACHE`, ...) is covered by its repository's own directory beneath it:
+  the same path, a per-repository content. All three tools trust what they
+  find there - composer revalidates its metadata with `If-Modified-Since`
+  and keeps an entry until upstream changes, `dist.url` pointing anywhere
+  and `shasum` usually empty; an npm packument carries `resolved` and
+  `integrity` together; Go checks public modules against the checksum
+  database, but the estate's own are `GOPRIVATE` - so a cache shared
+  between repositories would let one task poison the next repository's
+  lock refresh, and lock-file maintenance merges automatically. The
+  branches of one repository share its cache; two repositories never do.
+  In the estate's runner the caches live and die with one job (only
+  pinup's own state is kept between runs), so this costs the sharing
+  between repositories within a job - nothing for composer, which
+  revalidates every file on every run anyway (measured: 1.1 s cold and
+  warm for a TYPO3 project); a few seconds per repository for an npm
+  update that several frontends take in the same job.
 
   **It fails closed.** Before its first task a process runs the sandbox on
   itself and checks from inside what a task must not manage - the parent's
@@ -91,20 +109,11 @@ pinup holds, and what a repository can and cannot make the bot do.
   **What it does not cover.** The network: a task that fetches packages
   needs it, and can reach anything the job can. Files outside the hidden
   paths that the uid can read stay readable; the hidden list is what the
-  job is known to keep secrets in, not a whitelist of the filesystem.
-
-  And the caches its environment names (`COMPOSER_HOME`,
-  `npm_config_cache`, `GOMODCACHE`): kept visible so lock refreshes stay
-  fast, shared between repositories, and **writable by every task**. That
-  is a way to poison the next repository's lock refresh, and none of the
-  three tools stops it: composer revalidates its metadata with
-  `If-Modified-Since` and keeps a poisoned entry until upstream changes,
-  with `dist.url` pointing anywhere and `shasum` usually empty; an npm
-  packument carries `resolved` and `integrity` together, so a poisoned one
-  brings a hash that matches the poisoned tarball; Go checks public modules
-  against the checksum database, but the estate's own are `GOPRIVATE` and
-  are not checked. Lock-file maintenance merges automatically. Not closed
-  yet; per-repository caches are the planned answer.
+  job is known to keep secrets in, not a whitelist of the filesystem. A
+  directory the environment names that is not a cache stays shared and,
+  where the uid may write it, writable; in the estate's runner that is the
+  entries of `PATH` alone. And a repository's own cache is its own to poison:
+  a task that controls a repository already controls its lock file.
 - **A plan explains why nothing happens.** A held update carries its
   reason and the rule that held it; a refused command is named, not
   skipped.

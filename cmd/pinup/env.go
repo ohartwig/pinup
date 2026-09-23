@@ -263,9 +263,14 @@ func httpClient(p platformEnv) *httpx.Client {
 // PINUP_TASK_NETRC is a .netrc a task's toolchain fetches first-party
 // modules with (`machine <host> login <user> password <read-only token>`),
 // written into the task's scratch HOME and never seen as a variable.
-// isolate is taskIsolation's, made once per process.
-func taskRunner(getenv func(string) string, isolate func(*exec.Cmd, []string) (func(), error)) *plugin.Runner {
-	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC"), Isolate: isolate}
+// iso is taskIsolation's, made once per process; repo names the repository
+// the tasks work on, and so the caches they get. A nil iso runs tasks
+// unisolated.
+func taskRunner(getenv func(string) string, iso *isolation, repo string) *plugin.Runner {
+	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC")}
+	if iso != nil {
+		r.Isolate = iso.forRepo(repo)
+	}
 	for _, name := range strings.Split(getenv("PINUP_PLUGIN_ENV"), ",") {
 		if name = strings.TrimSpace(name); name != "" {
 			r.PassEnv = append(r.PassEnv, name)
@@ -291,25 +296,48 @@ func taskRunner(getenv func(string) string, isolate func(*exec.Cmd, []string) (f
 // state are pinup's own files - the lookup cache, whose first-seen records
 // decide minimumReleaseAge, and the consumer index the fast lane reads - so
 // that a task cannot rewrite what pinup decides by next.
-func taskIsolation(getenv func(string) string, errw io.Writer, state ...string) func(*exec.Cmd, []string) (func(), error) {
+func taskIsolation(getenv func(string) string, errw io.Writer, state ...string) *isolation {
 	if getenv("PINUP_TASK_ISOLATION") == "off" {
 		fmt.Fprintln(errw, "warning: PINUP_TASK_ISOLATION=off: tasks run unisolated, under the job's uid, with everything it owns in reach")
 		return nil
 	}
 	self, err := os.Executable()
 	if err != nil {
-		return func(*exec.Cmd, []string) (func(), error) {
-			return func() {}, fmt.Errorf("task isolation: %w", err)
-		}
+		return &isolation{checked: func() error { return fmt.Errorf("task isolation: %w", err) }}
 	}
-	sb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state)}
-	checked := sync.OnceValue(sb.Check)
+	sb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state), Caches: taskCaches}
+	return &isolation{sb: sb, checked: sync.OnceValue(sb.Check)}
+}
+
+// isolation is the process's sandbox and the verdict of its one check.
+type isolation struct {
+	sb      *sandbox.Sandbox
+	checked func() error
+}
+
+// forRepo is how the tasks of one repository run: in the sandbox, with that
+// repository's caches.
+func (iso *isolation) forRepo(repo string) func(*exec.Cmd, []string) (func(), error) {
 	return func(cmd *exec.Cmd, keep []string) (func(), error) {
-		if err := checked(); err != nil {
+		if err := iso.checked(); err != nil {
 			return func() {}, fmt.Errorf("task isolation does not hold here, so no task runs: %w (PINUP_TASK_ISOLATION=off runs tasks unisolated)", err)
 		}
+		sb := *iso.sb
+		sb.Repo = repo
 		return sb.Wrap(cmd, keep)
 	}
+}
+
+// taskCaches are the variables that name a package manager's cache. A task
+// handed one of them gets its repository's own directory there: composer's
+// metadata, npm's packuments and Go's private modules are all trusted as
+// found, so a cache shared between repositories is a way to poison the next
+// one's lock refresh.
+var taskCaches = []string{
+	"COMPOSER_HOME", "COMPOSER_CACHE_DIR",
+	"npm_config_cache", "NPM_CONFIG_CACHE", "YARN_CACHE_FOLDER",
+	"GOPATH", "GOMODCACHE", "GOCACHE",
+	"XDG_CACHE_HOME",
 }
 
 // taskHide is what a task must not see. The temporary directory first: the

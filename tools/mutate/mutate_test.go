@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): thirty named, deterministic
+// Package mutate is the mutation suite (H.7): thirty-two named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -127,8 +127,16 @@ var mutators = []mutator{
 		"\t\tif d := strings.Count(a.Path, \"/\") - strings.Count(b.Path, \"/\"); d != 0 {\n\t\t\treturn -d", []string{"./sandbox/"}, false, ""},
 	{30, "delivery", "the task keeps the shim's capabilities", "sandbox/linux.go",
 		"\tif err := dropPrivileges(); err != nil {", "\tif err := error(nil); err != nil {", []string{"./sandbox/"}, false, "linux"},
+	// the caches per repository (2026-09-23): one cache for every
+	// repository again, and a wiring that forgets which variables are
+	// caches. Either way the next repository's lock refresh reads what
+	// the last one's task wrote.
+	{31, "delivery", "a cache is shared between repositories again", "sandbox/sandbox.go",
+		"\treturn filepath.Join(cache, \".pinup-repos\", hex.EncodeToString(sum[:8]))", "\treturn filepath.Join(cache, hex.EncodeToString(sum[:0]))", []string{"./sandbox/"}, false, ""},
+	{32, "delivery", "the task runner forgets which variables are caches", "cmd/pinup/env.go",
+		"\tsb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state), Caches: taskCaches}", "\tsb := &sandbox.Sandbox{Self: self, Hide: taskHide(getenv, state)}", []string{"./cmd/pinup/"}, false, ""},
 	// the one change no test can see
-	{31, "sentinel", "a comment changes", "model/model.go",
+	{33, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

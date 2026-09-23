@@ -40,6 +40,8 @@ func render(ops []op) string {
 	var b strings.Builder
 	for _, o := range ops {
 		switch {
+		case o.Keep && o.Src != o.Path:
+			b.WriteString("repo " + o.Path + "\n")
 		case o.Keep:
 			b.WriteString("keep " + o.Path + "\n")
 		case o.Src == os.DevNull:
@@ -57,10 +59,10 @@ func render(ops []op) string {
 // environment names stay where they are, because nothing covers them.
 func TestPlanOrdersHidesAndKeepsByDepth(t *testing.T) {
 	for _, tc := range []struct {
-		name         string
-		hide, keep   []string
-		handed       []string
-		want, errHas string
+		name           string
+		hide, keep     []string
+		handed, caches []string
+		want, errHas   string
 	}{
 		{name: "the estate's runner",
 			hide:   []string{"/tmp", "/home/job", "/tmp/tmp.gnupg", "/tmp/ssh-x/agent.1", "/builds/pinup/runner/.pinup/cache.db"},
@@ -85,13 +87,34 @@ func TestPlanOrdersHidesAndKeepsByDepth(t *testing.T) {
 		{name: "the root is never hidden, a relative or missing path is skipped",
 			hide: []string{"/", "tmp", "/nowhere", "/tmp"},
 			want: "hide /tmp\n"},
+		{name: "a cache the task is handed becomes its repository's own",
+			hide:   []string{"/tmp"},
+			keep:   []string{"/tmp/pinup-run-a/repo"},
+			handed: []string{"/builds/pinup/runner/.pinup/composer", "/usr/bin"},
+			caches: []string{"/builds/pinup/runner/.pinup/composer"},
+			want:   "hide /tmp\nkeep /tmp/pinup-run-a/repo\nrepo /builds/pinup/runner/.pinup/composer\n"},
+		{name: "a cache under the hidden HOME is given back per repository",
+			hide:   []string{"/home/job"},
+			caches: []string{"/home/job/.cache/composer"},
+			want:   "hide /home/job\nrepo /home/job/.cache/composer\n"},
+		// A tool directory inside a cache would reach past the cover into
+		// the shared cache the cover is there to keep out of reach.
+		{name: "nothing handed inside a cache is kept",
+			hide:   []string{"/home/job"},
+			handed: []string{"/home/job/.local/bin"},
+			caches: []string{"/home/job/.local"},
+			want:   "hide /home/job\nrepo /home/job/.local\n"},
+		{name: "a cache cannot contain the checkout",
+			keep:   []string{"/tmp/pinup-run-a/repo"},
+			caches: []string{"/tmp/pinup-run-a"},
+			errHas: "cannot be a cache per repository: the task runs in it"},
 		{name: "the checkout cannot be the hidden directory itself",
 			hide:   []string{"/tmp/pinup-run-a/repo"},
 			keep:   []string{"/tmp/pinup-run-a/repo"},
 			errHas: "cannot hide /tmp/pinup-run-a/repo: the task runs in it"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ops, err := plan(tc.hide, tc.keep, tc.handed, jobFS)
+			ops, err := plan(tc.hide, tc.keep, tc.handed, tc.caches, "group/repo", jobFS)
 			if tc.errHas != "" {
 				if err == nil || !strings.Contains(err.Error(), tc.errHas) {
 					t.Fatalf("err = %v, want %q", err, tc.errHas)
@@ -119,5 +142,27 @@ func TestAMissingToolIsReportedNotWrapped(t *testing.T) {
 	}
 	if err := cmd.Start(); !errors.Is(err, exec.ErrNotFound) {
 		t.Errorf("start: %v, want not found", err)
+	}
+}
+
+// Two repositories never get the same cache, and the two branches of one
+// always do: the key is the repository, not the task.
+func TestACacheBelongsToOneRepository(t *testing.T) {
+	src := func(key string) string {
+		ops, err := plan(nil, nil, nil, []string{"/builds/cache/composer"}, key, jobFS)
+		if err != nil || len(ops) != 1 {
+			t.Fatalf("plan: %v %v", ops, err)
+		}
+		return ops[0].Src
+	}
+	a, again, b := src("development/moselwal/a"), src("development/moselwal/a"), src("development/moselwal/b")
+	if a != again {
+		t.Errorf("one repository, two caches: %s, %s", a, again)
+	}
+	if a == b {
+		t.Errorf("two repositories, one cache: %s", a)
+	}
+	if !strings.HasPrefix(a, "/builds/cache/composer/.pinup-repos/") {
+		t.Errorf("the repository's cache is not beneath the shared one: %s", a)
 	}
 }
