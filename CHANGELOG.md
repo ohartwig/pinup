@@ -1,3 +1,13 @@
+## [0.37.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.36.2...v0.37.0) (2026-09-23)
+
+### :sparkles: Features
+
+* **sandbox:** run every task where it cannot reach what the job holds ([20ad8bd](https://git.ole-hartwig.eu/pinup/pinup/commit/20ad8bd516ff50c0001c55b65bfb1f9ec3e6ce8b))
+
+### :bug: Fixes
+
+* **lint:** a package without a layer is outside the layering rule ([725890e](https://git.ole-hartwig.eu/pinup/pinup/commit/725890ed60a215a18b480b0c57e713dbb10b2ef6))
+
 ## [0.36.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.36.1...v0.36.2) (2026-09-23)
 
 ### :bug: Fixes
