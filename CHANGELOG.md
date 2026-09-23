@@ -1,3 +1,18 @@
+## [0.36.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.36.0...v0.36.1) (2026-09-23)
+
+### :bug: Fixes
+
+* **gitlab:** stop believing a 2xx that armed nothing, and merge when green ([9a7518c](https://git.ole-hartwig.eu/pinup/pinup/commit/9a7518c34831bd264157f08e209ec591eb39c8d7))
+
+### :memo: Documentation
+
+* `.pinup.yaml` is the name the examples use, and the list is not a precedence ([d0830fa](https://git.ole-hartwig.eu/pinup/pinup/commit/d0830fa708cad1b0bdcd66968d2fe9976fc439e3))
+* pinup's own configuration name in every example that is not about Renovate ([82a0002](https://git.ole-hartwig.eu/pinup/pinup/commit/82a0002dbe676a8d2d68784525877f629e92d9a1))
+* the image example names pinup's own configuration file ([2aad16b](https://git.ole-hartwig.eu/pinup/pinup/commit/2aad16bac1c52122a9b63ccd87ef1ad826ebac3a))
+* the image examples name a version that exists ([f48a2b9](https://git.ole-hartwig.eu/pinup/pinup/commit/f48a2b9078873aa4432b877d20b624bdeaeb8eb9))
+* **readme:** the two new capabilities belong in the feature list ([84d816f](https://git.ole-hartwig.eu/pinup/pinup/commit/84d816f75c06f97125ebfbd4c3bdee57099ec0bb))
+* the image has no entrypoint, so every example has to say `pinup` ([2a84177](https://git.ole-hartwig.eu/pinup/pinup/commit/2a84177a465b1dffce979061b49123d44aa57536))
+
 ## [0.36.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.35.0...v0.36.0) (2026-09-22)
 
 ### :sparkles: Features
