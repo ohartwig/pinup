@@ -33,7 +33,7 @@ jobs:
       # file, from the checkout); pinup clones the project it updates through
       # the token and reads that clone's own configuration file on top.
       - run: |
-          pinup run --project "$GITHUB_REPOSITORY" --config .pinup.json --report plan.json
+          pinup run --project "$GITHUB_REPOSITORY" --config .pinup.yaml --report plan.json
         env:
           PINUP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PINUP_GIT_NAME: Dependency Bot

@@ -85,9 +85,12 @@ func Parse(src []byte, name string) (Layer, error) {
 	return Layer{Source: "file:" + name, Raw: raw}, nil
 }
 
-// SHA256Name is the conventional file set pinup looks for, in order. The first
-// that exists wins; a repository carrying two is a mistake worth reporting
-// rather than resolving silently.
+// ConfigFileNames is the file set pinup looks for in a checkout. EXACTLY ONE
+// of them may exist: FindConfigFile collects every match and reports two as an
+// error rather than resolving it silently, so the order here is not a
+// precedence - nothing picks a winner, because there is never a contest. It
+// reads as one: pinup's own names first, YAML before JSON, then the four
+// Renovate spellings it also accepts.
 var ConfigFileNames = []string{
 	".pinup.yaml", ".pinup.yml", ".pinup.json", ".pinup.jsonc",
 	"renovate.json", "renovate.json5", ".renovaterc", ".renovaterc.json",
