@@ -67,6 +67,13 @@ type Request struct {
 	AutomergeDirect bool
 	// RemoveSourceBranch is set on the request so a merge cleans up.
 	RemoveSourceBranch bool
+	// HeadSHA is the head this run pushed, when it pushed. Automerge is
+	// armed for exactly that commit. The platform's own record of the head
+	// can lag a push by seconds, and arming the old head gets the
+	// automerge aborted the moment the platform catches up - "aborted the
+	// automatic merge because the source branch was updated", every hour
+	// on devops/koh-gitops!2878 (2026-09-24), whose base moved each run.
+	HeadSHA string
 }
 
 // Platform is the merge-request side of a run.

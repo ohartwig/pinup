@@ -203,6 +203,13 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			Automerge: automerge, AutomergeDirect: b.AutomergeDirect == nil || *b.AutomergeDirect,
 			RemoveSourceBranch: true,
 		}
+		if pushed {
+			req.HeadSHA = sha
+		}
+		if hasMR && pushed && automerge && !awaitHead(ctx, o, b.Name, sha) {
+			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
+				"%s: the platform has not seen the pushed head %s yet; automerge is armed by a later run", b.Name, short(sha))})
+		}
 		var out Outcome
 		switch {
 		case hasMR:
@@ -393,6 +400,40 @@ func editRows(description string) string {
 // requests failed, every branch there): six attempts, doubling from two
 // seconds, a minute in all, then the error stands and the next run opens
 // it.
+// headWaits bounds awaitHead: headWaits polls headWait apart. The lag it
+// covers was eight seconds on devops/koh-gitops!2889 (2026-09-24): pushed at
+// 09:37:16, "added 3 commits" recorded at 09:37:24.
+const (
+	headWaits = 15
+	headWait  = 2 * time.Second
+)
+
+// awaitHead waits until the platform records sha as the head of branch's
+// open request, and reports whether it did. Arming automerge before that
+// arms the previous head: GitLab accepts it, then aborts it "because the
+// source branch was updated" when it processes the push a few seconds later,
+// and the request waits for the next run - which, on a base that moves every
+// hour, rebases again and loses the same race again. Measured on
+// devops/koh-gitops, 2026-09-24: !2878, !2889, !2890 and !2891 were armed and
+// aborted every hour from 07:36 on while the log said "[automerge]".
+//
+// A platform that reports no head at all cannot be waited for, and is not.
+func awaitHead(ctx context.Context, o Options, branch, sha string) bool {
+	for attempt := range headWaits {
+		if attempt > 0 && o.Sleep != nil {
+			o.Sleep(headWait)
+		}
+		mr, ok, err := o.Platform.FindMergeRequest(ctx, o.Project, branch)
+		if err != nil || !ok {
+			return false
+		}
+		if mr.SHA == "" || mr.SHA == sha {
+			return true
+		}
+	}
+	return false
+}
+
 func createWithRetry(ctx context.Context, o Options, req publish.Request) (publish.MergeRequest, error) {
 	var last error
 	for attempt := range 6 {

@@ -207,7 +207,7 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 
 	refused := ""
 	if r.Automerge {
-		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, mr.IID, mr.SHA, r.AutomergeDirect)
+		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, mr.IID, headFor(r, mr.SHA), r.AutomergeDirect)
 		if err != nil {
 			return publish.MergeRequest{}, err
 		}
@@ -278,7 +278,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	// stopped allowing automerge must be able to take it back.
 	switch {
 	case r.Automerge && !cur.Automerge:
-		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, iid, cur.SHA, r.AutomergeDirect)
+		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, iid, headFor(r, cur.SHA), r.AutomergeDirect)
 		if err != nil {
 			return publish.MergeRequest{}, nil, err
 		}
@@ -303,6 +303,18 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	out := toPublish(cur)
 	out.AutomergeRefused = refused
 	return out, changed, nil
+}
+
+// headFor is the commit automerge is armed for: the head the run pushed
+// when it pushed one, otherwise the head GitLab records. GitLab takes the
+// sha as a condition - it refuses (409) rather than arm a head that is not
+// the branch's - so a push GitLab has not yet processed is "not yet", and
+// never an automerge armed on the old head and aborted a few seconds later.
+func headFor(r publish.Request, recorded string) string {
+	if r.HeadSHA != "" {
+		return r.HeadSHA
+	}
+	return recorded
 }
 
 // CloseMergeRequest closes the request under a new title.

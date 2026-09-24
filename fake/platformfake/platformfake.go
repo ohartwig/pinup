@@ -39,7 +39,14 @@ type Platform struct {
 	Issues map[string]publish.Issue
 	// IssueBodies holds the last description per title.
 	IssueBodies map[string]string
-	nextIID     int
+	// StaleHeads makes FindMergeRequest report the head "stale" for the
+	// branch's next N calls, as a platform does that has not yet processed
+	// a push. After that it reports no head, which the runner does not
+	// wait for.
+	StaleHeads map[string]int
+	// Requests records every request UpdateMergeRequest was given.
+	Requests []publish.Request
+	nextIID  int
 }
 
 var _ publish.Platform = (*Platform)(nil)
@@ -63,7 +70,12 @@ func (p *Platform) FindMergeRequest(_ context.Context, _ publish.Project, branch
 	defer p.mu.Unlock()
 	for i := len(p.MRs) - 1; i >= 0; i-- {
 		if p.MRs[i].SourceBranch == branch && p.MRs[i].State == "opened" {
-			return p.MRs[i], true, nil
+			mr := p.MRs[i]
+			if p.StaleHeads[branch] > 0 {
+				p.StaleHeads[branch]--
+				mr.SHA = "stale"
+			}
+			return mr, true, nil
 		}
 	}
 	return publish.MergeRequest{}, false, nil
@@ -107,6 +119,7 @@ func (p *Platform) UpdateMergeRequest(_ context.Context, _ publish.Project, iid 
 	}
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	p.Requests = append(p.Requests, r)
 	for i := range p.MRs {
 		if p.MRs[i].IID != iid {
 			continue
