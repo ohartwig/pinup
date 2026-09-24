@@ -392,6 +392,9 @@ type whatifRun struct {
 	// neither read nor refresh (unrefreshableLocks); a branch that edits
 	// such a manifest is held rather than pushed without its lock.
 	foreignLocks map[string]string
+	// npmrcAges maps an npm manifest's directory to the release age its
+	// project's .npmrc sets (npmrcFloor), when it sets one.
+	npmrcAges map[string]npmrcFloor
 
 	datasources   lookup.Registry
 	fetcher       *lookup.Fetcher
@@ -509,6 +512,7 @@ func (r *whatifRun) extractAll() error {
 	r.locks = map[string]string{}
 	r.lockPaths = map[string]string{}
 	r.foreignLocks = map[string]string{}
+	r.npmrcAges = map[string]npmrcFloor{}
 	for _, match := range r.found.Matches {
 		body, ok := r.contents[match.Path]
 		if !ok {
@@ -531,6 +535,11 @@ func (r *whatifRun) extractAll() error {
 		}
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		lock := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
+		if wire.ManagerNameOf(match.Manager) == "npm" {
+			if f, ok := readNpmrcFloor(o.Root, match.Path); ok {
+				r.npmrcAges[filepath.Dir(match.Path)] = f
+			}
+		}
 		if lock.versions == nil {
 			if f := foreignLock(o.Root, match.Path, wire.ManagerNameOf(match.Manager)); f != "" {
 				r.foreignLocks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = f
@@ -581,7 +590,13 @@ func (r *whatifRun) extractAll() error {
 			if o.Package != "" && d.SkipReason == "" && report.Key(d) != o.Package {
 				d.SkipReason = "not the package " + o.Package + " this run is for; the scheduled run covers it"
 			}
-			plan.Deps = append(plan.Deps, applyDepRules(r.engine, resolved.Raw, d))
+			d = applyDepRules(r.engine, resolved.Raw, d)
+			if f, ok := r.npmrcFloorFor(d.Manager, d.File, d.DepName); ok && d.InternalChecksFilter != "" {
+				// strict and flexible choose among releases old enough;
+				// old enough is what npm will install, too.
+				d.MinimumReleaseAge = f.longer(d.MinimumReleaseAge)
+			}
+			plan.Deps = append(plan.Deps, d)
 		}
 	}
 	plan.Warnings = append(plan.Warnings, orphanAnnotations(r.contents, plan.Deps)...)
@@ -717,7 +732,11 @@ func (r *whatifRun) planUpdates() error {
 				u.Effective, u.Analyzer, u.Evidence = e.Risk, name, e.Evidence
 			}
 		}
-		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now)
+		var floor *npmrcFloor
+		if f, ok := r.npmrcFloorFor(u.Dep.Manager, u.Dep.File, u.Dep.DepName); ok {
+			floor = &f
+		}
+		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now, floor)
 		if err != nil {
 			return fmt.Errorf("%s: %w", u.DepKey, err)
 		}
@@ -1040,7 +1059,7 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 // and the policy they select decides whether the update is acted on now.
 // Held, not deleted: the plan still says what would have happened and why
 // not, with the thaw time and the rule that held it.
-func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time) (model.Update, map[string]any, error) {
+func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time, floor *npmrcFloor) (model.Update, map[string]any, error) {
 	// The rules were written for Renovate and see the type Renovate would
 	// report: a majorAvailable update is a major to them.
 	subject := rules.SubjectOf(u.Dep, u.Type.Renovate().String())
@@ -1086,6 +1105,14 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		if enabled, ok := cfg["enabled"].(bool); ok {
 			policy.Enabled = enabled
 		}
+	}
+	// The project's .npmrc raises the age, never lowers it - and for a
+	// security fix too, which otherwise travels with none: npm refuses a
+	// version younger than its floor whatever pinup's reason for proposing
+	// it, and loops rather than failing. A fix it will not install is a
+	// fix that hangs the branch for 45 minutes and lands nowhere.
+	if floor != nil {
+		floor.raise(&policy)
 	}
 	decided, err := planner.Decide(u, policy, now)
 	if u.SecurityFix {
