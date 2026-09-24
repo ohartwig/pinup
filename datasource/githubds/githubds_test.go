@@ -38,6 +38,10 @@ type github struct {
 	tags     map[string][]string    // "owner/repo" -> tag names, in API order
 	status   map[string]int         // "owner/repo" -> status code to force
 	headers  map[string]http.Header // "owner/repo" -> headers to send with a forced status
+	// capPages, when set, is the last page GitHub serves before answering
+	// 422 "Only the first 1000 results are available." - the unauthenticated
+	// listing limit. The page before it still links to the next one.
+	capPages int
 	requests []string
 }
 
@@ -81,6 +85,12 @@ func (g *github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		page = 1
 	}
 	start := (page - 1) * pageSize
+	if g.capPages > 0 && page > g.capPages {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(`{"message":"Only the first 1000 results are available.","status":"422"}`))
+		return
+	}
 
 	switch kind {
 	case "releases":
@@ -207,6 +217,54 @@ func TestReleasesPaginateDropDraftsKeepPrereleases(t *testing.T) {
 	}
 	if rs.SourceURL != "https://github.com/hadolint/hadolint" {
 		t.Errorf("SourceURL = %q, want https://github.com/hadolint/hadolint", rs.SourceURL)
+	}
+}
+
+// GitHub ends an unauthenticated listing at 1000 entries with a 422 on the
+// next page, which the page before still advertises. Measured on
+// k3s-io/k3s, 2026-09-24: the lookup failed and the dependency lost its
+// update. The pages that were read are kept; a 422 on the first page is
+// still an error.
+func TestAListingCutOffByGitHubKeepsWhatWasRead(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		capPages int
+		want     []string
+		wantErr  bool
+	}{
+		{name: "cut off after two pages", capPages: 2, want: []string{"v5", "v4", "v3", "v2"}},
+		{name: "refused on the first page", capPages: -1, wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			client, srv, _, _ := newFixture(t)
+			srv.releases["k3s-io/k3s"] = []ghRelease{
+				{tag: "v5", published: time.Unix(5, 0)}, {tag: "v4", published: time.Unix(4, 0)},
+				{tag: "v3", published: time.Unix(3, 0)}, {tag: "v2", published: time.Unix(2, 0)},
+				{tag: "v1", published: time.Unix(1, 0)},
+			}
+			if tc.capPages < 0 {
+				srv.status["k3s-io/k3s"] = http.StatusUnprocessableEntity
+			} else {
+				srv.capPages = tc.capPages
+			}
+			rs, err := New(Releases, client, "").Releases(t.Context(), lookup.Ref{Datasource: "github-releases", PackageName: "k3s-io/k3s"})
+			if tc.wantErr {
+				if err == nil {
+					t.Fatalf("a 422 on the first page must be an error, got %v", rs.Releases)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("the cut-off listing failed the lookup: %v", err)
+			}
+			var got []string
+			for _, r := range rs.Releases {
+				got = append(got, r.Version)
+			}
+			if fmt.Sprint(got) != fmt.Sprint(tc.want) {
+				t.Errorf("releases %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
 
