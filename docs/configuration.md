@@ -231,7 +231,10 @@ floor.
 Why it matters - measured on 2026-09-24 with a version 5.8 days old,
 pinned exactly, under a seven-day age:
 
-- **npm** 11.17 and 12.1 resolve in a loop and never return. A lock
+- **npm** 11.17 and 12.1 fail with `ETARGET` - unless another dependency
+  peers on the pinned package, as every eslint config does. Then they
+  resolve in a loop and never return
+  ([npm/cli#9891](https://github.com/npm/cli/issues/9891)), and a lock
   refresh proposing such a version runs into its timeout (45 minutes in
   the estate's runner) in every schedule window until the version ages.
 - **pnpm** 10.34 and 11.27 fail within two seconds with

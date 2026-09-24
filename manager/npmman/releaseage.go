@@ -22,9 +22,11 @@ import (
 // its age, pinned exactly in package.json (measured 2026-09-24 against
 // @types/node 26.6.2 at 5.8 days under a seven-day age):
 //
-//   - npm 11.17 and 12.1 (.npmrc min-release-age) resolve in a loop and never
-//     return. On development/sales-agent-ai that hung a lock refresh for its
-//     full 45-minute timeout, every four hours, for every version between
+//   - npm 11.17 and 12.1 (.npmrc min-release-age) fail with ETARGET - unless
+//     another dependency peers on the pinned package, as every eslint config
+//     does, and then they resolve in a loop and never return (npm/cli#9891).
+//     On development/sales-agent-ai that hung a lock refresh for its full
+//     45-minute timeout, every four hours, for every version between
 //     pinup's three days and the project's seven.
 //   - pnpm 10.34 and 11.27 (pnpm-workspace.yaml minimumReleaseAge, and in
 //     pnpm 10 also .npmrc minimum-release-age) fail within two seconds:
