@@ -1,3 +1,9 @@
+## [0.40.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.40.0...v0.40.1) (2026-09-24)
+
+### :bug: Fixes
+
+* **publish:** arm automerge on the pushed head once the platform has seen it ([5b1086d](https://git.ole-hartwig.eu/pinup/pinup/commit/5b1086df0d8a428490db236749aa369eff24cf64))
+
 ## [0.40.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.39.0...v0.40.0) (2026-09-24)
 
 ### :sparkles: Features
