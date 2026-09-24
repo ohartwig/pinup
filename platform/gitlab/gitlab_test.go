@@ -4,6 +4,7 @@
 package gitlab
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -48,6 +49,9 @@ type fakeMR struct {
 	// (measured on devops/koh-gitops!2808, 2026-09-22).
 	acceptsButDoesNotArm bool
 	staleHead            bool // the request still records the head before a rebase push
+	// recordedSHA, when set, is the head GitLab reports for the request while
+	// sha is the branch's real head: a push it has not processed yet.
+	recordedSHA          string
 	mayNotMerge          bool // the token's user lacks merge permission: GitLab answers 401
 	createdAt, updatedAt time.Time
 	mergedAt             time.Time
@@ -57,7 +61,7 @@ func (m *fakeMR) toJSON() mrJSON {
 	return mrJSON{
 		IID: m.iid, State: m.state, SourceBranch: m.sourceBranch, TargetBranch: m.targetBranch,
 		Title: m.title, Description: m.description, Labels: append([]string(nil), m.labels...),
-		SHA: m.sha, WebURL: m.webURL, Automerge: m.automerge,
+		SHA: cmp.Or(m.recordedSHA, m.sha), WebURL: m.webURL, Automerge: m.automerge,
 		DetailedMergeStatus: m.detailedMergeStatus,
 		CreatedAt:           m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
 	}
@@ -435,6 +439,12 @@ func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR, body
 	if mr.staleHead {
 		// GitLab answers 409 when the sha sent is not the branch's head -
 		// which the request's own record is, right after a rebase push.
+		writeJSON(w, http.StatusConflict, map[string]string{"message": "SHA does not match HEAD of source branch: " + mr.sha})
+		return
+	}
+	if want, _ := payload["sha"].(string); want != "" && want != mr.sha {
+		// The sha is a condition: GitLab answers 409 when it is not the
+		// source branch's head.
 		writeJSON(w, http.StatusConflict, map[string]string{"message": "SHA does not match HEAD of source branch: " + mr.sha})
 		return
 	}
@@ -1084,6 +1094,49 @@ func TestAutomergeDirectOffLeavesTheRequestOpenAndSaysWhy(t *testing.T) {
 	}
 	if !strings.Contains(out.AutomergeRefused, "not armed") {
 		t.Errorf("refusal = %q, want it to name what happened", out.AutomergeRefused)
+	}
+}
+
+// Automerge is armed for the head the run pushed, not for the one GitLab
+// still records. Measured on devops/koh-gitops!2889 (2026-09-24): pinup armed
+// at 09:37:16 "when all merge checks for 9e05ff1a pass", GitLab recorded the
+// rebase push at 09:37:24 and had aborted the automerge at 09:37:22 "because
+// the source branch was updated" - every hour, while the log said
+// "[automerge]". With the pushed head as the condition GitLab arms the right
+// commit, or refuses outright while it has not seen it.
+func TestAutomergeIsArmedForThePushedHeadNotTheRecordedOne(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		head    string
+		wantArm bool
+	}{
+		{name: "the pushed head is sent", head: "pushed", wantArm: true},
+		{name: "without it the recorded, stale head is refused", head: "", wantArm: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pf, srv, _ := newFixture(t, "")
+			proj := srv.addProject("group/proj", "main")
+			req := publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"}
+			mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+			if err != nil {
+				t.Fatalf("create: %v", err)
+			}
+
+			srv.mu.Lock()
+			proj.mrs[0].canMerge = true
+			proj.mrs[0].sha = "pushed"
+			proj.mrs[0].recordedSHA = "before-the-rebase"
+			srv.mu.Unlock()
+
+			req.Automerge, req.HeadSHA = true, tc.head
+			out, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+			if err != nil {
+				t.Fatalf("update: %v", err)
+			}
+			if out.Automerge != tc.wantArm || slices.Contains(changed, "automerge") != tc.wantArm {
+				t.Errorf("armed = %v, changed = %v; want armed %v", out.Automerge, changed, tc.wantArm)
+			}
+		})
 	}
 }
 

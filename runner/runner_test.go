@@ -162,6 +162,69 @@ func TestCreatesThenUpdatesTheSameMergeRequest(t *testing.T) {
 	}
 }
 
+// A rebased branch's automerge is armed only once the platform has seen the
+// push, and for the head that was pushed. Measured on devops/koh-gitops,
+// 2026-09-24: GitLab recorded a push eight seconds after it happened, pinup
+// armed the old head in between, GitLab aborted it "because the source
+// branch was updated", and four requests waited for hours while every run
+// reported "[automerge]".
+func TestAutomergeIsArmedOnThePushedHeadOnceThePlatformHasSeenIt(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		stale      int
+		wantSleeps int
+		wantWarn   bool
+	}{
+		// The run's own lookup of the request is the first stale read,
+		// so three stale reads leave two for the wait.
+		{name: "the platform catches up after three reads", stale: 3, wantSleeps: 2},
+		{name: "the platform never catches up in time", stale: 100, wantSleeps: headWaits - 1, wantWarn: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			remote, repo := fixture(t)
+			pf := &platformfake.Platform{}
+			ctx := context.Background()
+			branch := model.Branch{
+				Name: "renovate/alpine-3.x", Title: "chore(deps): update alpine docker tag to v3.21",
+				UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}, Automerge: true,
+			}
+			p := plan(branch)
+			if _, err := Execute(ctx, p, options(repo, pf)); err != nil {
+				t.Fatal(err)
+			}
+
+			// Second run: the branch is rebuilt and pushed again, and the
+			// platform keeps reporting the old head for a while.
+			repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), git.CloneOptions{}, testEnv)
+			repo2.Env = testEnv
+			p2 := plan(p.Branches[0])
+			p2.Branches[0].Existing = nil
+			o := options(repo2, pf)
+			o.Rebase = map[string]bool{branch.Name: true}
+			sleeps := 0
+			o.Sleep = func(time.Duration) { sleeps++ }
+			pf.StaleHeads = map[string]int{branch.Name: tc.stale}
+			outs, err := Execute(ctx, p2, o)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(outs) != 1 || outs[0].Action != "updated" {
+				t.Fatalf("second run: %+v", outs)
+			}
+			if sleeps != tc.wantSleeps {
+				t.Errorf("waited %d times for the pushed head, want %d", sleeps, tc.wantSleeps)
+			}
+			if len(pf.Requests) != 1 || pf.Requests[0].HeadSHA == "" || pf.Requests[0].HeadSHA != outs[0].SHA {
+				t.Errorf("automerge must be armed for the pushed head %q: %+v", outs[0].SHA, pf.Requests)
+			}
+			warned := slices.ContainsFunc(p2.Warnings, func(w model.Warning) bool { return strings.Contains(w.Msg, "has not seen the pushed head") })
+			if warned != tc.wantWarn {
+				t.Errorf("warning %v, want %v: %+v", warned, tc.wantWarn, p2.Warnings)
+			}
+		})
+	}
+}
+
 func TestHourlyLimitHoldsWithARecord(t *testing.T) {
 	_, repo := fixture(t)
 	pf := &platformfake.Platform{}
