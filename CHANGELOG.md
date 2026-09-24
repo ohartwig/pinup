@@ -1,3 +1,13 @@
+## [0.40.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.39.0...v0.40.0) (2026-09-24)
+
+### :sparkles: Features
+
+* **npm:** a project's .npmrc release age is a floor under pinup's own ([ec50d16](https://git.ole-hartwig.eu/pinup/pinup/commit/ec50d16410e8722cc6f5dcab9eef49d2821c0764))
+
+### :memo: Documentation
+
+* pnpm, locks pinup cannot refresh, the allowlist's reach, autoclose, the .npmrc floor ([9565251](https://git.ole-hartwig.eu/pinup/pinup/commit/9565251afed33d8d1e7663fbb21b717132577beb))
+
 ## [0.39.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.38.0...v0.39.0) (2026-09-23)
 
 ### :sparkles: Features
