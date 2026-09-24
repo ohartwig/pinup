@@ -1,3 +1,9 @@
+## [0.40.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.40.1...v0.40.2) (2026-09-24)
+
+### :bug: Fixes
+
+* **githubds:** keep what was read when GitHub caps a listing ([b236539](https://git.ole-hartwig.eu/pinup/pinup/commit/b2365397855a16ed033b549f02e39cd265cb508c))
+
 ## [0.40.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.40.0...v0.40.1) (2026-09-24)
 
 ### :bug: Fixes
