@@ -105,8 +105,19 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	// request. No Link header, or none of its relations is "next", ends the
 	// walk - the safe direction: fewer releases rather than an endless loop.
 	next := fmt.Sprintf("%s/repos/%s/%s/%s?per_page=100", base, owner, repo, segment)
-	for next != "" {
+	for page := 1; next != ""; page++ {
 		resp, err := d.client.Get(ctx, next, httpx.ReqOptions{Accept: "application/vnd.github+json"})
+		if page > 1 && isPaginationCap(err) {
+			// GitHub serves an unauthenticated listing up to 1000 entries and
+			// answers the page after that with 422 "Only the first 1000
+			// results are available." - while the page before still
+			// advertises it as rel="next". Measured on k3s-io/k3s
+			// (2026-09-24): page 10 200, page 11 422 without a token, 200 with
+			// one. Both lists come newest first, so what was read holds every
+			// release an update could move to; failing the lookup instead cost
+			// the dependency its update altogether.
+			break
+		}
 		if err != nil {
 			return nil, wrapError(d.kind, owner, repo, err)
 		}
@@ -171,6 +182,14 @@ func parseTags(body []byte) ([]model.Release, error) {
 		out = append(out, model.Release{Version: it.Name})
 	}
 	return out, nil
+}
+
+// isPaginationCap reports GitHub's answer for a page past the listing limit.
+// It is only consulted after the first page: a 422 on page one is a real
+// error and is reported as one.
+func isPaginationCap(err error) bool {
+	se, ok := errors.AsType[*httpx.StatusError](err)
+	return ok && se.StatusCode == http.StatusUnprocessableEntity
 }
 
 // nextLink extracts the rel="next" target from an RFC 5988 Link header,
