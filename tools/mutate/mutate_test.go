@@ -152,10 +152,20 @@ var mutators = []mutator{
 	// ignored, the estate's own packages wait a week for nothing.
 	{36, "delivery", "a project's .npmrc release age is ignored", "cmd/pinup/whatif.go",
 		"\tif floor != nil {\n\t\tfloor.raise(&policy)\n\t}", "\tif floor != nil && false {\n\t\tfloor.raise(&policy)\n\t}", []string{"./cmd/pinup/"}, false, ""},
-	{37, "delivery", "an .npmrc exemption is not honoured", "cmd/pinup/npmrc.go",
-		"\tif !ok || f.age.Excludes(depName) {", "\tif !ok {", []string{"./cmd/pinup/"}, false, ""},
+	{37, "delivery", "an .npmrc exemption is not honoured", "cmd/pinup/releaseage.go",
+		"\t\tif r.age.Age > best.age.Age && !r.age.Exempts(pkg, version, npmScheme.Satisfies) {", "\t\tif r.age.Age > best.age.Age {", []string{"./cmd/pinup/"}, false, ""},
+	// pnpm's and yarn's release ages (2026-09-24): unread, pinup proposes a
+	// version pnpm and yarn refuse and the lock refresh fails; the first
+	// age found instead of the longest; an exemption narrowed to a range
+	// exempting every version.
+	{38, "delivery", "pnpm's and yarn's release ages are not read", "cmd/pinup/releaseage.go",
+		"\t\tname, raw, ok := nearest(root, manifest, f.file)\n\t\tif !ok {", "\t\tname, raw, ok := nearest(root, manifest, f.file)\n\t\tif !ok || true {", []string{"./cmd/pinup/"}, false, ""},
+	{39, "delivery", "the first of several release ages wins, not the longest", "cmd/pinup/releaseage.go",
+		"\t\tif r.age.Age > best.age.Age && !r.age.Exempts(", "\t\tif best.age.Age == 0 && !r.age.Exempts(", []string{"./cmd/pinup/"}, false, ""},
+	{40, "delivery", "an exemption narrowed to a range exempts every version", "manager/npmman/releaseage.go",
+		"\t\tif e.Range == \"\" || (version != \"\" && satisfies(version, e.Range)) {", "\t\tif true {", []string{"./manager/npmman/", "./cmd/pinup/"}, false, ""},
 	// the one change no test can see
-	{38, "sentinel", "a comment changes", "model/model.go",
+	{41, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

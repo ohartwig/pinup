@@ -392,9 +392,9 @@ type whatifRun struct {
 	// neither read nor refresh (unrefreshableLocks); a branch that edits
 	// such a manifest is held rather than pushed without its lock.
 	foreignLocks map[string]string
-	// npmrcAges maps an npm manifest's directory to the release age its
-	// project's .npmrc sets (npmrcFloor), when it sets one.
-	npmrcAges map[string]npmrcFloor
+	// releaseAges maps an npm manifest's directory to the release ages its
+	// project's package managers are told to enforce (releaseAgeFloor).
+	releaseAges map[string]releaseAgeFloor
 
 	datasources   lookup.Registry
 	fetcher       *lookup.Fetcher
@@ -512,7 +512,7 @@ func (r *whatifRun) extractAll() error {
 	r.locks = map[string]string{}
 	r.lockPaths = map[string]string{}
 	r.foreignLocks = map[string]string{}
-	r.npmrcAges = map[string]npmrcFloor{}
+	r.releaseAges = map[string]releaseAgeFloor{}
 	for _, match := range r.found.Matches {
 		body, ok := r.contents[match.Path]
 		if !ok {
@@ -536,8 +536,10 @@ func (r *whatifRun) extractAll() error {
 		plan.Warnings = append(plan.Warnings, res.Warnings...)
 		lock := lockedVersions(o.Root, match.Path, wire.ManagerNameOf(match.Manager), lockFilesOf(res), plan)
 		if wire.ManagerNameOf(match.Manager) == "npm" {
-			if f, ok := readNpmrcFloor(o.Root, match.Path); ok {
-				r.npmrcAges[filepath.Dir(match.Path)] = f
+			floor, warnings := readReleaseAgeFloor(o.Root, match.Path)
+			plan.Warnings = append(plan.Warnings, warnings...)
+			if len(floor) > 0 {
+				r.releaseAges[filepath.Dir(match.Path)] = floor
 			}
 		}
 		if lock.versions == nil {
@@ -591,9 +593,9 @@ func (r *whatifRun) extractAll() error {
 				d.SkipReason = "not the package " + o.Package + " this run is for; the scheduled run covers it"
 			}
 			d = applyDepRules(r.engine, resolved.Raw, d)
-			if f, ok := r.npmrcFloorFor(d.Manager, d.File, d.DepName); ok && d.InternalChecksFilter != "" {
+			if f, ok := r.releaseAgeFor(d.Manager, d.File, d.DepName, ""); ok && d.InternalChecksFilter != "" {
 				// strict and flexible choose among releases old enough;
-				// old enough is what npm will install, too.
+				// old enough is what the package manager will install, too.
 				d.MinimumReleaseAge = f.longer(d.MinimumReleaseAge)
 			}
 			plan.Deps = append(plan.Deps, d)
@@ -732,8 +734,8 @@ func (r *whatifRun) planUpdates() error {
 				u.Effective, u.Analyzer, u.Evidence = e.Risk, name, e.Evidence
 			}
 		}
-		var floor *npmrcFloor
-		if f, ok := r.npmrcFloorFor(u.Dep.Manager, u.Dep.File, u.Dep.DepName); ok {
+		var floor *ageRule
+		if f, ok := r.releaseAgeFor(u.Dep.Manager, u.Dep.File, u.Dep.DepName, u.NewVersion); ok {
 			floor = &f
 		}
 		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now, floor)
@@ -1059,7 +1061,7 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 // and the policy they select decides whether the update is acted on now.
 // Held, not deleted: the plan still says what would have happened and why
 // not, with the thaw time and the rule that held it.
-func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time, floor *npmrcFloor) (model.Update, map[string]any, error) {
+func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time, floor *ageRule) (model.Update, map[string]any, error) {
 	// The rules were written for Renovate and see the type Renovate would
 	// report: a majorAvailable update is a major to them.
 	subject := rules.SubjectOf(u.Dep, u.Type.Renovate().String())
@@ -1106,11 +1108,11 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 			policy.Enabled = enabled
 		}
 	}
-	// The project's .npmrc raises the age, never lowers it - and for a
-	// security fix too, which otherwise travels with none: npm refuses a
-	// version younger than its floor whatever pinup's reason for proposing
-	// it, and loops rather than failing. A fix it will not install is a
-	// fix that hangs the branch for 45 minutes and lands nowhere.
+	// The project's release age raises pinup's, never lowers it - and for a
+	// security fix too, which otherwise travels with none: the package
+	// manager refuses a version younger than its age whatever pinup's
+	// reason for proposing it - npm by looping, pnpm and yarn by failing.
+	// A fix it will not install is a fix that lands nowhere.
 	if floor != nil {
 		floor.raise(&policy)
 	}
