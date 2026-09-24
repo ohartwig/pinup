@@ -113,7 +113,7 @@ unsupported means nothing reads it and the run says so.
 | `matchManagers` | supported |
 | `matchPackageNames` | supported |
 | `matchUpdateTypes` | supported |
-| `minimumReleaseAge` | supported; for npm, a project's `.npmrc` `min-release-age` is a floor under it ([below](#a-projects-npmrc-release-age)) |
+| `minimumReleaseAge` | supported; for npm, a release age the project sets for npm, pnpm or yarn is a floor under it ([below](#a-projects-own-release-age)) |
 | `minimumReleaseAgeBehaviour` | supported |
 | `osvVulnerabilityAlerts` | supported |
 | `packageRules` | supported |
@@ -184,35 +184,66 @@ changes how one that is already allowed is carried out.
 
 `automerge: false` remains the way to stop pinup merging at all.
 
-## A project's .npmrc release age
+## A project's own release age
 
-npm (from 11.10) refuses a version younger than an `.npmrc`'s
-`min-release-age` days, except the packages `min-release-age-exclude`
-names. pinup reads both from the `.npmrc` governing an npm manifest -
-beside it or, for a workspace, the nearest one above it - and takes the
-longer of that and its own `minimumReleaseAge`:
+npm, pnpm and yarn can each be told to refuse a version younger than a
+given age, except the packages the setting exempts. pinup reads every
+such setting governing an npm manifest - in its directory or, for a
+workspace member, the nearest file above it - and takes the longest that
+does not exempt the package, if it is longer than its own
+`minimumReleaseAge`:
 
-| pinup's rules | `.npmrc` | applies |
+| Tool | File | Setting | Unit | Exemptions |
+|---|---|---|---|---|
+| npm ≥ 11.10 | `.npmrc` | `min-release-age` | days | `min-release-age-exclude`: names, patterns; comma lists split |
+| pnpm 10 (measured 10.34) | `.npmrc` | `minimum-release-age` | minutes | `minimum-release-age-exclude`: one entry per line |
+| pnpm 10 and 11 (measured 10.34, 11.27) | `pnpm-workspace.yaml` | `minimumReleaseAge` | minutes | `minimumReleaseAgeExclude`: names, patterns, `name@1.2.3 \|\| 1.2.4` |
+| yarn berry (measured 4.14) | `.yarnrc.yml` | `npmMinimalAgeGate` | minutes, or `h`/`d`/`w` | `npmPreapprovedPackages`: names, patterns, `name@range` |
+
+| pinup's rules | project | applies |
 |---|---|---|
-| 3 days | 7 | 7 days |
-| 7 days | 7 | 7 days |
-| 14 days | 7 | 14 days |
-| any | 7, package excluded (`@scope/*`) | pinup's rules alone |
+| 3 days | 7 days | 7 days |
+| 7 days | 7 days | 7 days |
+| 14 days | 7 days | 14 days |
+| 3 days | `.npmrc` 6 days, `pnpm-workspace.yaml` 8 days | 8 days |
+| any | 7 days, package exempt | pinup's rules alone |
 
-The floor is the one age both the candidate choice
-(`internalChecksFilter`) and the hold use, and the hold names the file:
-`origin` `file:<path>/.npmrc`, pointer `/min-release-age`, with `until`
-the moment npm will install the version. It applies to security fixes
-too, which otherwise carry no age - npm refuses the version whatever the
+Every setting counts, whichever package manager the project actually
+uses: what the repository wrote down is what it asked for, and holding a
+release a little longer than one tool would is the direction that cannot
+break a lock refresh. An exemption narrowed to versions covers those
+versions only. Where no single version is in question yet - choosing the
+candidate under `internalChecksFilter` - it covers none.
+
+The age is the one both the candidate choice and the hold use, and the
+hold names the file: `origin` `file:<path>`, pointer the setting
+(`/min-release-age`, `/minimum-release-age`, `/minimumReleaseAge`,
+`/npmMinimalAgeGate`), with `until` the moment the package manager will
+install the version. It applies to security fixes too, which otherwise
+carry no age - the package manager refuses the version whatever the
 reason for proposing it. Lock-file maintenance stays exempt, as for any
-age: npm applies its own policy while re-resolving ranges. Other holds -
-approval, schedule, `allowedVersions`, `enabled: false` - are unchanged
-and add up.
+age: the package manager applies its own policy while re-resolving
+ranges. Other holds - approval, schedule, `allowedVersions`,
+`enabled: false` - are unchanged and add up. A `pnpm-workspace.yaml` or
+`.yarnrc.yml` whose age pinup cannot read is a plan warning, and no
+floor.
 
-Why it matters: a version under the floor, pinned exactly, does not make
-npm fail. npm 11.17 and 12.1 both resolve in a loop and never return, so
-a lock refresh proposing one runs into its timeout (45 minutes in the
-estate's runner) in every schedule window until the version ages.
+Why it matters - measured on 2026-09-24 with a version 5.8 days old,
+pinned exactly, under a seven-day age:
+
+- **npm** 11.17 and 12.1 resolve in a loop and never return. A lock
+  refresh proposing such a version runs into its timeout (45 minutes in
+  the estate's runner) in every schedule window until the version ages.
+- **pnpm** 10.34 and 11.27 fail within two seconds with
+  `ERR_PNPM_NO_MATURE_MATCHING_VERSION`.
+- **yarn** 4.14 fails at once with `YN0016` ("quarantined").
+
+Failing fast is kinder than looping, but either way the branch lands
+nowhere. None of the three has an age by default. pnpm 11 reads its age
+from `pnpm-workspace.yaml` only, not from `.npmrc` or package.json's
+`pnpm` field. yarn classic (1.x), the only yarn pinup refreshes locks
+with, has no age at all; a `.yarnrc.yml` age is honoured as the
+project's stated wish.
 
 ## Custom managers
 
