@@ -44,6 +44,15 @@ requests, write the dashboard issue. One of `--repo`, `--project`,
 Every run also reads the dashboard issue's ticked boxes before it plans,
 and writes the consumer index the fast lane and the advisory watch read.
 
+A full run - not `--released`, not `--package` - closes the requests it
+no longer stands behind, titled `- autoclosed`, and deletes their
+branches: those whose branch the plan no longer names, and those whose
+branch the configuration has settled against (`enabled: false`, a
+version outside `allowedVersions`) - such a request proposes what the
+configuration now refuses, one merge away from undoing it. A branch that
+is only waiting - an age, a window, an approval - keeps its request; one
+carrying somebody else's commits is left to them, with a warning.
+
 ## print-config
 
 Print the resolved configuration.

@@ -113,7 +113,7 @@ unsupported means nothing reads it and the run says so.
 | `matchManagers` | supported |
 | `matchPackageNames` | supported |
 | `matchUpdateTypes` | supported |
-| `minimumReleaseAge` | supported |
+| `minimumReleaseAge` | supported; for npm, a project's `.npmrc` `min-release-age` is a floor under it ([below](#a-projects-npmrc-release-age)) |
 | `minimumReleaseAgeBehaviour` | supported |
 | `osvVulnerabilityAlerts` | supported |
 | `packageRules` | supported |
@@ -183,6 +183,36 @@ that did not happen. Turning it off never turns automerge *on*; it only
 changes how one that is already allowed is carried out.
 
 `automerge: false` remains the way to stop pinup merging at all.
+
+## A project's .npmrc release age
+
+npm (from 11.10) refuses a version younger than an `.npmrc`'s
+`min-release-age` days, except the packages `min-release-age-exclude`
+names. pinup reads both from the `.npmrc` governing an npm manifest -
+beside it or, for a workspace, the nearest one above it - and takes the
+longer of that and its own `minimumReleaseAge`:
+
+| pinup's rules | `.npmrc` | applies |
+|---|---|---|
+| 3 days | 7 | 7 days |
+| 7 days | 7 | 7 days |
+| 14 days | 7 | 14 days |
+| any | 7, package excluded (`@scope/*`) | pinup's rules alone |
+
+The floor is the one age both the candidate choice
+(`internalChecksFilter`) and the hold use, and the hold names the file:
+`origin` `file:<path>/.npmrc`, pointer `/min-release-age`, with `until`
+the moment npm will install the version. It applies to security fixes
+too, which otherwise carry no age - npm refuses the version whatever the
+reason for proposing it. Lock-file maintenance stays exempt, as for any
+age: npm applies its own policy while re-resolving ranges. Other holds -
+approval, schedule, `allowedVersions`, `enabled: false` - are unchanged
+and add up.
+
+Why it matters: a version under the floor, pinned exactly, does not make
+npm fail. npm 11.17 and 12.1 both resolve in a loop and never return, so
+a lock refresh proposing one runs into its timeout (45 minutes in the
+estate's runner) in every schedule window until the version ages.
 
 ## Custom managers
 

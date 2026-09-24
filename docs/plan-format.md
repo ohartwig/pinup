@@ -60,13 +60,19 @@ and `effective` risk, the `analyzer` and its `evidence` where one ran
 cache's first-seen record), `securityFix` with the advisory, and:
 
 - `blocks`: every reason the update is held - `reason`, the `origin`
-  (`config` or `packageRules[N]`), `until` where a hold thaws, `note`.
+  (`config`, `packageRules[N]`, or a file the repository carries:
+  `file:<path>` with a `pointer`, as a project's `.npmrc` for
+  `minimumReleaseAge`), `until` where a hold thaws, `note`.
   Reasons: `minimumReleaseAge`, `schedule`, `dependencyDashboardApproval`,
   `disabled`, `allowedVersions`, `internalChecksFilter`, `hourlyLimit`,
-  `concurrentLimit`, `rollingMajor`, `pluginRequired`, `taskRefused`,
-  `nothingToRefresh`, `publishFailed`, `closedByHand` (the newest
-  request on the branch was closed by a person without merging and
-  carried exactly these edits; a changed update opens again).
+  `concurrentLimit`, `rollingMajor`, `pluginRequired` (a tool missing,
+  or a lock pinup cannot refresh governing the manifest - the note names
+  it), `taskRefused`, `nothingToRefresh`, `publishFailed`, `closedByHand`
+  (the newest request on the branch was closed by a person without
+  merging and carried exactly these edits; a changed update opens again).
+  `disabled` and `allowedVersions` are the configuration's verdicts
+  rather than waits: a full run closes a request whose branch is held
+  for one (see `run` in [commands.md](commands.md)).
 - `suppressedBy`: the first reason, for readers that need one word.
 - `notes`, `compareUrl`: the release notes between the versions and the
   forge's compare page, where the source is known.

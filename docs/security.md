@@ -49,7 +49,10 @@ pinup holds, and what a repository can and cannot make the bot do.
   That matters because of what the allowlist admits. A package manager it
   names is hardened so it cannot run code out of the checkout
   (`--no-scripts`, `--no-plugins`, `--ignore-scripts`, appended before the
-  allowlist is consulted), and the git configuration that makes git execute
+  allowlist is consulted). pinup's own lock refreshes are not matched
+  against the allowlist - they are commands pinup composes, not text a
+  configuration brings - and carry the same flags written in. The git
+  configuration that makes git execute
   a program - `core.hooksPath`, `core.fsmonitor`, `gpg.program` - is pinned
   on every invocation, with the `.git` control surface fingerprinted around
   every task. But an entry of the form `node scripts/<file>.mjs` runs code
