@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): thirty-five named, deterministic
+// Package mutate is the mutation suite (H.7): thirty-seven named, deterministic
 // breakages of the code, one per gate, each of which the tests of its
 // layer must catch - and one deliberately undetectable change, reported as
 // exactly that, so the suite proves it can tell the two apart.
@@ -147,8 +147,15 @@ var mutators = []mutator{
 	// nothing, and every member's versions go missing again.
 	{35, "delivery", "a pnpm lock is read as a yarn lock", "manager/npmman/npmman.go",
 		"\t\tif bytes.HasPrefix(trimmed, []byte(\"lockfileVersion:\")) {", "\t\tif false && bytes.HasPrefix(trimmed, []byte(\"lockfileVersion:\")) {", []string{"./manager/npmman/"}, false, ""},
+	// the .npmrc release age (2026-09-24): ignored, pinup proposes what
+	// npm refuses and the lock refresh loops for 45 minutes; exclusions
+	// ignored, the estate's own packages wait a week for nothing.
+	{36, "delivery", "a project's .npmrc release age is ignored", "cmd/pinup/whatif.go",
+		"\tif floor != nil {\n\t\tfloor.raise(&policy)\n\t}", "\tif floor != nil && false {\n\t\tfloor.raise(&policy)\n\t}", []string{"./cmd/pinup/"}, false, ""},
+	{37, "delivery", "an .npmrc exemption is not honoured", "cmd/pinup/npmrc.go",
+		"\tif !ok || f.age.Excludes(depName) {", "\tif !ok {", []string{"./cmd/pinup/"}, false, ""},
 	// the one change no test can see
-	{36, "sentinel", "a comment changes", "model/model.go",
+	{38, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
