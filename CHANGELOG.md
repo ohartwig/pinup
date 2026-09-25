@@ -1,3 +1,9 @@
+## [0.44.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.44.0...v0.44.1) (2026-09-25)
+
+### :bug: Fixes
+
+* **planner:** allowedVersions falls back to an npm range, as in Renovate ([fb3633b](https://git.ole-hartwig.eu/pinup/pinup/commit/fb3633b733fc9694a19fe44b14cdcd5b5df5f247))
+
 ## [0.44.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.43.1...v0.44.0) (2026-09-25)
 
 ### :sparkles: Features
