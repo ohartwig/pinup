@@ -172,7 +172,14 @@ var mutators = []mutator{
 		"\t\tcase r.Slots <- struct{}{}:\n\t\t\tdefer func() { <-r.Slots }()", "\t\tdefault:", []string{"./plugin/"}, false, ""},
 	{42, "delivery", "waiting for a slot counts against the task's timeout", "plugin/plugin.go",
 		"\tif r.Slots != nil {\n\t\tselect {", "\twait := r.Timeout\n\tif wait == 0 {\n\t\twait = 15 * time.Minute\n\t}\n\tctx, cancelWait := context.WithTimeout(ctx, wait)\n\tdefer cancelWait()\n\tif r.Slots != nil {\n\t\tselect {", []string{"./plugin/"}, false, ""},
-	{43, "sentinel", "a comment changes", "model/model.go",
+	// allowedVersions under a scheme without a range form (2026-09-25):
+	// without the npm fallback the PHP interpreters' line rule refused itself
+	// and blocked every update; coerced wrongly, "v8.4.14" is never read.
+	{43, "plan", "allowedVersions refuses an npm range under semver", "planner/planner.go",
+		"\tif v.Name() != \"npm\" {\n\t\tif npm, err := reg.Get(\"npm\"); err == nil && npm.IsValid(constraint) {", "\tif false {\n\t\tif npm, err := reg.Get(\"npm\"); err == nil && npm.IsValid(constraint) {", []string{"./planner/"}, false, ""},
+	{44, "plan", "coerce keeps the prefix before the first number", "planner/planner.go",
+		"\ti := strings.IndexFunc(s, func(r rune) bool { return r >= '0' && r <= '9' })", "\ti := 0", []string{"./planner/"}, false, ""},
+	{45, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
