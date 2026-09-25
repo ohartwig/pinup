@@ -52,8 +52,12 @@ func orphanAnnotation(in *Input) []Finding {
 		if len(lines) == 0 {
 			continue
 		}
+		what := "the annotation at %s names no dependency, and the pin it meant is not updated"
+		if len(lines) > 1 {
+			what = "the annotations at %s name no dependency, and the pins they meant are not updated"
+		}
 		out = append(out, Finding{ID: "coverage/orphan-annotation", Category: Coverage, Severity: Warn, Pointer: "/", Frame: FrameResolved, Origin: in.originAt("/"),
-			Msg: fmt.Sprintf("plan %s: the annotation at %s names no dependency, and the pin it meant is not updated - the pinned value must sit on the line right after the annotation",
+			Msg: fmt.Sprintf("plan %s: "+what+" - the pinned value must sit on the line right after the annotation",
 				p.Repo.Path, strings.Join(lines, ", "))})
 	}
 	return out
@@ -112,12 +116,13 @@ func manifestWithoutLock(in *Input) []Finding {
 
 // pinPatterns are the two shapes that measured precise enough to report:
 // an image reference with a registry path, and an upper-case
-// `*_VERSION`/`*_VER`/`*_TAG` variable with a full three-part version - a
-// two-part one (`PHP_VERSION: "8.5"`) chooses a line, and moving the line
-// is a decision, not an update. Bare `name@1.2.3` and URLs with a version
+// `*_VERSION`/`*_VER`/`*_TAG` variable - both with a full three-part
+// version. A two-part one (`PHP_VERSION: "8.5"`, `franken-php/ci:8.5`,
+// `valkey:8.1-alpine3.22`) chooses a line whose patches it already follows,
+// and moving the line is a decision, not an update. Bare `name@1.2.3` and URLs with a version
 // inside were measured too and were mostly noise.
 var pinPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`\b(?:[\w.-]+\.[a-z]{2,}(?::\d+)?/)?[\w.-]+(?:/[\w.-]+)+:(v?\d+\.\d+(?:\.\d+)?(?:-[\w.]+)?)(?:[\s"'@,\]}]|$)`),
+	regexp.MustCompile(`\b(?:[\w.-]+\.[a-z]{2,}(?::\d+)?/)?[\w.-]+(?:/[\w.-]+)+:(v?\d+\.\d+\.\d+(?:-[\w.]+)?)(?:[\s"'@,\]}]|$)`),
 	regexp.MustCompile(`\b[A-Z][A-Z0-9_]*_(?:VERSION|VER|TAG)["']?\s*[:=]\s*["']?(v?\d+\.\d+\.\d+(?:-[\w.]+)?)\b`),
 }
 

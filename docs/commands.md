@@ -221,7 +221,9 @@ skipped otherwise.
 
 `coverage/unmanaged-pin` reports two shapes only - an image reference with
 a path (`smallstep/step-ca:0.28.1`) and an upper-case `*_VERSION`, `*_VER`
-or `*_TAG` variable - because those measured precise; bare `name@1.2.3` and
+or `*_TAG` variable, both with a three-part version - because those
+measured precise; a two-part tag (`valkey:8.1-alpine`) chooses a line whose
+patches it follows already; bare `name@1.2.3` and
 versions inside URLs were mostly noise. It leaves out comments, prose,
 locks, tests, fixtures, vendored trees, `ignorePaths`, the line under a
 `renovate:` annotation, and anything a plan holds for the same file. A pin

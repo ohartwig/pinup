@@ -33,7 +33,8 @@ func TestUnmanagedPinLeavesHeldPinsAlone(t *testing.T) {
 		{"the configuration", "renovate.json", `{"description": "x"}` + "\nHELM_VERSION: 3.18.0\n", `{}`, 0},
 		{"a sentence naming an image", "ci.py", "    values.yaml stood at devops/images/ksops:2.1.6, a Git tag with\n", `{}`, 0},
 		{"a line, not a version", "Containerfile", "ARG PHP_VERSION=8.5\n", `{}`, 0},
-		{"a command naming an image", "lefthook.yml", "run: docker run --rm -w /app registry.x/devops/images/php/ci:8.5 composer audit --no-dev\n", `{}`, 1},
+		{"an image on a line tag", "compose.yaml", "    image: valkey/valkey:8.1-alpine3.22\n", `{}`, 0},
+		{"a command naming an image", "lefthook.yml", "run: docker run --rm -v \"$PWD:/check:ro\" mstruebing/editorconfig-checker:v3.7.0 ec {staged_files}\n", `{}`, 1},
 		{"nothing excuses it", "ci.yml", "x:\n  HELM_VERSION: 3.18.0\n", `{}`, 1},
 	} {
 		t.Run(c.name, func(t *testing.T) {
