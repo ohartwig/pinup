@@ -354,6 +354,50 @@ func TestConcurrentLimitCountsOpenRequests(t *testing.T) {
 	}
 }
 
+// A request this run opens is armed once GitLab can arm it, not four hours
+// later: devops/ci-mirrors!317 (2026-09-25) was opened 15 seconds before its
+// pipeline existed, the arming on creation was "not yet", and nothing
+// tried again until a person merged it by hand.
+func TestANewRequestIsArmedOnceThePlatformCan(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		armAfter   int
+		wantArmed  bool
+		wantSleeps int
+		wantWarn   bool
+	}{
+		{name: "armed on the third try", armAfter: 3, wantArmed: true, wantSleeps: 3},
+		{name: "never within the window", armAfter: 1000, wantSleeps: armWaits, wantWarn: true},
+		{name: "armed on creation", armAfter: 0, wantArmed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, repo := fixture(t)
+			pf := &platformfake.Platform{ArmAfter: tc.armAfter}
+			p := plan(model.Branch{Name: "renovate/a", Title: "a", UpdateKeys: []string{"a"}, Edits: []model.Edit{edit("3.20", "3.21")}, Automerge: true})
+			o := options(repo, pf)
+			sleeps := 0
+			o.Sleep = func(time.Duration) { sleeps++ }
+			outs, err := Execute(context.Background(), p, o)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if outs[0].Action != "created" {
+				t.Fatalf("outcome %+v", outs[0])
+			}
+			if pf.MRs[0].Automerge != tc.wantArmed {
+				t.Errorf("armed %v, want %v", pf.MRs[0].Automerge, tc.wantArmed)
+			}
+			if sleeps != tc.wantSleeps {
+				t.Errorf("waited %d times, want %d", sleeps, tc.wantSleeps)
+			}
+			warned := slices.ContainsFunc(p.Warnings, func(w model.Warning) bool { return strings.Contains(w.Msg, "automerge not armed yet") })
+			if warned != tc.wantWarn {
+				t.Errorf("warning %v, want %v: %+v", warned, tc.wantWarn, p.Warnings)
+			}
+		})
+	}
+}
+
 // A request waiting for a person by design holds no slot: prConcurrentLimit
 // counts only what is not labelled with prConcurrentLimitIgnoreLabels.
 // Measured on koh-gitops, 2026-09-24: the k3s minor and its kubectl, both

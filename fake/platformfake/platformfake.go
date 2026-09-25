@@ -46,6 +46,11 @@ type Platform struct {
 	StaleHeads map[string]int
 	// Requests records every request UpdateMergeRequest was given.
 	Requests []publish.Request
+	// ArmAfter makes the platform arm automerge only on the ArmAfter-th
+	// update after a request was created, as GitLab does once the pipeline
+	// exists; zero arms it on creation.
+	ArmAfter int
+	updates  int
 	nextIID  int
 }
 
@@ -105,7 +110,7 @@ func (p *Platform) CreateMergeRequest(_ context.Context, _ publish.Project, r pu
 	p.nextIID++
 	mr := publish.MergeRequest{
 		IID: p.nextIID, State: "opened", SourceBranch: r.SourceBranch, TargetBranch: r.TargetBranch,
-		Title: r.Title, Description: r.Description, Labels: r.Labels, Automerge: r.Automerge,
+		Title: r.Title, Description: r.Description, Labels: r.Labels, Automerge: r.Automerge && p.ArmAfter == 0,
 		WebURL: fmt.Sprintf("https://fake/mr/%d", p.nextIID),
 	}
 	p.MRs = append(p.MRs, mr)
@@ -137,7 +142,8 @@ func (p *Platform) UpdateMergeRequest(_ context.Context, _ publish.Project, iid 
 			p.MRs[i].Labels = r.Labels
 			changed = append(changed, "labels")
 		}
-		if p.MRs[i].Automerge != r.Automerge {
+		p.updates++
+		if p.MRs[i].Automerge != r.Automerge && (!r.Automerge || p.updates >= p.ArmAfter) {
 			p.MRs[i].Automerge = r.Automerge
 			changed = append(changed, "automerge")
 		}
