@@ -1,3 +1,13 @@
+## [0.45.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.44.1...v0.45.0) (2026-09-25)
+
+### :sparkles: Features
+
+* **advise:** a coverage category - what the repository pins that no run updates ([05cf9d9](https://git.ole-hartwig.eu/pinup/pinup/commit/05cf9d9944e22572eeac384ed31329ae67c49747))
+
+### :bug: Fixes
+
+* **advise:** an image on a two-part tag chooses a line, it does not pin ([fe6ccc9](https://git.ole-hartwig.eu/pinup/pinup/commit/fe6ccc9e9965ffbdefffd44694521f0ec62ebb99))
+
 ## [0.44.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.44.0...v0.44.1) (2026-09-25)
 
 ### :bug: Fixes
