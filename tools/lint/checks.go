@@ -25,13 +25,18 @@ var (
 )
 
 // CheckSPDXHeader requires the two-line header on every Go file. Licensing
-// completeness is checked in CI by lint-reuse; this catches it at the point
-// where it is cheap to fix.
+// completeness is NOT checked in CI yet: the lint-reuse include produces no
+// job here (see .gitlab-ci.yml). Until it does, this check and a local
+// `reuse lint` are all there is.
 func CheckSPDXHeader(files []File) []Violation {
+	// REUSE-IgnoreStart -- the literal below is what the check looks for, not
+	// this file's licence; unmarked, reuse lint reads `Apache-2.0"` as an
+	// invalid expression and fails the repository.
 	const (
 		wantCopyright = "// SPDX-FileCopyrightText:"
 		wantLicense   = "// SPDX-License-Identifier: Apache-2.0"
 	)
+	// REUSE-IgnoreEnd
 	var vs []Violation
 	for _, f := range files {
 		lines := strings.SplitN(string(f.Src), "\n", 3)
