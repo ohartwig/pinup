@@ -5,6 +5,7 @@ package planner
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -949,6 +950,79 @@ func TestReleasedTagIsACompleteVersion(t *testing.T) {
 	} {
 		if got := releasedTag(tc.tag); got != tc.want {
 			t.Errorf("releasedTag(%q) = %v, want %v", tc.tag, got, tc.want)
+		}
+	}
+}
+
+// npmRangeForTest reads a space-separated conjunction of >= and < bounds, the
+// shape wolfi-packages' interpreter rules use, and records the version it
+// was asked about - the coerced candidate, not the release's own spelling.
+type npmRangeForTest struct {
+	testScheme
+	asked *[]string
+}
+
+func (npmRangeForTest) Name() string { return "npm" }
+func (npmRangeForTest) IsValid(s string) bool {
+	return strings.HasPrefix(s, ">=") && strings.Contains(s, " <")
+}
+func (n npmRangeForTest) Satisfies(v, rng string) bool {
+	*n.asked = append(*n.asked, v)
+	lo, hi, _ := strings.Cut(strings.TrimPrefix(rng, ">="), " <")
+	pv, _ := semverx.Parse(v)
+	plo, _ := semverx.Parse(lo)
+	phi, _ := semverx.Parse(hi)
+	return semverx.CompareVersions(pv, plo) >= 0 && semverx.CompareVersions(pv, phi) < 0
+}
+
+// A scheme without a range form reads allowedVersions as an npm range, as
+// Renovate does. wolfi-packages holds its PHP 8.4 interpreter on the 8.4 line
+// with ">=8.4.0 <8.5.0" under semver; before this the planner refused the
+// constraint with a warning and planned no update at all - not the patch
+// release the rule exists to let through. Without an npm scheme to fall back
+// on, the constraint is still refused, by name.
+func TestAllowedVersionsFallsBackToAnNpmRange(t *testing.T) {
+	var asked []string
+	reg := registry()
+	reg["npm"] = npmRangeForTest{asked: &asked}
+	d := dep("php/php-src", "8.4.12", "semver")
+	d.AllowedVersions = ">=8.4.0 <8.5.0"
+	res := Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet {
+		return releases("8.4.13", "8.5.0", "v8.4.14")
+	}, Versionings: reg, Now: now})
+	if len(res.Warnings) != 0 || len(res.Updates) != 1 || res.Updates[0].NewValue != "v8.4.14" {
+		t.Errorf("updates %+v, warnings %v; want v8.4.14 alone", res.Updates, res.Warnings)
+	}
+	if !slices.Contains(asked, "8.4.14") || slices.Contains(asked, "v8.4.14") {
+		t.Errorf("the npm range was asked about %v; want the coerced 8.4.14", asked)
+	}
+
+	res = Plan(Request{Deps: []model.Dependency{d}, Releases: func(model.Dependency) *model.ReleaseSet {
+		return releases("8.4.13")
+	}, Versionings: registry(), Now: now})
+	if len(res.Warnings) != 1 || !strings.Contains(res.Warnings[0].Msg, "nor an npm range") {
+		t.Errorf("without an npm scheme: warnings %v", res.Warnings)
+	}
+}
+
+// coerce is semver.coerce's reading: the first one to three numbers, padded.
+func TestCoerce(t *testing.T) {
+	for _, tc := range []struct {
+		in, want string
+		ok       bool
+	}{
+		{"8.4.13", "8.4.13", true},
+		{"v8.4.13", "8.4.13", true},
+		{"8.4", "8.4.0", true},
+		{"8", "8.0.0", true},
+		{"1.2.3.4", "1.2.3", true},
+		{"1.2.3-rc1", "1.2.3", true},
+		{"php-8.04.1", "8.4.1", true},
+		{"latest", "", false},
+	} {
+		got, ok := coerce(tc.in)
+		if got != tc.want || ok != tc.ok {
+			t.Errorf("coerce(%q) = %q, %t; want %q, %t", tc.in, got, ok, tc.want, tc.ok)
 		}
 	}
 }

@@ -440,7 +440,7 @@ func (p *planning) candidates() (candidateSet, string, *model.Warning) {
 			continue
 		}
 		if d.AllowedVersions != "" {
-			ok, err := allowed(v, d.AllowedVersions, cand)
+			ok, err := allowed(req.Versionings, v, d.AllowedVersions, cand)
 			if err != nil {
 				return c, fmt.Sprintf("allowedVersions %q: %v", d.AllowedVersions, err), &model.Warning{
 					Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: allowedVersions %q: %v", d.DepName, d.AllowedVersions, err),
@@ -642,7 +642,15 @@ func (p *planning) upToDate(unchanged string) string {
 // allowed applies an allowedVersions constraint to one candidate: /regex/
 // matches the version string, !/regex/ must not match, anything else is a
 // range the candidate must satisfy under the dependency's scheme.
-func allowed(v versioning.Versioning, constraint, candidate string) (bool, error) {
+//
+// A scheme with no range form of its own - semver, docker, loose - reads
+// the constraint as an npm range instead, against the candidate coerced to
+// x.y.z, as Renovate does for every scheme but npm. Without that,
+// ">=8.4.0 <8.5.0" under semver was "not a valid semver range", and the
+// warning was the only trace: the dependency - wolfi-packages' PHP 8.4 and
+// 8.5 interpreters, whose rule exists to keep patch releases flowing - got
+// no update at all (2026-09-25).
+func allowed(reg versioning.Registry, v versioning.Versioning, constraint, candidate string) (bool, error) {
 	negate := strings.HasPrefix(constraint, "!")
 	body := strings.TrimPrefix(constraint, "!")
 	if strings.HasPrefix(body, "/") && strings.LastIndex(body, "/") > 0 {
@@ -663,10 +671,44 @@ func allowed(v versioning.Versioning, constraint, candidate string) (bool, error
 	if negate {
 		return false, fmt.Errorf("negation is only supported for a /regex/")
 	}
-	if !v.IsValid(constraint) {
-		return false, fmt.Errorf("not a valid %s range", v.Name())
+	if v.IsValid(constraint) {
+		return v.Satisfies(candidate, constraint), nil
 	}
-	return v.Satisfies(candidate, constraint), nil
+	if v.Name() != "npm" {
+		if npm, err := reg.Get("npm"); err == nil && npm.IsValid(constraint) {
+			coerced, ok := coerce(candidate)
+			return ok && npm.Satisfies(coerced, constraint), nil
+		}
+	}
+	return false, fmt.Errorf("not a valid %s range, nor an npm range", v.Name())
+}
+
+// coerce reads the first one to three dot-separated numbers of a version as
+// x.y.z, padding with zeros - what semver.coerce does for Renovate's npm-range
+// fallback: "v8.4.13" is 8.4.13, "8.4" is 8.4.0, "1.2.3.4" is 1.2.3.
+func coerce(s string) (string, bool) {
+	i := strings.IndexFunc(s, func(r rune) bool { return r >= '0' && r <= '9' })
+	if i < 0 {
+		return "", false
+	}
+	parts := []string{"0", "0", "0"}
+	n, start := 0, i
+	for j := i; j <= len(s) && n < 3; j++ {
+		if j == len(s) || s[j] < '0' || s[j] > '9' {
+			if j > start {
+				parts[n] = strings.TrimLeft(s[start:j], "0")
+				if parts[n] == "" {
+					parts[n] = "0"
+				}
+				n++
+			}
+			if j == len(s) || s[j] != '.' {
+				break
+			}
+			start = j + 1
+		}
+	}
+	return strings.Join(parts, "."), true
 }
 
 // extractVersions applies an extractVersion pattern to a release set,
