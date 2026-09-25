@@ -22,6 +22,7 @@ and needs no platform token.
 | `--now` | plan as if it were this moment (RFC 3339); schedules and release ages are judged against it |
 | `--cache` | the lookup cache (bbolt); empty means every lookup is cold |
 | `--cache-ttl` | how long a cached lookup counts as fresh (default 1h) |
+| `--coverage` | scan the checkout for pinned versions nothing updates and record them in the plan as `unmanaged` (default from `PINUP_COVERAGE`) |
 
 ## run
 
@@ -40,6 +41,7 @@ requests, write the dashboard issue. One of `--repo`, `--project`,
 | `--base` | plan and branch from this branch instead of the project's default branch |
 | `--dry-run` | plan only; push nothing, open nothing - `whatif` with the platform's view of the existing merge requests |
 | `--config`, `--report`, `--cache`, `--cache-ttl` | as for `whatif`; a `%s` in `--report` becomes the project path |
+| `--coverage` | scan each checkout for pinned versions nothing updates; the plan records them and the dashboard lists them under "Not updated by anything" (default from `PINUP_COVERAGE`; skipped by `--released` and `--package`) |
 
 Every run also reads the dashboard issue's ticked boxes before it plans,
 and writes the consumer index the fast lane and the advisory watch read.
@@ -228,7 +230,11 @@ versions inside URLs were mostly noise. It leaves out comments, prose,
 locks, tests, fixtures, vendored trees, `ignorePaths`, the line under a
 `renovate:` annotation, and anything a plan holds for the same file. A pin
 kept on purpose is marked `pinup: coverage-ignore` on its line or the one
-above; `pinup: coverage-ignore-file` anywhere in a file excludes all of it. Every check has a test case that makes it fire, and a
+above; `pinup: coverage-ignore-file` anywhere in a file excludes all of it. The same scan runs inside `whatif` and `run` with
+`--coverage`, where its findings land in the plan and on the dashboard -
+the place a repository's owners read - instead of in an advice report.
+
+Every check has a test case that makes it fire, and a
 test asserts that every check in the catalogue has one.
 
 ## advisories

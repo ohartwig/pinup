@@ -185,7 +185,13 @@ var mutators = []mutator{
 		"strings.Contains(line, ignoreLine) || strings.Contains(above, ignoreLine) ||", "strings.Contains(line, ignoreLine) ||", []string{"./advise/"}, false, ""},
 	{46, "coverage", "a manifest a lock pins is reported without a lock", "advise/coverage.go",
 		"\t\t\tif locked[file] || warned[file] {", "\t\t\tif warned[file] {", []string{"./advise/"}, false, ""},
-	{47, "sentinel", "a comment changes", "model/model.go",
+	// Coverage in the scheduled run (2026-09-25): the scan's answer reaches
+	// the dashboard, and the switch is what turns it on.
+	{47, "coverage", "the dashboard drops the unmanaged-pins section", "report/dashboard.go",
+		"s.problems, s.unmanaged, s.pending,", "s.problems, s.pending,", []string{"./report/"}, false, ""},
+	{48, "coverage", "whatif ignores --coverage", "cmd/pinup/whatif.go",
+		"\tif o.Coverage {\n\t\tr.plan.Unmanaged =", "\tif false {\n\t\tr.plan.Unmanaged =", []string{"./cmd/pinup/"}, false, ""},
+	{49, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

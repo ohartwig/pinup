@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ohartwig/pinup/advise"
 	"github.com/ohartwig/pinup/apply"
 	"github.com/ohartwig/pinup/cache"
 	"github.com/ohartwig/pinup/changelog"
@@ -46,6 +47,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt); empty means every lookup is cold")
 	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
 	nowFlag := fs.String("now", "", "plan as if it were this moment (RFC 3339); schedules and release ages are judged against it")
+	coverage := fs.Bool("coverage", coverageFromEnv(os.Getenv), "scan the checkout for pinned versions nothing updates and record them in the plan (default from PINUP_COVERAGE)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -83,7 +85,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return err
 	}
 	opts := whatifOptions{
-		Root: *repo, ConfigPath: *cfgPath, RepoName: *name, Now: now,
+		Root: *repo, Coverage: *coverage, ConfigPath: *cfgPath, RepoName: *name, Now: now,
 		Datasources:   wire.Datasources(client, dsOpts),
 		CacheTTL:      *cacheTTL,
 		RunnerProject: project,
@@ -166,7 +168,11 @@ const (
 // whatifOptions is everything a plan run needs. Datasources is injected so a
 // test can hand in a fake registry and prove the run touched no network.
 type whatifOptions struct {
-	Root        string
+	Root string
+	// Coverage asks for the scan of Root for pins nothing updates; the
+	// plan records them as Unmanaged. Off by default: it reads every file
+	// of the checkout, which a fast-lane run has no use for.
+	Coverage    bool
 	ConfigPath  string
 	RepoName    string
 	Now         time.Time
@@ -359,7 +365,17 @@ func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 			return nil, err
 		}
 	}
+	if o.Coverage {
+		r.plan.Unmanaged = advise.UnmanagedPins(os.DirFS(o.Root), r.plan.Deps, r.decoded.IgnorePaths)
+	}
 	return r.finish()
+}
+
+// coverageFromEnv reads PINUP_COVERAGE: "1" or "true" switches the scan
+// on for every run of the process, which is how a CI job asks for it.
+func coverageFromEnv(getenv func(string) string) bool {
+	v := strings.ToLower(getenv("PINUP_COVERAGE"))
+	return v == "1" || v == "true"
 }
 
 // whatifRun is one run's state as it passes through the stages: the

@@ -62,6 +62,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	dryRun := fs.Bool("dry-run", false, "plan only; push nothing, open nothing")
 	baseBranch := fs.String("base", "", "plan and branch from this branch instead of the project's default branch")
 	pkg := fs.String("package", "", "narrow the run to one external package, datasource:name (e.g. npm:lodash), with a fresh lookup for it - the advisory watch's targeted run; with --project or --autodiscover")
+	coverage := fs.Bool("coverage", coverageFromEnv(os.Getenv), "scan each checkout for pinned versions nothing updates; the plan records them and the dashboard lists them (default from PINUP_COVERAGE)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -164,6 +165,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env, pkg: *pkg,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: os.Getenv("PINUP_DASHBOARD_TITLE"),
+		coverage:       *coverage,
 	}
 	if !*dryRun {
 		one.isolate = taskIsolation(os.Getenv, errw, *cachePath, *indexPath)
@@ -391,6 +393,10 @@ type runOptions struct {
 	// base, when set, replaces the project's default branch as the
 	// branch the run reads and branches from.
 	base string
+	// coverage is --coverage: every project's plan records the pins
+	// nothing updates. A narrowed run (the fast lane, --package) looks at
+	// one dependency and skips it.
+	coverage bool
 }
 
 // runReleased is the fast lane. The consumers come from the index the
@@ -599,6 +605,7 @@ func checkout(ctx context.Context, o *runOptions, project, repoDir string) (repo
 func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publish.Project, errw io.Writer) (whatifOptions, error) {
 	opts := whatifOptions{
 		Root: repo.Dir, ConfigPath: o.cfgPath, RepoName: proj.Path, Now: o.now,
+		Coverage:      o.coverage && o.released == "" && o.pkg == "",
 		Datasources:   o.datasources,
 		Cache:         o.cache,
 		CacheTTL:      o.cacheTTL,
