@@ -7,6 +7,7 @@ import (
 	"encoding/json/v2"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -57,17 +58,37 @@ func TestAdviseReportsTheRunnerConfiguration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("--strict fails a configuration without errors: %v", err)
 	}
-	if len(r.Skipped) != 0 {
-		t.Errorf("with --plan nothing is skipped: %v", r.Skipped)
+	if !slices.Equal(r.Skipped, []string{"coverage/unmanaged-pin"}) {
+		t.Errorf("with --plan and no --repo only the file scan is skipped: %v", r.Skipped)
 	}
-	found := false
+	repo := t.TempDir()
+	if err := os.WriteFile(filepath.Join(repo, "compose.yaml"), []byte("services:\n  ca:\n    image: smallstep/step-ca:0.28.1\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r, err = adviseJSON(t, "--config", fixture.Config(t), "--plan", plan, "--repo", repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(r.Skipped) != 0 {
+		t.Errorf("with --plan and --repo nothing is skipped: %v", r.Skipped)
+	}
+	found, scanned := false, false
 	for _, f := range r.Findings {
-		if f.ID == "plan/datasource-failing" {
+		switch {
+		case f.ID == "plan/datasource-failing":
 			found = true
+		case f.ID == "coverage/unmanaged-pin" && f.Pointer == "compose.yaml" && f.Frame == "repo":
+			scanned = true
 		}
 	}
 	if !found {
 		t.Error("the golden plan's failing datasource is not reported")
+	}
+	if !scanned {
+		t.Error("--repo: the compose image no plan holds is not reported")
+	}
+	if _, err := adviseJSON(t, "--config", fixture.Config(t), "--plan", plan, "--repo", filepath.Join(repo, "compose.yaml")); err == nil || !strings.Contains(err.Error(), "not a directory") {
+		t.Errorf("--repo on a file must fail, got %v", err)
 	}
 	if _, err := adviseJSON(t, "--config", fixture.Config(t), "--plan", "nonesuch/plan.json"); err == nil || !strings.Contains(err.Error(), "nonesuch/plan.json") {
 		t.Errorf("a missing plan must fail naming the file, got %v", err)

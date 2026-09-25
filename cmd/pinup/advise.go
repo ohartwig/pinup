@@ -38,6 +38,7 @@ func cmdAdvise(args []string, out, errw io.Writer) error {
 	fix := fs.Bool("fix", false, "apply the fixes to the file in memory and verify the result; a dry run unless --out or --write")
 	outPath := fs.String("out", "", "with --fix: write the fixed file here")
 	write := fs.Bool("write", false, "with --fix: write the fixed file in place")
+	repo := fs.String("repo", "", "the checkout the plans were made from, for the coverage scan of its files")
 	var plans, skip multiFlag
 	fs.Var(&plans, "plan", "a plan whatif wrote, for the checks that read what runs found (repeatable)")
 	fs.Var(&skip, "skip", "a check ID to leave out of the report and the fixes (repeatable)")
@@ -69,6 +70,12 @@ func cmdAdvise(args []string, out, errw io.Writer) error {
 	}
 	in.Covers = wire.Covers
 	in.Datasources = wire.DatasourceNames(in.Decoded.CustomDatasources)
+	if *repo != "" {
+		if st, err := os.Stat(*repo); err != nil || !st.IsDir() {
+			return fmt.Errorf("advise: --repo %s: not a directory", *repo)
+		}
+		in.Repo = os.DirFS(*repo)
+	}
 	for _, p := range plans {
 		f, err := os.Open(p)
 		if err != nil {
@@ -212,7 +219,7 @@ func (r adviceReport) print(w io.Writer) {
 		fmt.Fprintln(w, "\nnothing to change")
 	}
 	if len(r.Skipped) > 0 {
-		fmt.Fprintf(w, "\nskipped: %d plan checks (no --plan)\n", len(r.Skipped))
+		fmt.Fprintf(w, "\nskipped: %d checks that need --plan or --repo: %s\n", len(r.Skipped), strings.Join(r.Skipped, ", "))
 	}
 	if r.Fix == nil {
 		return

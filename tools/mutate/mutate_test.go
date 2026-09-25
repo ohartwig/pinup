@@ -179,7 +179,13 @@ var mutators = []mutator{
 		"\tif v.Name() != \"npm\" {\n\t\tif npm, err := reg.Get(\"npm\"); err == nil && npm.IsValid(constraint) {", "\tif false {\n\t\tif npm, err := reg.Get(\"npm\"); err == nil && npm.IsValid(constraint) {", []string{"./planner/"}, false, ""},
 	{44, "plan", "coerce keeps the prefix before the first number", "planner/planner.go",
 		"\ti := strings.IndexFunc(s, func(r rune) bool { return r >= '0' && r <= '9' })", "\ti := 0", []string{"./planner/"}, false, ""},
-	{45, "sentinel", "a comment changes", "model/model.go",
+	// The coverage scan (2026-09-25) is only read if it stays quiet where a
+	// pin is kept on purpose, and a lock that pins the ranges is no gap.
+	{45, "coverage", "the ignore marker on the line above is not honoured", "advise/coverage.go",
+		"strings.Contains(line, ignoreLine) || strings.Contains(above, ignoreLine) ||", "strings.Contains(line, ignoreLine) ||", []string{"./advise/"}, false, ""},
+	{46, "coverage", "a manifest a lock pins is reported without a lock", "advise/coverage.go",
+		"\t\t\tif locked[file] || warned[file] {", "\t\t\tif warned[file] {", []string{"./advise/"}, false, ""},
+	{47, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

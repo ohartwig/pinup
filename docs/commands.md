@@ -98,11 +98,12 @@ git rm renovate.json   # pinup refuses two configuration files
 ## advise
 
 Analyse a configuration as a run resolves it - defaults, presets, file -
-and report what to change, in four categories: **compat** (what this
+and report what to change, in five categories: **compat** (what this
 version of pinup does not read, cannot evaluate, rewrote or would refuse),
 **hygiene** (what the file says twice or for nothing), **performance**
-(work a run does for nothing) and **security** (what widens the blast
-radius of an update nobody looked at). Every finding names its pointer,
+(work a run does for nothing), **security** (what widens the blast
+radius of an update nobody looked at) and **coverage** (what the
+repository pins that no run updates). Every finding names its pointer,
 the layer that wrote the value - the file, a preset, the builtin defaults -
 and, where the file owns the value, a fix.
 
@@ -111,6 +112,7 @@ and, where the file owns the value, a fix.
 | `--config` | the configuration to analyse (required) |
 | `--runner` | as for print-config: the runner's configuration a `local>` extends resolves to |
 | `--plan` | a plan `whatif` wrote (repeatable); enables the checks that read what runs found |
+| `--repo` | the checkout the plans were made from; enables the scan of its files for pins no plan holds |
 | `--skip` | a check ID to leave out of the report and the fixes (repeatable) |
 | `--json` | the report as JSON |
 | `--strict` | exit 1 when any finding is an `error`; warnings never fail |
@@ -131,7 +133,7 @@ warn (2)
       fix:  set /ignorePaths = ["**/node_modules/**", …, "**/prometheus-exporter/**"]
       from: file:renovate.json
   …
-skipped: 6 plan checks (no --plan)
+skipped: 10 checks that need --plan or --repo: plan/rule-never-matched, …
 ```
 
 `--json` prints `{"file", "plans", "skipped", "counts": {error, warn,
@@ -139,8 +141,8 @@ info}, "findings": [{id, category, severity, pointer, frame, origin, msg,
 fix}], "fix": {applied, skipped, wrote}}`. A finding's `frame` says which
 document its pointer indexes: `file` for the document as written, `resolved`
 for what a run reads - the presets' `packageRules` stand before the file's
-in the resolved frame, so the two numberings differ. A fix always points
-into the file.
+in the resolved frame, so the two numberings differ - and `repo` for a
+path in the checkout `--repo` names. A fix always points into the file.
 
 ### The fixes
 
@@ -209,8 +211,22 @@ write by hand, until the YAML rewriter lands.
 | `plan/datasource-failing` | warn | a custom datasource whose lookups the plans record as failed | — |
 | `plan/component-pinned-exact` | info | a plan whose CI component includes are pinned to a patch version rather than a rolling major | — |
 
-The `plan/*` checks run only with `--plan`; the report counts them as
-skipped otherwise. Every check has a test case that makes it fire, and a
+| `coverage/orphan-annotation` | warn | annotations the plans record as naming no dependency; the pin beneath is not updated | — |
+| `coverage/manifest-without-lock` | warn | an npm or composer manifest with ranges and no lock pinning them | — |
+| `coverage/unmanaged-pin` | info | a file with image references or `*_VERSION` variables no plan holds and no annotation claims | — |
+
+The `plan/*` and `coverage/*` checks run only with `--plan`, and
+`coverage/unmanaged-pin` also needs `--repo`; the report counts them as
+skipped otherwise.
+
+`coverage/unmanaged-pin` reports two shapes only - an image reference with
+a path (`smallstep/step-ca:0.28.1`) and an upper-case `*_VERSION`, `*_VER`
+or `*_TAG` variable - because those measured precise; bare `name@1.2.3` and
+versions inside URLs were mostly noise. It leaves out comments, prose,
+locks, tests, fixtures, vendored trees, `ignorePaths`, the line under a
+`renovate:` annotation, and anything a plan holds for the same file. A pin
+kept on purpose is marked `pinup: coverage-ignore` on its line or the one
+above; `pinup: coverage-ignore-file` anywhere in a file excludes all of it. Every check has a test case that makes it fire, and a
 test asserts that every check in the catalogue has one.
 
 ## advisories
