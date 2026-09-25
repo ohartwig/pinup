@@ -14,6 +14,7 @@ import (
 // meant to be left alone. Each case is one way a version literal is not a
 // gap; the last proves the same literal is reported once nothing excuses it.
 func TestUnmanagedPinLeavesHeldPinsAlone(t *testing.T) {
+	mirrored := model.Dependency{Manager: "regex", File: "mirrors.yml", CustomManager: 0, DepName: "docker.io/semgrep/semgrep", Datasource: "docker", CurrentValue: "1.174.0", Locus: model.Locus{Line: 9}}
 	tracked := model.Dependency{Manager: "gitlabci", File: ".gitlab-ci.yml", CustomManager: model.NoCustomManager, DepName: "x/helm", Datasource: "docker", CurrentValue: "3.19.0", Locus: model.Locus{Line: 2}}
 	for _, c := range []struct {
 		name, file, body, cfg string
@@ -35,10 +36,12 @@ func TestUnmanagedPinLeavesHeldPinsAlone(t *testing.T) {
 		{"a line, not a version", "Containerfile", "ARG PHP_VERSION=8.5\n", `{}`, 0},
 		{"an image on a line tag", "compose.yaml", "    image: valkey/valkey:8.1-alpine3.22\n", `{}`, 0},
 		{"a command naming an image", "lefthook.yml", "run: docker run --rm -v \"$PWD:/check:ro\" mstruebing/editorconfig-checker:v3.7.0 ec {staged_files}\n", `{}`, 1},
+		{"a dependency the plan found, raised since", "mirrors.yml", "x: 1\n  - SRC: [\"docker.io/semgrep/semgrep:1.178.0\"]\n", `{}`, 0},
+		{"another image in that file", "mirrors.yml", "  - SRC: [\"docker.io/rancher/system-upgrade-controller:v0.20.2\"]\n", `{}`, 1},
 		{"nothing excuses it", "ci.yml", "x:\n  HELM_VERSION: 3.18.0\n", `{}`, 1},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			in := load(t, c.cfg, plan([]model.Dependency{tracked}, nil))
+			in := load(t, c.cfg, plan([]model.Dependency{tracked, mirrored}, nil))
 			in.Repo = fstest.MapFS{c.file: {Data: []byte(c.body)}}
 			if got := len(unmanagedPin(in)); got != c.want {
 				t.Errorf("%d findings, want %d: %+v", got, c.want, unmanagedPin(in))
