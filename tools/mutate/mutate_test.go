@@ -191,7 +191,13 @@ var mutators = []mutator{
 		"s.problems, s.unmanaged, s.pending,", "s.problems, s.pending,", []string{"./report/"}, false, ""},
 	{48, "coverage", "whatif ignores --coverage", "cmd/pinup/whatif.go",
 		"\tif o.Coverage {\n\t\tr.plan.Unmanaged =", "\tif false {\n\t\tr.plan.Unmanaged =", []string{"./cmd/pinup/"}, false, ""},
-	{49, "sentinel", "a comment changes", "model/model.go",
+	// advise --init (2026-09-25): the proposal passes its own advice, and
+	// an annotation already written is read under it.
+	{49, "coverage", "--init prints a proposal advise warns about", "cmd/pinup/adviseinit.go",
+		"\tif len(bad) > 0 {\n\t\treturn fmt.Errorf(\"the proposal fails", "\tif false {\n\t\treturn fmt.Errorf(\"the proposal fails", []string{"./cmd/pinup/"}, false, ""},
+	{50, "coverage", "--init leaves annotated files to no manager", "cmd/pinup/adviseinit.go",
+		"\tfor _, f := range p.Annotated {\n\t\tfiles[f] = true\n\t}", "\tfor range p.Annotated {\n\t}", []string{"./cmd/pinup/"}, false, ""},
+	{51, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

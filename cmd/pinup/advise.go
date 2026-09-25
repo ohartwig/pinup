@@ -4,6 +4,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"encoding/json/jsontext"
 	"encoding/json/v2"
@@ -36,14 +37,21 @@ func cmdAdvise(args []string, out, errw io.Writer) error {
 	asJSON := fs.Bool("json", false, "print the findings as JSON")
 	strict := fs.Bool("strict", false, "exit 1 when any finding is an error")
 	fix := fs.Bool("fix", false, "apply the fixes to the file in memory and verify the result; a dry run unless --out or --write")
-	outPath := fs.String("out", "", "with --fix: write the fixed file here")
+	outPath := fs.String("out", "", "with --fix: write the fixed file here; with --init: write the proposal here")
 	write := fs.Bool("write", false, "with --fix: write the fixed file in place")
 	repo := fs.String("repo", "", "the checkout the plans were made from, for the coverage scan of its files")
+	initFlag := fs.Bool("init", false, "propose a first configuration for the checkout --repo names (default .), offline, checked by advise itself")
 	var plans, skip multiFlag
 	fs.Var(&plans, "plan", "a plan whatif wrote, for the checks that read what runs found (repeatable)")
 	fs.Var(&skip, "skip", "a check ID to leave out of the report and the fixes (repeatable)")
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if *initFlag {
+		if *cfgPath != "" || *fix || *write || len(plans) > 0 {
+			return fmt.Errorf("advise: --init proposes a configuration; it takes --repo and --out, not --config, --fix, --write or --plan")
+		}
+		return adviseInit(cmp.Or(*repo, "."), *outPath, out)
 	}
 	if *cfgPath == "" {
 		return fmt.Errorf("advise: --config is required")

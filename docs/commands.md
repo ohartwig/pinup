@@ -115,6 +115,7 @@ and, where the file owns the value, a fix.
 | `--runner` | as for print-config: the runner's configuration a `local>` extends resolves to |
 | `--plan` | a plan `whatif` wrote (repeatable); enables the checks that read what runs found |
 | `--repo` | the checkout the plans were made from; enables the scan of its files for pins no plan holds |
+| `--init` | propose a first configuration for the checkout `--repo` names (default `.`) instead of advising on one; with `--out`, write it there (never over an existing file) |
 | `--skip` | a check ID to leave out of the report and the fixes (repeatable) |
 | `--json` | the report as JSON |
 | `--strict` | exit 1 when any finding is an `error`; warnings never fail |
@@ -145,6 +146,30 @@ document its pointer indexes: `file` for the document as written, `resolved`
 for what a run reads - the presets' `packageRules` stand before the file's
 in the resolved frame, so the two numberings differ - and `repo` for a
 path in the checkout `--repo` names. A fix always points into the file.
+
+### A first configuration
+
+`pinup advise --init` is for a repository that has none. It extracts the
+checkout offline - no token, no lookup - and proposes the smallest
+`.pinup.jsonc` that is right for what it found:
+
+- `config:recommended`, `minimumReleaseAge: "3 days"` and
+  `osvVulnerabilityAlerts: true` - the settings the security checks raise
+  on a configuration without them;
+- `enabledManagers` limited to the managers that found a dependency, so a
+  run does not walk the tree for ecosystems the repository does not have;
+- where pins exist that no manager reads (the coverage scan's rules), or
+  files carry `# renovate:` annotations nothing reads yet, one annotation
+  manager for exactly those files - and, per pin, the annotation to write
+  above it. For an image the annotation is complete; for a variable the
+  `depName` is left for the owner, since nothing on the line says where
+  the tool is released.
+
+The reasoning stands in comments above the object; the object is what the
+file resolves to. Before anything is printed, the proposal is resolved,
+planned offline and run through the catalogue: a warning or an error
+fails the command and names the check - a proposal the next `advise` would
+criticise is a bug in `--init`, not advice.
 
 ### The fixes
 
