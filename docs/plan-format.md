@@ -61,8 +61,8 @@ cache's first-seen record), `securityFix` with the advisory, and:
 
 - `blocks`: every reason the update is held - `reason`, the `origin`
   (`config`, `packageRules[N]`, or a file the repository carries:
-  `file:<path>` with a `pointer`, as a project's `.npmrc` for
-  `minimumReleaseAge`), `until` where a hold thaws, `note`.
+  `file:<path>` with a `pointer`, as a project's `.npmrc`,
+  `pnpm-workspace.yaml` or `.yarnrc.yml` for `minimumReleaseAge`), `until` where a hold thaws, `note`.
   Reasons: `minimumReleaseAge`, `schedule`, `dependencyDashboardApproval`,
   `disabled`, `allowedVersions`, `internalChecksFilter`, `hourlyLimit`,
   `concurrentLimit`, `rollingMajor`, `pluginRequired` (a tool missing,
