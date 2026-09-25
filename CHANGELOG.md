@@ -1,3 +1,9 @@
+## [0.43.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.43.0...v0.43.1) (2026-09-25)
+
+### :bug: Fixes
+
+* **runner:** arm a new request once GitLab has a pipeline to wait for ([048a8be](https://git.ole-hartwig.eu/pinup/pinup/commit/048a8bea16963c044784fb38b742d1263ee91949))
+
 ## [0.43.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.42.0...v0.43.0) (2026-09-25)
 
 ### :sparkles: Features
