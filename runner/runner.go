@@ -56,6 +56,9 @@ type Options struct {
 	// ones already open under the plan's prefixes; further new branches are held with
 	// Reason concurrentLimit. Zero means no cap.
 	ConcurrentLimit int
+	// ConcurrentIgnoreLabels names labels whose open requests are not
+	// counted against ConcurrentLimit (prConcurrentLimitIgnoreLabels).
+	ConcurrentIgnoreLabels []string
 	// Prune closes the open requests under the plan's prefixes whose branch the plan
 	// no longer names - the value they carried reached the base by
 	// another road, or the rule behind them is gone - and deletes their
@@ -112,7 +115,16 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		if err != nil {
 			return nil, fmt.Errorf("runner: counting open merge requests: %w", err)
 		}
-		openNow = len(open)
+		// A request that waits for a person by design holds no slot. The
+		// k3s minor and the kubectl that follows it wait for a runbook and
+		// a human; counted, they held two of koh-gitops' ten slots for
+		// weeks, and on 2026-09-24 the grafana and loki bumps carrying an
+		// otel fix sat behind "10 merge requests already open" for hours.
+		for _, m := range open {
+			if !slices.ContainsFunc(m.Labels, func(l string) bool { return slices.Contains(o.ConcurrentIgnoreLabels, l) }) {
+				openNow++
+			}
+		}
 	}
 	for i := range plan.Branches {
 		b := &plan.Branches[i]
@@ -126,7 +138,11 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			outcomes = append(outcomes, fail(plan, b, "find merge request", err))
 			continue
 		}
-		if !hasMR && o.ConcurrentLimit > 0 && openNow+created >= o.ConcurrentLimit {
+		// A security fix is not held for a limit: the limits pace routine
+		// updates, and the one update that closes an advisory is the one
+		// that should not queue behind them. It is still counted once open.
+		security := fixesAdvisory(b, plan.Updates)
+		if !hasMR && !security && o.ConcurrentLimit > 0 && openNow+created >= o.ConcurrentLimit {
 			hold(plan, b, model.Block{
 				Reason: model.BlockConcurrentLimit, Org: model.Origin{Source: "config", Rule: model.NoRule},
 				Note: fmt.Sprintf("prConcurrentLimit %d: %d merge requests already open", o.ConcurrentLimit, openNow+created),
@@ -134,7 +150,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "held", Message: "concurrent limit"})
 			continue
 		}
-		if !hasMR && o.HourlyLimit > 0 && created >= o.HourlyLimit {
+		if !hasMR && !security && o.HourlyLimit > 0 && created >= o.HourlyLimit {
 			hold(plan, b, model.Block{
 				Reason: model.BlockHourlyLimit, Org: model.Origin{Source: "config", Rule: model.NoRule},
 				Until: o.Now.Add(time.Hour).UTC(),
@@ -647,6 +663,21 @@ const (
 // then the release notes the forge publishes for the span, each collapsed,
 // and the footer. updates are the plan's; only the branch's own are read,
 // and a dependency read from several places is one row.
+// fixesAdvisory reports whether any update on the branch is planned to clear
+// an advisory (model.Update.SecurityFix).
+func fixesAdvisory(b *model.Branch, updates []model.Update) bool {
+	keys := map[string]bool{}
+	for _, k := range b.UpdateKeys {
+		keys[k] = true
+	}
+	for _, u := range updates {
+		if u.SecurityFix && keys[u.Key()] {
+			return true
+		}
+	}
+	return false
+}
+
 func description(b *model.Branch, updates []model.Update, footer string) string {
 	var s strings.Builder
 	keys := map[string]bool{}

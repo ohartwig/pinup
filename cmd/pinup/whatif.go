@@ -445,7 +445,8 @@ func (r *whatifRun) configure() error {
 	for _, w := range presetWarnings {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "config", Msg: w})
 	}
-	plan.Limits = model.Limits{PRHourlyLimit: intOf(resolved.Raw["prHourlyLimit"]), PRConcurrentLimit: intOf(resolved.Raw["prConcurrentLimit"])}
+	plan.Limits = model.Limits{PRHourlyLimit: intOf(resolved.Raw["prHourlyLimit"]), PRConcurrentLimit: intOf(resolved.Raw["prConcurrentLimit"]),
+		PRConcurrentLimitIgnoreLabels: stringsOf(resolved.Raw["prConcurrentLimitIgnoreLabels"])}
 	plan.Branching = model.Branching{Prefix: stringOf(resolved.Raw["branchPrefix"]), PrefixOld: stringOf(resolved.Raw["branchPrefixOld"])}
 	if plan.Branching.PrefixOld == plan.Branching.Prefix {
 		plan.Branching.PrefixOld = ""
@@ -1419,6 +1420,18 @@ func postUpgradeOf(cfg map[string]any) (plugin.PostUpgrade, bool) {
 		Origin:        model.Origin{Source: "config", Rule: model.NoRule},
 	}
 	return pu, len(pu.Commands) > 0
+}
+
+// stringsOf reads a JSON list of strings; anything else is none.
+func stringsOf(v any) []string {
+	items, _ := v.([]any)
+	var out []string
+	for _, it := range items {
+		if s, ok := it.(string); ok && s != "" {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 func stringOf(v any) string {
