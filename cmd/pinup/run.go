@@ -24,6 +24,7 @@ func commands() []command {
 	return []command{
 		{"whatif", "resolve and plan without writing anything", cmdWhatif},
 		{"run", "plan, then apply and publish", cmdRun},
+		{"plandiff", "compare two plan reports and say what a configuration change does, as Markdown", cmdPlandiff},
 		{"print-config", "print the resolved config, optionally explained", cmdPrintConfig},
 		{"shadow", "compare plan reports with the merge requests Renovate has open", cmdShadow},
 		{"notify", "keep the estate-wide rolling-major notice in one issue (notify rolling-major)", cmdNotify},
