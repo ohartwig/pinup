@@ -122,8 +122,9 @@ unsupported means nothing reads it and the run says so.
 | `postUpgradeTasks` | supported |
 | `prBodyDefinitions` | supported |
 | `prBodyNotes` | supported |
-| `prConcurrentLimit` | supported |
-| `prHourlyLimit` | supported |
+| `prConcurrentLimit` | supported; a branch that fixes an advisory (`vulnerabilityAlerts`) is not held by it, and requests labelled with `prConcurrentLimitIgnoreLabels` are not counted |
+| `prConcurrentLimitIgnoreLabels` | pinup's own: labels whose open requests hold no slot of `prConcurrentLimit` - requests that wait for a person by design, such as a cluster minor behind a runbook |
+| `prHourlyLimit` | supported; a branch that fixes an advisory is not held by it |
 | `rangeStrategy` | supported |
 | `registryUrls` | supported |
 | `schedule` | supported |

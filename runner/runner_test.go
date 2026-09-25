@@ -354,6 +354,83 @@ func TestConcurrentLimitCountsOpenRequests(t *testing.T) {
 	}
 }
 
+// A request waiting for a person by design holds no slot: prConcurrentLimit
+// counts only what is not labelled with prConcurrentLimitIgnoreLabels.
+// Measured on koh-gitops, 2026-09-24: the k3s minor and its kubectl, both
+// needs-runbook, held two of ten slots for weeks.
+func TestTheConcurrentLimitIgnoresRequestsWaitingForAPerson(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		ignore []string
+		want   string
+	}{
+		{name: "labels ignored", ignore: []string{"needs-runbook"}, want: "created"},
+		{name: "labels counted", ignore: nil, want: "held"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, repo := fixture(t)
+			pf := &platformfake.Platform{MRs: []publish.MergeRequest{
+				{IID: 1, State: "opened", SourceBranch: "renovate/k3s", Labels: []string{"pinup", "needs-runbook"}},
+				{IID: 2, State: "opened", SourceBranch: "renovate/kubectl", Labels: []string{"needs-runbook"}},
+			}}
+			p := plan(model.Branch{Name: "renovate/a", Title: "a", UpdateKeys: []string{"a"}, Edits: []model.Edit{edit("3.20", "3.21")}})
+			o := options(repo, pf)
+			o.ConcurrentLimit = 2
+			o.ConcurrentIgnoreLabels = tc.ignore
+			outs, err := Execute(context.Background(), p, o)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if outs[0].Action != tc.want {
+				t.Errorf("outcome %+v, want %s", outs[0], tc.want)
+			}
+		})
+	}
+}
+
+// A security fix is not held for a limit. The limits pace routine updates;
+// the update that closes an advisory is the one that must not queue behind
+// them.
+func TestASecurityFixIsNotHeldByTheLimits(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		concurrent int
+		hourly     int
+	}{
+		{name: "concurrent limit", concurrent: 1},
+		{name: "hourly limit", hourly: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, repo := fixture(t)
+			pf := &platformfake.Platform{MRs: []publish.MergeRequest{{IID: 1, State: "opened", SourceBranch: "renovate/old"}}}
+			p := plan(
+				model.Branch{Name: "renovate/routine", Title: "routine", UpdateKeys: []string{"r"}, Edits: []model.Edit{edit("1.26", "1.27")}},
+				model.Branch{Name: "renovate/fix", Title: "fix", UpdateKeys: []string{"f"}, Edits: []model.Edit{edit("3.20", "3.21")}},
+			)
+			p.Updates[1].SecurityFix = true
+			o := options(repo, pf)
+			o.ConcurrentLimit, o.HourlyLimit = tc.concurrent, tc.hourly
+			if tc.hourly > 0 {
+				pf.MRs = nil // only the hourly count applies
+			}
+			outs, err := Execute(context.Background(), p, o)
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := map[string]string{}
+			for _, out := range outs {
+				got[out.Branch] = out.Action
+			}
+			if got["renovate/fix"] != "created" {
+				t.Errorf("the security fix was %q, want created: %+v", got["renovate/fix"], outs)
+			}
+			if tc.concurrent > 0 && got["renovate/routine"] != "held" {
+				t.Errorf("the routine update was %q, want held by the limit: %+v", got["renovate/routine"], outs)
+			}
+		})
+	}
+}
+
 // fakeTasks stands in for the toolchain: it writes whatever files the test
 // says a task produced, so the commit and scope rules can be checked
 // without composer or npm - the acceptance of P1d.6 in hermetic form.

@@ -33,7 +33,7 @@ var KeySupport = map[string]Support{
 	"enabled": Supported, "minimumReleaseAge": Supported, "minimumReleaseAgeBehaviour": Supported, "schedule": Supported,
 	"timezone": Supported, "automerge": Supported, "automergeDirect": Supported, "dependencyDashboardApproval": Supported, "groupName": Supported,
 	"groupSlug": Supported, "versioning": Supported, "registryUrls": Supported, "extractVersion": Supported,
-	"ignoreUnstable": Supported, "prHourlyLimit": Supported, "prConcurrentLimit": Supported, "labels": Supported,
+	"ignoreUnstable": Supported, "prHourlyLimit": Supported, "prConcurrentLimit": Supported, "prConcurrentLimitIgnoreLabels": Supported, "labels": Supported,
 	"ignoreDeps": Supported, "allowedVersions": Supported, "rangeStrategy": Supported, "separateMajorMinor": Supported,
 	"separateMinorPatch": Partial, "separateMultipleMajor": Partial, "pinDigests": Supported,
 	"lockFileMaintenance": Supported, "osvVulnerabilityAlerts": Supported, "vulnerabilityAlerts": Supported,

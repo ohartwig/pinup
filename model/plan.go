@@ -226,6 +226,10 @@ func (b Branching) Prefixes() []string {
 type Limits struct {
 	PRHourlyLimit     int `json:"prHourlyLimit"`
 	PRConcurrentLimit int `json:"prConcurrentLimit"`
+	// PRConcurrentLimitIgnoreLabels (pinup's own) names labels whose open
+	// requests do not count against prConcurrentLimit: requests that wait for
+	// a person by design and would otherwise hold a slot for weeks.
+	PRConcurrentLimitIgnoreLabels []string `json:"prConcurrentLimitIgnoreLabels,omitempty"`
 }
 
 // Sort puts a plan in canonical order. Determinism is asserted rather than
