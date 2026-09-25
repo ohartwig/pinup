@@ -1,3 +1,9 @@
+## [0.45.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.45.1...v0.45.2) (2026-09-25)
+
+### :bug: Fixes
+
+* **lint:** say truthfully that CI does not check licensing yet; fix the invalid SPDX literal ([721579a](https://git.ole-hartwig.eu/pinup/pinup/commit/721579a99351825e5fa2cc5cb509c957d5c2d20d))
+
 ## [0.45.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.45.0...v0.45.1) (2026-09-25)
 
 ### :bug: Fixes
