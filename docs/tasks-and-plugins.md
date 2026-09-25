@@ -89,7 +89,12 @@ task is not a way to write arbitrary files into a repository. (A
 repository that commits `node_modules/` fails its npm refresh this way,
 correctly: the refresh writes `node_modules/.package-lock.json`.)
 
-`PINUP_EXECUTION_TIMEOUT` (minutes) bounds each task.
+`PINUP_EXECUTION_TIMEOUT` (minutes) bounds each task. `PINUP_TASK_CONCURRENCY`
+(default 2) bounds how many run at once across every repository of the
+run, whatever `PINUP_REPOSITORY_CONCURRENCY` lets work side by side: a
+repository is mostly network wait, a lock refresh resolves a whole
+dependency graph in memory, and eight of them on one worker thrashed it
+(2026-09-23). A task waiting for its slot is not yet on its timeout.
 
 ## Where the tools come from
 

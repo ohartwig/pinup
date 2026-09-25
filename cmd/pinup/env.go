@@ -266,8 +266,8 @@ func httpClient(p platformEnv) *httpx.Client {
 // iso is taskIsolation's, made once per process; repo names the repository
 // the tasks work on, and so the caches they get. A nil iso runs tasks
 // unisolated.
-func taskRunner(getenv func(string) string, iso *isolation, repo string) *plugin.Runner {
-	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC")}
+func taskRunner(getenv func(string) string, iso *isolation, repo string, slots chan struct{}) *plugin.Runner {
+	r := &plugin.Runner{Now: time.Now, Netrc: getenv("PINUP_TASK_NETRC"), Slots: slots}
 	if iso != nil {
 		r.Isolate = iso.forRepo(repo)
 	}
@@ -386,6 +386,22 @@ func repositoryConcurrency(getenv func(string) string) int {
 		}
 	}
 	return 4
+}
+
+// taskSlots bounds how many tasks - lock refreshes, postUpgradeTasks -
+// run at once in this process, whatever PINUP_REPOSITORY_CONCURRENCY lets
+// run side by side: PINUP_TASK_CONCURRENCY, default 2. Repositories are
+// mostly network wait and cost little; a task resolves a dependency graph
+// and costs a gigabyte. Two keep a job inside its memory limit (3 GB on
+// the runner fleet's az1a pool) with room for the scan around them.
+func taskSlots(getenv func(string) string) chan struct{} {
+	n := 2
+	if v := getenv("PINUP_TASK_CONCURRENCY"); v != "" {
+		if m, err := strconv.Atoi(v); err == nil && m > 0 {
+			n = m
+		}
+	}
+	return make(chan struct{}, n)
 }
 
 // defaultDashboardTitle names the dashboard issue when the configuration

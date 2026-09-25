@@ -167,6 +167,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	}
 	if !*dryRun {
 		one.isolate = taskIsolation(os.Getenv, errw, *cachePath, *indexPath)
+		one.taskSlots = taskSlots(os.Getenv)
 	}
 	dsOpts, err := datasourceOptions(env, os.Getenv)
 	if err != nil {
@@ -384,6 +385,9 @@ type runOptions struct {
 	pkg string
 	// isolate is how every task of the process runs; see taskIsolation.
 	isolate *isolation
+	// taskSlots is shared by every repository of the process: how many
+	// tasks may run at once; see taskSlots.
+	taskSlots chan struct{}
 	// base, when set, replaces the project's default branch as the
 	// branch the run reads and branches from.
 	base string
@@ -530,7 +534,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			ConcurrentIgnoreLabels: plan.Limits.PRConcurrentLimitIgnoreLabels,
 			Now:                    o.now,
 			Prune:                  o.pkg == "" && o.released == "",
-			Tasks:                  plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate, cmp.Or(project, repoDir))},
+			Tasks:                  plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate, cmp.Or(project, repoDir), o.taskSlots)},
 			Sleep:                  time.Sleep,
 			Rebase:                 rebaseSet(*opts.checksRead),
 		})
