@@ -162,14 +162,23 @@ const maxScanned = 400 << 10
 
 // unmanagedPin scans the repository for pinned versions no plan holds and
 // no annotation claims. A version the plans record for the same file - on
-// the same line, or anywhere in it with the same value - is held. No fix:
+// the same line, anywhere in it with the same value, or as `<name>:` of a
+// dependency the plan found there - is held. The name counts because the
+// plan and the checkout are rarely the same commit: pinup raises a pin, the
+// merge lands after the plan was written, and the new value in the file is
+// one the plan never saw (ci-mirrors' semgrep, 2026-09-25). No fix:
 // the answer is an annotation, a manager, or the ignore marker, and which
 // one is the repository's call.
 func unmanagedPin(in *Input) []Finding {
-	lines, values := map[string]bool{}, map[string]bool{}
+	lines, values, names := map[string]bool{}, map[string]bool{}, map[string][]string{}
 	for _, p := range in.Plans {
 		for _, d := range p.Deps {
 			lines[fmt.Sprintf("%s:%d", d.File, d.Locus.Line)] = true
+			for _, n := range []string{d.DepName, d.PackageName} {
+				if strings.Contains(n, "/") {
+					names[d.File] = append(names[d.File], n+":")
+				}
+			}
 			for _, v := range []string{d.CurrentValue, d.LockedVersion} {
 				if v != "" {
 					values[d.File+"|"+strings.TrimPrefix(v, "v")] = true
@@ -211,7 +220,7 @@ func unmanagedPin(in *Input) []Finding {
 			if strings.Contains(line, ignoreLine) || strings.Contains(above, ignoreLine) || annotationAbove.MatchString(above) {
 				continue
 			}
-			if lines[fmt.Sprintf("%s:%d", path, n)] || prose(line) {
+			if lines[fmt.Sprintf("%s:%d", path, n)] || prose(line) || slices.ContainsFunc(names[path], func(name string) bool { return strings.Contains(line, name) }) {
 				continue
 			}
 			for _, rx := range pinPatterns {
