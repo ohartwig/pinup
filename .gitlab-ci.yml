@@ -18,7 +18,7 @@ include:
   # resolves `@1` to the newest 1.x, the exact pins live inside the composed
   # template where they are reviewed once. No `# renovate:` line above them -
   # there is no patch version here for pinup to raise.
-  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@1
+  - component: ${CI_SERVER_HOST}/devops/ci-cd-components/composed-default-pipelines/go@2
     inputs:
       working-directory: '.'
 
