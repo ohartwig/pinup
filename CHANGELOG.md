@@ -1,3 +1,9 @@
+## [0.45.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.45.0...v0.45.1) (2026-09-25)
+
+### :bug: Fixes
+
+* **advise:** a pin the plan found by name is held after it moved ([9bd535b](https://git.ole-hartwig.eu/pinup/pinup/commit/9bd535ba47a76bf06616f4c7bd404be61f4f3591))
+
 ## [0.45.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.44.1...v0.45.0) (2026-09-25)
 
 ### :sparkles: Features
