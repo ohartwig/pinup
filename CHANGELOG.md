@@ -1,3 +1,14 @@
+## [0.42.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.41.0...v0.42.0) (2026-09-25)
+
+### :sparkles: Features
+
+* **dashboard:** a held branch names the rule that holds it and when it lifts ([9ba97e7](https://git.ole-hartwig.eu/pinup/pinup/commit/9ba97e79b4afbaae5ef4b9fa844c2fdde2b9fc95))
+* **runner:** security fixes skip the limits; labelled requests hold no slot ([b676244](https://git.ole-hartwig.eu/pinup/pinup/commit/b676244d9d6ee42d672552504a561629ba409883))
+
+### :repeat: Continuous Integrations
+
+* composed go@2 ([342c2bd](https://git.ole-hartwig.eu/pinup/pinup/commit/342c2bd912bafdc579f1cff2f35c21335683c38b))
+
 ## [0.41.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.40.2...v0.41.0) (2026-09-25)
 
 ### :sparkles: Features
