@@ -6,6 +6,7 @@ package advise
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -52,8 +53,8 @@ func TestAdviceOverTheRunnerConfiguration(t *testing.T) {
 		t.Fatalf("only %d golden plans; the fixture root is not what the test expects", len(in.Plans))
 	}
 	findings, skipped := Run(in, Catalogue())
-	if len(skipped) != 0 {
-		t.Errorf("with plans nothing is skipped: %v", skipped)
+	if !slices.Equal(skipped, []string{"coverage/unmanaged-pin"}) {
+		t.Errorf("with plans and no repository only the file scan is skipped: %v", skipped)
 	}
 
 	byCategory := map[Category]int{}

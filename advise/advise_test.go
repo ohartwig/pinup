@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
@@ -66,6 +67,7 @@ var cases = []struct {
 	pointer   string
 	fix       *Fix
 	absent    []string // IDs that must not fire on this configuration
+	repo      fstest.MapFS
 }{
 	{name: "inert preset the file names", cfg: `{"extends": ["config:recommended", "abandonments:recommended"]}`,
 		want: "compat/preset-inert", pointer: "/extends/1", fix: &Fix{Pointer: "/extends/1", Op: OpRemove}},
@@ -186,12 +188,30 @@ var cases = []struct {
 	{name: "a component include pinned to a patch", cfg: `{}`,
 		plans: []*model.Plan{plan([]model.Dependency{componentDep, dockerDep}, nil)},
 		want:  "plan/component-pinned-exact", pointer: "/"},
+	{name: "an annotation no dependency claims", cfg: `{}`,
+		plans: []*model.Plan{plan([]model.Dependency{dockerDep}, nil, model.Warning{Stage: "extract", File: ".gitlab-ci.yml",
+			Msg: "line 7: annotation `renovate: datasource=npm depName=stylelint` names no dependency: no manager found a pinned value on the line beneath it"})},
+		want: "coverage/orphan-annotation", pointer: "/"},
+	{name: "a manifest with ranges and no lock", cfg: `{}`,
+		plans: []*model.Plan{plan([]model.Dependency{
+			{Manager: "npm", File: "web/package.json", CustomManager: model.NoCustomManager, DepName: "vite", Datasource: "npm", CurrentValue: "^7.1.0", LockFiles: []string{"package-lock.json"}},
+			{Manager: "npm", File: "package.json", CustomManager: model.NoCustomManager, DepName: "vite", Datasource: "npm", CurrentValue: "^7.1.0", LockedVersion: "7.1.4", LockFiles: []string{"package-lock.json"}},
+			{Manager: "npm", File: "tools/package.json", CustomManager: model.NoCustomManager, DepName: "vite", Datasource: "npm", CurrentValue: "7.1.4", LockFiles: []string{"package-lock.json"}},
+		}, nil)},
+		want: "coverage/manifest-without-lock", pointer: "/"},
+	{name: "a compose image no manager reads", cfg: `{}`,
+		plans: []*model.Plan{plan([]model.Dependency{dockerDep}, nil)},
+		repo:  fstest.MapFS{"compose.yaml": {Data: []byte("services:\n  ca:\n    image: smallstep/step-ca:0.28.1\n")}},
+		want:  "coverage/unmanaged-pin", pointer: "compose.yaml"},
 }
 
 func TestEachCheckFiresWhereItShould(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			in := load(t, c.cfg, c.plans...)
+			if c.repo != nil {
+				in.Repo = c.repo
+			}
 			findings, _ := Run(in, Catalogue())
 			var hit []Finding
 			for _, f := range findings {
@@ -266,6 +286,7 @@ func TestEveryCheckCanFire(t *testing.T) {
 func TestEveryCheckCanStaySilent(t *testing.T) {
 	in := load(t, `{"extends": ["config:recommended"], "osvVulnerabilityAlerts": true, "minimumReleaseAge": "3 days"}`,
 		plan([]model.Dependency{dockerDep}, nil))
+	in.Repo = fstest.MapFS{"Dockerfile": {Data: []byte("FROM alpine:3.20\n")}}
 	findings, skipped := Run(in, Catalogue())
 	if len(findings) != 0 {
 		t.Errorf("a clean configuration has findings:\n%s", describe(findings))
@@ -274,8 +295,8 @@ func TestEveryCheckCanStaySilent(t *testing.T) {
 		t.Errorf("with a plan nothing is skipped, got %v", skipped)
 	}
 	_, skipped = Run(load(t, `{}`), Catalogue())
-	if len(skipped) != len(planChecks) {
-		t.Errorf("without a plan every plan check is skipped: %v", skipped)
+	if len(skipped) != len(planChecks)+len(coverageChecks) {
+		t.Errorf("without a plan every plan and coverage check is skipped: %v", skipped)
 	}
 }
 

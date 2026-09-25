@@ -6,6 +6,7 @@ package advise
 import (
 	"cmp"
 	"fmt"
+	"io/fs"
 	"slices"
 	"strconv"
 	"strings"
@@ -25,6 +26,7 @@ const (
 	Security    Category = "security"
 	Hygiene     Category = "hygiene"
 	Compat      Category = "compat"
+	Coverage    Category = "coverage"
 )
 
 // Severity is how much a finding matters. An error is something the run
@@ -67,6 +69,8 @@ type Fix struct {
 const (
 	FrameFile     = "file"
 	FrameResolved = "resolved"
+	// FrameRepo is a path in the repository --repo names, not a pointer.
+	FrameRepo = "repo"
 )
 
 // Finding is one thing to change, and why.
@@ -93,6 +97,9 @@ type Check struct {
 	// Plan marks a check that reads plans; without any it is skipped, not
 	// failed, and the report says so.
 	Plan bool
+	// Repo marks a check that reads the repository's files; without --repo
+	// it is skipped the same way.
+	Repo bool
 }
 
 // Input is everything a check may read. It is built once by Load; the
@@ -124,6 +131,9 @@ type Input struct {
 	// Datasources is the set of datasource names a configuration may use;
 	// nil disables the check that asks.
 	Datasources map[string]bool
+	// Repo is the checkout the plans were made from; nil skips the checks
+	// that read files.
+	Repo fs.FS
 }
 
 // Load resolves a configuration the way a run does and gathers what the
@@ -169,12 +179,12 @@ func Load(layer config.Layer, src preset.Source, vs versioning.Registry) (*Input
 
 // Run executes the checks and returns their findings in report order -
 // severity, category, ID, pointer - and the IDs of the checks skipped for
-// want of a plan.
+// want of a plan or a repository.
 func Run(in *Input, checks []Check) ([]Finding, []string) {
 	var out []Finding
 	var skipped []string
 	for _, c := range checks {
-		if c.Plan && len(in.Plans) == 0 {
+		if c.Plan && len(in.Plans) == 0 || c.Repo && in.Repo == nil {
 			skipped = append(skipped, c.ID)
 			continue
 		}
@@ -228,5 +238,6 @@ func Catalogue() []Check {
 	all = append(all, perfChecks...)
 	all = append(all, secChecks...)
 	all = append(all, planChecks...)
+	all = append(all, coverageChecks...)
 	return all
 }
