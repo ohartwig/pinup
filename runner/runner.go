@@ -248,6 +248,14 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			}
 			created++
 			out = Outcome{Branch: b.Name, Action: "created", MRIID: mr.IID, SHA: sha}
+			if req.Automerge && !mr.Automerge && mr.State != "merged" && mr.AutomergeRefused == "" {
+				var armed bool
+				mr, armed = armNew(ctx, o, mr, req)
+				if !armed && mr.AutomergeRefused == "" {
+					plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
+						"%s: !%d opened, automerge not armed yet - GitLab had no pipeline to wait for within %s; the next run arms it", b.Name, mr.IID, armWindow)})
+				}
+			}
 		}
 		if mr.AutomergeRefused != "" {
 			// The request is open; only the merge is somebody else's. Said
@@ -416,6 +424,40 @@ func editRows(description string) string {
 // requests failed, every branch there): six attempts, doubling from two
 // seconds, a minute in all, then the error stands and the next run opens
 // it.
+// armWaits bounds armNew: armWaits attempts armWait apart, armWindow in all.
+const (
+	armWaits  = 12
+	armWait   = 5 * time.Second
+	armWindow = armWaits * armWait
+)
+
+// armNew arms automerge on a request this run just opened. The call that
+// creates it asks too, but GitLab cannot arm a request whose pipeline does
+// not exist yet: it answers "not yet", and the request used to wait for the
+// next run - four hours since the waves went four-hourly. Measured on
+// devops/ci-mirrors!317, 2026-09-25: opened 06:46:24, pipeline created
+// 06:46:39 and green 06:57, never armed, merged by hand at 07:22 while the
+// log said nothing. It reports whether the request is armed or merged now.
+func armNew(ctx context.Context, o Options, mr publish.MergeRequest, req publish.Request) (publish.MergeRequest, bool) {
+	for range armWaits {
+		if o.Sleep != nil {
+			o.Sleep(armWait)
+		}
+		updated, _, err := o.Platform.UpdateMergeRequest(ctx, o.Project, mr.IID, req)
+		if err != nil {
+			return mr, false
+		}
+		mr = updated
+		if mr.Automerge || mr.State == "merged" {
+			return mr, true
+		}
+		if mr.AutomergeRefused != "" {
+			return mr, false
+		}
+	}
+	return mr, false
+}
+
 // headWaits bounds awaitHead: headWaits polls headWait apart. The lag it
 // covers was eight seconds on devops/koh-gitops!2889 (2026-09-24): pushed at
 // 09:37:16, "added 3 commits" recorded at 09:37:24.
