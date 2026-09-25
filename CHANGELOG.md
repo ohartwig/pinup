@@ -1,3 +1,15 @@
+## [0.41.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.40.2...v0.41.0) (2026-09-25)
+
+### :sparkles: Features
+
+* **npm:** pnpm's and yarn's release ages are a floor too ([26fafcc](https://git.ole-hartwig.eu/pinup/pinup/commit/26fafccbc19b8b73c2986e5d0f385dddfb804bc3))
+
+### :memo: Documentation
+
+* **tasks:** D.22.4 and D.22.5 - a run per push, the full scan every four hours ([990ad71](https://git.ole-hartwig.eu/pinup/pinup/commit/990ad71ea29c8536c94cc2200be24eb201726a4a))
+* **npm:** npm loops only when a dependency peers on the pinned package ([b22c9a2](https://git.ole-hartwig.eu/pinup/pinup/commit/b22c9a2fb9f18cd2d85e4b4970677a23490186e4))
+* pnpm's and yarn's release ages, what each tool does with a young pin ([98cd474](https://git.ole-hartwig.eu/pinup/pinup/commit/98cd474b9b8cd1e1c0fce6c4ceab41ed216c2195))
+
 ## [0.40.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.40.1...v0.40.2) (2026-09-24)
 
 ### :bug: Fixes
