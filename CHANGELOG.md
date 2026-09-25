@@ -1,3 +1,13 @@
+## [0.43.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.42.0...v0.43.0) (2026-09-25)
+
+### :sparkles: Features
+
+* pinup plandiff says what a configuration change does ([0f0933c](https://git.ole-hartwig.eu/pinup/pinup/commit/0f0933c2cd1136b7ad5dbce1826af656ae4fc452))
+
+### :bug: Fixes
+
+* **platform:** report only what the platform shows afterwards ([af263fe](https://git.ole-hartwig.eu/pinup/pinup/commit/af263fe5b759911858c563f8159dd5d1c4710e73))
+
 ## [0.42.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.41.0...v0.42.0) (2026-09-25)
 
 ### :sparkles: Features
