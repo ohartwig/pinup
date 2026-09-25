@@ -1,3 +1,10 @@
+## [0.46.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.45.2...v0.46.0) (2026-09-25)
+
+### :sparkles: Features
+
+* **advise:** --init proposes a first configuration from the checkout ([c855ab8](https://git.ole-hartwig.eu/pinup/pinup/commit/c855ab81c93f0fd8f1826f1c992f17193436a91a))
+* **run:** --coverage puts the pins nothing updates on the dashboard ([b8f5776](https://git.ole-hartwig.eu/pinup/pinup/commit/b8f5776d345ccfd09e7f6ba4ee3aa582a3d73681))
+
 ## [0.45.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.45.1...v0.45.2) (2026-09-25)
 
 ### :bug: Fixes
