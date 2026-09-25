@@ -281,6 +281,18 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		if err := json.Unmarshal(resp.body, &cur); err != nil {
 			return publish.MergeRequest{}, nil, fmt.Errorf("github: decode updated pull request %d for %q: %w", number, proj.Path, err)
 		}
+		// What the run reports as changed is what the pull request now shows,
+		// not what a 2xx promised (see platform/gitlab, UpdateMergeRequest).
+		var stale []string
+		if _, asked := fields["title"]; asked && strings.TrimSpace(cur.Title) != strings.TrimSpace(r.Title) {
+			stale = append(stale, "title")
+		}
+		if _, asked := fields["body"]; asked && strings.TrimSpace(cur.Body) != strings.TrimSpace(r.Description) {
+			stale = append(stale, "description")
+		}
+		if len(stale) > 0 {
+			return publish.MergeRequest{}, nil, fmt.Errorf("github: %q #%d accepted the update but still shows the old %s", proj.Path, number, strings.Join(stale, ", "))
+		}
 	}
 	if !sameLabelSet(cur.labelNames(), r.Labels) {
 		labels, err := p.setLabels(ctx, base, number, r.Labels)
@@ -288,6 +300,9 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 			return publish.MergeRequest{}, nil, err
 		}
 		cur.Labels = labels
+		if !sameLabelSet(cur.labelNames(), r.Labels) {
+			return publish.MergeRequest{}, nil, fmt.Errorf("github: %q #%d accepted the labels but records %v", proj.Path, number, cur.labelNames())
+		}
 		changed = append(changed, "labels")
 	}
 
@@ -307,6 +322,22 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		if _, _, err := p.setAutomerge(ctx, proj.Path, cur.NodeID, number, false); err != nil {
 			return publish.MergeRequest{}, nil, err
 		}
+		// The mutation answering without errors is not the same as the pull
+		// request being disarmed: read it back before saying so.
+		resp, err := p.do(ctx, http.MethodGet, prURL, nil)
+		if err != nil {
+			return publish.MergeRequest{}, nil, err
+		}
+		if err := classify(resp, proj.Path); err != nil {
+			return publish.MergeRequest{}, nil, err
+		}
+		var after pullJSON
+		if err := json.Unmarshal(resp.body, &after); err != nil {
+			return publish.MergeRequest{}, nil, fmt.Errorf("github: decode pull request %d for %q: %w", number, proj.Path, err)
+		}
+		if after.AutoMerge != nil {
+			return publish.MergeRequest{}, nil, fmt.Errorf("github: %q #%d accepted disabling auto-merge but is still armed", proj.Path, number)
+		}
 		cur.AutoMerge = nil
 		changed = append(changed, "automerge")
 	}
@@ -325,7 +356,17 @@ func (p *Platform) CloseMergeRequest(ctx context.Context, proj publish.Project, 
 	if err != nil {
 		return err
 	}
-	return classify(resp, proj.Path)
+	if err := classify(resp, proj.Path); err != nil {
+		return err
+	}
+	var after pullJSON
+	if err := json.Unmarshal(resp.body, &after); err != nil {
+		return fmt.Errorf("github: decode closed pull request %d of %q: %w", number, proj.Path, err)
+	}
+	if after.State != "closed" {
+		return fmt.Errorf("github: %q #%d accepted the close but is still %s", proj.Path, number, after.State)
+	}
+	return nil
 }
 
 // setLabels replaces the labels of issue/pull request number and returns

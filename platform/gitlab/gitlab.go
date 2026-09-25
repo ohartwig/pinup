@@ -270,6 +270,13 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		if err := json.Unmarshal(resp.body, &cur); err != nil {
 			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: decode updated merge request %d for %q: %w", iid, proj.Path, err)
 		}
+		// A 2xx is not taken at its word: what the run reports as changed is
+		// what the request now shows. The same rule the automerge call below
+		// learned on koh-gitops!2808 and !2878, where "[automerge]" stood in
+		// the log for hours for an automerge GitLab had not kept.
+		if stale := unapplied(cur, r); len(stale) > 0 {
+			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: %q !%d accepted the update but still shows the old %s", proj.Path, iid, strings.Join(stale, ", "))
+		}
 	}
 
 	// Automerge, handled the same way as CreateMergeRequest: a separate call
@@ -296,6 +303,13 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		if err := classify(resp, proj.Path); err != nil {
 			return publish.MergeRequest{}, nil, err
 		}
+		var after mrJSON
+		if err := json.Unmarshal(resp.body, &after); err != nil {
+			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: decode cancelled automerge of %q !%d: %w", proj.Path, iid, err)
+		}
+		if after.Automerge {
+			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: %q !%d accepted the automerge cancellation but is still armed", proj.Path, iid)
+		}
 		cur.Automerge = false
 		changed = append(changed, "automerge")
 	}
@@ -317,6 +331,22 @@ func headFor(r publish.Request, recorded string) string {
 	return recorded
 }
 
+// unapplied names the fields of r a merge request does not show after an
+// update, compared the way UpdateMergeRequest decided they differed.
+func unapplied(cur mrJSON, r publish.Request) []string {
+	var out []string
+	if strings.TrimSpace(cur.Title) != strings.TrimSpace(r.Title) {
+		out = append(out, "title")
+	}
+	if strings.TrimSpace(cur.Description) != strings.TrimSpace(r.Description) {
+		out = append(out, "description")
+	}
+	if !sameLabelSet(cur.Labels, r.Labels) {
+		out = append(out, "labels")
+	}
+	return out
+}
+
 // CloseMergeRequest closes the request under a new title.
 func (p *Platform) CloseMergeRequest(ctx context.Context, proj publish.Project, iid int, title string) error {
 	u := fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d", p.base, url.PathEscape(proj.Path), iid)
@@ -324,7 +354,20 @@ func (p *Platform) CloseMergeRequest(ctx context.Context, proj publish.Project, 
 	if err != nil {
 		return err
 	}
-	return classify(resp, proj.Path)
+	if err := classify(resp, proj.Path); err != nil {
+		return err
+	}
+	// Closed means GitLab says closed: the run reports an autoclose, and a
+	// request still open behind that line would be merged by nobody and
+	// counted by the next run as open.
+	var after mrJSON
+	if err := json.Unmarshal(resp.body, &after); err != nil {
+		return fmt.Errorf("gitlab: decode closed merge request %d of %q: %w", iid, proj.Path, err)
+	}
+	if after.State != "closed" {
+		return fmt.Errorf("gitlab: %q !%d accepted the close but is still %s", proj.Path, iid, after.State)
+	}
+	return nil
 }
 
 // CommitVerification reports how GitLab judged a commit's signature. A 404
@@ -447,6 +490,9 @@ func (p *Platform) UpsertIssue(ctx context.Context, proj publish.Project, title,
 		var updated issueJSON
 		if err := json.Unmarshal(resp.body, &updated); err != nil {
 			return publish.Issue{}, false, fmt.Errorf("gitlab: decode updated issue %d of %q: %w", is.IID, proj.Path, err)
+		}
+		if strings.TrimSpace(updated.Description) != strings.TrimSpace(description) || !sameSet(updated.Labels, labels) {
+			return publish.Issue{}, false, fmt.Errorf("gitlab: %q #%d accepted the update but still shows the old text or labels", proj.Path, is.IID)
 		}
 		return updated.issue(), true, nil
 	}

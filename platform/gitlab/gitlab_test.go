@@ -51,8 +51,12 @@ type fakeMR struct {
 	staleHead            bool // the request still records the head before a rebase push
 	// recordedSHA, when set, is the head GitLab reports for the request while
 	// sha is the branch's real head: a push it has not processed yet.
-	recordedSHA          string
-	mayNotMerge          bool // the token's user lacks merge permission: GitLab answers 401
+	recordedSHA string
+	mayNotMerge bool // the token's user lacks merge permission: GitLab answers 401
+	// acceptsButIgnores answers every PUT and the automerge cancellation with
+	// a 2xx and changes nothing - the shape a 2xx that is not taken at its
+	// word has to be tested against.
+	acceptsButIgnores    bool
 	createdAt, updatedAt time.Time
 	mergedAt             time.Time
 }
@@ -79,6 +83,8 @@ type fakeIssue struct {
 }
 
 type fakeProject struct {
+	// issuesIgnorePut answers an issue update with a 2xx and changes nothing.
+	issuesIgnorePut   bool
 	pathWithNamespace string
 	defaultBranch     string
 	mrs               []*fakeMR
@@ -384,7 +390,9 @@ func (s *gitlabServer) serveOneMergeRequest(w http.ResponseWriter, r *http.Reque
 	}
 	if sub == "cancel_merge_when_pipeline_succeeds" && r.Method == http.MethodPost {
 		s.mu.Lock()
-		mr.automerge = false
+		if !mr.acceptsButIgnores {
+			mr.automerge = false
+		}
 		out := mr.toJSON()
 		s.mu.Unlock()
 		writeJSON(w, http.StatusCreated, out)
@@ -401,6 +409,12 @@ func (s *gitlabServer) updateMergeRequest(w http.ResponseWriter, mr *fakeMR, bod
 	}
 
 	s.mu.Lock()
+	if mr.acceptsButIgnores {
+		out := mr.toJSON()
+		s.mu.Unlock()
+		writeJSON(w, http.StatusOK, out)
+		return
+	}
 	if raw, ok := payload["title"]; ok {
 		_ = json.Unmarshal(raw, &mr.title)
 	}
@@ -889,6 +903,10 @@ func (s *gitlabServer) serveIssues(w http.ResponseWriter, r *http.Request, proj 
 			if fmt.Sprint(is.iid) != rest {
 				continue
 			}
+			if proj.issuesIgnorePut {
+				_ = json.NewEncoder(w).Encode(encode(is))
+				return
+			}
 			if d, ok := in["description"]; ok {
 				is.desc = d
 			}
@@ -902,6 +920,59 @@ func (s *gitlabServer) serveIssues(w http.ResponseWriter, r *http.Request, proj 
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
+}
+
+// A 2xx is not taken at its word anywhere a run reports a change: a title,
+// a description or labels, a cancelled automerge, a closed request, an
+// updated issue. Each is checked against what GitLab shows afterwards, and
+// one it did not apply is an error with its name, not a line in the log.
+func TestAChangeGitLabAcceptsButDoesNotApplyIsNotReported(t *testing.T) {
+	ctx := context.Background()
+	pr := publish.Project{Path: "group/proj"}
+	setup := func(t *testing.T, automerge bool) (*Platform, *gitlabServer, *fakeProject, publish.MergeRequest) {
+		p, srv, _ := newFixture(t, "")
+		proj := srv.addProject("group/proj", "main")
+		mr, err := p.CreateMergeRequest(ctx, pr, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		srv.mu.Lock()
+		proj.mrs[0].automerge = automerge
+		proj.mrs[0].acceptsButIgnores = true
+		srv.mu.Unlock()
+		return p, srv, proj, mr
+	}
+	t.Run("title", func(t *testing.T) {
+		p, _, _, mr := setup(t, false)
+		_, changed, err := p.UpdateMergeRequest(ctx, pr, mr.IID, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x to 2"})
+		if err == nil || !strings.Contains(err.Error(), "still shows the old title") {
+			t.Errorf("err %v, changed %v: an unapplied title must be an error", err, changed)
+		}
+	})
+	t.Run("automerge cancellation", func(t *testing.T) {
+		p, _, _, mr := setup(t, true)
+		_, changed, err := p.UpdateMergeRequest(ctx, pr, mr.IID, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"})
+		if err == nil || !strings.Contains(err.Error(), "still armed") {
+			t.Errorf("err %v, changed %v: a kept automerge must be an error", err, changed)
+		}
+	})
+	t.Run("close", func(t *testing.T) {
+		p, _, _, mr := setup(t, false)
+		if err := p.CloseMergeRequest(ctx, pr, mr.IID, "autoclosed"); err == nil || !strings.Contains(err.Error(), "still opened") {
+			t.Errorf("err %v: a request still open must not read as closed", err)
+		}
+	})
+	t.Run("issue", func(t *testing.T) {
+		p, srv, _ := newFixture(t, "tok")
+		proj := srv.addProject("pinup/runner", "main")
+		proj.issues = append(proj.issues, &fakeIssue{iid: 1, title: "pinup Dashboard", desc: "old", state: "opened", authorID: 322})
+		proj.nextIID = 1
+		proj.issuesIgnorePut = true
+		_, changed, err := p.UpsertIssue(ctx, publish.Project{Path: "pinup/runner"}, "pinup Dashboard", "new", nil)
+		if err == nil || changed {
+			t.Errorf("err %v, changed %v: an issue update GitLab did not apply must be an error", err, changed)
+		}
+	})
 }
 
 // An issue is created once, updated only when its text or labels differ,

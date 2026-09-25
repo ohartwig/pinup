@@ -34,10 +34,13 @@ type fakePull struct {
 	labels    []string
 	autoMerge bool
 	// notYet: auto-merge cannot be armed yet (nothing to wait for).
-	notYet    bool
-	createdAt time.Time
-	updatedAt time.Time
-	mergedAt  time.Time
+	notYet bool
+	// acceptsButIgnores answers a PATCH and the disable mutation as if they
+	// had worked and changes nothing.
+	acceptsButIgnores bool
+	createdAt         time.Time
+	updatedAt         time.Time
+	mergedAt          time.Time
 }
 
 func (m *fakePull) toJSON(owner, repo string) map[string]any {
@@ -251,7 +254,7 @@ func (s *githubServer) serveRepo(w http.ResponseWriter, r *http.Request, rp *fak
 			if m.number != n {
 				continue
 			}
-			if r.Method == http.MethodPatch {
+			if r.Method == http.MethodPatch && !m.acceptsButIgnores {
 				var in map[string]any
 				_ = json.Unmarshal(body, &in)
 				if t, ok := in["title"].(string); ok {
@@ -388,7 +391,9 @@ func (s *githubServer) graphql(w http.ResponseWriter, body []byte) {
 			}
 			switch {
 			case strings.Contains(in.Query, "disablePullRequestAutoMerge"):
-				m.autoMerge = false
+				if !m.acceptsButIgnores {
+					m.autoMerge = false
+				}
 				writeJSON(w, 200, map[string]any{"data": map[string]any{"disablePullRequestAutoMerge": map[string]any{"clientMutationId": nil}}})
 			case !rp.allowAutoMerge:
 				writeJSON(w, 200, map[string]any{"data": nil, "errors": []map[string]any{{"type": "UNPROCESSABLE", "message": "Auto merge is not allowed for this repository"}}})
@@ -704,4 +709,35 @@ func TestClosePullRequestRetitlesAndCloses(t *testing.T) {
 	if _, ok, _ := p.FindMergeRequest(context.Background(), publish.Project{Path: "acme/site"}, "renovate/x"); ok {
 		t.Error("a closed request is not found as open")
 	}
+}
+
+// A 2xx is not taken at its word: a title, a cancelled auto-merge and a
+// close are checked against what GitHub shows afterwards (see the GitLab
+// test of the same name).
+func TestAChangeGitHubAcceptsButDoesNotApplyIsNotReported(t *testing.T) {
+	ctx := context.Background()
+	setup := func(t *testing.T, autoMerge bool) (*Platform, publish.Project, int) {
+		p, srv, _ := newFixture(t)
+		rp := srv.addRepo("octo/app", "main")
+		rp.pulls = append(rp.pulls, &fakePull{number: 7, state: "open", head: "pinup/x", base: "main", title: "bump x", autoMerge: autoMerge, acceptsButIgnores: true})
+		return p, publish.Project{Path: "octo/app", DefaultBranch: "main"}, 7
+	}
+	t.Run("title", func(t *testing.T) {
+		p, pr, n := setup(t, false)
+		if _, _, err := p.UpdateMergeRequest(ctx, pr, n, publish.Request{Title: "bump x to 2"}); err == nil || !strings.Contains(err.Error(), "still shows the old title") {
+			t.Errorf("err %v: an unapplied title must be an error", err)
+		}
+	})
+	t.Run("auto-merge disable", func(t *testing.T) {
+		p, pr, n := setup(t, true)
+		if _, _, err := p.UpdateMergeRequest(ctx, pr, n, publish.Request{Title: "bump x"}); err == nil || !strings.Contains(err.Error(), "still armed") {
+			t.Errorf("err %v: a kept auto-merge must be an error", err)
+		}
+	})
+	t.Run("close", func(t *testing.T) {
+		p, pr, n := setup(t, false)
+		if err := p.CloseMergeRequest(ctx, pr, n, "autoclosed"); err == nil || !strings.Contains(err.Error(), "still open") {
+			t.Errorf("err %v: a pull request still open must not read as closed", err)
+		}
+	})
 }
