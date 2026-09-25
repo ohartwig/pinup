@@ -1,3 +1,9 @@
+## [0.44.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.43.1...v0.44.0) (2026-09-25)
+
+### :sparkles: Features
+
+* **plugin:** bound how many tasks run at once across a run ([deef5b3](https://git.ole-hartwig.eu/pinup/pinup/commit/deef5b38285a5e9948f0e394491127b31022a89e))
+
 ## [0.43.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.43.0...v0.43.1) (2026-09-25)
 
 ### :bug: Fixes
