@@ -12,6 +12,8 @@ import (
 	"runtime"
 	"slices"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -443,5 +445,78 @@ func TestATaskRunsThroughIsolation(t *testing.T) {
 	_, err := r.Run(t.Context(), root, model.Task{Command: []string{"composer", "update", "x"}})
 	if err == nil || !strings.Contains(err.Error(), "the sandbox does not hold here") || started {
 		t.Errorf("refused isolation: err=%v started=%t", err, started)
+	}
+}
+
+// Six repositories' lock refreshes, two slots: never more than two run at
+// once, and all six run. A partition works on eight repositories side by
+// side; without the bound their composer and npm runs stacked up on one
+// worker until it thrashed (the az1a pool, 2026-09-23).
+func TestTasksShareTheirSlots(t *testing.T) {
+	slots := make(chan struct{}, 2)
+	var running, peak atomic.Int32
+	exec := func(context.Context, *exec.Cmd) error {
+		now := running.Add(1)
+		for {
+			p := peak.Load()
+			if now <= p || peak.CompareAndSwap(p, now) {
+				break
+			}
+		}
+		time.Sleep(20 * time.Millisecond)
+		running.Add(-1)
+		return nil
+	}
+	var wg sync.WaitGroup
+	var done atomic.Int32
+	for range 6 {
+		wg.Go(func() {
+			r := &Runner{Slots: slots, Getenv: func(string) string { return "" }, Exec: exec}
+			if _, err := r.Run(t.Context(), t.TempDir(), model.Task{Command: []string{"composer", "update"}}); err != nil {
+				t.Error(err)
+				return
+			}
+			done.Add(1)
+		})
+	}
+	wg.Wait()
+	if peak.Load() != 2 || done.Load() != 6 {
+		t.Errorf("%d tasks at once (want 2), %d of 6 done", peak.Load(), done.Load())
+	}
+}
+
+// A task queued behind another has not started hanging: its timeout runs
+// from the moment it gets its slot. Measured as a 100 ms task that waits
+// 150 ms for the slot and must still run. And a run cancelled while it
+// waits says so instead of starting.
+func TestWaitingForASlotIsNotTheTasksTime(t *testing.T) {
+	slots := make(chan struct{}, 1)
+	holding := make(chan struct{})
+	first := &Runner{Slots: slots, Getenv: func(string) string { return "" }, Exec: func(context.Context, *exec.Cmd) error {
+		close(holding)
+		time.Sleep(150 * time.Millisecond)
+		return nil
+	}}
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		if _, err := first.Run(t.Context(), t.TempDir(), model.Task{Command: []string{"composer", "update"}}); err != nil {
+			t.Error(err)
+		}
+	})
+	<-holding
+	second := &Runner{Slots: slots, Timeout: 100 * time.Millisecond, Getenv: func(string) string { return "" }, Exec: func(ctx context.Context, _ *exec.Cmd) error {
+		return ctx.Err()
+	}}
+	if _, err := second.Run(t.Context(), t.TempDir(), model.Task{Command: []string{"npm", "install"}}); err != nil {
+		t.Errorf("the wait was charged to the task: %v", err)
+	}
+	wg.Wait()
+
+	slots <- struct{}{}
+	ctx, cancel := context.WithCancel(t.Context())
+	cancel()
+	_, err := second.Run(ctx, t.TempDir(), model.Task{Command: []string{"npm", "install"}})
+	if err == nil || !strings.Contains(err.Error(), "waiting for a task slot") {
+		t.Errorf("cancelled while waiting: %v", err)
 	}
 }

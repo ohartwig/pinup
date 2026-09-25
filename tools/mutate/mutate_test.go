@@ -165,7 +165,14 @@ var mutators = []mutator{
 	{40, "delivery", "an exemption narrowed to a range exempts every version", "manager/npmman/releaseage.go",
 		"\t\tif e.Range == \"\" || (version != \"\" && satisfies(version, e.Range)) {", "\t\tif true {", []string{"./manager/npmman/", "./cmd/pinup/"}, false, ""},
 	// the one change no test can see
-	{41, "sentinel", "a comment changes", "model/model.go",
+	// the task bound (2026-09-25): without it eight repositories' lock
+	// refreshes stack up on one worker; charged to the timeout, a task
+	// queued behind others is killed as hung before it starts.
+	{41, "delivery", "tasks run without taking a slot", "plugin/plugin.go",
+		"\t\tcase r.Slots <- struct{}{}:\n\t\t\tdefer func() { <-r.Slots }()", "\t\tdefault:", []string{"./plugin/"}, false, ""},
+	{42, "delivery", "waiting for a slot counts against the task's timeout", "plugin/plugin.go",
+		"\tif r.Slots != nil {\n\t\tselect {", "\twait := r.Timeout\n\tif wait == 0 {\n\t\twait = 15 * time.Minute\n\t}\n\tctx, cancelWait := context.WithTimeout(ctx, wait)\n\tdefer cancelWait()\n\tif r.Slots != nil {\n\t\tselect {", []string{"./plugin/"}, false, ""},
+	{43, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

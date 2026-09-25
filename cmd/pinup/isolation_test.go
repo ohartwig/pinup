@@ -45,11 +45,11 @@ func TestTasksAreIsolatedUnlessSwitchedOffByName(t *testing.T) {
 	if iso == nil {
 		t.Fatal("tasks run unisolated by default")
 	}
-	r := taskRunner(env(nil), iso, "development/moselwal/site")
+	r := taskRunner(env(nil), iso, "development/moselwal/site", nil)
 	if r.Isolate == nil {
 		t.Fatal("the task runner dropped the isolation it was handed")
 	}
-	if taskRunner(env(nil), nil, "x").Isolate != nil {
+	if taskRunner(env(nil), nil, "x", nil).Isolate != nil {
 		t.Error("no isolation handed, yet the runner isolates")
 	}
 	for _, name := range []string{"COMPOSER_HOME", "npm_config_cache", "GOMODCACHE", "GOPATH"} {

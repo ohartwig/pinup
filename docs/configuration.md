@@ -282,7 +282,9 @@ platform token is never sent to a URL a repository configuration names
 | `PINUP_ALLOWED_COMMANDS` | JSON array of anchored patterns a `postUpgradeTasks` command must match; the runner's decision, never a repository's |
 | `PINUP_PLUGIN_ENV` | variables a task may see besides `PATH`, `LANG`, `TZ` |
 | `PINUP_TASK_NETRC` | a `.netrc` written into each task's scratch `HOME` for a toolchain that fetches private modules; never a variable |
-| `PINUP_EXECUTION_TIMEOUT` | minutes per task |
+| `PINUP_EXECUTION_TIMEOUT` | minutes per task, counted from the moment it gets its slot |
+| `PINUP_REPOSITORY_CONCURRENCY` | repositories a run works on at once (default 4) |
+| `PINUP_TASK_CONCURRENCY` | tasks - lock refreshes, `postUpgradeTasks` - that run at once across all of them (default 2) |
 | `PINUP_RUNNER_PROJECT` | the project repositories extend the runner configuration from |
 | `PINUP_DASHBOARD_TITLE` | the operator's override of `dependencyDashboardTitle`; empty means the configuration names the issue |
 | `PINUP_APK_VIEWS` | apk indexes served natively besides the public Wolfi repository: `{"custom.<name>": {"mirrors": [...], "arches": [...]}}` |

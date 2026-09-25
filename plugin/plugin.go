@@ -327,6 +327,14 @@ type Runner struct {
 	// The runner composes it from a read-only token of its own choosing;
 	// the platform token is never handed over this way by pinup itself.
 	Netrc string
+	// Slots, when set, bounds how many tasks run at once across every
+	// Runner that shares it. A partition works on several repositories in
+	// parallel, and each lock refresh is a composer or npm resolving a
+	// whole dependency graph in memory: eight of them side by side filled
+	// a 4 GB worker until it thrashed rather than failed (2026-09-23, the
+	// runner fleet's az1a pool). Waiting for a slot is not counted against
+	// Timeout - a task queued behind others has not started hanging.
+	Slots chan struct{}
 }
 
 // Baseline is the environment every task gets, credentials excluded.
@@ -461,6 +469,14 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	}
 	if err := r.carriesSecret(); err != nil {
 		return Result{}, err
+	}
+	if r.Slots != nil {
+		select {
+		case r.Slots <- struct{}{}:
+			defer func() { <-r.Slots }()
+		case <-ctx.Done():
+			return Result{}, fmt.Errorf("plugin: %s: waiting for a task slot: %w", strings.Join(t.Command, " "), ctx.Err())
+		}
 	}
 	timeout := r.Timeout
 	if timeout == 0 {
