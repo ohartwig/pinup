@@ -32,6 +32,7 @@ path. `schemaVersion` is 1; the fields below are the ones a reader acts on.
 | `updates` | every update planned, held or not |
 | `branches` | the branches the updates compose into |
 | `warnings` | what could not be done and why, by stage |
+| `unmanaged` | with `--coverage` only: pinned versions nothing updates, `{file, line, value}` |
 | `stats` | counts and timings |
 
 ## deps
@@ -124,6 +125,23 @@ caused the rebuild. Where it earns its place is a registry without immutable tag
 rules, where nothing else notices at all: the only trace is that the digest
 a file pinned is no longer the one the tag answers with, which is what the
 planner has just measured on its way to the update.
+
+## unmanaged
+
+Filled only when the run was asked for coverage (`--coverage` on `whatif`
+and `run`, or `PINUP_COVERAGE=1`): the checkout is scanned for image
+references with a path and upper-case `*_VERSION`/`*_VER`/`*_TAG`
+variables, both with a three-part version, that no dependency of the plan
+sits on and no annotation claims. Each is `{file, line, value}`. The rules
+are those of `advise`'s `coverage/unmanaged-pin` - comments, prose, the
+configuration, locks, tests, vendored trees, `ignorePaths` and lines marked
+`pinup: coverage-ignore` are left out - see `commands.md`. The dashboard
+lists them under "Not updated by anything". An empty or absent list from a
+run without the switch says nothing; from a run with it, that nothing was
+found.
+
+A narrowed run - the fast lane (`--released`) or `--package` - skips the
+scan even with the switch: it looks at one dependency, not the repository.
 
 ## Reading a plan
 

@@ -22,6 +22,7 @@ and needs no platform token.
 | `--now` | plan as if it were this moment (RFC 3339); schedules and release ages are judged against it |
 | `--cache` | the lookup cache (bbolt); empty means every lookup is cold |
 | `--cache-ttl` | how long a cached lookup counts as fresh (default 1h) |
+| `--coverage` | scan the checkout for pinned versions nothing updates and record them in the plan as `unmanaged` (default from `PINUP_COVERAGE`) |
 
 ## run
 
@@ -40,6 +41,7 @@ requests, write the dashboard issue. One of `--repo`, `--project`,
 | `--base` | plan and branch from this branch instead of the project's default branch |
 | `--dry-run` | plan only; push nothing, open nothing - `whatif` with the platform's view of the existing merge requests |
 | `--config`, `--report`, `--cache`, `--cache-ttl` | as for `whatif`; a `%s` in `--report` becomes the project path |
+| `--coverage` | scan each checkout for pinned versions nothing updates; the plan records them and the dashboard lists them under "Not updated by anything" (default from `PINUP_COVERAGE`; skipped by `--released` and `--package`) |
 
 Every run also reads the dashboard issue's ticked boxes before it plans,
 and writes the consumer index the fast lane and the advisory watch read.
@@ -113,6 +115,7 @@ and, where the file owns the value, a fix.
 | `--runner` | as for print-config: the runner's configuration a `local>` extends resolves to |
 | `--plan` | a plan `whatif` wrote (repeatable); enables the checks that read what runs found |
 | `--repo` | the checkout the plans were made from; enables the scan of its files for pins no plan holds |
+| `--init` | propose a first configuration for the checkout `--repo` names (default `.`) instead of advising on one; with `--out`, write it there (never over an existing file) |
 | `--skip` | a check ID to leave out of the report and the fixes (repeatable) |
 | `--json` | the report as JSON |
 | `--strict` | exit 1 when any finding is an `error`; warnings never fail |
@@ -143,6 +146,30 @@ document its pointer indexes: `file` for the document as written, `resolved`
 for what a run reads - the presets' `packageRules` stand before the file's
 in the resolved frame, so the two numberings differ - and `repo` for a
 path in the checkout `--repo` names. A fix always points into the file.
+
+### A first configuration
+
+`pinup advise --init` is for a repository that has none. It extracts the
+checkout offline - no token, no lookup - and proposes the smallest
+`.pinup.jsonc` that is right for what it found:
+
+- `config:recommended`, `minimumReleaseAge: "3 days"` and
+  `osvVulnerabilityAlerts: true` - the settings the security checks raise
+  on a configuration without them;
+- `enabledManagers` limited to the managers that found a dependency, so a
+  run does not walk the tree for ecosystems the repository does not have;
+- where pins exist that no manager reads (the coverage scan's rules), or
+  files carry `# renovate:` annotations nothing reads yet, one annotation
+  manager for exactly those files - and, per pin, the annotation to write
+  above it. For an image the annotation is complete; for a variable the
+  `depName` is left for the owner, since nothing on the line says where
+  the tool is released.
+
+The reasoning stands in comments above the object; the object is what the
+file resolves to. Before anything is printed, the proposal is resolved,
+planned offline and run through the catalogue: a warning or an error
+fails the command and names the check - a proposal the next `advise` would
+criticise is a bug in `--init`, not advice.
 
 ### The fixes
 
@@ -228,7 +255,11 @@ versions inside URLs were mostly noise. It leaves out comments, prose,
 locks, tests, fixtures, vendored trees, `ignorePaths`, the line under a
 `renovate:` annotation, and anything a plan holds for the same file. A pin
 kept on purpose is marked `pinup: coverage-ignore` on its line or the one
-above; `pinup: coverage-ignore-file` anywhere in a file excludes all of it. Every check has a test case that makes it fire, and a
+above; `pinup: coverage-ignore-file` anywhere in a file excludes all of it. The same scan runs inside `whatif` and `run` with
+`--coverage`, where its findings land in the plan and on the dashboard -
+the place a repository's owners read - instead of in an advice report.
+
+Every check has a test case that makes it fire, and a
 test asserts that every check in the catalogue has one.
 
 ## advisories

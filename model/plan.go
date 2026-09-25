@@ -195,7 +195,21 @@ type Plan struct {
 	Updates  []Update     `json:"updates"`
 	Branches []Branch     `json:"branches"`
 	Warnings []Warning    `json:"warnings,omitempty"`
-	Stats    Stats        `json:"stats"`
+	// Unmanaged are the versions the repository pins that nothing here
+	// updates: no manager read the line, no annotation claims it. Filled
+	// only when the run was asked for coverage (--coverage,
+	// PINUP_COVERAGE); empty otherwise, which says nothing either way.
+	Unmanaged []Unmanaged `json:"unmanaged,omitempty"`
+	Stats     Stats       `json:"stats"`
+}
+
+// Unmanaged is one pinned version in the repository no run updates: an
+// image reference or a three-part *_VERSION variable, at a line no
+// dependency of the plan sits on. See advise.UnmanagedPins for what counts.
+type Unmanaged struct {
+	File  string `json:"file"`
+	Line  int    `json:"line"`
+	Value string `json:"value"`
 }
 
 // Limits are the run-wide caps from the configuration. Zero means none.

@@ -101,7 +101,7 @@ func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.M
 	b.WriteString("This issue lists pinup updates and detected dependencies. A ticked box is read on the next run and cleared.\n\n")
 	s := sortBranches(plan, states, open)
 	for _, section := range []func(*strings.Builder){
-		s.problems, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable, s.detected,
+		s.problems, s.unmanaged, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable, s.detected,
 	} {
 		section(&b)
 	}
@@ -187,6 +187,31 @@ func (s *sections) problems(b *strings.Builder) {
 			break
 		}
 		fmt.Fprintf(b, " - ⚠️ %s%s\n", where(w), w.Msg)
+	}
+	b.WriteString("\n")
+}
+
+// unmanagedShown caps the list; the plan keeps every entry.
+const unmanagedShown = 30
+
+// unmanaged lists the pins the coverage scan found: versions in the
+// repository that no merge request will ever move, because nothing reads
+// them. Without a line here they rot silently - the dashboard is the one
+// page the repository's owners read, the plan is not.
+func (s *sections) unmanaged(b *strings.Builder) {
+	if len(s.plan.Unmanaged) == 0 {
+		return
+	}
+	b.WriteString("## Not updated by anything\n\n")
+	b.WriteString("These versions are pinned here and no manager or annotation reads them, so no merge request will move them. " +
+		"Put a `# renovate: datasource=… depName=…` annotation directly above the line, enable the manager for the file, " +
+		"or mark a pin that stays on purpose `pinup: coverage-ignore`.\n\n")
+	for i, u := range s.plan.Unmanaged {
+		if i == unmanagedShown {
+			fmt.Fprintf(b, " - … and %d more in the plan\n", len(s.plan.Unmanaged)-unmanagedShown)
+			break
+		}
+		fmt.Fprintf(b, " - `%s:%d` `%s`\n", u.File, u.Line, u.Value)
 	}
 	b.WriteString("\n")
 }

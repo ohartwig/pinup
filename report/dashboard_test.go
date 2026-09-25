@@ -4,6 +4,7 @@
 package report
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -122,5 +123,30 @@ func TestDashboardSectionsAndBoxes(t *testing.T) {
 	}
 	if ParseChecks(body).Any() {
 		t.Error("a fresh dashboard reads as nothing ticked")
+	}
+}
+
+// The coverage scan's findings are listed where the owners read, capped,
+// and a plan without any - or run without the scan - shows no section.
+func TestDashboardListsUnmanagedPins(t *testing.T) {
+	now := time.Date(2026, 9, 25, 8, 0, 0, 0, time.UTC)
+	plan := &model.Plan{PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"}}
+	if body := Dashboard(plan, nil, nil, now); strings.Contains(body, "Not updated by anything") {
+		t.Errorf("a plan without unmanaged pins has the section:\n%s", body)
+	}
+	for i := range unmanagedShown + 2 {
+		plan.Unmanaged = append(plan.Unmanaged, model.Unmanaged{File: "compose.yaml", Line: 10 + i, Value: "0.29.0"})
+	}
+	body := Dashboard(plan, nil, nil, now)
+	for _, want := range []string{"## Not updated by anything", "- `compose.yaml:10` `0.29.0`", "pinup: coverage-ignore", "… and 2 more in the plan"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard lacks %q\n%s", want, body)
+		}
+	}
+	if strings.Contains(body, fmt.Sprintf("compose.yaml:%d`", 10+unmanagedShown)) {
+		t.Errorf("the list is not capped at %d", unmanagedShown)
+	}
+	if ParseChecks(body).Any() {
+		t.Error("the section added a box that reads as ticked")
 	}
 }

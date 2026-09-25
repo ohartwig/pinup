@@ -1496,3 +1496,39 @@ func TestDashboardTitlePrecedence(t *testing.T) {
 		t.Errorf("configured title %q, the boxes were read under %q", plan.Dashboard.Title, asked)
 	}
 }
+
+// --coverage records what nothing updates, and only that: the Dockerfile's
+// base image is the dockerfile manager's, the compose image nobody's.
+// Without the switch the plan says nothing either way.
+func TestWhatifCoverageRecordsUnmanagedPins(t *testing.T) {
+	at := time.Date(2026, 9, 25, 12, 0, 0, 0, time.UTC)
+	root := t.TempDir()
+	for name, body := range map[string]string{
+		"Dockerfile":   "FROM docker.io/library/alpine:3.20.3\n",
+		"compose.yaml": "services:\n  ca:\n    image: smallstep/step-ca:0.29.0\n",
+	} {
+		if err := os.WriteFile(filepath.Join(root, name), []byte(body), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	o := treeOptions(t, root, "g/coverage", at)
+	plan, err := whatif(context.Background(), o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Unmanaged) != 0 {
+		t.Errorf("without --coverage the plan records %v", plan.Unmanaged)
+	}
+	o.Coverage = true
+	plan, err = whatif(context.Background(), o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []model.Unmanaged{{File: "compose.yaml", Line: 3, Value: "0.29.0"}}
+	if !slices.Equal(plan.Unmanaged, want) {
+		t.Errorf("unmanaged = %+v, want %+v", plan.Unmanaged, want)
+	}
+	if err := plan.Validate(); err != nil {
+		t.Errorf("the plan is not valid: %v", err)
+	}
+}

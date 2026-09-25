@@ -170,25 +170,46 @@ const maxScanned = 400 << 10
 // the answer is an annotation, a manager, or the ignore marker, and which
 // one is the repository's call.
 func unmanagedPin(in *Input) []Finding {
-	lines, values, names := map[string]bool{}, map[string]bool{}, map[string][]string{}
+	var deps []model.Dependency
 	for _, p := range in.Plans {
-		for _, d := range p.Deps {
-			lines[fmt.Sprintf("%s:%d", d.File, d.Locus.Line)] = true
-			for _, n := range []string{d.DepName, d.PackageName} {
-				if strings.Contains(n, "/") {
-					names[d.File] = append(names[d.File], n+":")
-				}
+		deps = append(deps, p.Deps...)
+	}
+	byFile := map[string][]string{}
+	for _, u := range UnmanagedPins(in.Repo, deps, in.Decoded.IgnorePaths) {
+		byFile[u.File] = append(byFile[u.File], fmt.Sprintf("%d (%s)", u.Line, u.Value))
+	}
+	var out []Finding
+	for _, path := range slices.Sorted(maps.Keys(byFile)) {
+		out = append(out, Finding{ID: "coverage/unmanaged-pin", Category: Coverage, Severity: Info, Pointer: path, Frame: FrameRepo, Origin: in.originAt("/"),
+			Msg: fmt.Sprintf("%s: no plan updates the version pinned at line %s - annotate it, enable the manager that reads the file, or mark it `%s`",
+				path, strings.Join(byFile[path], ", "), ignoreLine)})
+	}
+	return out
+}
+
+// UnmanagedPins scans repo for the pinned versions none of deps holds and
+// no annotation claims, in file order. It is the coverage/unmanaged-pin
+// check without the configuration around it, for a run that has the
+// checkout and its plan in hand and wants the answer on the dashboard
+// rather than in a report nobody opens.
+func UnmanagedPins(repo fs.FS, deps []model.Dependency, ignorePaths []string) []model.Unmanaged {
+	lines, values, names := map[string]bool{}, map[string]bool{}, map[string][]string{}
+	for _, d := range deps {
+		lines[fmt.Sprintf("%s:%d", d.File, d.Locus.Line)] = true
+		for _, n := range []string{d.DepName, d.PackageName} {
+			if strings.Contains(n, "/") {
+				names[d.File] = append(names[d.File], n+":")
 			}
-			for _, v := range []string{d.CurrentValue, d.LockedVersion} {
-				if v != "" {
-					values[d.File+"|"+strings.TrimPrefix(v, "v")] = true
-				}
+		}
+		for _, v := range []string{d.CurrentValue, d.LockedVersion} {
+			if v != "" {
+				values[d.File+"|"+strings.TrimPrefix(v, "v")] = true
 			}
 		}
 	}
-	ignored := glob.NewIgnoreSet(in.Decoded.IgnorePaths)
-	byFile := map[string][]string{}
-	_ = fs.WalkDir(in.Repo, ".", func(path string, e fs.DirEntry, err error) error {
+	ignored := glob.NewIgnoreSet(ignorePaths)
+	var out []model.Unmanaged
+	_ = fs.WalkDir(repo, ".", func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
@@ -204,7 +225,7 @@ func unmanagedPin(in *Input) []Finding {
 		if info, err := e.Info(); err != nil || info.Size() > maxScanned {
 			return nil
 		}
-		body, err := fs.ReadFile(in.Repo, path)
+		body, err := fs.ReadFile(repo, path)
 		if err != nil || bytes.IndexByte(body, 0) >= 0 || bytes.Contains(body, []byte(ignoreFile)) {
 			return nil
 		}
@@ -228,17 +249,11 @@ func unmanagedPin(in *Input) []Finding {
 				if m == nil || values[path+"|"+strings.TrimPrefix(m[1], "v")] {
 					continue
 				}
-				byFile[path] = append(byFile[path], fmt.Sprintf("%d (%s)", n, m[1]))
+				out = append(out, model.Unmanaged{File: path, Line: n, Value: m[1]})
 				break
 			}
 		}
 		return nil
 	})
-	var out []Finding
-	for _, path := range slices.Sorted(maps.Keys(byFile)) {
-		out = append(out, Finding{ID: "coverage/unmanaged-pin", Category: Coverage, Severity: Info, Pointer: path, Frame: FrameRepo, Origin: in.originAt("/"),
-			Msg: fmt.Sprintf("%s: no plan updates the version pinned at line %s - annotate it, enable the manager that reads the file, or mark it `%s`",
-				path, strings.Join(byFile[path], ", "), ignoreLine)})
-	}
 	return out
 }
