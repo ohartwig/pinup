@@ -78,7 +78,8 @@ func TestDashboardSectionsAndBoxes(t *testing.T) {
 	u3, b3 := mk("renovate/npm", model.UpdateMinor, model.Block{Reason: model.BlockMinimumReleaseAge, Until: now.Add(48 * time.Hour)})
 	u4, b4 := mk("renovate/ci-components", model.UpdateMinor)
 	u5, b5 := mk("renovate/failed", model.UpdateMinor)
-	u6, b6 := mk("renovate/tasked", model.UpdateMinor, model.Block{Reason: model.BlockTaskRefused, Note: "command \"x\" is not on the allowedCommands list"})
+	u6, b6 := mk("renovate/tasked", model.UpdateMinor, model.Block{Reason: model.BlockTaskRefused, Note: "command \"x\" is not on the allowedCommands list",
+		Org: model.Origin{Source: "file:renovate.json", Rule: 3}, Until: now.Add(5 * time.Hour)})
 	u7, b7 := mk("renovate/lock-current", model.UpdateLockFileMaintenance, model.Block{Reason: model.BlockNothingToRefresh, Note: "the lock file is current"})
 	plan := &model.Plan{
 		PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"},
@@ -101,6 +102,8 @@ func TestDashboardSectionsAndBoxes(t *testing.T) {
 		"## Awaiting schedule", "- [ ] <!-- unschedule-branch=renovate/lock-file-maintenance -->", "(opens 2026-09-13 11:00 UTC)",
 		"## Awaiting release age", "- [ ] <!-- approvePr-branch=renovate/npm -->", "old enough 2026-09-15",
 		"## Held", "taskRefused: command \"x\"",
+		// The rule that holds it and when it lifts, as the plan carries them.
+		"held by packageRules[3] (file:renovate.json)", "lifts 2026-09-13 13:00 UTC",
 		"## Errored", "- [ ] <!-- retry-branch=renovate/failed -->", "push: rejected",
 		"## Open", "- [ ] <!-- rebase-branch=renovate/ci-components -->[chore(deps): update renovate/ci-components](!12)",
 		"## Detected dependencies", "<details><summary>composer (1)</summary>", "`symfony/console ^7.4` → [Updates: `^8.1`, `^8.2`, `^8.3`, `^8.4`, `^8.5`, `^8.6`, `^8.7`]",

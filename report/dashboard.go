@@ -242,9 +242,31 @@ func (s *sections) otherHeld(b *strings.Builder) {
 		if h.block.Note != "" {
 			note += ": " + h.block.Note
 		}
+		// The three things a held update carries in the plan, not one:
+		// the reason, the rule that holds it, and when it lifts. Without
+		// the rule a reader cannot tell a limit from a pin from a
+		// disabled update without opening the plan artefact.
+		note += " · held by " + heldBy(h.block.Org)
+		if !h.block.Until.IsZero() {
+			note += " · lifts " + h.block.Until.UTC().Format("2006-01-02 15:04 UTC")
+		}
 		fmt.Fprintf(b, " - %s — %s\n", h.branch.Title, note)
 	}
 	b.WriteString("\n")
+}
+
+// heldBy names where a block comes from: the rule and the file or preset it
+// sits in, or the configuration key when no rule is involved.
+func heldBy(o model.Origin) string {
+	switch {
+	case o.Rule != model.NoRule && o.Source != "":
+		return fmt.Sprintf("packageRules[%d] (%s)", o.Rule, o.Source)
+	case o.Rule != model.NoRule:
+		return fmt.Sprintf("packageRules[%d]", o.Rule)
+	case o.Source != "":
+		return o.Source
+	}
+	return "—"
 }
 
 func (s *sections) errored(b *strings.Builder) {
