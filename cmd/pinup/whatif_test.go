@@ -297,7 +297,7 @@ func skippedAfterExtraction(reason string) bool {
 	for _, prefix := range []string{
 		"lookup failed:", "no lookup was made", "up to date:", "the registry lists no releases",
 		"current value", "none of the", "versioning:", "cannot write",
-		"disabled by packageRules", "listed in ignoreDeps", "not the released package", "not the package ",
+		"disabled by packageRules", "held by allowedVersions", "listed in ignoreDeps", "not the released package", "not the package ",
 	} {
 		if strings.HasPrefix(reason, prefix) {
 			return true
