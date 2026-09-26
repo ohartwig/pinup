@@ -42,7 +42,13 @@ type github struct {
 	// 422 "Only the first 1000 results are available." - the unauthenticated
 	// listing limit. The page before it still links to the next one.
 	capPages int
-	requests []string
+	// refs and tagObjects serve the git database endpoints a digest walks:
+	// refs is "owner/repo" -> tag name -> the object the ref names (a
+	// commit for a lightweight tag, a tag object for an annotated one),
+	// tagObjects is "owner/repo" -> tag object SHA -> the object it points to.
+	refs       map[string]map[string]gitObject
+	tagObjects map[string]map[string]gitObject
+	requests   []string
 }
 
 func (g *github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +63,19 @@ func (g *github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	rest := strings.TrimPrefix(path, prefix)
+
+	if repoPath, tag, ok := strings.Cut(rest, "/git/ref/tags/"); ok {
+		g.serveObject(w, repoPath, g.refs[repoPath], tag, func(o gitObject) map[string]any {
+			return map[string]any{"ref": "refs/tags/" + tag, "object": map[string]any{"sha": o.SHA, "type": o.Type}}
+		})
+		return
+	}
+	if repoPath, sha, ok := strings.Cut(rest, "/git/tags/"); ok {
+		g.serveObject(w, repoPath, g.tagObjects[repoPath], sha, func(o gitObject) map[string]any {
+			return map[string]any{"sha": sha, "tag": "annotated", "object": map[string]any{"sha": o.SHA, "type": o.Type}}
+		})
+		return
+	}
 
 	var kind, repoPath string
 	switch {
@@ -137,6 +156,28 @@ func (g *github) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// serveObject answers one git database object by key, or the 404 GitHub
+// gives for a ref or object that does not exist (or cannot be read).
+func (g *github) serveObject(w http.ResponseWriter, repoPath string, objects map[string]gitObject, key string, body func(gitObject) map[string]any) {
+	if code, forced := g.status[repoPath]; forced {
+		for k, vs := range g.headers[repoPath] {
+			for _, v := range vs {
+				w.Header().Add(k, v)
+			}
+		}
+		w.WriteHeader(code)
+		return
+	}
+	o, ok := objects[key]
+	w.Header().Set("Content-Type", "application/json")
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"message":"Not Found","status":"404"}`))
+		return
+	}
+	_ = json.NewEncoder(w).Encode(body(o))
+}
+
 // setNextLink writes a Link header with an absolute rel="next" URL, the way
 // the real API does. A client that parsed only the query string, or missed
 // that the URL is already absolute, would fail the pagination tests.
@@ -157,6 +198,9 @@ func newFixture(t *testing.T) (*httpx.Client, *github, *harness.Recorder, *harne
 		tags:     map[string][]string{},
 		status:   map[string]int{},
 		headers:  map[string]http.Header{},
+
+		refs:       map[string]map[string]gitObject{},
+		tagObjects: map[string]map[string]gitObject{},
 	}
 	rec := &harness.Recorder{}
 	rt := harness.NewRefusingTransport(rec)

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package githubds implements the github-releases and github-tags
-// datasources against the GitHub REST API.
+// datasources against the GitHub REST API, and the commit a tag points to
+// for a reference pinned by SHA (digest.go).
 //
 // The REST API is a public specification (docs.github.com/rest), not
 // Renovate internals: nothing here is copied out of the Renovate tree, only
@@ -78,10 +79,7 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		return nil, fmt.Errorf("%s: %w", d.kind, err)
 	}
 
-	base := d.apiBase
-	if len(ref.RegistryURLs) > 0 && ref.RegistryURLs[0] != "" {
-		base = strings.TrimRight(ref.RegistryURLs[0], "/")
-	}
+	base := d.baseFor(ref)
 
 	var segment string
 	switch d.kind {
@@ -136,6 +134,15 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		next = nextLink(resp.Header)
 	}
 	return rs, nil
+}
+
+// baseFor is the API host a lookup asks: the dependency's own registry when
+// it names one (GitHub Enterprise), the datasource's default otherwise.
+func (d *Datasource) baseFor(ref lookup.Ref) string {
+	if len(ref.RegistryURLs) > 0 && ref.RegistryURLs[0] != "" {
+		return strings.TrimRight(ref.RegistryURLs[0], "/")
+	}
+	return d.apiBase
 }
 
 // parseReleases reads one page of "GET /repos/{owner}/{repo}/releases".
