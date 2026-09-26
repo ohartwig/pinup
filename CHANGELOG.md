@@ -1,3 +1,9 @@
+## [0.48.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.47.1...v0.48.0) (2026-09-26)
+
+### :sparkles: Features
+
+* **planner:** name what allowedVersions keeps out beside an update ([2d1ba58](https://git.ole-hartwig.eu/pinup/pinup/commit/2d1ba58cd49f874c3bedd321a327eb16733bfb95))
+
 ## [0.47.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.47.0...v0.47.1) (2026-09-26)
 
 ### :bug: Fixes
