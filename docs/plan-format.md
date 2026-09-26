@@ -49,7 +49,10 @@ constraint a rule set and `allowedVersionsBy` the rule; when the constraint
 keeps out every newer release, the skip reason says so - `held by
 allowedVersions "/^8\.2\./" (packageRules[12]): 3 newer releases excluded,
 the newest 8.5.2` - rather than `up to date`, and the dashboard shows that
-line where it leaves an up-to-date dependency bare.
+line where it leaves an up-to-date dependency bare. A dependency that gets
+the update its rule admits while the rule keeps out something newer carries
+the same sentence in `heldBack`, and the dashboard shows it after the
+update.
 
 ## updates
 
