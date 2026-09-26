@@ -1064,6 +1064,23 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 			d.TimestampOptional = b == "timestamp-optional"
 		}
 	}
+	// Where the dependency is looked up, as Renovate's override keys say.
+	// A manager's default source can run ahead of what the estate ships:
+	// composer's "php" resolves against containerbase's prebuilds, the
+	// upstream PHP release, while the images run the Wolfi package built
+	// here. On 2026-09-26 that raised php to ^8.5.11 in four sites whose
+	// image and config.platform.php were still 8.5.10, and every release
+	// was withdrawn. A rule points php at the package the images pin.
+	if ds, ok := res.Config["overrideDatasource"].(string); ok && ds != "" && len(res.Wrote["overrideDatasource"]) > 0 {
+		d.Datasource = ds
+		d.RegistryURLs = nil
+	}
+	if pn, ok := res.Config["overridePackageName"].(string); ok && pn != "" && len(res.Wrote["overridePackageName"]) > 0 {
+		d.PackageName = pn
+	}
+	if ev, ok := res.Config["extractVersion"].(string); ok && ev != "" && len(res.Wrote["extractVersion"]) > 0 {
+		d.ExtractVersion = ev
+	}
 	if urls, ok := res.Config["registryUrls"].([]any); ok && len(res.Wrote["registryUrls"]) > 0 {
 		d.RegistryURLs = d.RegistryURLs[:0:0]
 		for _, u := range urls {
