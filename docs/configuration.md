@@ -93,7 +93,7 @@ unsupported means nothing reads it and the run says so.
 | `enabled` | supported |
 | `enabledManagers` | supported |
 | `extends` | supported |
-| `extractVersion` | supported |
+| `extractVersion` | supported, from a custom manager and from a packageRule (the rule's value wins) |
 | `fetchChangeLogs` | supported |
 | `groupName` | supported |
 | `groupSlug` | supported |
@@ -126,6 +126,8 @@ unsupported means nothing reads it and the run says so.
 | `prConcurrentLimitIgnoreLabels` | pinup's own: labels whose open requests hold no slot of `prConcurrentLimit` - requests that wait for a person by design, such as a cluster minor behind a runbook |
 | `prHourlyLimit` | supported; a branch that fixes an advisory is not held by it |
 | `rangeStrategy` | supported |
+| `overrideDatasource` | supported in packageRules: the dependency is looked up at that datasource, without the manager's registry URLs |
+| `overridePackageName` | partial: a literal name; Renovate's templates are not expanded |
 | `registryUrls` | supported |
 | `schedule` | supported |
 | `semanticCommitScope` | supported |

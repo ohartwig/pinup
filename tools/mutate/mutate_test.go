@@ -208,7 +208,13 @@ var mutators = []mutator{
 		"\tif p.excluded > 0 && len(ups) > 0 && p.beyond(ups) {", "\tif false {", []string{"./planner/"}, false, ""},
 	{54, "plan", "the dashboard drops what allowedVersions keeps out beside an update", "report/dashboard.go",
 		"\t\t\t\t\tif d.HeldBack != \"\" {", "\t\t\t\t\tif false {", []string{"./report/"}, false, ""},
-	{55, "sentinel", "a comment changes", "model/model.go",
+	// A rule moves where a dependency is looked up (2026-09-26): composer's
+	// php follows the Wolfi package the images pin, not the upstream release.
+	{55, "config", "overrideDatasource in a rule is ignored", "cmd/pinup/whatif.go",
+		"\t\td.Datasource = ds\n", "", []string{"./cmd/pinup/"}, false, ""},
+	{56, "config", "extractVersion in a rule is ignored", "cmd/pinup/whatif.go",
+		"\t\td.ExtractVersion = ev\n", "", []string{"./cmd/pinup/"}, false, ""},
+	{57, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

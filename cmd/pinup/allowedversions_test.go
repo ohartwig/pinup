@@ -32,3 +32,30 @@ func TestAllowedVersionsCarriesItsRule(t *testing.T) {
 		t.Errorf("no rule, yet allowedVersions %q by %q", d.AllowedVersions, d.AllowedVersionsBy)
 	}
 }
+
+// A rule can move where a dependency is looked up. composer's php resolves
+// against the upstream PHP release by default; the estate points it at the
+// Wolfi package its images pin, one rule per PHP line, with the apk revision
+// cut off. extractVersion in a rule was reported as supported and never
+// applied until then.
+func TestPackageRuleOverridesTheLookup(t *testing.T) {
+	engine, err := rules.Compile([]any{
+		map[string]any{"matchManagers": []any{"composer"}, "matchDepNames": []any{"php"}, "matchCurrentValue": "/^[~^>=]*8\\.5\\./",
+			"overrideDatasource": "custom.wolfi", "overridePackageName": "php-frankenphp-8.5", "extractVersion": "^(?<version>\\d+\\.\\d+\\.\\d+)"},
+	}, wire.Versionings())
+	if err != nil {
+		t.Fatal(err)
+	}
+	php := model.Dependency{Manager: "composer", CustomManager: model.NoCustomManager, DepName: "php", PackageName: "containerbase/php-prebuild", Datasource: "github-tags",
+		CurrentValue: "^8.5.10", RegistryURLs: []string{"https://example.test"}}
+	got := applyDepRules(engine, map[string]any{}, php)
+	if got.Datasource != "custom.wolfi" || got.PackageName != "php-frankenphp-8.5" || got.ExtractVersion == "" || got.RegistryURLs != nil {
+		t.Errorf("php looked up at %s/%s extract %q urls %v; want custom.wolfi/php-frankenphp-8.5 with the revision cut, no urls",
+			got.Datasource, got.PackageName, got.ExtractVersion, got.RegistryURLs)
+	}
+	other := php
+	other.CurrentValue = "^8.4.20"
+	if got := applyDepRules(engine, map[string]any{}, other); got.Datasource != "github-tags" || got.PackageName != "containerbase/php-prebuild" {
+		t.Errorf("a php on another line moved to %s/%s", got.Datasource, got.PackageName)
+	}
+}
