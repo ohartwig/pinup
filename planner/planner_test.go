@@ -1035,6 +1035,29 @@ func TestAllowedVersionsExcludingEverythingSaysSo(t *testing.T) {
 	}
 }
 
+// A dependency that gets the update its rule admits still names what the
+// rule keeps out, when that is newer than every update planned - and only
+// then: a release excluded below the target costs nothing.
+func TestAllowedVersionsBesideAnUpdateNamesWhatItKeepsOut(t *testing.T) {
+	d := dep("php", "8.2.30", "semver")
+	d.AllowedVersions = "/^8\\.2\\./"
+	d.AllowedVersionsBy = "packageRules[12]"
+	res := plan(t, d, releases("8.2.31", "8.3.1", "8.4.2"))
+	want := `held by allowedVersions "/^8\\.2\\./" (packageRules[12]): 2 newer releases excluded, the newest 8.4.2`
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "8.2.31" || res.Deps[0].HeldBack != want {
+		t.Errorf("updates %+v, heldBack %q; want 8.2.31 and %q", res.Updates, res.Deps[0].HeldBack, want)
+	}
+	if res.Deps[0].SkipReason != "" {
+		t.Errorf("a dependency with an update has no skip reason: %q", res.Deps[0].SkipReason)
+	}
+
+	d.AllowedVersions = "!/^8\\.2\\.31$/"
+	res = plan(t, d, releases("8.2.31", "8.2.32"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "8.2.32" || res.Deps[0].HeldBack != "" {
+		t.Errorf("an exclusion below the target: updates %+v, heldBack %q", res.Updates, res.Deps[0].HeldBack)
+	}
+}
+
 // coerce is semver.coerce's reading: the first one to three numbers, padded.
 func TestCoerce(t *testing.T) {
 	for _, tc := range []struct {

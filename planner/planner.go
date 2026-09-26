@@ -208,6 +208,9 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 	if skip != "" {
 		return nil, skip, nil
 	}
+	if p.excluded > 0 && len(ups) > 0 && p.beyond(ups) {
+		d.HeldBack = p.heldBack()
+	}
 	if d.CurrentDigest != "" && versioning.GoPseudoCommit(d.CurrentValue) == "" {
 		return p.withDigests(ups)
 	}
@@ -657,6 +660,18 @@ func (p *planning) heldBack() string {
 		releases = "releases"
 	}
 	return fmt.Sprintf("held by allowedVersions %q (%s): %d newer %s excluded, the newest %s", p.d.AllowedVersions, by, p.excluded, releases, p.newestExcluded)
+}
+
+// beyond reports whether the newest release allowedVersions kept out is
+// newer than every update planned: only then does the rule cost anything
+// the updates do not already cover.
+func (p *planning) beyond(ups []model.Update) bool {
+	for _, u := range ups {
+		if u.NewVersion != "" && p.v.IsVersion(u.NewVersion) && p.v.Compare(u.NewVersion, p.newestExcluded) >= 0 {
+			return false
+		}
+	}
+	return true
 }
 
 // upToDate is the reason for planning nothing when nothing is newer.

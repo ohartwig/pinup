@@ -102,6 +102,11 @@ type Dependency struct {
 	// dependency whose every newer release it excludes can say who holds
 	// it rather than reading as up to date.
 	AllowedVersionsBy string `json:"allowedVersionsBy,omitempty"`
+	// HeldBack is set when the dependency gets an update and allowedVersions
+	// still keeps newer releases out: the update is what the rule admits,
+	// and this names what it costs. One whose every newer release the rule
+	// excludes says the same in SkipReason instead.
+	HeldBack string `json:"heldBack,omitempty"`
 	// RangeStrategy is how a range current value moves: replace (a newer
 	// version outside the range replaces it), bump (the range's floor is
 	// raised even for a version it admits), update-lockfile (a version the

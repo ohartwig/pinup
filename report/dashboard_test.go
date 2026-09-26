@@ -150,3 +150,27 @@ func TestDashboardListsUnmanagedPins(t *testing.T) {
 		t.Error("the section added a box that reads as ticked")
 	}
 }
+
+// What allowedVersions keeps out is shown on the dependency's line: next to
+// the update the rule admits, or on its own where the rule admits nothing
+// newer. "up to date" stays bare.
+func TestDashboardNamesWhatAllowedVersionsKeepsOut(t *testing.T) {
+	now := time.Date(2026, 9, 26, 8, 0, 0, 0, time.UTC)
+	held := `held by allowedVersions "/^8\.2\./" (packageRules[12]): 2 newer releases excluded, the newest 8.4.2`
+	beside := model.Dependency{Manager: "dockerfile", File: "Dockerfile", DepName: "php", CurrentValue: "8.2.30", Datasource: "docker", HeldBack: held}
+	alone := model.Dependency{Manager: "dockerfile", File: "Dockerfile", DepName: "node", CurrentValue: "22.1.0", Datasource: "docker", SkipReason: held}
+	current := model.Dependency{Manager: "dockerfile", File: "Dockerfile", DepName: "go", CurrentValue: "1.27.0", Datasource: "docker", SkipReason: "up to date: none of 3 releases is newer than 1.27.0"}
+	plan := &model.Plan{PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"},
+		Deps:    []model.Dependency{beside, alone, current},
+		Updates: []model.Update{{DepKey: beside.Key(), Dep: beside, NewValue: "8.2.31", NewVersion: "8.2.31", Type: model.UpdatePatch}}}
+	body := Dashboard(plan, nil, nil, now)
+	for _, want := range []string{
+		"`php 8.2.30` → [Updates: `8.2.31`] — " + held,
+		"`node 22.1.0` — " + held,
+		" - `go 1.27.0`\n",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard lacks %q\n%s", want, body)
+		}
+	}
+}

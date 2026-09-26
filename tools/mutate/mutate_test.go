@@ -203,7 +203,12 @@ var mutators = []mutator{
 		"		if p.excluded > 0 {\n			return nil, p.heldBack(), nil", "		if false {\n			return nil, p.heldBack(), nil", []string{"./planner/"}, false, ""},
 	{52, "plan", "allowedVersions loses the rule that set it", "cmd/pinup/whatif.go",
 		"		d.AllowedVersionsBy = lastWriter(res, \"allowedVersions\")\n", "", []string{"./cmd/pinup/"}, false, ""},
-	{53, "sentinel", "a comment changes", "model/model.go",
+	// ... and beside an update the rule admits, what it still keeps out.
+	{53, "plan", "an update beside an allowedVersions exclusion hides what is kept out", "planner/planner.go",
+		"\tif p.excluded > 0 && len(ups) > 0 && p.beyond(ups) {", "\tif false {", []string{"./planner/"}, false, ""},
+	{54, "plan", "the dashboard drops what allowedVersions keeps out beside an update", "report/dashboard.go",
+		"\t\t\t\t\tif d.HeldBack != \"\" {", "\t\t\t\t\tif false {", []string{"./report/"}, false, ""},
+	{55, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

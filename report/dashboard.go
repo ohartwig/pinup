@@ -392,6 +392,9 @@ func (s *sections) detected(b *strings.Builder) {
 				line := fmt.Sprintf(" - `%s %s`", d.DepName, value)
 				if ups := newest[d.Key()]; len(ups) > 0 {
 					line += " → [Updates: `" + strings.Join(ups, "`, `") + "`]"
+					if d.HeldBack != "" {
+						line += " — " + d.HeldBack
+					}
 				} else if d.SkipReason != "" && !strings.HasPrefix(d.SkipReason, "up to date") {
 					line += " — " + d.SkipReason
 				}
