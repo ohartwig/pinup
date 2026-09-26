@@ -1,3 +1,14 @@
+## [0.47.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.46.0...v0.47.0) (2026-09-26)
+
+### :sparkles: Features
+
+* **planner:** a dependency allowedVersions holds back says so ([7f1fba1](https://git.ole-hartwig.eu/pinup/pinup/commit/7f1fba1e218df15e98baa512e985030cae316d94))
+
+### :repeat: Continuous Integrations
+
+* **deps:** pin registry.ole-hartwig.eu/devops/images/pinup docker tag to 56290d5 ([1ce9625](https://git.ole-hartwig.eu/pinup/pinup/commit/1ce9625060edd330fdb4022f4236b874df29298b))
+* the REUSE gate is on ([d17cca0](https://git.ole-hartwig.eu/pinup/pinup/commit/d17cca008b25a69efa6a544993630dc965be7181))
+
 ## [0.46.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.45.2...v0.46.0) (2026-09-25)
 
 ### :sparkles: Features
