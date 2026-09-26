@@ -41,8 +41,8 @@ library. Two numeric components (`8.5`, `1.27`) name a line rather than a
 release and stay quiet, as does a checksum beside a pin.
 
 The `github-actions` manager reads a `uses:` reference in two forms.
-`owner/repo@v7.0.1` is a version, taken as written. `owner/repo@<40-hex SHA>
-# v7.0.1` is a commit pin: the SHA is the digest, the comment's version the
+`owner/repo@v7.0.1` is a version, taken as written.
+`owner/repo@<40-hex SHA> # v7.0.1` is a commit pin: the SHA is the digest, the comment's version the
 value, and an update writes the commit the new tag points to (an annotated
 tag is dereferenced to its commit) together with the new version, in one
 edit; a new version without its SHA is refused. Versioning is the
