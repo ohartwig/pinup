@@ -248,10 +248,15 @@ var imageName = regexp.MustCompile(`([\w.-]+(?:\.[a-z]{2,}(?::\d+)?)?/[\w./-]+):
 // suggestAnnotation is the annotation a pin needs: for an image, complete;
 // for a variable, with the depName left for the owner to fill, because
 // nothing on the line says where the tool is released.
+//
+// An image's annotation names its versioning. The proposal's own manager
+// reads it either way, but a configuration that extends a shared one may
+// require it: the estate runner's compose manager does, and an annotation
+// without it matched nothing there (devops/compose!166, 2026-09-26).
 func suggestAnnotation(root string, u model.Unmanaged) string {
 	line := lineOf(os.DirFS(root), u.File, u.Line)
 	if m := imageName.FindStringSubmatch(line); m != nil && strings.Contains(line, m[1]+":"+u.Value) {
-		return "# renovate: datasource=docker depName=" + m[1]
+		return "# renovate: datasource=docker depName=" + m[1] + " versioning=docker"
 	}
 	return "# renovate: datasource=github-releases depName=<owner>/<repo>"
 }

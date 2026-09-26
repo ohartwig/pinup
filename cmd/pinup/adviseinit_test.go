@@ -70,7 +70,7 @@ func TestAdviseInitProposesWhatTheTreeNeeds(t *testing.T) {
 		t.Errorf("annotated = %v", p.Annotated)
 	}
 	suggestion := p.Annotations["compose.yaml:3"]
-	if suggestion != "# renovate: datasource=docker depName=smallstep/step-ca" {
+	if suggestion != "# renovate: datasource=docker depName=smallstep/step-ca versioning=docker" {
 		t.Errorf("suggestion = %q", suggestion)
 	}
 
