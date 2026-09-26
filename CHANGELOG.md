@@ -1,3 +1,9 @@
+## [0.49.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.0...v0.49.1) (2026-09-26)
+
+### :bug: Fixes
+
+* **run:** a run narrowed to one package leaves the dashboard alone ([d0184a8](https://git.ole-hartwig.eu/pinup/pinup/commit/d0184a849e128c10d9d601d58d53c9a84bb97ea6))
+
 ## [0.49.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.48.1...v0.49.0) (2026-09-26)
 
 ### :sparkles: Features
