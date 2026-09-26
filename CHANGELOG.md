@@ -1,3 +1,22 @@
+## [0.49.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.48.1...v0.49.0) (2026-09-26)
+
+### :sparkles: Features
+
+* **manager:** a github-actions manager, with SHA pins and their version comment ([cee4b74](https://git.ole-hartwig.eu/pinup/pinup/commit/cee4b74d62617a08fbcf905a2cf28c610f5cce64))
+* **githubds:** the commit a tag points to, as the datasource's digest ([0156218](https://git.ole-hartwig.eu/pinup/pinup/commit/0156218353fc2aff6d60c4c65c6195bc6851309d))
+
+### :memo: Documentation
+
+* no wrapped line starts with a hash ([3dc02fc](https://git.ole-hartwig.eu/pinup/pinup/commit/3dc02fcd1859e974876868a1708bc90d688610a2))
+
+### :white_check_mark: Tests
+
+* the public fixtures name the github-actions coverage gap too ([bd86f22](https://git.ole-hartwig.eu/pinup/pinup/commit/bd86f2201aa431a3e295ba5b90e571f370fbd6d7))
+
+### :repeat: Continuous Integrations
+
+* **config:** pinup updates the actions of its own image workflow ([afef577](https://git.ole-hartwig.eu/pinup/pinup/commit/afef5779ac076f4cf2a26e5f476cf27227d51132))
+
 ## [0.48.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.48.0...v0.48.1) (2026-09-26)
 
 ### :bug: Fixes
