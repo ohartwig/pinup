@@ -28,15 +28,15 @@ include:
   - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/commit-signing-verify@1
     inputs:
       stage: quick
-  # This include produces NO job, and has not since it was added: the
-  # component's default rule requires **/*.php. Forcing it to run is no fix
-  # either - its reuse image is amd64-only and every docker runner is arm64
-  # (exec format error, measured 2026-09-25). It stays, inert and labelled,
-  # until lint-reuse ships a multi-arch image; then the rule and
-  # allow_failure: false go here and lint:reuse into expected-jobs.txt.
+  # The licence gate, live since lint-tools 1.36.45 (2026-09-26). Until then
+  # the include produced no job (its rule required **/*.php) and, forced to
+  # run, died on an amd64-only image (GDG-50). Every pipeline, because
+  # expected-jobs.txt lists it unqualified; allow_failure is taken back below.
   - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-reuse@1
     inputs:
       stage: quick
+      rules-config:
+        - when: on_success
   - component: ${CI_SERVER_HOST}/devops/ci-cd-components/lint-tools/lint-renovate-annotations@1
     inputs:
       stage: quick
@@ -268,6 +268,10 @@ lint:staticcheck:
 #
 # The count assertion is the point of the second script line. A suite that runs
 # zero tests and a suite that does not run at all are both green otherwise.
+# A licence gate that cannot fail the pipeline is a report.
+lint:reuse:
+  allow_failure: false
+
 test:go:
   script:
     - go test -race -coverprofile=coverage.out ./...
