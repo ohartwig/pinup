@@ -1044,6 +1044,7 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	}
 	if av, ok := res.Config["allowedVersions"].(string); ok && av != "" {
 		d.AllowedVersions = av
+		d.AllowedVersionsBy = lastWriter(res, "allowedVersions")
 	}
 	if rs, ok := res.Config["rangeStrategy"].(string); ok && rs != "" {
 		d.RangeStrategy = rs

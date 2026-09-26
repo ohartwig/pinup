@@ -71,7 +71,7 @@ unsupported means nothing reads it and the run says so.
 | `addLabels` | supported |
 | `additionalBranchPrefix` | supported |
 | `allowedCommands` | supported |
-| `allowedVersions` | supported: a range in the scheme's own syntax, else - for every scheme but npm, as in Renovate - an npm range (`>=8.4.0 <8.5.0`) against the version coerced to x.y.z; `/regex/` and `!/regex/` |
+| `allowedVersions` | supported: a range in the scheme's own syntax, else - for every scheme but npm, as in Renovate - an npm range (`>=8.4.0 <8.5.0`) against the version coerced to x.y.z; `/regex/` and `!/regex/`. A dependency whose every newer release it excludes is `held by allowedVersions`, naming the rule and the newest release kept out - not `up to date` |
 | `analyze` | supported (pinup's own) |
 | `automerge` | supported |
 | `automergeDirect` | pinup's own; default on, see [automerge](#automerge) |

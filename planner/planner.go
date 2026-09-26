@@ -212,6 +212,9 @@ func planOne(req Request, d *model.Dependency) ([]model.Update, string, *model.W
 		return p.withDigests(ups)
 	}
 	if len(ups) == 0 {
+		if p.excluded > 0 {
+			return nil, p.heldBack(), nil
+		}
 		return nil, p.upToDate(unchanged), nil
 	}
 	return ups, "", nil
@@ -236,6 +239,11 @@ type planning struct {
 	strategy         versioning.RangeStrategy
 	// seen counts the releases the scheme could read at all.
 	seen int
+	// excluded counts the newer releases allowedVersions alone kept out,
+	// newestExcluded the highest of them: what the dependency would
+	// otherwise have been offered.
+	excluded       int
+	newestExcluded string
 }
 
 // candidateSet is what the bucket pass produced: the newest-per-bucket
@@ -447,6 +455,12 @@ func (p *planning) candidates() (candidateSet, string, *model.Warning) {
 				}
 			}
 			if !ok {
+				if t := versioning.UpdateType(v, base, cand); t == model.UpdateMajor || t == model.UpdateMinor || t == model.UpdatePatch {
+					p.excluded++
+					if p.newestExcluded == "" || v.Compare(cand, p.newestExcluded) > 0 {
+						p.newestExcluded = cand
+					}
+				}
 				continue
 			}
 		}
@@ -626,6 +640,23 @@ func (p *planning) withDigests(ups []model.Update) ([]model.Update, string, *mod
 		return refresh, skip, warn
 	}
 	return refresh, skip, rwarn
+}
+
+// heldBack is the reason for planning nothing when newer releases exist
+// and allowedVersions kept every one of them out. It is not "up to date":
+// the dependency is behind by choice, and the plan names the choice, the
+// rule that made it and what it costs - a range written for one PHP line
+// reads as current long after the line's last release otherwise.
+func (p *planning) heldBack() string {
+	by := p.d.AllowedVersionsBy
+	if by == "" {
+		by = "the configuration"
+	}
+	releases := "release"
+	if p.excluded != 1 {
+		releases = "releases"
+	}
+	return fmt.Sprintf("held by allowedVersions %q (%s): %d newer %s excluded, the newest %s", p.d.AllowedVersions, by, p.excluded, releases, p.newestExcluded)
 }
 
 // upToDate is the reason for planning nothing when nothing is newer.

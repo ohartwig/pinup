@@ -1005,6 +1005,36 @@ func TestAllowedVersionsFallsBackToAnNpmRange(t *testing.T) {
 	}
 }
 
+// A dependency whose every newer release allowedVersions keeps out is not
+// up to date: the plan names the constraint, the rule that set it and the
+// newest release it costs, and the dashboard shows that line where it hides
+// "up to date". One that still gets an update, or has nothing newer at all,
+// reads as before.
+func TestAllowedVersionsExcludingEverythingSaysSo(t *testing.T) {
+	d := dep("php", "8.2.30", "semver")
+	d.AllowedVersions = "/^8\\.2\\./"
+	d.AllowedVersionsBy = "packageRules[12]"
+	res := plan(t, d, releases("8.2.30", "8.3.1", "8.5.2", "8.4.9"))
+	want := `held by allowedVersions "/^8\\.2\\./" (packageRules[12]): 3 newer releases excluded, the newest 8.5.2`
+	if len(res.Updates) != 0 || res.Deps[0].SkipReason != want {
+		t.Errorf("skip %q, updates %+v; want %q", res.Deps[0].SkipReason, res.Updates, want)
+	}
+
+	res = plan(t, d, releases("8.2.30", "8.2.31", "8.3.1"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "8.2.31" {
+		t.Errorf("an admitted release is still offered: %+v %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	res = plan(t, d, releases("8.2.29", "8.2.30"))
+	if !strings.HasPrefix(res.Deps[0].SkipReason, "up to date") {
+		t.Errorf("nothing newer is up to date, whatever the constraint: %q", res.Deps[0].SkipReason)
+	}
+	d.AllowedVersionsBy = ""
+	res = plan(t, d, releases("8.3.1"))
+	if want := `held by allowedVersions "/^8\\.2\\./" (the configuration): 1 newer release excluded, the newest 8.3.1`; res.Deps[0].SkipReason != want {
+		t.Errorf("without a rule: %q", res.Deps[0].SkipReason)
+	}
+}
+
 // coerce is semver.coerce's reading: the first one to three numbers, padded.
 func TestCoerce(t *testing.T) {
 	for _, tc := range []struct {

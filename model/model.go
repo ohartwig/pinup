@@ -98,6 +98,10 @@ type Dependency struct {
 	// AllowedVersions, when set by a rule, restricts the candidates: a range
 	// in the dependency's scheme, or /regex/, or !/regex/.
 	AllowedVersions string `json:"allowedVersions,omitempty"`
+	// AllowedVersionsBy names the rule that set AllowedVersions, so a
+	// dependency whose every newer release it excludes can say who holds
+	// it rather than reading as up to date.
+	AllowedVersionsBy string `json:"allowedVersionsBy,omitempty"`
 	// RangeStrategy is how a range current value moves: replace (a newer
 	// version outside the range replaces it), bump (the range's floor is
 	// raised even for a version it admits), update-lockfile (a version the

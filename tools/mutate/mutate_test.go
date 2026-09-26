@@ -197,7 +197,13 @@ var mutators = []mutator{
 		"\tif len(bad) > 0 {\n\t\treturn fmt.Errorf(\"the proposal fails", "\tif false {\n\t\treturn fmt.Errorf(\"the proposal fails", []string{"./cmd/pinup/"}, false, ""},
 	{50, "coverage", "--init leaves annotated files to no manager", "cmd/pinup/adviseinit.go",
 		"\tfor _, f := range p.Annotated {\n\t\tfiles[f] = true\n\t}", "\tfor range p.Annotated {\n\t}", []string{"./cmd/pinup/"}, false, ""},
-	{51, "sentinel", "a comment changes", "model/model.go",
+	// A dependency allowedVersions holds back (2026-09-26) is named, not
+	// read as up to date, and the rule that holds it travels with it.
+	{51, "plan", "a dependency allowedVersions holds back reads as up to date", "planner/planner.go",
+		"		if p.excluded > 0 {\n			return nil, p.heldBack(), nil", "		if false {\n			return nil, p.heldBack(), nil", []string{"./planner/"}, false, ""},
+	{52, "plan", "allowedVersions loses the rule that set it", "cmd/pinup/whatif.go",
+		"		d.AllowedVersionsBy = lastWriter(res, \"allowedVersions\")\n", "", []string{"./cmd/pinup/"}, false, ""},
+	{53, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

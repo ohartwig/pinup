@@ -44,7 +44,12 @@ One entry per dependency per file: `manager`, `file`, `depName`,
 `locus` (byte offsets of the value and the digest in the file), and for a
 custom manager its `customManager` index and the `captures` the pattern
 made. A dependency that is not looked up says why in `skipReason`; one a
-rule disabled says which rule in `disabled`.
+rule disabled says which rule in `disabled`. `allowedVersions` is the
+constraint a rule set and `allowedVersionsBy` the rule; when the constraint
+keeps out every newer release, the skip reason says so - `held by
+allowedVersions "/^8\.2\./" (packageRules[12]): 3 newer releases excluded,
+the newest 8.5.2` - rather than `up to date`, and the dashboard shows that
+line where it leaves an up-to-date dependency bare.
 
 ## updates
 
