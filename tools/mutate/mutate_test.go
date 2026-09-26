@@ -221,7 +221,11 @@ var mutators = []mutator{
 		"New: up.NewDigest + between + up.NewValue", "New: up.NewDigest + between + d.CurrentValue", []string{"./manager/githubactions/"}, false, ""},
 	{58, "lookup", "an annotated tag answers the tag object, not its commit", "datasource/githubds/digest.go",
 		"\t\t\tobj = next.Object\n", "\t\t\treturn obj.SHA, nil\n", []string{"./datasource/githubds/"}, false, ""},
-	{59, "sentinel", "a comment changes", "model/model.go",
+	// A narrowed run leaves the dashboard alone (2026-09-26): the fast lane
+	// had replaced the repository's list with skip lines.
+	{59, "delivery", "a fast-lane run overwrites the dashboard", "cmd/pinup/runcmd.go",
+		"\tif o.pkg != \"\" || o.released != \"\" {\n\t\treturn nil\n\t}\n\tstates := map", "\tstates := map", []string{"./cmd/pinup/"}, false, ""},
+	{60, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

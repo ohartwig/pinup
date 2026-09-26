@@ -198,3 +198,30 @@ func TestNarrowedRunsDoNotRecordTheIndex(t *testing.T) {
 		t.Errorf("a full run records: %+v", got)
 	}
 }
+
+// A run narrowed to one package does not write the dashboard: its plan
+// marks everything else skipped, and the issue would lose the repository's
+// list and its approval boxes until the next full run. A full run writes it.
+func TestNarrowedRunsLeaveTheDashboard(t *testing.T) {
+	plan := &model.Plan{Dashboard: model.Dashboard{Enabled: true, Title: "pinup Dashboard"}}
+	proj := publish.Project{Path: "group/app"}
+	for name, o := range map[string]*runOptions{
+		"package":  {pkg: "npm|left-pad", now: time.Now()},
+		"released": {released: "x/y@1.0.0", now: time.Now()},
+	} {
+		pf := &platformfake.Platform{}
+		if err := publishDashboard(context.Background(), o, pf, proj, plan, nil, "", "", io.Discard, io.Discard); err != nil {
+			t.Fatal(err)
+		}
+		if len(pf.Issues) != 0 {
+			t.Errorf("%s: the dashboard was written: %v", name, pf.Calls)
+		}
+	}
+	pf := &platformfake.Platform{}
+	if err := publishDashboard(context.Background(), &runOptions{now: time.Now()}, pf, proj, plan, nil, "", "", io.Discard, io.Discard); err != nil {
+		t.Fatal(err)
+	}
+	if len(pf.Issues) != 1 {
+		t.Errorf("a full run writes the dashboard: %v", pf.Calls)
+	}
+}
