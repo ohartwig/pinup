@@ -1,3 +1,9 @@
+## [0.47.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.47.0...v0.47.1) (2026-09-26)
+
+### :bug: Fixes
+
+* **advise:** --init suggests image annotations with their versioning ([a297d00](https://git.ole-hartwig.eu/pinup/pinup/commit/a297d007a1d96cced34cfc959f1ad3fbe953d06b))
+
 ## [0.47.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.46.0...v0.47.0) (2026-09-26)
 
 ### :sparkles: Features
