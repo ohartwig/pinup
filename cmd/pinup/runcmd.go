@@ -306,7 +306,18 @@ func rebaseSet(c report.Checks) map[string]bool {
 // publishDashboard renders the dashboard for the plan and what the run did
 // and writes it: to the issue in a live run, beside the report in a dry
 // run, where the shadow phase can read what the issue would say.
+//
+// A run narrowed to one package - the fast lane, --package - leaves the
+// dashboard alone. Its plan looks up that package and marks every other
+// dependency "not the released package", and written to the issue that
+// replaced the repository's list with skip lines until the next full run
+// (measured 2026-09-26: composed-default-pipelines' dashboard read so after
+// each component release, and its pending approval for test-tools 4 was
+// gone from it). The full scan and the push runs keep it current.
 func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platform, proj publish.Project, plan *model.Plan, outcomes []runner.Outcome, reportPath, project string, out, errw io.Writer) error {
+	if o.pkg != "" || o.released != "" {
+		return nil
+	}
 	states := map[string]report.BranchState{}
 	for _, oc := range outcomes {
 		states[oc.Branch] = report.BranchState{Action: oc.Action, MRIID: oc.MRIID, Message: oc.Message}
