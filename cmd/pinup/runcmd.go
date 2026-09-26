@@ -303,6 +303,25 @@ func rebaseSet(c report.Checks) map[string]bool {
 	return out
 }
 
+// holdGroupsInNarrowedRun leaves group branches to the runs that see the
+// whole group. A narrowed run plans one package; a group branch it wrote
+// would carry that package's update and drop every other member's.
+func holdGroupsInNarrowedRun(o *runOptions, plan *model.Plan) {
+	if o.pkg == "" && o.released == "" {
+		return
+	}
+	for i := range plan.Branches {
+		b := &plan.Branches[i]
+		if b.GroupName == "" || b.SuppressedBy != "" {
+			continue
+		}
+		holdBranch(b, plan.Updates, model.Block{
+			Reason: model.BlockNarrowedRun, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
+			Note: "a run narrowed to one package sees only part of the group " + b.GroupName + "; the full scan writes the branch",
+		})
+	}
+}
+
 // publishDashboard renders the dashboard for the plan and what the run did
 // and writes it: to the issue in a live run, beside the report in a dry
 // run, where the shadow phase can read what the issue would say.
@@ -539,6 +558,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 	}
 	lap("plan")
 	recordIndex(o, proj, plan, errw)
+	holdGroupsInNarrowedRun(o, plan)
 
 	var outcomes []runner.Outcome
 	if !o.dryRun {

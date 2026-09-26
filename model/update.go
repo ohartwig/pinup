@@ -203,6 +203,15 @@ const (
 	// (mergedBefore) and would have reopened nozzleops/platform!41-45 the
 	// hour after they were closed on purpose.
 	BlockClosedByHand BlockReason = "closedByHand"
+	// BlockNarrowedRun holds a group branch in a run narrowed to one
+	// package (the fast lane, --package). Such a run looks that package up
+	// and marks every other dependency skipped, so it sees only part of a
+	// group; rewritten from that, the branch lost its other members.
+	// Measured 2026-09-26: the fast lane for a php-runtime release rebuilt
+	// four TYPO3 sites' "apk" group with the runtime alone, dropping the
+	// php and config.platform.php updates it carried, and both checks went
+	// red. The full scan and the push runs write group branches.
+	BlockNarrowedRun BlockReason = "narrowedRun"
 )
 
 // Settled reports whether a reason is the configuration's verdict on an

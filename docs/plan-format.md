@@ -79,6 +79,9 @@ cache's first-seen record), `securityFix` with the advisory, and:
   it), `taskRefused`, `nothingToRefresh`, `publishFailed`, `closedByHand`
   (the newest request on the branch was closed by a person without
   merging and carried exactly these edits; a changed update opens again).
+  `narrowedRun` holds a group branch in a run narrowed to one package
+  (the fast lane, `--package`): it sees only part of the group, and the
+  full scan writes the branch.
   `disabled` and `allowedVersions` are the configuration's verdicts
   rather than waits: a full run closes a request whose branch is held
   for one (see `run` in [commands.md](commands.md)).
