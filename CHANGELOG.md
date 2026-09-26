@@ -1,3 +1,9 @@
+## [0.48.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.48.0...v0.48.1) (2026-09-26)
+
+### :bug: Fixes
+
+* **config:** packageRules can move a lookup (overrideDatasource, overridePackageName, extractVersion) ([3316ca6](https://git.ole-hartwig.eu/pinup/pinup/commit/3316ca6cb4a975359b4377af390f42b590588736))
+
 ## [0.48.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.47.1...v0.48.0) (2026-09-26)
 
 ### :sparkles: Features
