@@ -214,7 +214,14 @@ var mutators = []mutator{
 		"\t\td.Datasource = ds\n", "", []string{"./cmd/pinup/"}, false, ""},
 	{56, "config", "extractVersion in a rule is ignored", "cmd/pinup/whatif.go",
 		"\t\td.ExtractVersion = ev\n", "", []string{"./cmd/pinup/"}, false, ""},
-	{57, "sentinel", "a comment changes", "model/model.go",
+	// GitHub Actions pinned by commit (2026-09-26): the SHA and the version
+	// in its comment move together, and the SHA is the commit's, not the
+	// annotated tag object's.
+	{57, "extract", "a SHA pin moves without its version comment", "manager/githubactions/githubactions.go",
+		"New: up.NewDigest + between + up.NewValue", "New: up.NewDigest + between + d.CurrentValue", []string{"./manager/githubactions/"}, false, ""},
+	{58, "lookup", "an annotated tag answers the tag object, not its commit", "datasource/githubds/digest.go",
+		"\t\t\tobj = next.Object\n", "\t\t\treturn obj.SHA, nil\n", []string{"./datasource/githubds/"}, false, ""},
+	{59, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

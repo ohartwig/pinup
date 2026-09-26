@@ -1,4 +1,8 @@
 {
+  "manager:github-actions": {
+    "owner": "pinup",
+    "reason": "New 2026-09-26 and not yet recorded: a golden repository is a live recording against api.github.com, which was not made from the machine that wrote the manager. The chain from extraction through the github-tags digest to the edit is exercised hermetically in wire (TestAShaPinnedActionMovesEndToEnd); the golden repository follows the first recording, pinup's own .github/workflows/images.yml being the obvious tree."
+  },
   "versioning:go": {
     "owner": "pinup",
     "reason": "No dependency of the synthetic twin is versioned `go`: gomod dependencies resolve as `semver` (measured), and the corpus carries no `versioning=go` annotation. The scheme conforms to its captured table; a golden repository follows the first use."

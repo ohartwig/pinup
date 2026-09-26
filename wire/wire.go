@@ -39,6 +39,7 @@ import (
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/manager/composerman"
 	"github.com/ohartwig/pinup/manager/dockerfile"
+	"github.com/ohartwig/pinup/manager/githubactions"
 	"github.com/ohartwig/pinup/manager/gitlabci"
 	"github.com/ohartwig/pinup/manager/gomod"
 	"github.com/ohartwig/pinup/manager/kustomize"
@@ -91,13 +92,14 @@ func Versionings() versioning.Registry {
 // uses.
 func Managers() extract.Registry {
 	return extract.Registry{
-		"dockerfile": dockerfile.New(),
-		"gitlabci":   gitlabci.New(),
-		"kustomize":  kustomize.New(),
-		"gomod":      gomod.New(),
-		"composer":   composerman.New(),
-		"npm":        npmman.New(),
-		"terraform":  terraform.New(),
+		"dockerfile":     dockerfile.New(),
+		"gitlabci":       gitlabci.New(),
+		"github-actions": githubactions.New(),
+		"kustomize":      kustomize.New(),
+		"gomod":          gomod.New(),
+		"composer":       composerman.New(),
+		"npm":            npmman.New(),
+		"terraform":      terraform.New(),
 		// The registry key is the manager's Renovate name, which the
 		// enabledManagers list and the rules' matchManagers use.
 		"terraform-version": tfversion.New(),
