@@ -17,6 +17,7 @@ not run, and `custom.regex` must be named to run the custom managers.
 |---|---|---|
 | `dockerfile` | `Dockerfile`, `Containerfile`, `*.Dockerfile` | `FROM`, `COPY --from`, `# syntax=`; ARG-interpolated images; digest pins kept or added with `pinDigests`; warns about an unmanaged version pin (see below) |
 | `gitlabci` | `.gitlab-ci.yml` | `image:` and `services:` at every nesting, string and object form; `include: component:` pins (`gitlab-tags` on the component's project); `$VAR` tags are reported as unresolvable rather than guessed |
+| `github-actions` | workflows and actions under `.github/`, `.gitea/`, `.forgejo/`, `workflow-templates/`, any `action.yml` | `uses:` of steps (workflow and composite action) and of reusable-workflow jobs, as `github-tags` on `owner/repo`; a ref pinned by commit SHA with its version in a trailing comment (`@<sha> # v7.0.1`) moves SHA and comment together; see below for what is reported rather than updated |
 | `kustomize` | `kustomization.yaml` | `images:` with `newTag`/`digest`, remote `resources` and `components` with `?ref=`, `helmCharts:` |
 | `npm` | `package.json`, lock files (`package-lock.json`, `npm-shrinkwrap.json`, `yarn.lock`, `pnpm-lock.yaml`) | dependencies of every type, `engines.node` (`node-version`), `packageManager`, `pnpm.overrides`; workspaces read and refresh the root lock; a lock pinup cannot refresh (`bun.lock`, `bun.lockb`) holds the branch; a release age the project sets (`.npmrc`, `pnpm-workspace.yaml`, `.yarnrc.yml`) is a floor under `minimumReleaseAge` |
 | `composer` | `composer.json`, `composer.lock` | `require`, `require-dev`, `config.platform.php`, repositories of type `composer` in file order followed by Packagist; the locked version is what an update moves from |
@@ -39,13 +40,28 @@ sixteen findings a container scan reported were all its Go standard
 library. Two numeric components (`8.5`, `1.27`) name a line rather than a
 release and stay quiet, as does a checksum beside a pin.
 
+The `github-actions` manager reads a `uses:` reference in two forms.
+`owner/repo@v7.0.1` is a version, taken as written. `owner/repo@<40-hex SHA>
+# v7.0.1` is a commit pin: the SHA is the digest, the comment's version the
+value, and an update writes the commit the new tag points to (an annotated
+tag is dereferenced to its commit) together with the new version, in one
+edit; a new version without its SHA is refused. Versioning is the
+datasource's default, `semver`, as the resolved defaults give the manager
+nothing else: a full version moves to newer releases, and a rolling major
+(`# v7`) is no semver version, so the tag stays and the SHA follows the
+commit it points to now. A `versioning` rule overrides that like for any
+manager. What is recorded with a reason instead of an update: a SHA with
+no version comment (nothing says which release it is), a local action
+(`./…`), an expression (`${{ … }}`), an action named by URL, and a
+`docker://` image, which this manager does not look up yet.
+
 ## Datasources
 
 | Name | Asks | Notes |
 |---|---|---|
 | `docker` | the registry's `/v2/` API | tags, the digest of one tag when pinning; bearer tokens by realm; the estate's own registry with the platform credential, others anonymously |
 | `gitlab-tags`, `gitlab-releases`, `gitlab-packages` | a GitLab instance's REST API | the instance from the environment unless `registryUrls` names another; paginated |
-| `github-releases`, `github-tags` | `api.github.com` | with `GITHUB_COM_TOKEN` when set; the 60-an-hour limit otherwise |
+| `github-releases`, `github-tags` | `api.github.com` | with `GITHUB_COM_TOKEN` when set; the 60-an-hour limit otherwise; the digest of a version is the commit its tag points to (`git/ref/tags/…`, annotated tags dereferenced) |
 | `npm` | the registry's package document | `registryUrls`; `deprecated` as a string or a boolean |
 | `packagist` | the Composer repository protocol | Packagist and every registry that speaks it, the GitLab group registry's provider-format metadata included; repositories tried in file order until one has the package |
 | `pypi` | the JSON API | by the PEP 503 name; a release yanked in every file is deprecated |
