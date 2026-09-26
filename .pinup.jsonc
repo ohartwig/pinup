@@ -1,10 +1,11 @@
 // pinup's own configuration - the tool updates itself from here, under the
-// runner's rules plus the one manager the runner never enables: gomod.
+// runner's rules plus the managers the runner never enables: gomod, and
+// github-actions for the SHA-pinned actions of the image workflow on GitHub.
 // Arrays replace, so enabledManagers is repeated in full.
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["local>devops/renovate-runner"],
-  "enabledManagers": ["custom.regex", "dockerfile", "gitlabci", "gitlabci-include", "gomod"],
+  "enabledManagers": ["custom.regex", "dockerfile", "gitlabci", "gitlabci-include", "gomod", "github-actions"],
   // The parity corpus carries deliberately outdated pins, and test files
   // carry FROM lines and annotations as fixtures: Renovate's dockerfile
   // pattern matches dockerfile_test.go, measured.

@@ -18,9 +18,11 @@
 #     --certificate-identity-regexp '^https://github.com/ohartwig/pinup/' \
 #     --certificate-oidc-issuer https://token.actions.githubusercontent.com
 #
-# Actions are pinned to commit SHAs. There is no manager for them here yet
-# (pinup has no github-actions manager), so the version behind each SHA is
-# written beside it and the pins are reviewed by hand.
+# Actions are pinned to commit SHAs, with the version behind each SHA
+# written beside it. pinup's github-actions manager reads that comment and
+# moves the SHA and the version together (.pinup.jsonc enables it here);
+# keep the `@<sha>  # vX.Y.Z` form, since a SHA without its version is
+# reported as not updatable.
 name: images
 
 on:
