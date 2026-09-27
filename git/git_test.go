@@ -20,6 +20,16 @@ var testEnv = []string{
 	"GIT_CONFIG_GLOBAL=/dev/null", "GIT_CONFIG_SYSTEM=/dev/null",
 	"GIT_AUTHOR_NAME=fixture", "GIT_AUTHOR_EMAIL=fixture@example.invalid",
 	"GIT_COMMITTER_NAME=fixture", "GIT_COMMITTER_EMAIL=fixture@example.invalid",
+	// No background maintenance in the fixtures. A push starts it on the
+	// receiving side, and a local clone copies the objects directory while
+	// maintenance.lock comes and goes: "failed to copy file to
+	// .../objects/maintenance.lock" failed TestAdoptRebasesAndForceWithLease...
+	// in CI on 2026-09-26, never locally. Every git process in these tests
+	// inherits this environment, receive-pack included.
+	"GIT_CONFIG_COUNT=3",
+	"GIT_CONFIG_KEY_0=maintenance.auto", "GIT_CONFIG_VALUE_0=false",
+	"GIT_CONFIG_KEY_1=gc.auto", "GIT_CONFIG_VALUE_1=0",
+	"GIT_CONFIG_KEY_2=receive.autogc", "GIT_CONFIG_VALUE_2=false",
 }
 
 func needGit(t *testing.T) {

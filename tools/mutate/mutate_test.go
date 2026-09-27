@@ -225,7 +225,11 @@ var mutators = []mutator{
 	// had replaced the repository's list with skip lines.
 	{59, "delivery", "a fast-lane run overwrites the dashboard", "cmd/pinup/runcmd.go",
 		"\tif o.pkg != \"\" || o.released != \"\" {\n\t\treturn nil\n\t}\n\tstates := map", "\tstates := map", []string{"./cmd/pinup/"}, false, ""},
-	{60, "sentinel", "a comment changes", "model/model.go",
+	// A narrowed run holds group branches (2026-09-26): the fast lane for
+	// php-runtime had rebuilt the sites' apk group with the runtime alone.
+	{60, "delivery", "a fast-lane run rewrites a group branch from part of the group", "cmd/pinup/runcmd.go",
+		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" {", "\t\tif true {", []string{"./cmd/pinup/"}, false, ""},
+	{61, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

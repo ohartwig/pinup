@@ -225,3 +225,36 @@ func TestNarrowedRunsLeaveTheDashboard(t *testing.T) {
 		t.Errorf("a full run writes the dashboard: %v", pf.Calls)
 	}
 }
+
+// A run narrowed to one package holds group branches and writes the rest:
+// it sees only part of a group, and a group branch written from that lost
+// its other members. A full run holds nothing.
+func TestNarrowedRunsHoldGroupBranches(t *testing.T) {
+	mk := func() *model.Plan {
+		u1 := model.Update{DepKey: "a|x", Dep: model.Dependency{File: "a", Manager: "dockerfile", DepName: "x", CurrentValue: "1"}, NewValue: "2"}
+		u2 := model.Update{DepKey: "b|y", Dep: model.Dependency{File: "b", Manager: "npm", DepName: "y", CurrentValue: "1"}, NewValue: "2"}
+		return &model.Plan{
+			Updates: []model.Update{u1, u2},
+			Branches: []model.Branch{
+				{Name: "pinup/apk", GroupName: "alpine + wolfi packages", UpdateKeys: []string{u1.Key()}, Edits: []model.Edit{{File: "a"}}},
+				{Name: "pinup/y-2.x", UpdateKeys: []string{u2.Key()}, Edits: []model.Edit{{File: "b"}}},
+			},
+		}
+	}
+	for name, o := range map[string]*runOptions{"package": {pkg: "npm|y"}, "released": {released: "x/y@2"}} {
+		plan := mk()
+		holdGroupsInNarrowedRun(o, plan)
+		g, s := plan.Branches[0], plan.Branches[1]
+		if g.SuppressedBy != model.BlockNarrowedRun || g.Edits != nil || plan.Updates[0].SuppressedBy != model.BlockNarrowedRun {
+			t.Errorf("%s: the group branch is not held: %+v / %+v", name, g, plan.Updates[0])
+		}
+		if s.SuppressedBy != "" || len(s.Edits) != 1 || plan.Updates[1].SuppressedBy != "" {
+			t.Errorf("%s: an ungrouped branch was held: %+v", name, s)
+		}
+	}
+	plan := mk()
+	holdGroupsInNarrowedRun(&runOptions{}, plan)
+	if plan.Branches[0].SuppressedBy != "" || len(plan.Branches[0].Edits) != 1 {
+		t.Errorf("a full run held the group branch: %+v", plan.Branches[0])
+	}
+}
