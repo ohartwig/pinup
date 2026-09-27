@@ -1,3 +1,9 @@
+## [0.49.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.5...v0.49.6) (2026-09-27)
+
+### :bug: Fixes
+
+* **run:** the fast lane writes a group branch nothing is waiting on ([7552ee1](https://git.ole-hartwig.eu/pinup/pinup/commit/7552ee1e6c40e080c6e71e90b6797a75772dafcc))
+
 ## [0.49.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.4...v0.49.5) (2026-09-27)
 
 ### :bug: Fixes
