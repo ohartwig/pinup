@@ -235,7 +235,13 @@ var mutators = []mutator{
 		"\tif !hasSufs {\n\t\treturn v, true\n\t}", "\tif true {\n\t\treturn v, !hasSufs\n\t}", []string{"./versioning/apk/"}, false, ""},
 	{62, "lookup", "apk suffixes compare by number, not by kind", "versioning/apk/apk.go",
 		"cmp.Or(cmp.Compare(sa.rank, sb.rank), cmp.Compare(sa.n, sb.n))", "cmp.Compare(sa.n, sb.n)", []string{"./versioning/apk/"}, false, ""},
-	{63, "sentinel", "a comment changes", "model/model.go",
+	// A bot token has no /user (2026-09-27): the dashboard is the issue a
+	// bot wrote, never a human's, and two bots' issues are not guessed at.
+	{63, "delivery", "a bot token adopts a human's dashboard issue", "platform/github/github.go",
+		"\t\t\tif botOnly && is.User.Type != \"Bot\" {", "\t\t\tif false {", []string{"./platform/github/"}, false, ""},
+	{64, "delivery", "a bot token guesses between two bot-authored dashboards", "platform/github/github.go",
+		"\tcase 1:\n\t\treturn hit[0], true, nil", "\tcase 1, 2:\n\t\treturn hit[0], true, nil", []string{"./platform/github/"}, false, ""},
+	{65, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
