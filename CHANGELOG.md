@@ -1,3 +1,13 @@
+## [0.49.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.2...v0.49.3) (2026-09-27)
+
+### :bug: Fixes
+
+* **run:** a run narrowed to one package leaves group branches alone ([0354084](https://git.ole-hartwig.eu/pinup/pinup/commit/0354084545f42b6bd0af63dcf66cbb2706c709bc))
+
+### :white_check_mark: Tests
+
+* **git:** no background maintenance in the fixtures ([2645c34](https://git.ole-hartwig.eu/pinup/pinup/commit/2645c3415c7d99c8ba9cbd0facf4b5cf91c4a495))
+
 ## [0.49.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.1...v0.49.2) (2026-09-27)
 
 ### :repeat: Chores
