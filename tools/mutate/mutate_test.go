@@ -229,7 +229,13 @@ var mutators = []mutator{
 	// php-runtime had rebuilt the sites' apk group with the runtime alone.
 	{60, "delivery", "a fast-lane run rewrites a group branch from part of the group", "cmd/pinup/runcmd.go",
 		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" {", "\t\tif true {", []string{"./cmd/pinup/"}, false, ""},
-	{61, "sentinel", "a comment changes", "model/model.go",
+	// apk underscore suffixes (2026-09-27): Wolfi's python-3.13
+	// 3.13.15_git20260912-r0 was rejected, so its CVE fix was never offered.
+	{61, "lookup", "an apk version with an underscore suffix is rejected", "versioning/apk/apk.go",
+		"\tif !hasSufs {\n\t\treturn v, true\n\t}", "\tif true {\n\t\treturn v, !hasSufs\n\t}", []string{"./versioning/apk/"}, false, ""},
+	{62, "lookup", "apk suffixes compare by number, not by kind", "versioning/apk/apk.go",
+		"cmp.Or(cmp.Compare(sa.rank, sb.rank), cmp.Compare(sa.n, sb.n))", "cmp.Compare(sa.n, sb.n)", []string{"./versioning/apk/"}, false, ""},
+	{63, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

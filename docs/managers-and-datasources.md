@@ -97,7 +97,7 @@ never a failed run for the repository.
 | `semver-coerced` | anything that starts like a version | |
 | `loose` | leading numeric components | no prerelease notion: `1.0.0-alpha` is stable here, and `Satisfies` is equality |
 | `docker` | image tags | version and compatibility segment (`22-alpine3.21`); a different suffix or component count is another image, not an update |
-| `apk` | Wolfi/Alpine package versions | `-rN` revisions, epochs |
+| `apk` | Wolfi/Alpine package versions | `-rN` revisions, epochs, `_rc`/`_git`/`_p` suffixes |
 | `composer` | Composer constraints | `^`, `~`, `*`, stability flags, `dev-` branches |
 | `npm` | npm ranges | `^`, `~`, `x`, `\|\|`, hyphen ranges |
 | `node` | Node.js | semver, with `engines` ranges as npm ranges |

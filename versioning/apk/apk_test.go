@@ -57,3 +57,41 @@ func TestOnlyRevisionSuffixesAreAccepted(t *testing.T) {
 		}
 	}
 }
+
+// Wolfi versions its packages with apk's underscore suffixes. python-3.13
+// 3.13.15_git20260912-r0 fixed a HIGH that 3.13.15-r8 carried, and pinup
+// never offered it while this scheme rejected the value (2026-09-27).
+func TestUnderscoreSuffixesOrder(t *testing.T) {
+	s := New()
+	ordered := []string{
+		"1.0_alpha", "1.0_alpha2", "1.0_beta", "1.0_pre1", "1.0_rc1", "1.0_rc2",
+		"1.0", "1.0-r3", "1.0_cvs", "1.0_svn", "1.0_git20260101", "1.0_git20260912",
+		"1.0_hg", "1.0_p1", "1.0_p2", "1.0_p2-r1", "1.0a", "1.0b_rc1", "1.0b", "1.0.1",
+	}
+	for i := 0; i+1 < len(ordered); i++ {
+		if !s.IsValid(ordered[i]) {
+			t.Errorf("%q was rejected", ordered[i])
+		}
+		if s.Compare(ordered[i], ordered[i+1]) >= 0 || s.Compare(ordered[i+1], ordered[i]) <= 0 {
+			t.Errorf("%q should sort before %q", ordered[i], ordered[i+1])
+		}
+	}
+	if s.Compare("3.13.15-r8", "3.13.15_git20260912-r0") >= 0 {
+		t.Error("the Wolfi python-3.13 fix does not sort after the build it replaces")
+	}
+	for _, v := range []string{"1.0_rc1", "2.0_beta3-r1", "1.0_alpha"} {
+		if s.IsStable(v) {
+			t.Errorf("%q is a prerelease and was called stable", v)
+		}
+	}
+	for _, v := range []string{"3.13.15_git20260912-r0", "9.9_p1-r2", "1.0_cvs", "1.0a"} {
+		if !s.IsStable(v) {
+			t.Errorf("%q is a release and was called unstable", v)
+		}
+	}
+	for _, bad := range []string{"1.0_", "1.0_foo", "1.0_rc_", "1.0__p1", "_p1", "1.0_p1x", "1.0A", "1.0ab"} {
+		if s.IsValid(bad) {
+			t.Errorf("%q was accepted; it is not an apk version", bad)
+		}
+	}
+}
