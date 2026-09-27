@@ -92,9 +92,12 @@ type fakeRepo struct {
 }
 
 type githubServer struct {
-	mu       sync.Mutex
-	token    string
-	login    string
+	mu    sync.Mutex
+	token string
+	login string
+	// noUser makes the token an installation token (or GITHUB_TOKEN): /user
+	// refuses it, and what it writes is authored by the bot in login.
+	noUser   bool
 	repos    map[string]*fakeRepo // "owner/name"
 	requests []string
 }
@@ -170,6 +173,8 @@ func (s *githubServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch {
+	case r.URL.Path == "/user" && s.noUser:
+		writeJSON(w, 403, map[string]any{"message": "Resource not accessible by integration"})
 	case r.URL.Path == "/user":
 		writeJSON(w, 200, map[string]any{"login": s.login})
 	case r.URL.Path == "/user/repos":
@@ -370,6 +375,11 @@ func issueBody(owner, name string, is *fakeIssue) map[string]any {
 	}
 	out := map[string]any{"number": is.number, "title": is.title, "body": is.body, "labels": labels, "state": "open",
 		"html_url": fmt.Sprintf("https://github.example/%s/%s/issues/%d", owner, name, is.number)}
+	userType := "User"
+	if strings.HasSuffix(is.author, "[bot]") {
+		userType = "Bot"
+	}
+	out["user"] = map[string]any{"login": is.author, "type": userType}
 	if is.isPull {
 		out["pull_request"] = map[string]any{"url": "x"}
 	}
@@ -628,6 +638,48 @@ func TestUpsertIssueIsTheBotsOwnAndSkipsPullRequests(t *testing.T) {
 	}
 	if srv.count("GET", "creator=pinup-bot") == 0 {
 		t.Error("issues must be asked for by the bot's own login")
+	}
+}
+
+// A GitHub App installation token and a workflow's GITHUB_TOKEN have no
+// user: /user answers 403. The dashboard was then never written, and a
+// held update could not be approved at all (2026-09-27, pinup 0.49.3 on
+// ohartwig/typo3-kubernetes-chart).
+func TestInstallationTokenKeepsItsDashboard(t *testing.T) {
+	p, srv, _ := newFixture(t)
+	srv.noUser = true
+	srv.login = "pinup-ohartwig[bot]"
+	rp := srv.addRepo("acme/site", "main")
+	// A human's issue with the title is not the dashboard.
+	rp.issues = append(rp.issues, &fakeIssue{number: 1, title: "pinup Dashboard", body: "forged", author: "someone"})
+	rp.nextNumber = 2
+	ctx := context.Background()
+	proj := publish.Project{Path: "acme/site"}
+	is, changed, err := p.UpsertIssue(ctx, proj, "pinup Dashboard", "body", nil)
+	if err != nil || !changed || is.IID != 2 {
+		t.Fatalf("upsert = %+v %v %v", is, changed, err)
+	}
+	_, changed, err = p.UpsertIssue(ctx, proj, "pinup Dashboard", "body2", nil)
+	if err != nil || !changed {
+		t.Fatalf("second upsert = %v %v", changed, err)
+	}
+	if n := len(rp.issues); n != 2 {
+		t.Errorf("%d issues, want 2: the bot's own dashboard is found again, not duplicated", n)
+	}
+	if rp.issues[0].body != "forged" {
+		t.Error("the human's issue was overwritten")
+	}
+	_, body, ok, err := p.ReadIssue(ctx, proj, "pinup Dashboard")
+	if err != nil || !ok || body != "body2" {
+		t.Errorf("read = %q %v %v", body, ok, err)
+	}
+	// Two bots' issues of the same title: pinup does not guess.
+	rp.issues = append(rp.issues, &fakeIssue{number: 3, title: "pinup Dashboard", body: "other", author: "renovate[bot]"})
+	if _, _, _, err := p.ReadIssue(ctx, proj, "pinup Dashboard"); err == nil {
+		t.Error("two bot-authored dashboards were read without complaint")
+	}
+	if _, _, err := p.UpsertIssue(ctx, proj, "pinup Dashboard", "body3", nil); err == nil {
+		t.Error("two bot-authored dashboards: one was overwritten on a guess")
 	}
 }
 

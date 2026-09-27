@@ -93,6 +93,12 @@ func New(webURL string, transport http.RoundTripper, token string) *Platform {
 
 func (p *Platform) Name() string { return Name }
 
+// errNoUser is selfLogin's answer for a token that has no user: a GitHub
+// App installation token or a workflow's GITHUB_TOKEN. Both are refused
+// by /user (403 "Resource not accessible by integration") and write as a
+// bot account, "<app>[bot]" or "github-actions[bot]".
+var errNoUser = errors.New("github: the token has no user; it acts as a bot")
+
 // selfLogin answers the login of the account behind the token, from
 // /user, once: the dashboard is the issue that account wrote.
 func (p *Platform) selfLogin(ctx context.Context) (string, error) {
@@ -104,6 +110,10 @@ func (p *Platform) selfLogin(ctx context.Context) (string, error) {
 	resp, err := p.do(ctx, http.MethodGet, p.api+"/user", nil)
 	if err != nil {
 		return "", err
+	}
+	if (resp.status == http.StatusUnauthorized || resp.status == http.StatusForbidden) &&
+		!strings.Contains(apiMessage(resp.body), "rate limit") {
+		return "", errNoUser
 	}
 	if err := classify(resp, "(the token's own user)"); err != nil {
 		return "", err
@@ -503,12 +513,32 @@ func (p *Platform) ReadIssue(ctx context.Context, proj publish.Project, title st
 	if err != nil {
 		return publish.Issue{}, "", false, err
 	}
+	is, ok, err := oneTitled(found, title, proj.Path)
+	if err != nil || !ok {
+		return publish.Issue{}, "", false, err
+	}
+	return is.issue(), is.Body, true, nil
+}
+
+// oneTitled picks the issue with exactly this title. Two are an error: with
+// a bot token, ownIssues can only say "a bot wrote it", and two bots' issues
+// of the same title - pinup's and a Renovate app's, say - are not something
+// to guess between and then overwrite.
+func oneTitled(found []issueJSON, title, path string) (issueJSON, bool, error) {
+	var hit []issueJSON
 	for _, is := range found {
 		if is.Title == title {
-			return is.issue(), is.Body, true, nil
+			hit = append(hit, is)
 		}
 	}
-	return publish.Issue{}, "", false, nil
+	switch len(hit) {
+	case 0:
+		return issueJSON{}, false, nil
+	case 1:
+		return hit[0], true, nil
+	default:
+		return issueJSON{}, false, fmt.Errorf("github: %q has %d open issues titled %q by a bot account; close all but the dashboard", path, len(hit), title)
+	}
 }
 
 // UpsertIssue finds the bot's open issue with exactly this title and brings
@@ -522,10 +552,9 @@ func (p *Platform) UpsertIssue(ctx context.Context, proj publish.Project, title,
 	if err != nil {
 		return publish.Issue{}, false, err
 	}
-	for _, is := range found {
-		if is.Title != title {
-			continue
-		}
+	if is, ok, err := oneTitled(found, title, proj.Path); err != nil {
+		return publish.Issue{}, false, err
+	} else if ok {
 		fields := map[string]any{}
 		if strings.TrimSpace(is.Body) != strings.TrimSpace(description) {
 			fields["body"] = description
@@ -564,17 +593,25 @@ func (p *Platform) UpsertIssue(ctx context.Context, proj publish.Project, title,
 }
 
 // ownIssues lists the open issues the token's account created. GitHub's
-// issues endpoint returns pull requests too; those are left out.
+// issues endpoint returns pull requests too; those are left out. A token
+// without a user (errNoUser) cannot name its account, so it gets the open
+// issues any bot account wrote: an installation token only ever writes as
+// its app's bot, and a human's issue of the same title is never taken.
 func (p *Platform) ownIssues(ctx context.Context, path string) ([]issueJSON, error) {
 	base, err := p.repoURL(path)
 	if err != nil {
 		return nil, err
 	}
-	me, err := p.selfLogin(ctx)
-	if err != nil {
+	botOnly := false
+	q := url.Values{"state": {"open"}, "per_page": {"100"}}
+	switch me, err := p.selfLogin(ctx); {
+	case errors.Is(err, errNoUser):
+		botOnly = true
+	case err != nil:
 		return nil, err
+	default:
+		q.Set("creator", me)
 	}
-	q := url.Values{"state": {"open"}, "creator": {me}, "per_page": {"100"}}
 	var out []issueJSON
 	next := base + "/issues?" + q.Encode()
 	for next != "" {
@@ -590,9 +627,13 @@ func (p *Platform) ownIssues(ctx context.Context, path string) ([]issueJSON, err
 			return nil, fmt.Errorf("github: decode issues of %q: %w", path, err)
 		}
 		for _, is := range items {
-			if is.PullRequest == nil {
-				out = append(out, is)
+			if is.PullRequest != nil {
+				continue
 			}
+			if botOnly && is.User.Type != "Bot" {
+				continue
+			}
+			out = append(out, is)
 		}
 		next = nextLink(resp.header)
 	}
@@ -779,6 +820,10 @@ type issueJSON struct {
 	State       string      `json:"state"`
 	HTMLURL     string      `json:"html_url"`
 	PullRequest *struct{}   `json:"pull_request"`
+	User        struct {
+		Login string `json:"login"`
+		Type  string `json:"type"` // "User" or "Bot"
+	} `json:"user"`
 }
 
 func (i issueJSON) labelNames() []string {
