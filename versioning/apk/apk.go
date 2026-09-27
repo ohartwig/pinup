@@ -13,11 +13,23 @@
 // Measured:
 //
 //	"1.2.3-r5" > "1.2.3-r4" > "1.2.3"   an absent revision is r0
-//	"1.0.0-alpha" is INVALID            -rN is the only suffix allowed
+//	"1.0.0-alpha" is INVALID            -rN is the only hyphen suffix allowed
 //	"1.2", "1" and "1.2.3.4" are valid  components are read as far as they go
+//
+// Between the numbers and the revision, an apk version may carry one letter
+// and any number of underscore suffixes, each with an optional number. The
+// suffix names and their order are apk's own (the Alpine APKBUILD reference):
+//
+//	_alpha < _beta < _pre < _rc < (none) < _cvs < _svn < _git < _hg < _p
+//
+// so "1.0_rc1" is a prerelease of "1.0" and "3.13.15_git20260912-r0" is newer
+// than "3.13.15-r8". Wolfi ships both kinds. Before 2026-09-27 this scheme
+// rejected every such value, and pinup never offered python-3.13
+// 3.13.15_git20260912-r0 - the one build that fixed a HIGH in franken-php/ci.
 package apk
 
 import (
+	"cmp"
 	"fmt"
 	"strconv"
 	"strings"
@@ -32,8 +44,21 @@ func New() *Scheme { return &Scheme{} }
 func (*Scheme) Name() string { return "apk" }
 
 type version struct {
-	nums []int
-	rev  int
+	nums   []int
+	letter byte // 0 when absent, which sorts before 'a'
+	sufs   []suffix
+	rev    int
+}
+
+type suffix struct {
+	rank int // negative for a prerelease, positive for a post-release
+	n    int
+}
+
+// suffixRank orders apk's suffix names around the bare version, rank 0.
+var suffixRank = map[string]int{
+	"alpha": -4, "beta": -3, "pre": -2, "rc": -1,
+	"cvs": 1, "svn": 2, "git": 3, "hg": 4, "p": 5,
 }
 
 func parse(s string) (version, bool) {
@@ -45,8 +70,7 @@ func parse(s string) (version, bool) {
 	// An -rN revision, and nothing else, may follow the numbers. Any other
 	// suffix makes the whole value invalid rather than being ignored - that is
 	// what separates this scheme from docker and loose.
-	if i := strings.LastIndex(body, "-"); i >= 0 {
-		rev := body[i+1:]
+	if head, rev, ok := strings.CutLast(body, "-"); ok {
 		if len(rev) < 2 || rev[0] != 'r' {
 			return version{}, false
 		}
@@ -55,17 +79,40 @@ func parse(s string) (version, bool) {
 			return version{}, false
 		}
 		v.rev = n
-		body = body[:i]
+		body = head
 	}
-	if body == "" {
+	body, sufs, hasSufs := strings.Cut(body, "_")
+	if body == "" || hasSufs && sufs == "" {
 		return version{}, false
 	}
-	for _, seg := range strings.Split(body, ".") {
+	if c := body[len(body)-1]; c >= 'a' && c <= 'z' {
+		v.letter = c
+		body = body[:len(body)-1]
+	}
+	for seg := range strings.SplitSeq(body, ".") {
 		n, err := strconv.Atoi(seg)
-		if err != nil || seg == "" {
+		if err != nil || seg == "" || seg[0] == '+' || seg[0] == '-' {
 			return version{}, false
 		}
 		v.nums = append(v.nums, n)
+	}
+	if !hasSufs {
+		return v, true
+	}
+	for suf := range strings.SplitSeq(sufs, "_") {
+		name := strings.TrimRight(suf, "0123456789")
+		rank, known := suffixRank[name]
+		if !known {
+			return version{}, false
+		}
+		n := 0
+		if digits := suf[len(name):]; digits != "" {
+			var err error
+			if n, err = strconv.Atoi(digits); err != nil {
+				return version{}, false
+			}
+		}
+		v.sufs = append(v.sufs, suffix{rank: rank, n: n})
 	}
 	return v, true
 }
@@ -78,9 +125,20 @@ func (*Scheme) IsValid(s string) bool {
 	return ok
 }
 
-// IsStable is true for every valid version: an apk version has no prerelease
-// concept, only a revision.
-func (s *Scheme) IsStable(v string) bool { return s.IsValid(v) }
+// IsStable is false only for a prerelease suffix (_alpha, _beta, _pre, _rc).
+// A post-release suffix such as _git or _p is a release.
+func (*Scheme) IsStable(s string) bool {
+	v, ok := parse(s)
+	if !ok {
+		return false
+	}
+	for _, suf := range v.sufs {
+		if suf.rank < 0 {
+			return false
+		}
+	}
+	return true
+}
 
 func at(s string, i int) (int, bool) {
 	v, ok := parse(s)
@@ -122,14 +180,24 @@ func (*Scheme) Compare(a, b string) int {
 		}
 		return 1
 	}
-	switch {
-	case va.rev < vb.rev:
-		return -1
-	case va.rev > vb.rev:
-		return 1
-	default:
-		return 0
+	if va.letter != vb.letter {
+		return cmp.Compare(va.letter, vb.letter)
 	}
+	// Suffixes pairwise; a missing one counts as the bare version, rank 0, so
+	// "1.0_rc1" < "1.0" < "1.0_p1".
+	for i := range max(len(va.sufs), len(vb.sufs)) {
+		var sa, sb suffix
+		if i < len(va.sufs) {
+			sa = va.sufs[i]
+		}
+		if i < len(vb.sufs) {
+			sb = vb.sufs[i]
+		}
+		if c := cmp.Or(cmp.Compare(sa.rank, sb.rank), cmp.Compare(sa.n, sb.n)); c != 0 {
+			return c
+		}
+	}
+	return cmp.Compare(va.rev, vb.rev)
 }
 
 func (s *Scheme) Equal(a, b string) bool {
