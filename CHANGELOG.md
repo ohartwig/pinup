@@ -1,3 +1,13 @@
+## [0.49.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.3...v0.49.4) (2026-09-27)
+
+### :bug: Fixes
+
+* **versioning/apk:** accept apk's letter and underscore suffixes ([2bc8a94](https://git.ole-hartwig.eu/pinup/pinup/commit/2bc8a9456183ba2f449cca8a7addd5676dc42e3f))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 3063af2 ([d60bc11](https://git.ole-hartwig.eu/pinup/pinup/commit/d60bc110645c44ce91415cc17955bf8e1d5879f2))
+
 ## [0.49.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.2...v0.49.3) (2026-09-27)
 
 ### :bug: Fixes
