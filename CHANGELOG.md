@@ -1,3 +1,9 @@
+## [0.49.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.4...v0.49.5) (2026-09-27)
+
+### :bug: Fixes
+
+* **platform/github:** the dashboard works with an installation token ([74dccf8](https://git.ole-hartwig.eu/pinup/pinup/commit/74dccf84870cffa79ad55b6b9bb192cd785f7778))
+
 ## [0.49.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.3...v0.49.4) (2026-09-27)
 
 ### :bug: Fixes
