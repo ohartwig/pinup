@@ -303,16 +303,22 @@ func rebaseSet(c report.Checks) map[string]bool {
 	return out
 }
 
-// holdGroupsInNarrowedRun leaves group branches to the runs that see the
-// whole group. A narrowed run plans one package; a group branch it wrote
-// would carry that package's update and drop every other member's.
-func holdGroupsInNarrowedRun(o *runOptions, plan *model.Plan) {
+// holdGroupsInNarrowedRun leaves an OPEN group merge request to the runs
+// that see the whole group. A narrowed run plans one package; rewriting a
+// group branch that already carries other members' updates would drop them
+// (2026-09-26: the php-runtime fast lane rebuilt the sites' apk group with
+// the runtime alone). A group branch with no open request has nothing to
+// lose, and holding it too meant the fast lane delivered nothing for a
+// grouped package at all (2026-09-27: structured-content 2.11.3, group
+// "first-party composer packages", waited for the next wave). open is the
+// set of source branches with an open request.
+func holdGroupsInNarrowedRun(o *runOptions, plan *model.Plan, open map[string]bool) {
 	if o.pkg == "" && o.released == "" {
 		return
 	}
 	for i := range plan.Branches {
 		b := &plan.Branches[i]
-		if b.GroupName == "" || b.SuppressedBy != "" {
+		if b.GroupName == "" || b.SuppressedBy != "" || !open[b.Name] {
 			continue
 		}
 		holdBranch(b, plan.Updates, model.Block{
@@ -558,7 +564,19 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 	}
 	lap("plan")
 	recordIndex(o, proj, plan, errw)
-	holdGroupsInNarrowedRun(o, plan)
+	if o.pkg != "" || o.released != "" {
+		// Unknown is open: a failed listing holds every group branch, the
+		// behaviour before the listing was asked for.
+		open := map[string]bool{}
+		mrs, err := o.platform.OpenMergeRequests(ctx, proj, "")
+		for i := range plan.Branches {
+			open[plan.Branches[i].Name] = err != nil
+		}
+		for _, m := range mrs {
+			open[m.SourceBranch] = true
+		}
+		holdGroupsInNarrowedRun(o, plan, open)
+	}
 
 	var outcomes []runner.Outcome
 	if !o.dryRun {

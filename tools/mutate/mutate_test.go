@@ -228,7 +228,7 @@ var mutators = []mutator{
 	// A narrowed run holds group branches (2026-09-26): the fast lane for
 	// php-runtime had rebuilt the sites' apk group with the runtime alone.
 	{60, "delivery", "a fast-lane run rewrites a group branch from part of the group", "cmd/pinup/runcmd.go",
-		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" {", "\t\tif true {", []string{"./cmd/pinup/"}, false, ""},
+		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] {", "\t\tif true {", []string{"./cmd/pinup/"}, false, ""},
 	// apk underscore suffixes (2026-09-27): Wolfi's python-3.13
 	// 3.13.15_git20260912-r0 was rejected, so its CVE fix was never offered.
 	{61, "lookup", "an apk version with an underscore suffix is rejected", "versioning/apk/apk.go",
@@ -241,7 +241,12 @@ var mutators = []mutator{
 		"\t\t\tif botOnly && is.User.Type != \"Bot\" {", "\t\t\tif false {", []string{"./platform/github/"}, false, ""},
 	{64, "delivery", "a bot token guesses between two bot-authored dashboards", "platform/github/github.go",
 		"\tcase 1:\n\t\treturn hit[0], true, nil", "\tcase 1, 2:\n\t\treturn hit[0], true, nil", []string{"./platform/github/"}, false, ""},
-	{65, "sentinel", "a comment changes", "model/model.go",
+	// A fast-lane run writes a group branch that has no open request
+	// (2026-09-27): holding every group branch delivered nothing for a
+	// grouped package until the next wave.
+	{65, "delivery", "a fast-lane run holds a group branch nothing is waiting on", "cmd/pinup/runcmd.go",
+		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] {", "\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" {", []string{"./cmd/pinup/"}, false, ""},
+	{66, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
