@@ -226,9 +226,11 @@ func TestNarrowedRunsLeaveTheDashboard(t *testing.T) {
 	}
 }
 
-// A run narrowed to one package holds group branches and writes the rest:
-// it sees only part of a group, and a group branch written from that lost
-// its other members. A full run holds nothing.
+// A run narrowed to one package holds a group branch with an open request
+// and writes the rest: it sees only part of a group, and an open group
+// branch rewritten from that lost its other members. A group branch with no
+// open request is written - the fast lane otherwise delivered nothing for a
+// grouped package. A full run holds nothing.
 func TestNarrowedRunsHoldGroupBranches(t *testing.T) {
 	mk := func() *model.Plan {
 		u1 := model.Update{DepKey: "a|x", Dep: model.Dependency{File: "a", Manager: "dockerfile", DepName: "x", CurrentValue: "1"}, NewValue: "2"}
@@ -241,9 +243,15 @@ func TestNarrowedRunsHoldGroupBranches(t *testing.T) {
 			},
 		}
 	}
+	open := map[string]bool{"pinup/apk": true, "pinup/y-2.x": true}
 	for name, o := range map[string]*runOptions{"package": {pkg: "npm|y"}, "released": {released: "x/y@2"}} {
 		plan := mk()
-		holdGroupsInNarrowedRun(o, plan)
+		holdGroupsInNarrowedRun(o, plan, map[string]bool{})
+		if g := plan.Branches[0]; g.SuppressedBy != "" || len(g.Edits) != 1 {
+			t.Errorf("%s: a group branch with no open request was held: %+v", name, g)
+		}
+		plan = mk()
+		holdGroupsInNarrowedRun(o, plan, open)
 		g, s := plan.Branches[0], plan.Branches[1]
 		if g.SuppressedBy != model.BlockNarrowedRun || g.Edits != nil || plan.Updates[0].SuppressedBy != model.BlockNarrowedRun {
 			t.Errorf("%s: the group branch is not held: %+v / %+v", name, g, plan.Updates[0])
@@ -253,7 +261,7 @@ func TestNarrowedRunsHoldGroupBranches(t *testing.T) {
 		}
 	}
 	plan := mk()
-	holdGroupsInNarrowedRun(&runOptions{}, plan)
+	holdGroupsInNarrowedRun(&runOptions{}, plan, open)
 	if plan.Branches[0].SuppressedBy != "" || len(plan.Branches[0].Edits) != 1 {
 		t.Errorf("a full run held the group branch: %+v", plan.Branches[0])
 	}
