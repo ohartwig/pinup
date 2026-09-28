@@ -852,7 +852,11 @@ func noteLinks(u model.Update) string {
 		parts = append(parts, fmt.Sprintf("%d releases", n))
 	}
 	if u.SecurityFix {
-		parts = append(parts, "security fix")
+		if note := u.Dep.WithdrawnNote(); note != "" {
+			parts = append(parts, "security fix ("+note+")")
+		} else {
+			parts = append(parts, "security fix")
+		}
 	}
 	return strings.Join(parts, ", ")
 }

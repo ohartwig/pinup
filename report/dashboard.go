@@ -398,6 +398,10 @@ func (s *sections) detected(b *strings.Builder) {
 				} else if d.SkipReason != "" && !strings.HasPrefix(d.SkipReason, "up to date") {
 					line += " — " + d.SkipReason
 				}
+				// A withdrawn current version is said on its line, moved or not.
+				if note := d.WithdrawnNote(); note != "" {
+					line += " — " + note
+				}
 				b.WriteString(line + "\n")
 			}
 			b.WriteString("\n</details>\n\n")

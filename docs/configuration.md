@@ -289,4 +289,4 @@ platform token is never sent to a URL a repository configuration names
 | `PINUP_TASK_CONCURRENCY` | tasks - lock refreshes, `postUpgradeTasks` - that run at once across all of them (default 2) |
 | `PINUP_RUNNER_PROJECT` | the project repositories extend the runner configuration from |
 | `PINUP_DASHBOARD_TITLE` | the operator's override of `dependencyDashboardTitle`; empty means the configuration names the issue |
-| `PINUP_APK_VIEWS` | apk indexes served natively besides the public Wolfi repository: `{"custom.<name>": {"mirrors": [...], "arches": [...]}}` |
+| `PINUP_APK_VIEWS` | apk indexes served natively besides the public Wolfi repository: `{"custom.<name>": {"mirrors": [...], "arches": [...]}}`; each mirror's `withdrawn.json` is read too (see managers-and-datasources.md) |

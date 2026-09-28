@@ -174,3 +174,19 @@ func TestDashboardNamesWhatAllowedVersionsKeepsOut(t *testing.T) {
 		}
 	}
 }
+
+// A dependency on a withdrawn version says so on its dashboard line and in
+// the plan report's advisories table, with the ids and the replacement.
+func TestWithdrawnVersionIsNamed(t *testing.T) {
+	d := model.Dependency{DepName: "grafana-alloy", Manager: "dockerfile", File: "Containerfile", CurrentValue: "1.19.2-r6", CustomManager: model.NoCustomManager,
+		VulnerabilityBound: "1.20.0-r0",
+		Advisories:         []model.Advisory{{ID: "CVE-2026-33997", Fixed: "1.20.0-r0", Withdrawn: true}}}
+	plan := &model.Plan{Deps: []model.Dependency{d}}
+	want := "withdrawn: CVE-2026-33997, replacement 1.20.0-r0"
+	if got := Dashboard(plan, nil, nil, time.Unix(0, 0)); !strings.Contains(got, want) {
+		t.Errorf("dashboard does not name the withdrawal:\n%s", got)
+	}
+	if got := Markdown(plan); !strings.Contains(got, want) {
+		t.Errorf("plan report does not name the withdrawal:\n%s", got)
+	}
+}

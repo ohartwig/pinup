@@ -90,9 +90,14 @@ func Markdown(p *model.Plan) string {
 		for _, d := range advisories {
 			ids := make([]string, 0, len(d.Advisories))
 			for _, a := range d.Advisories {
-				ids = append(ids, a.ID)
+				if !a.Withdrawn {
+					ids = append(ids, a.ID)
+				}
 			}
-			fmt.Fprintf(&b, "| %s %s | %s | %s |\n", cell(d.DepName), cell(d.CurrentValue), strings.Join(ids, ", "), d.VulnerabilityBound)
+			if note := d.WithdrawnNote(); note != "" {
+				ids = append(ids, note)
+			}
+			fmt.Fprintf(&b, "| %s %s | %s | %s |\n", cell(d.DepName), cell(d.CurrentValue), cell(strings.Join(ids, ", ")), d.VulnerabilityBound)
 		}
 		b.WriteString("\n")
 	}

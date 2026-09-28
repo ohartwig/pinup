@@ -246,7 +246,16 @@ var mutators = []mutator{
 	// grouped package until the next wave.
 	{65, "delivery", "a fast-lane run holds a group branch nothing is waiting on", "cmd/pinup/runcmd.go",
 		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] {", "\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" {", []string{"./cmd/pinup/"}, false, ""},
-	{66, "sentinel", "a comment changes", "model/model.go",
+	// Withdrawn apk versions (2026-09-28): a repository's withdrawal list
+	// takes a version out of the releases and moves a dependency off it
+	// like an advisory, and every surface names it.
+	{66, "lookup", "a withdrawn apk version stays a release", "datasource/apkds/apkds.go",
+		"\t\tif !gone[v] {", "\t\tif true {", []string{"./datasource/apkds/"}, false, ""},
+	{67, "lookup", "a withdrawn current version gets no fix bound", "cmd/pinup/withdrawn.go",
+		"\t\t\td.VulnerabilityBound = bound\n", "\t\t\t_ = bound\n", []string{"./cmd/pinup/"}, false, ""},
+	{68, "delivery", "the dashboard does not name a withdrawn version", "report/dashboard.go",
+		"\t\t\t\tif note := d.WithdrawnNote(); note != \"\" {", "\t\t\t\tif note := d.WithdrawnNote(); false && note != \"\" {", []string{"./report/"}, false, ""},
+	{69, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

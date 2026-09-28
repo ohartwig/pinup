@@ -680,6 +680,12 @@ func (r *whatifRun) lookupAll() error {
 	r.results = r.fetcher.Fetch(ctx, plan.Deps)
 	if o.Advisories != nil {
 		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
+	}
+	// A version its repository withdrew is moved off like an advisory -
+	// after the database, whose bound it may raise. It needs no database:
+	// the list travels on the release set.
+	plan.Warnings = append(plan.Warnings, applyWithdrawals(r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
+	{
 		var vulnerable []model.Dependency
 		for i := range plan.Deps {
 			d := &plan.Deps[i]
