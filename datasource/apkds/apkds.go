@@ -21,12 +21,27 @@
 // tagged repository and must not be satisfied from the public one.
 //
 // An index that parses to no packages is an error, never an empty answer.
+//
+// A repository may also publish "<mirror>/withdrawn.json", the versions it
+// has withdrawn (koh wolfi-packages, 2026-09-28):
+//
+//	{"version":1,"withdrawn":[{"package":"grafana-alloy","version":"1.19.2-r6",
+//	  "ids":["CVE-2026-33997"],"replacement":"1.20.0-r0","reason":"…",
+//	  "date":"2026-09-28T00:00:00Z","source":"auto"}]}
+//
+// A withdrawn version is left out of the releases even when an index still
+// carries it, and the entry travels on the release set so the plan can move
+// a dependency off it. A 404 is a repository without a list; any other
+// failure is a warning on the release set, never a failed lookup.
 package apkds
 
 import (
 	"bytes"
 	"context"
+	"encoding/json/v2"
+	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -60,11 +75,16 @@ type Datasource struct {
 	mu      sync.Mutex
 	indexes map[string]*apkindex.Index // url -> index
 	errors  map[string]error
+	// withdrawn is each mirror's withdrawal list, fetched once: mirror ->
+	// package -> entries. lists holds the read error, if any, per mirror.
+	withdrawn map[string]map[string][]model.Withdrawal
+	lists     map[string]error
 }
 
 // New returns a datasource of the given name over view.
 func New(name string, client *httpx.Client, view View) *Datasource {
-	return &Datasource{name: name, view: view, client: client, indexes: map[string]*apkindex.Index{}, errors: map[string]error{}}
+	return &Datasource{name: name, view: view, client: client, indexes: map[string]*apkindex.Index{}, errors: map[string]error{},
+		withdrawn: map[string]map[string][]model.Withdrawal{}, lists: map[string]error{}}
 }
 
 func (d *Datasource) Name() string { return d.name }
@@ -92,8 +112,26 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	}
 	common := apkindex.Intersect(perArch...)
 	rs := &model.ReleaseSet{PackageName: ref.PackageName, Datasource: d.name, RegistryURL: d.view.Mirrors[0]}
+	gone := map[string]bool{}
+	var listErrs []string
+	for _, m := range d.view.Mirrors {
+		entries, err := d.withdrawals(ctx, m)
+		if err != nil {
+			listErrs = append(listErrs, err.Error())
+			continue
+		}
+		for _, w := range entries[ref.PackageName] {
+			if !gone[w.Version] {
+				gone[w.Version] = true
+				rs.Withdrawn = append(rs.Withdrawn, w)
+			}
+		}
+	}
+	rs.WithdrawnErr = strings.Join(listErrs, "; ")
 	for _, v := range common.Versions(ref.PackageName) {
-		rs.Releases = append(rs.Releases, model.Release{Version: v})
+		if !gone[v] {
+			rs.Releases = append(rs.Releases, model.Release{Version: v})
+		}
 	}
 	rs.NewerStream = newerStream(common, ref.PackageName)
 	return rs, nil
@@ -122,6 +160,57 @@ func (d *Datasource) index(ctx context.Context, url string) (*apkindex.Index, er
 	}
 	d.indexes[url] = idx
 	return idx, nil
+}
+
+// withdrawnList is withdrawn.json as a repository publishes it.
+type withdrawnList struct {
+	Version   int `json:"version"`
+	Withdrawn []struct {
+		model.Withdrawal `json:",inline"`
+		Package          string `json:"package"`
+	} `json:"withdrawn"`
+}
+
+// withdrawals reads one mirror's withdrawal list, once, keyed by package.
+// A mirror without one (404) has none; any other failure is returned and
+// remembered, so a broken list is reported, not refetched per package.
+func (d *Datasource) withdrawals(ctx context.Context, mirror string) (map[string][]model.Withdrawal, error) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	if w, ok := d.withdrawn[mirror]; ok {
+		return w, nil
+	}
+	if err, ok := d.lists[mirror]; ok {
+		return nil, err
+	}
+	url := mirror + "/withdrawn.json"
+	byPkg := map[string][]model.Withdrawal{}
+	resp, err := d.client.Get(ctx, url, httpx.ReqOptions{})
+	if se, ok := errors.AsType[*httpx.StatusError](err); ok && se.StatusCode == http.StatusNotFound {
+		d.withdrawn[mirror] = byPkg
+		return byPkg, nil
+	}
+	if err != nil {
+		d.lists[mirror] = fmt.Errorf("withdrawal list %s: %w", url, err)
+		return nil, d.lists[mirror]
+	}
+	var list withdrawnList
+	if err := json.Unmarshal(resp.Body, &list); err != nil {
+		d.lists[mirror] = fmt.Errorf("withdrawal list %s: %w", url, err)
+		return nil, d.lists[mirror]
+	}
+	if list.Version != 1 {
+		d.lists[mirror] = fmt.Errorf("withdrawal list %s: version %d, this pinup reads 1", url, list.Version)
+		return nil, d.lists[mirror]
+	}
+	for _, e := range list.Withdrawn {
+		if e.Package == "" || e.Version == "" {
+			continue
+		}
+		byPkg[e.Package] = append(byPkg[e.Package], e.Withdrawal)
+	}
+	d.withdrawn[mirror] = byPkg
+	return byPkg, nil
 }
 
 // seriesName splits a package name of a series - "kubectl-1.36",

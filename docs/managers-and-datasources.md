@@ -85,6 +85,28 @@ and the security feed goes on naming fixes that are never built
 11.8.9-r1 that does not exist, 2026-09-18). The notice is how that stops
 being invisible.
 
+An apk repository may also publish a withdrawal list at its root,
+`<mirror>/withdrawn.json`, next to the architecture directories:
+
+```json
+{"version": 1, "withdrawn": [{"package": "grafana-alloy", "version": "1.19.2-r6",
+  "ids": ["CVE-2026-33997"], "replacement": "1.20.0-r0", "reason": "fixable HIGH",
+  "date": "2026-09-28T00:00:00Z", "source": "auto"}]}
+```
+
+A withdrawn version is never offered, even while an index still carries
+it. A dependency whose current version is withdrawn is moved off it like
+a security fix: the entry's ids become its advisories, the replacement
+(or, when the repository does not carry it, the newest stable release
+above) is the fix, and the update travels under `vulnerabilityAlerts` -
+its own branch, no release age, no schedule, no dashboard approval, no
+merge request limits. The dashboard line, the plan report and the merge
+request name it as `withdrawn: <ids>, replacement <version>`.
+`vulnerabilityAlerts.enabled: false` turns the move off; the withdrawn
+versions stay out of the releases. A mirror without a list answers 404
+and has none; any other failure to read one is a warning, and the run
+plans as it would without it.
+
 A datasource's failure is a warning on the plan against that dependency,
 never a failed run for the repository.
 

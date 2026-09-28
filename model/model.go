@@ -18,6 +18,7 @@ package model
 
 import (
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -180,6 +181,39 @@ type Advisory struct {
 	Severity  string    `json:"severity,omitempty"`
 	Fixed     string    `json:"fixed,omitempty"`
 	Published time.Time `json:"published,omitzero"`
+	// Withdrawn marks an advisory that is the repository's own withdrawal
+	// of the current version (ReleaseSet.Withdrawn), not a database record.
+	// Fixed is then the replacement.
+	Withdrawn bool `json:"withdrawn,omitempty"`
+}
+
+// WithdrawnNote says why a dependency's current version was withdrawn -
+// "withdrawn: CVE-…, replacement 1.20.0-r0" - or "" when it was not. The
+// dashboard, the plan report and the merge request all name it the same way.
+func (d Dependency) WithdrawnNote() string {
+	var ids []string
+	replacement, found := "", false
+	for _, a := range d.Advisories {
+		if !a.Withdrawn {
+			continue
+		}
+		found = true
+		if a.ID != "withdrawn" {
+			ids = append(ids, a.ID)
+		}
+		replacement = a.Fixed
+	}
+	if !found {
+		return ""
+	}
+	note := "withdrawn"
+	if len(ids) > 0 {
+		note += ": " + strings.Join(ids, ", ")
+	}
+	if replacement != "" {
+		note += ", replacement " + replacement
+	}
+	return note
 }
 
 // NoCustomManager is the CustomManager value for a built-in manager.
@@ -238,6 +272,27 @@ type ReleaseSet struct {
 	// series through its own releases: the name is the series. Set by
 	// datasources whose index carries the whole family (apk).
 	NewerStream *Stream `json:"newerStream,omitempty"`
+	// Withdrawn lists the versions of this package its repository has
+	// withdrawn - a known vulnerability, a broken build - with the
+	// replacement it names. Such a version is never among Releases; a
+	// dependency still on one is moved off it like a security fix. Set by
+	// datasources whose repository publishes a withdrawal list (apk).
+	Withdrawn []Withdrawal `json:"withdrawn,omitempty"`
+	// WithdrawnErr is why the withdrawal list could not be read. It is a
+	// warning, never a failed lookup: without the list the run plans as it
+	// did before there was one.
+	WithdrawnErr string `json:"withdrawnErr,omitempty"`
+}
+
+// Withdrawal is one withdrawn version of a package: the advisory ids that
+// withdrew it, the version to move to instead, and why.
+type Withdrawal struct {
+	Version     string    `json:"version"`
+	IDs         []string  `json:"ids,omitempty"`
+	Replacement string    `json:"replacement,omitempty"`
+	Reason      string    `json:"reason,omitempty"`
+	Date        time.Time `json:"date,omitzero"`
+	Source      string    `json:"source,omitempty"`
 }
 
 // Stream is a sibling package of a higher series and its versions, in

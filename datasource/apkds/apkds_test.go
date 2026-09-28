@@ -41,14 +41,31 @@ func indexOf(t *testing.T, pkgs map[string][]string) []byte {
 	return buf.Bytes()
 }
 
-// mirror serves "/<arch>/APKINDEX.tar.gz" per architecture and counts.
+// mirror serves "/<arch>/APKINDEX.tar.gz" per architecture and counts the
+// index fetches; "/withdrawn.json" is served from withdrawn, a 404 when it
+// is nil, or answered with listStatus.
 type mirror struct {
-	arches map[string][]byte
-	hits   int
-	status int
+	arches     map[string][]byte
+	hits       int
+	status     int
+	withdrawn  []byte
+	listStatus int
+	listHits   int
 }
 
 func (m *mirror) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if strings.HasSuffix(r.URL.Path, "/withdrawn.json") {
+		m.listHits++
+		switch {
+		case m.listStatus != 0:
+			w.WriteHeader(m.listStatus)
+		case m.withdrawn == nil:
+			w.WriteHeader(http.StatusNotFound)
+		default:
+			w.Write(m.withdrawn)
+		}
+		return
+	}
 	m.hits++
 	if m.status != 0 {
 		w.WriteHeader(m.status)
@@ -204,6 +221,69 @@ func TestSeriesNameAndNewerStream(t *testing.T) {
 			t.Errorf("%s: unexpected stream %+v", c.pkg, got)
 		case c.want != "" && (got == nil || got.Package != c.want || len(got.Versions) != c.n):
 			t.Errorf("%s: %+v, want %s with %d versions", c.pkg, got, c.want, c.n)
+		}
+	}
+}
+
+// A repository's withdrawal list (koh wolfi-packages, 2026-09-28): the
+// withdrawn version is not a release even though the index still carries
+// it, the entry travels on the release set, the list is read once per
+// mirror, and a mirror without one (404) is not a failure.
+func TestWithdrawnVersionsLeaveTheReleases(t *testing.T) {
+	own := &mirror{
+		arches: map[string][]byte{
+			"x86_64":  indexOf(t, map[string][]string{"grafana-alloy": {"1.19.2-r6", "1.20.0-r0"}, "other": {"1.0.0-r0"}}),
+			"aarch64": indexOf(t, map[string][]string{"grafana-alloy": {"1.19.2-r6", "1.20.0-r0"}, "other": {"1.0.0-r0"}}),
+		},
+		withdrawn: []byte(`{"version":1,"withdrawn":[{"package":"grafana-alloy","version":"1.19.2-r6","ids":["CVE-2026-33997"],"replacement":"1.20.0-r0","reason":"fixable HIGH","date":"2026-09-28T00:00:00Z","source":"auto"}]}`),
+	}
+	public := &mirror{arches: map[string][]byte{
+		"x86_64":  indexOf(t, map[string][]string{"busybox": {"1.37.0-r0"}}),
+		"aarch64": indexOf(t, map[string][]string{"busybox": {"1.37.0-r0"}}),
+	}}
+	rt := harness.NewRefusingTransport(t).Handle("mirror.example.org", own).Handle("packages.wolfi.dev", public)
+	ds := New("custom.koh-apk", client(rt), View{Mirrors: []string{"https://mirror.example.org", "https://packages.wolfi.dev/os"}, Arches: []string{"x86_64", "aarch64"}})
+	rs, err := ds.Releases(context.Background(), lookup.Ref{Datasource: ds.Name(), PackageName: "grafana-alloy"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rs.Releases) != 1 || rs.Releases[0].Version != "1.20.0-r0" {
+		t.Errorf("releases = %+v, want 1.20.0-r0 alone", rs.Releases)
+	}
+	if len(rs.Withdrawn) != 1 || rs.Withdrawn[0].Version != "1.19.2-r6" || rs.Withdrawn[0].Replacement != "1.20.0-r0" || rs.Withdrawn[0].IDs[0] != "CVE-2026-33997" {
+		t.Errorf("withdrawn = %+v", rs.Withdrawn)
+	}
+	if rs.WithdrawnErr != "" {
+		t.Errorf("a mirror without a list is no error: %q", rs.WithdrawnErr)
+	}
+	if got := versions(t, ds, "other"); len(got) != 1 {
+		t.Errorf("other = %v", got)
+	}
+	if own.listHits != 1 || public.listHits != 1 {
+		t.Errorf("list fetches: own %d, public %d; want 1 and 1", own.listHits, public.listHits)
+	}
+}
+
+// A list that cannot be read is a warning on the release set, never a
+// failed lookup: the releases come back as they would without it.
+func TestUnreadableWithdrawalListIsAWarning(t *testing.T) {
+	for name, m := range map[string]*mirror{
+		"server error": {listStatus: http.StatusInternalServerError},
+		"garbage":      {withdrawn: []byte("{not json")},
+		"new version":  {withdrawn: []byte(`{"version":2,"withdrawn":[]}`)},
+	} {
+		m.arches = map[string][]byte{
+			"x86_64":  indexOf(t, map[string][]string{"grafana-alloy": {"1.19.2-r6"}}),
+			"aarch64": indexOf(t, map[string][]string{"grafana-alloy": {"1.19.2-r6"}}),
+		}
+		rt := harness.NewRefusingTransport(t).Handle("mirror.example.org", m)
+		ds := New("custom.koh-apk", client(rt), View{Mirrors: []string{"https://mirror.example.org"}, Arches: []string{"x86_64", "aarch64"}})
+		rs, err := ds.Releases(context.Background(), lookup.Ref{Datasource: ds.Name(), PackageName: "grafana-alloy"})
+		if err != nil {
+			t.Fatalf("%s: a broken list failed the lookup: %v", name, err)
+		}
+		if rs.WithdrawnErr == "" || len(rs.Releases) != 1 {
+			t.Errorf("%s: err %q, releases %v", name, rs.WithdrawnErr, rs.Releases)
 		}
 	}
 }
