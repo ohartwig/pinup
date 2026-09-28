@@ -1,3 +1,13 @@
+## [0.50.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.9...v0.50.0) (2026-09-28)
+
+### :sparkles: Features
+
+* **apk:** withdrawn versions leave the releases and are moved off like a security fix ([78461e2](https://git.ole-hartwig.eu/pinup/pinup/commit/78461e2931509af506a1addc49a9d1402eba4ced))
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([c6206b6](https://git.ole-hartwig.eu/pinup/pinup/commit/c6206b67d5de4d4061646792973513cf5f56cf02))
+
 ## [0.49.9](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.8...v0.49.9) (2026-09-28)
 
 ### :repeat: Chores
