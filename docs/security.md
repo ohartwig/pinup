@@ -19,7 +19,7 @@ pinup holds, and what a repository can and cannot make the bot do.
 - **Core decides, plugins apply.** A task regenerates a lock or runs a
   command on a checkout it was handed, in a scope it must stay in; one
   path outside the scope discards its whole result.
-- **The stricter of two labels wins.** An analyzer's verdict relaxes an
+- **The stricter of two labels wins, unless a rule trusts the analyzer.** An analyzer's verdict relaxes an
   automerge only where a rule says `trustEffective: true`.
 - **Plugins get no credentials.** A task sees `PATH`, `LANG`, `TZ` and what
   the runner's `PINUP_PLUGIN_ENV` names; never the platform token, never
