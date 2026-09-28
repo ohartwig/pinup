@@ -24,10 +24,10 @@ what they were.
 ## The safety rule
 
 An automerge decision uses the stricter of the two labels unless a rule
-trusts the analyzer. An analyzer may only *relax* a decision where a rule says its word is to be trusted,
-`trustEffective: true`. Without that, an automerge a `matchEffective` rule
-switched on stays off, the request is still opened, and its evidence
-table says why. An analyzer can never make an update stricter than the
+trusts the analyzer. An analyzer may only *relax* a decision where a rule
+says its word is to be trusted, `trustEffective: true`. Without that, an
+automerge a `matchEffective` rule switched on stays off, the request is
+still opened, and its evidence table says why. An analyzer can never make an update stricter than the
 rules already made it, and never fires a rule by being absent: `unknown`
 is not a value `matchEffective` matches.
 
