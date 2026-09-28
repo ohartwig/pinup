@@ -1,3 +1,18 @@
+## [0.49.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.6...v0.49.7) (2026-09-28)
+
+### :memo: Documentation
+
+* stricter-label exception as a §0 note, reflow paragraph ([0290ded](https://git.ole-hartwig.eu/pinup/pinup/commit/0290ded4781feb5df18b9033ef4a6dd6b7386e6c))
+* stricter label wins unless a rule trusts the analyzer ([15f844b](https://git.ole-hartwig.eu/pinup/pinup/commit/15f844b4d7ae28bdf610bed51a330c91c19e35b8))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 3727417 ([1b084d5](https://git.ole-hartwig.eu/pinup/pinup/commit/1b084d50b457263fa6fb5de12e2db2a95834772b))
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([ad55f76](https://git.ole-hartwig.eu/pinup/pinup/commit/ad55f76838e21f10e5a2dc8ff293e5f6a2d56ab6))
+
 ## [0.49.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.5...v0.49.6) (2026-09-27)
 
 ### :bug: Fixes
