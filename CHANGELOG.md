@@ -1,3 +1,9 @@
+## [0.49.8](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.7...v0.49.8) (2026-09-28)
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([c82a4ef](https://git.ole-hartwig.eu/pinup/pinup/commit/c82a4ef13c47b3f73309636872648ca8091fcb9d))
+
 ## [0.49.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.6...v0.49.7) (2026-09-28)
 
 ### :memo: Documentation
