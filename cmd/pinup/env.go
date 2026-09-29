@@ -161,6 +161,12 @@ func firstSet(getenv func(string) string, names ...string) string {
 // "arches": ["x86_64", "aarch64"]}}. They join wire.DefaultApkViews; a
 // name already there is replaced, so an installation with a mirror of
 // Wolfi lists it under custom.wolfi with the public repository.
+//
+// PINUP_WITHDRAWN_IMAGES is the HTTPS URL of the installation's list of
+// withdrawn image versions (withdrawn-images.json). The docker datasource
+// hides those tags and the run moves a dependency still on one like a
+// security fix. A list on the instance's package registry is read with the
+// platform token: its path is one instancePaths allows.
 func datasourceOptions(p platformEnv, getenv func(string) string) (wire.DatasourceOptions, error) {
 	o := wire.DatasourceOptions{GitLabURL: p.gitLabURL()}
 	views, err := apkViews(getenv)
@@ -168,6 +174,12 @@ func datasourceOptions(p platformEnv, getenv func(string) string) (wire.Datasour
 		return o, err
 	}
 	o.ApkViews = views
+	if u := strings.TrimSpace(getenv("PINUP_WITHDRAWN_IMAGES")); u != "" {
+		if !strings.HasPrefix(u, "https://") {
+			return o, fmt.Errorf("PINUP_WITHDRAWN_IMAGES: %q is not an https URL", u)
+		}
+		o.WithdrawnImages = u
+	}
 	if p.Kind != "gitlab" || p.Host == "" || p.Token == "" || p.RegistryHost == "" {
 		return o, nil
 	}

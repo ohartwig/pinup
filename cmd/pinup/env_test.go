@@ -252,6 +252,30 @@ func TestApkViewsFromEnv(t *testing.T) {
 	}
 }
 
+// PINUP_WITHDRAWN_IMAGES names the list of withdrawn image versions; it
+// must be https - the platform token may ride on it - and unset means none.
+func TestWithdrawnImagesFromEnv(t *testing.T) {
+	env := func(v string) func(string) string {
+		return func(k string) string {
+			if k == "PINUP_WITHDRAWN_IMAGES" {
+				return v
+			}
+			return ""
+		}
+	}
+	const u = "https://git.example.test/api/v4/projects/708/packages/generic/withdrawn-images/1/withdrawn-images.json"
+	o, err := datasourceOptions(platformEnv{}, env(u))
+	if err != nil || o.WithdrawnImages != u {
+		t.Errorf("options = %q, %v", o.WithdrawnImages, err)
+	}
+	if o, err := datasourceOptions(platformEnv{}, env("")); err != nil || o.WithdrawnImages != "" {
+		t.Errorf("unset = %q, %v", o.WithdrawnImages, err)
+	}
+	if _, err := datasourceOptions(platformEnv{}, env("http://git.example.test/list.json")); err == nil {
+		t.Error("a plain http list was accepted")
+	}
+}
+
 // The allowlist a postUpgradeTasks command must match is the RUNNER's.
 // resolveConfig resolves the repository's layer whenever the repository
 // carries a configuration file, so reading allowedCommands back out of the

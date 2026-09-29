@@ -255,7 +255,13 @@ var mutators = []mutator{
 		"\t\t\td.VulnerabilityBound = bound\n", "\t\t\t_ = bound\n", []string{"./cmd/pinup/"}, false, ""},
 	{68, "delivery", "the dashboard does not name a withdrawn version", "report/dashboard.go",
 		"\t\t\t\tif note := d.WithdrawnNote(); note != \"\" {", "\t\t\t\tif note := d.WithdrawnNote(); false && note != \"\" {", []string{"./report/"}, false, ""},
-	{69, "sentinel", "a comment changes", "model/model.go",
+	// Withdrawn image versions (2026-09-29): a withdrawn tag leaves the
+	// docker releases, and the runner's list URL reaches the datasource.
+	{69, "lookup", "a withdrawn image tag stays a release", "datasource/dockerds/dockerds.go",
+		"return gone[r.Version] })", "return false && gone[r.Version] })", []string{"./datasource/dockerds/"}, false, ""},
+	{70, "lookup", "PINUP_WITHDRAWN_IMAGES is read and dropped", "cmd/pinup/env.go",
+		"\t\to.WithdrawnImages = u\n", "\t\t_ = u\n", []string{"./cmd/pinup/"}, false, ""},
+	{71, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

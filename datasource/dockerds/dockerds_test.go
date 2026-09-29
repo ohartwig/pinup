@@ -12,8 +12,10 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ohartwig/pinup/fake/harness"
+	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/lookup"
 )
 
@@ -478,6 +480,93 @@ func TestRealmCredentialsAreBoundToRegistryScopeAndTLS(t *testing.T) {
 		}
 		if realm.sawBasic {
 			t.Errorf("%s: the realm saw the credential", tc.name)
+		}
+	}
+}
+
+// listServer serves one withdrawn-images.json (or a status) and counts reads.
+type listServer struct {
+	status int
+	body   []byte
+	hits   int
+}
+
+func (l *listServer) ServeHTTP(w http.ResponseWriter, _ *http.Request) {
+	l.hits++
+	if l.status != 0 {
+		w.WriteHeader(l.status)
+		return
+	}
+	_, _ = w.Write(l.body)
+}
+
+func withdrawnDS(t *testing.T, list *listServer) (*Datasource, lookup.Ref) {
+	t.Helper()
+	registry := &glRegistry{tags: map[string][]string{
+		"devops/images/crowdsec": {"2.8.6", "2.8.9"},
+		"devops/images/other":    {"1.0.0"},
+	}}
+	realm := &glRealm{wantUser: "gitlab-ci-token", wantPass: "glcbt-secret"}
+	rt := harness.NewRefusingTransport(t).
+		Handle("registry.ole-hartwig.eu", registry).
+		Handle("git.ole-hartwig.eu", realm).
+		Handle("lists.example.org", list)
+	creds := func(registry string, realm *url.URL) (string, string, bool) {
+		return "gitlab-ci-token", "glcbt-secret", registry == "registry.ole-hartwig.eu"
+	}
+	hc := httpx.New(httpx.Options{Transport: rt, Now: func() time.Time { return time.Unix(0, 0) }, Sleep: func(time.Duration) {}})
+	ds := New(rt, creds).WithWithdrawals(hc, "https://lists.example.org/withdrawn-images.json")
+	return ds, lookup.Ref{Datasource: Name, PackageName: "registry.ole-hartwig.eu/devops/images/crowdsec"}
+}
+
+// A withdrawn tag leaves the releases and travels as ReleaseSet.Withdrawn,
+// where the run moves a dependency still on it (2026-09-29, crowdsec 2.8.6
+// with CVE-2026-32286 against 2.8.9 without it). Other images keep theirs,
+// and the list is read once.
+func TestWithdrawnImageTagsLeaveTheReleases(t *testing.T) {
+	list := &listServer{body: []byte(`{"version":1,"withdrawn":[{"image":"registry.ole-hartwig.eu/devops/images/crowdsec","version":"2.8.6","digest":"sha256:` + strings.Repeat("a", 64) + `","ids":["CVE-2026-32286"],"replacement":"2.8.9","reason":"fixable HIGH","date":"2026-09-29T00:00:00Z","source":"auto"}]}`)}
+	ds, ref := withdrawnDS(t, list)
+	rs, err := ds.Releases(context.Background(), ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rs.Releases) != 1 || rs.Releases[0].Version != "2.8.9" {
+		t.Errorf("releases = %+v, want 2.8.9 alone", rs.Releases)
+	}
+	if len(rs.Withdrawn) != 1 || rs.Withdrawn[0].Version != "2.8.6" || rs.Withdrawn[0].Replacement != "2.8.9" || rs.Withdrawn[0].IDs[0] != "CVE-2026-32286" {
+		t.Errorf("withdrawn = %+v", rs.Withdrawn)
+	}
+	other, err := ds.Releases(context.Background(), lookup.Ref{Datasource: Name, PackageName: "registry.ole-hartwig.eu/devops/images/other"})
+	if err != nil || len(other.Releases) != 1 || len(other.Withdrawn) != 0 {
+		t.Errorf("other image = %+v, %v", other, err)
+	}
+	if list.hits != 1 {
+		t.Errorf("list read %d times, want once", list.hits)
+	}
+}
+
+// No list published is nothing withdrawn; an unreadable one is a warning on
+// the release set and the releases come back whole.
+func TestWithdrawnImagesListFailures(t *testing.T) {
+	for name, tc := range map[string]struct {
+		list    *listServer
+		wantErr bool
+	}{
+		"absent":       {&listServer{status: http.StatusNotFound}, false},
+		"server error": {&listServer{status: http.StatusInternalServerError}, true},
+		"garbage":      {&listServer{body: []byte("{not json")}, true},
+		"version 2":    {&listServer{body: []byte(`{"version":2,"withdrawn":[]}`)}, true},
+	} {
+		ds, ref := withdrawnDS(t, tc.list)
+		rs, err := ds.Releases(context.Background(), ref)
+		if err != nil {
+			t.Fatalf("%s: the lookup failed: %v", name, err)
+		}
+		if len(rs.Releases) != 2 || len(rs.Withdrawn) != 0 {
+			t.Errorf("%s: releases %+v withdrawn %+v", name, rs.Releases, rs.Withdrawn)
+		}
+		if (rs.WithdrawnErr != "") != tc.wantErr {
+			t.Errorf("%s: WithdrawnErr = %q", name, rs.WithdrawnErr)
 		}
 	}
 }
