@@ -39,8 +39,11 @@ scope. A job token cannot rotate itself.
 
 ## GitHub
 
-Proven against a fake that speaks the API and in a read-only run against
-pinup's own mirror; waiting for its first production repository.
+In production since September 2026 on a first repository: a Helm chart
+whose workflow runs pinup as a GitHub App (`actions/create-github-app-token`),
+opening pull requests without automerge. The dashboard works with such an
+installation token from 0.49.5 on. Automerge on GitHub is proven against a
+fake that speaks the API, not yet in production.
 
 | Variable | |
 |---|---|
