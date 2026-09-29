@@ -11,9 +11,9 @@ requests that say what they bring. The datasources and managers are
 platform-neutral; the platform behind them - where the merge requests, the
 dashboard issue and the project listing live - is an interface with two
 implementations: GitLab, proven in production across an estate of two
-hundred repositories, and GitHub, proven against a fake that speaks the
-API and in a read-only run against this repository's own mirror, waiting
-for its first production repository.
+hundred repositories, and GitHub, in production since September 2026 on
+a first repository (a Helm chart, run as a GitHub App, without
+automerge) and proven against a fake that speaks the API for the rest.
 
 ```text
 config → resolve → checkout → discover → extract → lookup → classify → plan → apply → publish
