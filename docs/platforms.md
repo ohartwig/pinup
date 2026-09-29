@@ -55,7 +55,12 @@ API GitHub offers for it, and "not yet" (nothing to wait for) is told
 apart from "not allowed" (the repository setting), which is reported
 beside the request. git authenticates through the askpass as
 `x-access-token`. The dashboard is the bot's own issue by exact title;
-the issues endpoint's pull requests are left out. Autodiscovery lists
+the issues endpoint's pull requests are left out. A GitHub App
+installation token and a workflow's `GITHUB_TOKEN` have no user - `/user`
+answers 403 - so for them the dashboard is the open issue of that title
+written by a bot account; a person's issue of the same title is never
+taken, and two bot-written issues of the title are an error rather than
+a guess. Autodiscovery lists
 the repositories the token can push to that are not archived.
 
 What GitHub has no equivalent for is said, not faked: a request cannot
