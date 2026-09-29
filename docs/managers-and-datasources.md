@@ -107,6 +107,23 @@ versions stay out of the releases. A mirror without a list answers 404
 and has none; any other failure to read one is a warning, and the run
 plans as it would without it.
 
+Image versions are withdrawn the same way, through one list for the
+installation named by `PINUP_WITHDRAWN_IMAGES` (an https URL; on the
+instance's package registry it is read with the platform token):
+
+```json
+{"version": 1, "withdrawn": [{"image": "registry.example.org/team/images/crowdsec",
+  "version": "2.8.6", "digest": "sha256:...", "ids": ["CVE-2026-32286"],
+  "replacement": "2.8.9", "reason": "fixable HIGH", "date": "2026-09-29T00:00:00Z",
+  "source": "auto"}]}
+```
+
+The docker datasource leaves a withdrawn tag out of the releases, and a
+dependency pinned to one is moved to the replacement exactly as an apk
+dependency is: as a security fix, past schedules and limits - including a
+maintenance window a rule sets for that image. The image is matched by
+registry host and repository path, without tag or digest.
+
 A datasource's failure is a warning on the plan against that dependency,
 never a failed run for the repository.
 

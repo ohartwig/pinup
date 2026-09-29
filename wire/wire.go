@@ -125,6 +125,10 @@ type DatasourceOptions struct {
 	// ApkViews are the apk datasources served natively, by the name the
 	// configuration uses ("custom.wolfi"); nil means DefaultApkViews.
 	ApkViews map[string]apkds.View
+	// WithdrawnImages is the URL of the installation's list of withdrawn
+	// image versions (withdrawn-images.json); empty means none. The docker
+	// datasource reads it through the shared client.
+	WithdrawnImages string
 }
 
 // DefaultApkViews is the one apk view every installation has: the public
@@ -151,7 +155,7 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		"gitlab-packages": gitlabds.New(gitlabds.Packages, client, o.GitLabURL),
 		"github-releases": githubds.New(githubds.Releases, client, ""),
 		"github-tags":     githubds.New(githubds.Tags, client, ""),
-		"docker":          dockerds.New(o.Transport, o.RegistryCredentials),
+		"docker":          docker(client, o),
 		"packagist":       packagist.New(client),
 		"npm":             npmds.New(client),
 		// Renovate's default registry; the estate's terraform manager
@@ -179,6 +183,16 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 		r[name] = ds
 	}
 	return r
+}
+
+// docker is the registry datasource, reading the installation's withdrawal
+// list where one is named.
+func docker(client *httpx.Client, o DatasourceOptions) *dockerds.Datasource {
+	d := dockerds.New(o.Transport, o.RegistryCredentials)
+	if o.WithdrawnImages != "" && client != nil {
+		d.WithWithdrawals(client, o.WithdrawnImages)
+	}
+	return d
 }
 
 // DatasourceNames lists the names Datasources would register for a

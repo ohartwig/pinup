@@ -290,3 +290,4 @@ platform token is never sent to a URL a repository configuration names
 | `PINUP_RUNNER_PROJECT` | the project repositories extend the runner configuration from |
 | `PINUP_DASHBOARD_TITLE` | the operator's override of `dependencyDashboardTitle`; empty means the configuration names the issue |
 | `PINUP_APK_VIEWS` | apk indexes served natively besides the public Wolfi repository: `{"custom.<name>": {"mirrors": [...], "arches": [...]}}`; each mirror's `withdrawn.json` is read too (see managers-and-datasources.md) |
+| `PINUP_WITHDRAWN_IMAGES` | https URL of the installation's `withdrawn-images.json`: withdrawn image tags leave the docker releases, and a dependency on one is moved to the replacement as a security fix (see managers-and-datasources.md) |

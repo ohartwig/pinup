@@ -26,6 +26,22 @@
 // fixed ReqOptions. Rather than bend httpx to a shape it was not designed for,
 // this package takes an http.RoundTripper directly (so tests can still use
 // fake/harness) and does its own minimal, context-aware GET.
+//
+// # Withdrawn image versions
+//
+// An installation may publish the image versions it has withdrawn - a
+// fixable vulnerability the newest tag of the series no longer carries
+// (koh gitlab-housekeeping withdrawn-images.json, 2026-09-29):
+//
+//	{"version":1,"withdrawn":[{"image":"registry.ole-hartwig.eu/devops/images/crowdsec",
+//	  "version":"2.8.6","digest":"sha256:...","ids":["CVE-2026-32286"],
+//	  "replacement":"2.8.9","reason":"...","date":"2026-09-29T00:00:00Z","source":"auto"}]}
+//
+// WithWithdrawals names that list. A withdrawn tag leaves the releases and
+// is reported in ReleaseSet.Withdrawn, from where the run moves a
+// dependency still on it the way it moves one off an apk version withdrawn
+// by its repository. The list is plain HTTPS through the shared client, so
+// a list on the instance is read with the platform token's host rule.
 package dockerds
 
 import (
@@ -34,13 +50,16 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 
+	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
 )
@@ -94,6 +113,75 @@ type Datasource struct {
 
 	mu     sync.Mutex
 	tokens map[tokenKey]string
+
+	// The withdrawal list, when one is named: fetched once per process,
+	// under its own lock so a slow list never holds up the token cache.
+	listMu     sync.Mutex
+	listClient *httpx.Client
+	listURL    string
+	listRead   bool
+	listByImg  map[string][]model.Withdrawal
+	listErr    error
+}
+
+// WithWithdrawals makes Releases leave out the tags the list at url
+// withdraws and report them in ReleaseSet.Withdrawn. The list is fetched
+// once, through client; a 404 means nothing is withdrawn, any other
+// failure is ReleaseSet.WithdrawnErr - a warning, never a failed lookup.
+func (d *Datasource) WithWithdrawals(client *httpx.Client, url string) *Datasource {
+	d.listClient, d.listURL = client, url
+	return d
+}
+
+// withdrawnImages is withdrawn-images.json as an installation publishes it.
+type withdrawnImages struct {
+	Version   int `json:"version"`
+	Withdrawn []struct {
+		model.Withdrawal `json:",inline"`
+		Image            string `json:"image"`
+	} `json:"withdrawn"`
+}
+
+// imageKey is a registry image without scheme or tag: the form the list
+// names an image in.
+func imageKey(registry, repository string) string {
+	host := strings.TrimPrefix(strings.TrimPrefix(registry, "https://"), "http://")
+	return strings.TrimRight(host, "/") + "/" + strings.Trim(repository, "/")
+}
+
+func (d *Datasource) withdrawals(ctx context.Context) (map[string][]model.Withdrawal, error) {
+	d.listMu.Lock()
+	defer d.listMu.Unlock()
+	if d.listRead {
+		return d.listByImg, d.listErr
+	}
+	d.listRead = true
+	d.listByImg = map[string][]model.Withdrawal{}
+	resp, err := d.listClient.Get(ctx, d.listURL, httpx.ReqOptions{})
+	if se, ok := errors.AsType[*httpx.StatusError](err); ok && se.StatusCode == http.StatusNotFound {
+		return d.listByImg, nil
+	}
+	if err != nil {
+		d.listErr = fmt.Errorf("withdrawn images list %s: %w", d.listURL, err)
+		return nil, d.listErr
+	}
+	var list withdrawnImages
+	if err := json.Unmarshal(resp.Body, &list); err != nil {
+		d.listErr = fmt.Errorf("withdrawn images list %s: %w", d.listURL, err)
+		return nil, d.listErr
+	}
+	if list.Version != 1 {
+		d.listErr = fmt.Errorf("withdrawn images list %s: version %d, this pinup reads 1", d.listURL, list.Version)
+		return nil, d.listErr
+	}
+	for _, e := range list.Withdrawn {
+		if e.Image == "" || e.Version == "" {
+			continue
+		}
+		key := strings.TrimSuffix(imageKey(e.Image, ""), "/")
+		d.listByImg[key] = append(d.listByImg[key], e.Withdrawal)
+	}
+	return d.listByImg, nil
 }
 
 // New returns a Datasource that dials the registry (and any token realm)
@@ -183,6 +271,22 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		}
 		seen[t] = true
 		rs.Releases = append(rs.Releases, model.Release{Version: t})
+	}
+	if d.listURL == "" {
+		return rs, nil
+	}
+	list, err := d.withdrawals(ctx)
+	if err != nil {
+		rs.WithdrawnErr = err.Error()
+		return rs, nil
+	}
+	if ws := list[imageKey(registry, repository)]; len(ws) > 0 {
+		gone := make(map[string]bool, len(ws))
+		for _, w := range ws {
+			gone[w.Version] = true
+		}
+		rs.Withdrawn = ws
+		rs.Releases = slices.DeleteFunc(rs.Releases, func(r model.Release) bool { return gone[r.Version] })
 	}
 	return rs, nil
 }
