@@ -1,3 +1,9 @@
+## [0.51.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.50.0...v0.51.0) (2026-09-29)
+
+### :sparkles: Features
+
+* **dockerds:** withdrawn image versions leave the releases ([6697413](https://git.ole-hartwig.eu/pinup/pinup/commit/669741384a2f68a2e4fed2ba3e82fb398d4eb15f))
+
 ## [0.50.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.49.9...v0.50.0) (2026-09-28)
 
 ### :sparkles: Features
