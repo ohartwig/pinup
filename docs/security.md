@@ -182,6 +182,18 @@ possible with the explicit word `none`.
 A branch somebody else committed to is theirs: the run neither rebuilds
 it nor closes its request, and says whose it is.
 
+## Withdrawn versions
+
+A package source may withdraw a version: an apk repository through
+`withdrawn.json` at its root, container images through the list named
+by `PINUP_WITHDRAWN_IMAGES` (formats in
+[managers-and-datasources.md](managers-and-datasources.md)). pinup never
+offers a withdrawn version, and a dependency that currently sits on one
+is moved to the replacement as a security fix - no release age, no
+schedule, no dashboard approval, no request limit - with the withdrawal
+and its advisory ids named in the plan, the dashboard and the request.
+A list that cannot be read is a warning; the run goes on without it.
+
 ## Reporting
 
 Security reports to the address in `SECURITY.md` of the repository.
