@@ -462,7 +462,8 @@ func (r *whatifRun) configure() error {
 		plan.Warnings = append(plan.Warnings, model.Warning{Stage: "config", Msg: w})
 	}
 	plan.Limits = model.Limits{PRHourlyLimit: intOf(resolved.Raw["prHourlyLimit"]), PRConcurrentLimit: intOf(resolved.Raw["prConcurrentLimit"]),
-		PRConcurrentLimitIgnoreLabels: stringsOf(resolved.Raw["prConcurrentLimitIgnoreLabels"])}
+		PRConcurrentLimitIgnoreLabels: stringsOf(resolved.Raw["prConcurrentLimitIgnoreLabels"]),
+		RebaseWhen:                    rebaseWhenOf(resolved.Raw["rebaseWhen"])}
 	plan.Branching = model.Branching{Prefix: stringOf(resolved.Raw["branchPrefix"]), PrefixOld: stringOf(resolved.Raw["branchPrefixOld"])}
 	if plan.Branching.PrefixOld == plan.Branching.Prefix {
 		plan.Branching.PrefixOld = ""
@@ -1338,6 +1339,16 @@ func customDatasourcesHook(client *httpx.Client, o wire.DatasourceOptions) func(
 }
 
 // intOf reads a JSON number as an int; anything else is zero.
+// rebaseWhenOf keeps rebaseWhen only where it changes what a run does, so a
+// plan names it exactly when it matters: config:recommended sets "auto", and
+// every existing plan would otherwise gain a field that changes nothing.
+func rebaseWhenOf(v any) string {
+	if s := stringOf(v); s == "conflicted" {
+		return s
+	}
+	return ""
+}
+
 func intOf(v any) int {
 	f, ok := v.(float64)
 	if !ok {
