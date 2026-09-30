@@ -779,6 +779,7 @@ type mrJSON struct {
 	// It is what the direct merge below is allowed to act on, rather than
 	// pinup forming its own opinion about a pipeline it did not run.
 	DetailedMergeStatus string    `json:"detailed_merge_status"`
+	HasConflicts        bool      `json:"has_conflicts"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 	MergedAt            time.Time `json:"merged_at"`
@@ -796,6 +797,11 @@ func toPublish(m mrJSON) publish.MergeRequest {
 		SHA:          m.SHA,
 		WebURL:       m.WebURL,
 		Automerge:    m.Automerge,
+		// "ci_still_running" covers a pipeline that is created, pending
+		// or running - measured on devops/koh-gitops!3246 and !3232,
+		// 2026-09-30, both pending behind a runner backlog.
+		PipelineBusy: m.DetailedMergeStatus == "ci_still_running",
+		Conflict:     m.HasConflicts || m.DetailedMergeStatus == "conflict",
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,
 	}

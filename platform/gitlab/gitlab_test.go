@@ -57,6 +57,7 @@ type fakeMR struct {
 	// a 2xx and changes nothing - the shape a 2xx that is not taken at its
 	// word has to be tested against.
 	acceptsButIgnores    bool
+	hasConflicts         bool
 	createdAt, updatedAt time.Time
 	mergedAt             time.Time
 }
@@ -66,8 +67,8 @@ func (m *fakeMR) toJSON() mrJSON {
 		IID: m.iid, State: m.state, SourceBranch: m.sourceBranch, TargetBranch: m.targetBranch,
 		Title: m.title, Description: m.description, Labels: append([]string(nil), m.labels...),
 		SHA: cmp.Or(m.recordedSHA, m.sha), WebURL: m.webURL, Automerge: m.automerge,
-		DetailedMergeStatus: m.detailedMergeStatus,
-		CreatedAt:           m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
+		DetailedMergeStatus: m.detailedMergeStatus, HasConflicts: m.hasConflicts,
+		CreatedAt: m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
 	}
 }
 
@@ -573,6 +574,34 @@ func TestFindMergeRequestReturnsOnlyTheOpenedOne(t *testing.T) {
 	}
 	if !ok || mr.IID != 3 || mr.State != "opened" {
 		t.Errorf("got mr=%+v ok=%v, want the opened one (iid 3)", mr, ok)
+	}
+}
+
+// The runner leaves a branch alone while its pipeline runs, unless it
+// conflicts; both facts come from the list payload, without another call.
+func TestFindMergeRequestReportsPipelineAndConflict(t *testing.T) {
+	for _, tc := range []struct {
+		status             string
+		conflicts          bool
+		wantBusy, wantConf bool
+	}{
+		{status: "ci_still_running", wantBusy: true},
+		{status: "mergeable"},
+		{status: "ci_must_pass"},
+		{status: "conflict", wantConf: true},
+		{status: "ci_still_running", conflicts: true, wantBusy: true, wantConf: true},
+	} {
+		pf, srv, _ := newFixture(t, "")
+		proj := srv.addProject("group/proj", "main")
+		proj.mrs = []*fakeMR{{iid: 1, state: "opened", sourceBranch: "pinup/x", detailedMergeStatus: tc.status, hasConflicts: tc.conflicts, createdAt: fixedTime(1), updatedAt: fixedTime(1)}}
+		proj.nextIID = 1
+		mr, ok, err := pf.FindMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, "pinup/x")
+		if err != nil || !ok {
+			t.Fatalf("%s: ok=%v err=%v", tc.status, ok, err)
+		}
+		if mr.PipelineBusy != tc.wantBusy || mr.Conflict != tc.wantConf {
+			t.Errorf("%s/%v: busy=%v conflict=%v, want %v/%v", tc.status, tc.conflicts, mr.PipelineBusy, mr.Conflict, tc.wantBusy, tc.wantConf)
+		}
 	}
 }
 

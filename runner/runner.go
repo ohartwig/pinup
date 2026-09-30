@@ -180,7 +180,18 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			}
 		}
 
-		sha, pushed, err := pushBranch(ctx, o, b)
+		// A branch whose pipeline is still queued or running, that merges
+		// cleanly, and whose own files are unchanged is not rebuilt just
+		// because the base moved: every push restarts that pipeline and
+		// cancels the armed automerge. Measured on devops/koh-gitops,
+		// 2026-09-29/30: !3246 and !3232 were rebased by every run on a
+		// base that moves hourly, lost their automerge each time, never
+		// finished a pipeline behind a runner backlog, and held eighteen
+		// other updates at the concurrent limit. Merging with a merge
+		// commit does not need the branch to be current; a conflict, a
+		// changed edit or the dashboard's rebase box still pushes.
+		keep := hasMR && mr.PipelineBusy && !mr.Conflict
+		sha, pushed, err := pushBranch(ctx, o, b, keep)
 		if err != nil {
 			outcomes = append(outcomes, fail(plan, b, "push", err))
 			continue
@@ -235,6 +246,18 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 				continue
 			}
 			mr = updated
+			// GitLab cancels an armed automerge on every push, and cannot
+			// arm it again before the new head has a pipeline. The same
+			// wait as for a new request, or the branch stays unarmed
+			// until a run that happens not to push.
+			if pushed && req.Automerge && !mr.Automerge && mr.State != "merged" && mr.AutomergeRefused == "" {
+				var armed bool
+				mr, armed = armNew(ctx, o, mr, req)
+				if !armed && mr.AutomergeRefused == "" {
+					plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
+						"%s: !%d pushed, automerge not armed again yet - GitLab had no pipeline to wait for within %s; the next run arms it", b.Name, mr.IID, armWindow)})
+				}
+			}
 			action := "unchanged"
 			if pushed || len(changed) > 0 {
 				action = "updated"
@@ -431,7 +454,7 @@ const (
 	armWindow = armWaits * armWait
 )
 
-// armNew arms automerge on a request this run just opened. The call that
+// armNew arms automerge on a request this run just opened or pushed to. The call that
 // creates it asks too, but GitLab cannot arm a request whose pipeline does
 // not exist yet: it answers "not yet", and the request used to wait for the
 // next run - four hours since the waves went four-hourly. Measured on
@@ -513,14 +536,16 @@ func createWithRetry(ctx context.Context, o Options, req publish.Request) (publi
 }
 
 // pushBranch rebuilds the branch from the base, writes the edits, commits,
-// and pushes when the result differs from what the remote holds. It
-// returns the branch head and whether anything was pushed.
+// and pushes when the result differs from what the remote holds. With keep
+// set, a result that differs from the remote only outside the branch's own
+// files is not pushed either. It returns the branch head and whether
+// anything was pushed.
 //
 // The branch is rebuilt rather than continued because the plan's edits are
 // relative to the base: applying them on top of last run's branch would
 // find the bytes already changed. A branch that carries a person's
 // commits is not rebuilt - it is theirs now - and the run says so.
-func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, error) {
+func pushBranch(ctx context.Context, o Options, b *model.Branch, keep bool) (string, bool, error) {
 	before, existed, err := o.Repo.RemoteBranch(ctx, o.Remote, b.Name)
 	if err != nil {
 		return "", false, err
@@ -596,6 +621,16 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch) (string, bool, 
 			// Last run's branch already holds these bytes on the current
 			// base; nothing to push.
 			return before, false, nil
+		}
+		if keep {
+			current, err := o.Repo.SamePaths(ctx, sha, o.Remote+"/"+b.Name, paths...)
+			if err != nil {
+				return "", false, err
+			}
+			if current {
+				// Only the base moved; the pipeline on the branch goes on.
+				return before, false, nil
+			}
 		}
 	}
 	lease := ""
