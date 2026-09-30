@@ -1,3 +1,14 @@
+## [0.51.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.51.0...v0.51.1) (2026-09-30)
+
+### :bug: Fixes
+
+* **runner:** keep automerge across a moved base ([b46205a](https://git.ole-hartwig.eu/pinup/pinup/commit/b46205a261996a0719cbba9d87c4af56df96beec))
+
+### :memo: Documentation
+
+* GitHub runs in production, not only against the fake ([19e6aef](https://git.ole-hartwig.eu/pinup/pinup/commit/19e6aef074facccc79796971095d3cd6dd7f46cc))
+* narrowed runs, GitHub bot tokens and withdrawn versions as they now behave ([688b474](https://git.ole-hartwig.eu/pinup/pinup/commit/688b4744cae1f6f862882b950b948283770b4ff4)) ([!72](https://git.ole-hartwig.eu/pinup/pinup/merge_requests/72), [!71](https://git.ole-hartwig.eu/pinup/pinup/merge_requests/71), [!78](https://git.ole-hartwig.eu/pinup/pinup/merge_requests/78), [!80](https://git.ole-hartwig.eu/pinup/pinup/merge_requests/80))
+
 ## [0.51.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.50.0...v0.51.0) (2026-09-29)
 
 ### :sparkles: Features
