@@ -1,3 +1,9 @@
+## [0.52.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.51.1...v0.52.0) (2026-09-30)
+
+### :sparkles: Features
+
+* **runner:** honour rebaseWhen conflicted ([0ccb248](https://git.ole-hartwig.eu/pinup/pinup/commit/0ccb2487dc418122b260569cdf327772ffe56dec))
+
 ## [0.51.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.51.0...v0.51.1) (2026-09-30)
 
 ### :bug: Fixes
