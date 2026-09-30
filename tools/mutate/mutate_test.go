@@ -1,10 +1,11 @@
 // SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 // SPDX-License-Identifier: Apache-2.0
 
-// Package mutate is the mutation suite (H.7): thirty-seven named, deterministic
-// breakages of the code, one per gate, each of which the tests of its
-// layer must catch - and one deliberately undetectable change, reported as
-// exactly that, so the suite proves it can tell the two apart.
+// Package mutate is the mutation suite (H.7): named, deterministic breakages
+// of the code, one per gate, each of which the tests of its layer must catch
+// - and one deliberately undetectable change, reported as exactly that, so
+// the suite proves it can tell the two apart. The count is not written here:
+// it said thirty-seven long after the table had passed seventy.
 //
 // A gate that has never been seen red is not known to gate
 // (gitlab-profile/engineering/gates-that-did-not-gate.md). This is where
