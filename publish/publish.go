@@ -43,8 +43,13 @@ type MergeRequest struct {
 	// a request that asked for it - the bot may not merge in this
 	// project - so the run can report it beside the request it did open.
 	AutomergeRefused string
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
+	// PipelineBusy: the platform says the head's pipeline is still queued
+	// or running. Conflict: the branch no longer merges into its target.
+	// Both false when the platform does not say.
+	PipelineBusy bool
+	Conflict     bool
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 // Request is what a branch wants its merge request to look like.

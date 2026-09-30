@@ -145,7 +145,7 @@ unsupported means nothing reads it and the run says so.
 | `matchSourceUrls` | partial: the URL as the datasource reported it |
 | `postUpdateOptions` | partial: `gomodTidy` is what the gomod lock refresh does anyway; the others are unread |
 | `prCreation` | partial: `immediate` only; the not-pending deadlock is gone by design |
-| `rebaseWhen` | partial: a branch with foreign commits is left alone; otherwise rebased on conflict |
+| `rebaseWhen` | partial: a branch with foreign commits is left alone. Otherwise a branch is rebuilt on the current base when the base moved, except while its pipeline is still queued or running and it merges cleanly: then only a changed edit, a conflict or the dashboard's rebase box pushes. After every push automerge is armed again, since GitLab cancels it on a push |
 | `separateMinorPatch` | partial: read into the template variables; `separateMajorMinor` decides |
 | `separateMultipleMajor` | partial: read into the template variables; `separateMajorMinor` decides |
 | `separateMultipleMinor` | partial: read into the template variables; `separateMajorMinor` decides |

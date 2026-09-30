@@ -261,7 +261,13 @@ var mutators = []mutator{
 		"return gone[r.Version] })", "return false && gone[r.Version] })", []string{"./datasource/dockerds/"}, false, ""},
 	{70, "lookup", "PINUP_WITHDRAWN_IMAGES is read and dropped", "cmd/pinup/env.go",
 		"\t\to.WithdrawnImages = u\n", "\t\t_ = u\n", []string{"./cmd/pinup/"}, false, ""},
-	{71, "sentinel", "a comment changes", "model/model.go",
+	// Automerge that survives the base moving (2026-09-30): a busy branch is
+	// not rebuilt for a moved base, and a push arms automerge again.
+	{71, "delivery", "a busy branch is rebased for a moved base", "runner/runner.go",
+		"\t\tkeep := hasMR && mr.PipelineBusy && !mr.Conflict\n", "\t\tkeep := false && hasMR && mr.PipelineBusy && !mr.Conflict\n", []string{"./runner/"}, false, ""},
+	{72, "delivery", "a push leaves automerge disarmed", "runner/runner.go",
+		"\t\t\tif pushed && req.Automerge && !mr.Automerge", "\t\t\tif false && pushed && req.Automerge && !mr.Automerge", []string{"./runner/"}, false, ""},
+	{73, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 

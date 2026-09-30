@@ -384,6 +384,15 @@ func (r *Repo) SameTree(ctx context.Context, a, b string) (bool, error) {
 	return ta == tb, nil
 }
 
+// SamePaths reports whether two commits hold identical content at paths.
+func (r *Repo) SamePaths(ctx context.Context, a, b string, paths ...string) (bool, error) {
+	out, err := r.run(ctx, append([]string{"diff", "--name-only", a, b, "--"}, paths...)...)
+	if err != nil {
+		return false, err
+	}
+	return out == "", nil
+}
+
 // Status returns the porcelain status, empty when the tree is clean.
 func (r *Repo) Status(ctx context.Context) (string, error) {
 	return r.run(ctx, "status", "--porcelain")

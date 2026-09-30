@@ -225,6 +225,125 @@ func TestAutomergeIsArmedOnThePushedHeadOnceThePlatformHasSeenIt(t *testing.T) {
 	}
 }
 
+// moveBase commits an unrelated file to main on the remote: the base moves
+// under an open branch without touching its files.
+func moveBase(t *testing.T, remote, name string) {
+	t.Helper()
+	dir := filepath.Join(t.TempDir(), "mover")
+	mustGit(t, filepath.Dir(dir), "clone", "--quiet", remote, dir)
+	os.WriteFile(filepath.Join(dir, name), []byte(name+"\n"), 0o644)
+	mustGit(t, dir, "add", name)
+	mustGit(t, dir, "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "move "+name)
+	mustGit(t, dir, "push", "--quiet", "origin", "main")
+}
+
+// A branch whose pipeline is still running is not rebuilt only because the
+// base moved: each push restarts the pipeline and cancels the automerge.
+// Measured on devops/koh-gitops!3246 and !3232, 2026-09-29/30: rebased by
+// every run, never merged, eighteen updates held at the concurrent limit.
+func TestABusyBranchIsNotRebasedForAMovedBase(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		busy       bool
+		conflict   bool
+		rebase     bool
+		newVersion string
+		wantPushed bool
+	}{
+		{name: "busy, base moved: kept", busy: true},
+		{name: "idle, base moved: rebased", wantPushed: true},
+		{name: "busy but conflicting: rebased", busy: true, conflict: true, wantPushed: true},
+		{name: "busy, the dashboard asks: rebased", busy: true, rebase: true, wantPushed: true},
+		{name: "busy, the edit changed: pushed", busy: true, newVersion: "3.22", wantPushed: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			remote, repo := fixture(t)
+			pf := &platformfake.Platform{}
+			ctx := t.Context()
+			branch := model.Branch{
+				Name: "renovate/alpine-3.x", Title: "chore(deps): update alpine docker tag to v3.21",
+				UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}, Automerge: true,
+			}
+			p := plan(branch)
+			outs, err := Execute(ctx, p, options(repo, pf))
+			if err != nil || len(outs) != 1 || outs[0].Action != "created" {
+				t.Fatalf("first run: %+v %v", outs, err)
+			}
+			first := outs[0].SHA
+
+			moveBase(t, remote, "README")
+			pf.MRs[0].PipelineBusy, pf.MRs[0].Conflict = tc.busy, tc.conflict
+
+			repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), git.CloneOptions{}, testEnv)
+			repo2.Env = testEnv
+			p2 := plan(p.Branches[0])
+			p2.Branches[0].Existing = nil
+			if tc.newVersion != "" {
+				p2.Branches[0].Edits = []model.Edit{edit("3.20", tc.newVersion)}
+			}
+			o := options(repo2, pf)
+			if tc.rebase {
+				o.Rebase = map[string]bool{branch.Name: true}
+			}
+			outs, err = Execute(ctx, p2, o)
+			if err != nil || len(outs) != 1 {
+				t.Fatalf("second run: %+v %v", outs, err)
+			}
+			head, _, _ := repo2.RemoteBranch(ctx, "origin", branch.Name)
+			pushed := head != first
+			if pushed != tc.wantPushed {
+				t.Errorf("pushed %v, want %v (outcome %+v)", pushed, tc.wantPushed, outs[0])
+			}
+			if !tc.wantPushed && outs[0].Action != "unchanged" {
+				t.Errorf("a kept branch reads as %q, want unchanged", outs[0].Action)
+			}
+		})
+	}
+}
+
+// GitLab cancels an armed automerge on every push and cannot arm it again
+// before the new head has a pipeline. A pushed request is armed with the
+// same wait as a new one, not left for a run that happens not to push.
+func TestAutomergeIsArmedAgainAfterAPush(t *testing.T) {
+	remote, repo := fixture(t)
+	pf := &platformfake.Platform{}
+	ctx := t.Context()
+	branch := model.Branch{
+		Name: "renovate/alpine-3.x", Title: "chore(deps): update alpine docker tag to v3.21",
+		UpdateKeys: []string{"Containerfile|alpine|3.20"}, Edits: []model.Edit{edit("3.20", "3.21")}, Automerge: true,
+	}
+	p := plan(branch)
+	if _, err := Execute(ctx, p, options(repo, pf)); err != nil {
+		t.Fatal(err)
+	}
+	// The push below cancels it on GitLab; the platform arms again only on
+	// the third request, once the new pipeline exists.
+	pf.MRs[0].Automerge = false
+	pf.ArmAfter = 3
+
+	repo2, _ := git.Clone(ctx, remote, filepath.Join(filepath.Dir(repo.Dir), "work2"), git.CloneOptions{}, testEnv)
+	repo2.Env = testEnv
+	p2 := plan(p.Branches[0])
+	p2.Branches[0].Existing = nil
+	o := options(repo2, pf)
+	o.Rebase = map[string]bool{branch.Name: true}
+	sleeps := 0
+	o.Sleep = func(time.Duration) { sleeps++ }
+	outs, err := Execute(ctx, p2, o)
+	if err != nil || len(outs) != 1 || outs[0].Action != "updated" {
+		t.Fatalf("second run: %+v %v", outs, err)
+	}
+	if !pf.MRs[0].Automerge {
+		t.Errorf("automerge not armed again after the push: %d requests, %d waits", len(pf.Requests), sleeps)
+	}
+	if sleeps != 2 {
+		t.Errorf("waited %d times, want 2", sleeps)
+	}
+	if slices.ContainsFunc(p2.Warnings, func(w model.Warning) bool { return strings.Contains(w.Msg, "not armed again") }) {
+		t.Errorf("armed in time, yet warned: %+v", p2.Warnings)
+	}
+}
+
 func TestHourlyLimitHoldsWithARecord(t *testing.T) {
 	_, repo := fixture(t)
 	pf := &platformfake.Platform{}
