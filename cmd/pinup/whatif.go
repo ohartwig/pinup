@@ -180,6 +180,10 @@ type whatifOptions struct {
 	// Cache is optional; nil means every lookup is cold.
 	Cache    lookup.Cache
 	CacheTTL time.Duration
+	// CacheTTLOwn, when set, is the cache TTL for lookups served by one of
+	// OwnHosts - see lookup.Fetcher.OwnTTL.
+	CacheTTLOwn time.Duration
+	OwnHosts    []string
 	// Presets answers local> presets other than the runner's own file;
 	// nil means only the builtin library is known.
 	Presets preset.Source
@@ -659,7 +663,7 @@ func (r *whatifRun) lookupAll() error {
 	// Every unique (datasource, package, registry) once, however many
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
-	r.fetcher = &lookup.Fetcher{Registry: r.datasources, Cache: o.Cache, TTL: o.CacheTTL, Now: r.now}
+	r.fetcher = &lookup.Fetcher{Registry: r.datasources, Cache: o.Cache, TTL: o.CacheTTL, OwnTTL: o.CacheTTLOwn, OwnHosts: o.OwnHosts, Now: r.now}
 	if o.Released != "" {
 		r.fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}

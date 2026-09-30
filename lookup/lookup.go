@@ -21,7 +21,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/url"
+	"slices"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -130,6 +133,14 @@ type Fetcher struct {
 	Cache Cache
 	TTL   time.Duration
 	Now   time.Time
+	// OwnTTL, when set, replaces TTL for refs served by one of OwnHosts:
+	// the estate's own registries, where the releases a push run or a fast
+	// lane reacts to are made. A long TTL is right for rate-limited public
+	// registries and wrong there - measured 2026-09-30, a project run five
+	// hours after a cached lookup did not see pinup v0.51.1 an hour after
+	// it was published, and the image that ships it waited for the scan.
+	OwnTTL   time.Duration
+	OwnHosts []string
 	// Bypass, when set, names refs whose cached answer is not to be used:
 	// the release fast lane must see the tag that was pushed a minute ago,
 	// not last hour's list. The fresh answer is still written back.
@@ -200,7 +211,7 @@ func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 	key := ref.Key()
 	var stale *model.ReleaseSet
 	if f.Cache != nil && (f.Bypass == nil || !f.Bypass(ref)) {
-		payload, fresh, cerr := f.Cache.GetReleases(key, f.ttl(), f.Now)
+		payload, fresh, cerr := f.Cache.GetReleases(key, f.ttlFor(ref), f.Now)
 		if cerr == nil && payload != nil {
 			var cached model.ReleaseSet
 			if json.Unmarshal(payload, &cached) == nil {
@@ -276,7 +287,7 @@ func (f *Fetcher) Digest(ctx context.Context, d model.Dependency, version string
 	ref := RefOf(d)
 	key := "digest\x00" + ref.Key() + "\x00" + version
 	if f.Cache != nil && (f.Bypass == nil || !f.Bypass(ref)) {
-		if payload, fresh, err := f.Cache.GetReleases(key, f.ttl(), f.Now); err == nil && fresh && len(payload) > 0 {
+		if payload, fresh, err := f.Cache.GetReleases(key, f.ttlFor(ref), f.Now); err == nil && fresh && len(payload) > 0 {
 			return string(payload), nil
 		}
 	}
@@ -308,6 +319,30 @@ func (f *Fetcher) ttl() time.Duration {
 		return f.TTL
 	}
 	return time.Hour
+}
+
+// ttlFor is OwnTTL for a ref served by one of OwnHosts, TTL otherwise.
+func (f *Fetcher) ttlFor(ref Ref) time.Duration {
+	if f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {
+		return f.OwnTTL
+	}
+	return f.ttl()
+}
+
+// servedBy reports whether host serves the ref: named by its registry URL,
+// or leading its package name as a Docker image reference does
+// ("registry.example.org/group/image").
+func (r Ref) servedBy(host string) bool {
+	if host == "" {
+		return false
+	}
+	for _, u := range r.RegistryURLs {
+		if parsed, err := url.Parse(u); err == nil && strings.EqualFold(parsed.Hostname(), host) {
+			return true
+		}
+	}
+	first, _, found := strings.Cut(r.PackageName, "/")
+	return found && strings.EqualFold(first, host)
 }
 
 // recordFirstSeen stamps every release with the moment this cache first

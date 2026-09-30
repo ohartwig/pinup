@@ -59,6 +59,8 @@ func cmdRun(args []string, out, errw io.Writer) error {
 	reportPath := fs.String("report", "", "write the plan as JSON to this path; with several projects a %s in it becomes the project path")
 	cachePath := fs.String("cache", os.Getenv("PINUP_CACHE"), "path of the lookup cache file (bbolt)")
 	cacheTTL := fs.Duration("cache-ttl", time.Hour, "how long a cached lookup counts as fresh")
+	cacheTTLOwn := fs.Duration("cache-ttl-own", 0, "how long a cached lookup counts as fresh when --own-hosts serves it; 0 means --cache-ttl")
+	ownHosts := fs.String("own-hosts", "", "comma-separated hosts of the estate's own registries, for --cache-ttl-own (e.g. git.example.org,registry.example.org)")
 	dryRun := fs.Bool("dry-run", false, "plan only; push nothing, open nothing")
 	baseBranch := fs.String("base", "", "plan and branch from this branch instead of the project's default branch")
 	pkg := fs.String("package", "", "narrow the run to one external package, datasource:name (e.g. npm:lodash), with a fresh lookup for it - the advisory watch's targeted run; with --project or --autodiscover")
@@ -162,7 +164,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		store = s
 	}
 	one := &runOptions{
-		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, dryRun: *dryRun, env: env, pkg: *pkg,
+		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, cacheTTLOwn: *cacheTTLOwn, ownHosts: splitHosts(*ownHosts), dryRun: *dryRun, env: env, pkg: *pkg,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: os.Getenv("PINUP_DASHBOARD_TITLE"),
 		coverage:       *coverage,
@@ -391,6 +393,8 @@ type runOptions struct {
 	runnerProject string
 	cache         lookup.Cache
 	cacheTTL      time.Duration
+	cacheTTLOwn   time.Duration
+	ownHosts      []string
 	dryRun        bool
 	env           platformEnv
 	// client is the one HTTP client every project's lookups share: its
@@ -658,6 +662,8 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		Datasources:   o.datasources,
 		Cache:         o.cache,
 		CacheTTL:      o.cacheTTL,
+		CacheTTLOwn:   o.cacheTTLOwn,
+		OwnHosts:      o.ownHosts,
 		Presets:       preset.Remote{Reader: o.platform, Ctx: ctx, Parse: config.ParsePreset},
 		Released:      o.released,
 		Package:       o.pkg,
@@ -849,4 +855,15 @@ func fetchConfig(ctx context.Context, platform interface {
 		return "", err
 	}
 	return f.Name(), f.Close()
+}
+
+// splitHosts reads --own-hosts: comma-separated, blanks dropped.
+func splitHosts(s string) []string {
+	var hosts []string
+	for h := range strings.SplitSeq(s, ",") {
+		if h = strings.TrimSpace(h); h != "" {
+			hosts = append(hosts, h)
+		}
+	}
+	return hosts
 }

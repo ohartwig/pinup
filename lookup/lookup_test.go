@@ -160,6 +160,43 @@ func TestFreshCacheHitIssuesNoRequest(t *testing.T) {
 	}
 }
 
+// A lookup served by one of the estate's own hosts ages out after OwnTTL,
+// every other one after TTL. Measured 2026-09-30: a project run reused a
+// five-hour-old answer from the estate's own registry and did not see
+// pinup v0.51.1, published an hour before.
+func TestOwnHostsAgeOutAfterOwnTTL(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		dep       model.Dependency
+		wantCalls int
+	}{
+		{name: "image on an own registry", dep: dep("registry.example.org/group/image", "fake"), wantCalls: 2},
+		{name: "package behind an own registry URL", dep: func() model.Dependency {
+			d := dep("group/pkg", "fake")
+			d.RegistryURLs = []string{"https://git.example.org/"}
+			return d
+		}(), wantCalls: 2},
+		{name: "public image", dep: dep("docker.io/library/alpine", "fake"), wantCalls: 1},
+		{name: "own host only as a later path segment", dep: dep("mirror/registry.example.org/image", "fake"), wantCalls: 1},
+		{name: "bare name", dep: dep("alpine", "fake"), wantCalls: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			name := RefOf(tc.dep).PackageName
+			ds := &countingDS{calls: map[string]int{}, releases: map[string][]string{name: {"1.0.0"}}}
+			f := &Fetcher{
+				Registry: Registry{"fake": ds}, Cache: newMemCache(), TTL: 5 * time.Hour, Now: now,
+				OwnTTL: 10 * time.Minute, OwnHosts: []string{"git.example.org", "registry.example.org"},
+			}
+			f.Fetch(t.Context(), []model.Dependency{tc.dep})
+			f.Now = now.Add(30 * time.Minute)
+			f.Fetch(t.Context(), []model.Dependency{tc.dep})
+			if ds.calls[name] != tc.wantCalls {
+				t.Errorf("%d lookups after 30 minutes, want %d", ds.calls[name], tc.wantCalls)
+			}
+		})
+	}
+}
+
 func TestStaleEntryIsRefetchedAndServedOnFailure(t *testing.T) {
 	ds := &countingDS{calls: map[string]int{}, releases: map[string][]string{"a": {"1.0.0"}}}
 	c := newMemCache()

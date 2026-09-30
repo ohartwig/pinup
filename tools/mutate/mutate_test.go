@@ -268,7 +268,13 @@ var mutators = []mutator{
 		"\t\tkeep := hasMR && mr.PipelineBusy && !mr.Conflict\n", "\t\tkeep := false && hasMR && mr.PipelineBusy && !mr.Conflict\n", []string{"./runner/"}, false, ""},
 	{72, "delivery", "a push leaves automerge disarmed", "runner/runner.go",
 		"\t\t\tif pushed && req.Automerge && !mr.Automerge", "\t\t\tif false && pushed && req.Automerge && !mr.Automerge", []string{"./runner/"}, false, ""},
-	{73, "sentinel", "a comment changes", "model/model.go",
+	// Own-host cache TTL (2026-09-30): lookups at the estate's own
+	// registries age out after --cache-ttl-own, not after --cache-ttl.
+	{73, "lookup", "own hosts keep the long cache TTL", "lookup/lookup.go",
+		"\tif f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {", "\tif false && f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {", []string{"./lookup/"}, false, ""},
+	{74, "lookup", "a registry URL does not make a host own", "lookup/lookup.go",
+		"\t\tif parsed, err := url.Parse(u); err == nil && strings.EqualFold(parsed.Hostname(), host) {", "\t\tif parsed, err := url.Parse(u); false && err == nil && strings.EqualFold(parsed.Hostname(), host) {", []string{"./lookup/"}, false, ""},
+	{75, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
