@@ -587,6 +587,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			HourlyLimit:            plan.Limits.PRHourlyLimit,
 			ConcurrentLimit:        plan.Limits.PRConcurrentLimit,
 			ConcurrentIgnoreLabels: plan.Limits.PRConcurrentLimitIgnoreLabels,
+			RebaseWhen:             plan.Limits.RebaseWhen,
 			Now:                    o.now,
 			Prune:                  o.pkg == "" && o.released == "",
 			Tasks:                  plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate, cmp.Or(project, repoDir), o.taskSlots)},

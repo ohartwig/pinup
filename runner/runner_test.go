@@ -241,6 +241,7 @@ func moveBase(t *testing.T, remote, name string) {
 // base moved: each push restarts the pipeline and cancels the automerge.
 // Measured on devops/koh-gitops!3246 and !3232, 2026-09-29/30: rebased by
 // every run, never merged, eighteen updates held at the concurrent limit.
+// rebaseWhen "conflicted" keeps an idle branch too; the other pushes stand.
 func TestABusyBranchIsNotRebasedForAMovedBase(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
@@ -248,6 +249,7 @@ func TestABusyBranchIsNotRebasedForAMovedBase(t *testing.T) {
 		conflict   bool
 		rebase     bool
 		newVersion string
+		rebaseWhen string
 		wantPushed bool
 	}{
 		{name: "busy, base moved: kept", busy: true},
@@ -255,6 +257,11 @@ func TestABusyBranchIsNotRebasedForAMovedBase(t *testing.T) {
 		{name: "busy but conflicting: rebased", busy: true, conflict: true, wantPushed: true},
 		{name: "busy, the dashboard asks: rebased", busy: true, rebase: true, wantPushed: true},
 		{name: "busy, the edit changed: pushed", busy: true, newVersion: "3.22", wantPushed: true},
+		{name: "idle, conflicted, base moved: kept", rebaseWhen: "conflicted"},
+		{name: "idle, conflicted, conflicting: rebased", rebaseWhen: "conflicted", conflict: true, wantPushed: true},
+		{name: "idle, conflicted, the dashboard asks: rebased", rebaseWhen: "conflicted", rebase: true, wantPushed: true},
+		{name: "idle, conflicted, the edit changed: pushed", rebaseWhen: "conflicted", newVersion: "3.22", wantPushed: true},
+		{name: "idle, behind-base-branch, base moved: rebased", rebaseWhen: "behind-base-branch", wantPushed: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			remote, repo := fixture(t)
@@ -282,6 +289,7 @@ func TestABusyBranchIsNotRebasedForAMovedBase(t *testing.T) {
 				p2.Branches[0].Edits = []model.Edit{edit("3.20", tc.newVersion)}
 			}
 			o := options(repo2, pf)
+			o.RebaseWhen = tc.rebaseWhen
 			if tc.rebase {
 				o.Rebase = map[string]bool{branch.Name: true}
 			}

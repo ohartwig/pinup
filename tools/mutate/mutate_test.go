@@ -265,7 +265,7 @@ var mutators = []mutator{
 	// Automerge that survives the base moving (2026-09-30): a busy branch is
 	// not rebuilt for a moved base, and a push arms automerge again.
 	{71, "delivery", "a busy branch is rebased for a moved base", "runner/runner.go",
-		"\t\tkeep := hasMR && mr.PipelineBusy && !mr.Conflict\n", "\t\tkeep := false && hasMR && mr.PipelineBusy && !mr.Conflict\n", []string{"./runner/"}, false, ""},
+		"\t\tkeep := hasMR && !mr.Conflict && (mr.PipelineBusy || o.RebaseWhen == \"conflicted\")\n", "\t\tkeep := false && hasMR && !mr.Conflict && (mr.PipelineBusy || o.RebaseWhen == \"conflicted\")\n", []string{"./runner/"}, false, ""},
 	{72, "delivery", "a push leaves automerge disarmed", "runner/runner.go",
 		"\t\t\tif pushed && req.Automerge && !mr.Automerge", "\t\t\tif false && pushed && req.Automerge && !mr.Automerge", []string{"./runner/"}, false, ""},
 	{73, "sentinel", "a comment changes", "model/model.go",

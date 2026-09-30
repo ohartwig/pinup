@@ -75,6 +75,12 @@ type Options struct {
 	// equals what the remote holds - the dashboard's rebase and retry
 	// boxes.
 	Rebase map[string]bool
+	// RebaseWhen "conflicted" leaves an existing request's branch alone when
+	// only the base moved and it still merges cleanly, whatever its pipeline
+	// is doing. Any other value rebuilds such a branch once its pipeline has
+	// finished. A conflict, a changed edit or the dashboard's rebase box
+	// pushes either way.
+	RebaseWhen string
 
 	Now time.Time
 }
@@ -190,7 +196,13 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		// other updates at the concurrent limit. Merging with a merge
 		// commit does not need the branch to be current; a conflict, a
 		// changed edit or the dashboard's rebase box still pushes.
-		keep := hasMR && mr.PipelineBusy && !mr.Conflict
+		//
+		// rebaseWhen "conflicted" extends that to a finished pipeline. A
+		// rebuild after every merge on the base was a new full pipeline per
+		// open request per merge: on 2026-09-30 devops/koh-gitops ran two to
+		// four 24-job pipelines per bump, and pinup/runner ~1,200 pipelines a
+		// day, while the GitLab server sat at 99 % CPU.
+		keep := hasMR && !mr.Conflict && (mr.PipelineBusy || o.RebaseWhen == "conflicted")
 		sha, pushed, err := pushBranch(ctx, o, b, keep)
 		if err != nil {
 			outcomes = append(outcomes, fail(plan, b, "push", err))

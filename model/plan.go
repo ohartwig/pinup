@@ -244,6 +244,10 @@ type Limits struct {
 	// requests do not count against prConcurrentLimit: requests that wait for
 	// a person by design and would otherwise hold a slot for weeks.
 	PRConcurrentLimitIgnoreLabels []string `json:"prConcurrentLimitIgnoreLabels,omitempty"`
+	// RebaseWhen is the configuration's rebaseWhen when it is "conflicted",
+	// the one value that changes what the run does (runner.Options.RebaseWhen);
+	// empty otherwise.
+	RebaseWhen string `json:"rebaseWhen,omitempty"`
 }
 
 // Sort puts a plan in canonical order. Determinism is asserted rather than
