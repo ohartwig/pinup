@@ -15,6 +15,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -414,4 +415,19 @@ func mustLoad(t *testing.T, path string) map[string]any {
 		t.Fatal(err)
 	}
 	return l.Raw
+}
+
+func TestSplitHostsDropsBlanks(t *testing.T) {
+	for _, tc := range []struct {
+		in   string
+		want []string
+	}{
+		{in: "", want: nil},
+		{in: "git.example.org", want: []string{"git.example.org"}},
+		{in: " git.example.org, ,registry.example.org ,", want: []string{"git.example.org", "registry.example.org"}},
+	} {
+		if got := splitHosts(tc.in); !slices.Equal(got, tc.want) {
+			t.Errorf("splitHosts(%q) = %q, want %q", tc.in, got, tc.want)
+		}
+	}
 }

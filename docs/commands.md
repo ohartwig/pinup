@@ -41,6 +41,7 @@ requests, write the dashboard issue. One of `--repo`, `--project`,
 | `--base` | plan and branch from this branch instead of the project's default branch |
 | `--dry-run` | plan only; push nothing, open nothing - `whatif` with the platform's view of the existing merge requests |
 | `--config`, `--report`, `--cache`, `--cache-ttl` | as for `whatif`; a `%s` in `--report` becomes the project path |
+| `--cache-ttl-own`, `--own-hosts` | a shorter cache TTL for lookups served by the estate's own registries (comma-separated hosts, matched against a registry URL or the first segment of an image name); `0` keeps `--cache-ttl`. A long TTL suits rate-limited public registries; your own releases should be seen within minutes |
 | `--coverage` | scan each checkout for pinned versions nothing updates; the plan records them and the dashboard lists them under "Not updated by anything" (default from `PINUP_COVERAGE`; skipped by `--released` and `--package`) |
 
 Every run also reads the dashboard issue's ticked boxes before it plans,
