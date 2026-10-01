@@ -1,3 +1,10 @@
+## [0.53.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.0...v0.53.0) (2026-10-01)
+
+### :sparkles: Features
+
+* **runner:** honour rebaseWhen conflicted ([0ccb248](https://git.ole-hartwig.eu/pinup/pinup/commit/0ccb2487dc418122b260569cdf327772ffe56dec))
+* **run:** --cache-ttl-own for lookups at the estate's own registries ([b007d51](https://git.ole-hartwig.eu/pinup/pinup/commit/b007d5155375cbf99c1a38e137a3486ce89b97d0))
+
 ## [0.52.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.51.1...v0.52.0) (2026-09-30)
 
 ### :sparkles: Features
