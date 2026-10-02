@@ -1,3 +1,9 @@
+## [0.52.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.1...v0.52.2) (2026-10-02)
+
+### :bug: Fixes
+
+* **publish:** a description the platform did not keep no longer holds the branch ([d879029](https://git.ole-hartwig.eu/pinup/pinup/commit/d879029d691c82fbf8d589597ad3814ebcad3eed))
+
 ## [0.52.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.0...v0.52.1) (2026-10-02)
 
 ### :repeat: Chores
