@@ -272,6 +272,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 
 	fields := map[string]any{}
 	var changed []string
+	descStale := ""
 	if cur.Title != r.Title {
 		fields["title"] = r.Title
 		changed = append(changed, "title")
@@ -300,7 +301,12 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		if _, asked := fields["body"]; asked && strings.TrimSpace(cur.Body) != strings.TrimSpace(r.Description) {
 			stale = append(stale, "description")
 		}
-		if len(stale) > 0 {
+		// The description is reported rather than failed, for the reason
+		// spelled out in platform/gitlab, UpdateMergeRequest.
+		if len(stale) == 1 && stale[0] == "description" {
+			descStale = publish.DescriptionDiff(cur.Body, r.Description)
+			changed = without(changed, "description")
+		} else if len(stale) > 0 {
 			return publish.MergeRequest{}, nil, fmt.Errorf("github: %q #%d accepted the update but still shows the old %s", proj.Path, number, strings.Join(stale, ", "))
 		}
 	}
@@ -353,6 +359,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 	}
 	out := toPublish(cur)
 	out.AutomergeRefused = refused
+	out.DescriptionNotApplied = descStale
 	return out, changed, nil
 }
 
@@ -948,4 +955,15 @@ func apiMessage(body []byte) string {
 		msg = msg[:300] + "…"
 	}
 	return msg
+}
+
+// without returns list minus every occurrence of item.
+func without(list []string, item string) []string {
+	out := list[:0:0]
+	for _, s := range list {
+		if s != item {
+			out = append(out, s)
+		}
+	}
+	return out
 }

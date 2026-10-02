@@ -978,6 +978,28 @@ func TestAChangeGitLabAcceptsButDoesNotApplyIsNotReported(t *testing.T) {
 			t.Errorf("err %v, changed %v: an unapplied title must be an error", err, changed)
 		}
 	})
+	t.Run("description alone is reported, not failed", func(t *testing.T) {
+		p, _, _, mr := setup(t, false)
+		got, changed, err := p.UpdateMergeRequest(ctx, pr, mr.IID, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x", Description: "release notes v2"})
+		if err != nil {
+			t.Fatalf("err %v: a description GitLab did not keep must not fail the branch", err)
+		}
+		if got.DescriptionNotApplied == "" || !strings.Contains(got.DescriptionNotApplied, "first difference") {
+			t.Errorf("DescriptionNotApplied = %q, want where the texts part", got.DescriptionNotApplied)
+		}
+		for _, c := range changed {
+			if c == "description" {
+				t.Errorf("changed %v reports a description the request does not show", changed)
+			}
+		}
+	})
+	t.Run("title with description still fails", func(t *testing.T) {
+		p, _, _, mr := setup(t, false)
+		_, _, err := p.UpdateMergeRequest(ctx, pr, mr.IID, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x to 2", Description: "release notes v2"})
+		if err == nil || !strings.Contains(err.Error(), "still shows the old title") {
+			t.Errorf("err %v: an unapplied title must stay an error", err)
+		}
+	})
 	t.Run("automerge cancellation", func(t *testing.T) {
 		p, _, _, mr := setup(t, true)
 		_, changed, err := p.UpdateMergeRequest(ctx, pr, mr.IID, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"})
