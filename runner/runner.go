@@ -258,6 +258,10 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 				continue
 			}
 			mr = updated
+			if mr.DescriptionNotApplied != "" {
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
+					"%s: !%d kept its old description (%s); title, labels and automerge went ahead", b.Name, mr.IID, mr.DescriptionNotApplied)})
+			}
 			// GitLab cancels an armed automerge on every push, and cannot
 			// arm it again before the new head has a pipeline. The same
 			// wait as for a new request, or the branch stays unarmed

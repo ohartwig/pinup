@@ -780,6 +780,21 @@ func TestAChangeGitHubAcceptsButDoesNotApplyIsNotReported(t *testing.T) {
 			t.Errorf("err %v: an unapplied title must be an error", err)
 		}
 	})
+	t.Run("description alone is reported, not failed", func(t *testing.T) {
+		p, pr, n := setup(t, false)
+		got, changed, err := p.UpdateMergeRequest(ctx, pr, n, publish.Request{Title: "bump x", Description: "release notes v2"})
+		if err != nil {
+			t.Fatalf("err %v: a body GitHub did not keep must not fail the branch", err)
+		}
+		if !strings.Contains(got.DescriptionNotApplied, "first difference") {
+			t.Errorf("DescriptionNotApplied = %q, want where the texts part", got.DescriptionNotApplied)
+		}
+		for _, c := range changed {
+			if c == "description" {
+				t.Errorf("changed %v reports a body the pull request does not show", changed)
+			}
+		}
+	})
 	t.Run("auto-merge disable", func(t *testing.T) {
 		p, pr, n := setup(t, true)
 		if _, _, err := p.UpdateMergeRequest(ctx, pr, n, publish.Request{Title: "bump x"}); err == nil || !strings.Contains(err.Error(), "still armed") {

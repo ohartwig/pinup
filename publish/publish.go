@@ -14,8 +14,37 @@ package publish
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
+	"unicode/utf8"
 )
+
+// DescriptionDiff says where a description the platform shows parts from
+// the one that was sent: both lengths, the byte offset of the first
+// difference and a short quoted window of each side from there. Leading
+// and trailing whitespace are ignored, as in the comparison itself.
+func DescriptionDiff(shown, sent string) string {
+	shown, sent = strings.TrimSpace(shown), strings.TrimSpace(sent)
+	i := 0
+	for i < len(shown) && i < len(sent) && shown[i] == sent[i] {
+		i++
+	}
+	for i > 0 && !utf8.RuneStart(sent[min(i, len(sent)-1)]) {
+		i--
+	}
+	window := func(s string) string {
+		if i >= len(s) {
+			return `""`
+		}
+		end := min(i+48, len(s))
+		for end < len(s) && !utf8.RuneStart(s[end]) {
+			end++
+		}
+		return fmt.Sprintf("%q", s[i:end])
+	}
+	return fmt.Sprintf("shown %d bytes, sent %d, first difference at byte %d: shown %s, sent %s", len(shown), len(sent), i, window(shown), window(sent))
+}
 
 // Project identifies a repository on the platform.
 type Project struct {
@@ -43,6 +72,13 @@ type MergeRequest struct {
 	// a request that asked for it - the bot may not merge in this
 	// project - so the run can report it beside the request it did open.
 	AutomergeRefused string
+	// DescriptionNotApplied is set when the platform accepted a new
+	// description and still shows another one. It is reported, not
+	// failed: the description is text for people, and a failed update
+	// left the branch without its automerge, so a mismatch in prose held
+	// a green request open (devops/wolfi-packages !567, !580, !584,
+	// 2026-09-30). It names where the two texts part, for the next look.
+	DescriptionNotApplied string
 	// PipelineBusy: the platform says the head's pipeline is still queued
 	// or running. Conflict: the branch no longer merges into its target.
 	// Both false when the platform does not say.

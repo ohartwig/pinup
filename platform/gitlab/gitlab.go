@@ -242,7 +242,7 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 
 	fields := map[string]any{}
 	var changed []string
-	refused := ""
+	refused, descStale := "", ""
 	if cur.Title != r.Title {
 		fields["title"] = r.Title
 		changed = append(changed, "title")
@@ -274,8 +274,19 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		// what the request now shows. The same rule the automerge call below
 		// learned on koh-gitops!2808 and !2878, where "[automerge]" stood in
 		// the log for hours for an automerge GitLab had not kept.
+		//
+		// Title and labels still fail the branch. The description does not:
+		// it is prose for the reader, and failing here returned before the
+		// automerge below, so every pushed branch whose text GitLab did not
+		// keep stayed open and green with nothing armed. It is reported
+		// instead, with where the two texts part.
 		if stale := unapplied(cur, r); len(stale) > 0 {
-			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: %q !%d accepted the update but still shows the old %s", proj.Path, iid, strings.Join(stale, ", "))
+			if len(stale) == 1 && stale[0] == "description" {
+				descStale = publish.DescriptionDiff(cur.Description, r.Description)
+				changed = without(changed, "description")
+			} else {
+				return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: %q !%d accepted the update but still shows the old %s", proj.Path, iid, strings.Join(stale, ", "))
+			}
 		}
 	}
 
@@ -316,7 +327,19 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 
 	out := toPublish(cur)
 	out.AutomergeRefused = refused
+	out.DescriptionNotApplied = descStale
 	return out, changed, nil
+}
+
+// without returns list minus every occurrence of item.
+func without(list []string, item string) []string {
+	out := list[:0:0]
+	for _, s := range list {
+		if s != item {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // headFor is the commit automerge is armed for: the head the run pushed
