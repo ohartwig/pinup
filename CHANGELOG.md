@@ -1,3 +1,9 @@
+## [0.52.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.0...v0.52.1) (2026-10-02)
+
+### :repeat: Chores
+
+* **deps:** update alpine + wolfi packages ([be22969](https://git.ole-hartwig.eu/pinup/pinup/commit/be229691374b94d49f826556b73220fb3d4cb1ad))
+
 ## [0.53.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.0...v0.53.0) (2026-10-01)
 
 ### :sparkles: Features
