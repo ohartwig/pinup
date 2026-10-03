@@ -20,7 +20,7 @@ package names the branch moves (or the whole lock for
 | Manager | Command | Scope |
 |---|---|---|
 | composer | `composer update <names> --with-all-dependencies --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs` (without names for maintenance) | `composer.lock` |
-| npm | `npm install --package-lock-only --no-audit --ignore-scripts` | `package-lock.json`, `npm-shrinkwrap.json` |
+| npm | `npm install --package-lock-only --no-audit --ignore-scripts` (`npm update …` for maintenance) | `package-lock.json`, `npm-shrinkwrap.json` |
 | npm (yarn classic) | `yarn install --ignore-scripts --ignore-engines --ignore-platform --non-interactive` (`yarn upgrade …` for maintenance) | `yarn.lock` |
 | npm (pnpm) | `pnpm install --lockfile-only --ignore-scripts --pm-on-fail=warn` (`pnpm update …` for maintenance), at the workspace root | `pnpm-lock.yaml` |
 | gomod | `go mod tidy` | `go.mod`, `go.sum` |
