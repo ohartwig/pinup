@@ -1,3 +1,9 @@
+## [0.52.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.3...v0.52.4) (2026-10-03)
+
+### :bug: Fixes
+
+* **plugin:** npm lock maintenance moves resolutions ([9953f90](https://git.ole-hartwig.eu/pinup/pinup/commit/9953f907ea19317d3304c343a47b95ab6ccb6e5c))
+
 ## [0.52.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.2...v0.52.3) (2026-10-03)
 
 ### :repeat: Continuous Integrations
