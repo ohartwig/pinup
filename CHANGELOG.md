@@ -1,3 +1,9 @@
+## [0.53.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.53.0...v0.53.1) (2026-10-03)
+
+### :bug: Fixes
+
+* **run:** a narrowed run plans an open group branch whole ([6fa54f4](https://git.ole-hartwig.eu/pinup/pinup/commit/6fa54f4f07ccfa1385fcc9129ae835d42f059a2a))
+
 ## [0.52.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.52.3...v0.52.4) (2026-10-03)
 
 ### :bug: Fixes
