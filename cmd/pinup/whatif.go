@@ -8,9 +8,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -404,6 +406,14 @@ type whatifRun struct {
 	// locks maps "manager|dir" to the lock file present there, so the
 	// refresh task and the maintenance branch name the one that exists.
 	locks map[string]string
+	// lockSets are the locks a refresh regenerates, by "manager|path":
+	// every package each one pins, transitive ones included, for the
+	// advisory check on the lock (osvTransitiveAlerts).
+	lockSets map[string]lockSet
+	// transitive are the advisories found on a lock's transitive
+	// packages, by the same key; lockMaintenance turns them into a
+	// security refresh.
+	transitive map[string][]model.Advisory
 	// lockPaths maps "manager|dir" to the path of the lock a manifest's
 	// versions were read from - beside it or, for terraform, an ancestor's
 	// - for the edit that moves the lock with the manifest.
@@ -533,6 +543,7 @@ func (r *whatifRun) extractAll() error {
 	// directory: a manifest edit there needs a lock refresh task.
 	r.locks = map[string]string{}
 	r.lockPaths = map[string]string{}
+	r.lockSets = map[string]lockSet{}
 	r.foreignLocks = map[string]string{}
 	r.releaseAges = map[string]releaseAgeFloor{}
 	for _, match := range r.found.Matches {
@@ -577,12 +588,14 @@ func (r *whatifRun) extractAll() error {
 			// and a task regenerates; a terraform ancestor's lock only says
 			// what is pinned.
 			r.locks[wire.ManagerNameOf(match.Manager)+"|"+filepath.Dir(match.Path)] = lock.name
+			r.addLockSet(wire.ManagerNameOf(match.Manager), lock)
 		} else if lock.versions != nil && wire.ManagerNameOf(match.Manager) == "npm" {
 			// An npm workspace: the root lock is the member's lock, and the
 			// one a refresh regenerates - recorded by its path from the
 			// member, so the task runs where the lock is.
 			if rel, err := filepath.Rel(filepath.Dir(match.Path), lock.dir); err == nil {
 				r.locks["npm|"+filepath.Dir(match.Path)] = filepath.Join(rel, lock.name)
+				r.addLockSet("npm", lock)
 			}
 		}
 		for _, d := range res.Deps {
@@ -685,6 +698,9 @@ func (r *whatifRun) lookupAll() error {
 	r.results = r.fetcher.Fetch(ctx, plan.Deps)
 	if o.Advisories != nil {
 		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
+		var warns []model.Warning
+		r.transitive, warns = checkLockedAdvisories(ctx, o.Advisories, r.resolved.Raw, r.lockSets, plan.Deps, wire.DefaultVersioning(r.datasources))
+		plan.Warnings = append(plan.Warnings, warns...)
 	}
 	// A version its repository withdrew is moved off like an advisory -
 	// after the database, whose bound it may raise. It needs no database:
@@ -743,7 +759,7 @@ func (r *whatifRun) planUpdates() error {
 	// as its own update so the branch Renovate opens for it exists here
 	// too; the branch's task is the toolchain run, and a machine without
 	// the toolchain holds it.
-	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, r.locks)...)
+	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, r.locks, r.transitive)...)
 
 	var named []planner.Named
 	r.postUpgrade = map[string]plugin.PostUpgrade{}
@@ -1134,7 +1150,9 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 				Note: fmt.Sprintf("not armed: %s set it on the analyzer's %s over a declared %s; trustEffective: true would let it", lastWriter(res, "automerge"), u.Effective, u.Declared)})
 		}
 	}
-	if u.SecurityFix {
+	if u.SecurityFix && u.Type == model.UpdateLockFileMaintenance {
+		cfg = securityLockOverlay(cfg)
+	} else if u.SecurityFix {
 		// Measured: a security fix travels under the vulnerabilityAlerts
 		// object - its own branch topic, the security label, no release
 		// age, no schedule, no dashboard approval - forced over whatever
@@ -1792,13 +1810,16 @@ func holdBranch(b *model.Branch, updates []model.Update, block model.Block) {
 
 // lockMaintenance plans the lock-file refreshes lockFileMaintenance asks
 // for: one per (manager, lock file) among the dependencies that carry a
-// locked version, each an update of type lockFileMaintenance.
-func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[string]string) []model.Update {
-	lfm, ok := cfg["lockFileMaintenance"].(map[string]any)
-	if !ok {
-		return nil
+// locked version, each an update of type lockFileMaintenance. A lock whose
+// transitive packages carry advisories gets its refresh as a security fix -
+// planned even where lockFileMaintenance is off, and released from its
+// schedule by the vulnerabilityAlerts keys securityLockOverlay applies.
+func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[string]string, transitive map[string][]model.Advisory) []model.Update {
+	on := false
+	if lfm, ok := cfg["lockFileMaintenance"].(map[string]any); ok {
+		on, _ = lfm["enabled"].(bool)
 	}
-	if enabled, _ := lfm["enabled"].(bool); !enabled {
+	if !on && len(transitive) == 0 {
 		return nil
 	}
 	seen := map[string]bool{}
@@ -1819,14 +1840,160 @@ func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[stri
 			continue
 		}
 		seen[key] = true
+		found := transitive[key]
+		if !on && len(found) == 0 {
+			continue
+		}
 		out = append(out, model.Update{
 			DepKey: "lockFileMaintenance|" + key,
 			Dep: model.Dependency{
 				Manager: d.Manager, File: lock, DepName: "lock file", CustomManager: model.NoCustomManager,
-				Locus: model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest},
+				Locus:      model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest},
+				Advisories: found,
 			},
 			Type: model.UpdateLockFileMaintenance, TimeSource: model.TimeUnknown,
+			SecurityFix: len(found) > 0,
 		})
+	}
+	return out
+}
+
+// lockSet is one lock file a refresh regenerates and every package it pins.
+type lockSet struct {
+	manager, path string
+	versions      map[string]string
+}
+
+// addLockSet records a lock the run read. An npm workspace root is read
+// once per member, each time with that member's view; the union is the
+// lock.
+func (r *whatifRun) addLockSet(manager string, lock lockFile) {
+	path := filepath.Join(lock.dir, lock.name)
+	key := manager + "|" + path
+	ls, ok := r.lockSets[key]
+	if !ok {
+		ls = lockSet{manager: manager, path: path, versions: map[string]string{}}
+	}
+	for name, v := range lock.versions {
+		if _, seen := ls.versions[name]; !seen {
+			ls.versions[name] = v
+		}
+	}
+	r.lockSets[key] = ls
+}
+
+// lockDatasources are the managers whose locks name packages OSV knows:
+// the datasource each locked name is asked under.
+var lockDatasources = map[string]string{"composer": "packagist", "npm": "npm"}
+
+// checkLockedAdvisories asks the advisory database about every package a
+// lock pins that no manifest names - the transitive ones checkAdvisories
+// never sees, because only a dependency is extracted. Until 2026-10-03 a
+// vulnerable transitive composer, pnpm or yarn package left only with the
+// next nightly refresh, and an npm one (whose refresh was a no-op) never.
+// What is found goes on the lock's refresh as a security fix; a fix outside
+// the constraints of whatever requires the package is out of the refresh's
+// reach, so each finding is also a warning, repeated every run while it
+// lasts. Opt-in (osvTransitiveAlerts) under the same switches as the
+// dependency check.
+func checkLockedAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, locks map[string]lockSet, deps []model.Dependency, defaultVersioning func(string) string) (map[string][]model.Advisory, []model.Warning) {
+	if on, _ := cfg["osvTransitiveAlerts"].(bool); !on {
+		return nil, nil
+	}
+	if on, _ := cfg["osvVulnerabilityAlerts"].(bool); !on {
+		return nil, nil
+	}
+	if va, ok := cfg["vulnerabilityAlerts"].(map[string]any); ok {
+		if enabled, ok := va["enabled"].(bool); ok && !enabled {
+			return nil, nil
+		}
+	}
+	direct := map[string]bool{}
+	for _, d := range deps {
+		name := d.PackageName
+		if name == "" {
+			name = d.DepName
+		}
+		direct[d.Manager+"|"+name] = true
+	}
+	type locked struct{ key, name, version string }
+	var queries []osv.Query
+	var at []locked
+	schemes := wire.Versionings()
+	for _, key := range slices.Sorted(maps.Keys(locks)) {
+		ls := locks[key]
+		ds := lockDatasources[ls.manager]
+		if ds == "" {
+			continue
+		}
+		scheme := defaultVersioning(ds)
+		v, err := schemes.Get(scheme)
+		if err != nil {
+			continue
+		}
+		for _, name := range slices.Sorted(maps.Keys(ls.versions)) {
+			version := ls.versions[name]
+			// A branch or a path install (dev-main, a workspace link) is
+			// no version an advisory range can contain.
+			if direct[ls.manager+"|"+name] || !v.IsVersion(version) {
+				continue
+			}
+			queries = append(queries, osv.Query{Datasource: ds, PackageName: name, Version: version, Versioning: scheme})
+			at = append(at, locked{key: key, name: name, version: version})
+		}
+	}
+	if len(queries) == 0 {
+		return nil, nil
+	}
+	findings, err := client.Check(ctx, schemes, queries)
+	if err != nil {
+		return nil, []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; transitive packages are not checked", err)}}
+	}
+	out := map[string][]model.Advisory{}
+	var warns []model.Warning
+	for k, f := range findings {
+		l := at[k]
+		path := locks[l.key].path
+		for _, w := range f.Warnings {
+			warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: l.name + ": " + w})
+		}
+		if len(f.Advisories) == 0 {
+			continue
+		}
+		ids := make([]string, 0, len(f.Advisories))
+		for _, a := range f.Advisories {
+			out[l.key] = append(out[l.key], model.Advisory{
+				ID: a.ID, Aliases: a.Aliases, Summary: a.Summary, Severity: a.Severity, Fixed: a.Fixed, Published: a.Published,
+				Package: l.name, Installed: l.version,
+			})
+			ids = append(ids, a.ID)
+		}
+		fix := "no fixed version"
+		if f.Bound != "" {
+			fix = "fixed in " + f.Bound
+		}
+		warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: fmt.Sprintf(
+			"transitive %s %s: %s (%s); the lock refresh moves it only as far as the constraints that require it allow", l.name, l.version, strings.Join(ids, ", "), fix)})
+	}
+	return out, warns
+}
+
+// securityLockKeys are the vulnerabilityAlerts keys a security lock refresh
+// takes: when it runs and how it is marked. Not the branch topic, the group
+// or the range strategy - the refresh stays the lock's one maintenance
+// branch, the one the nightly refresh already uses.
+var securityLockKeys = []string{"enabled", "schedule", "minimumReleaseAge", "labels", "automerge", "prCreation", "dependencyDashboardApproval", "commitMessageSuffix"}
+
+func securityLockOverlay(cfg map[string]any) map[string]any {
+	out := maps.Clone(cfg)
+	va, ok := cfg["vulnerabilityAlerts"].(map[string]any)
+	if !ok {
+		return out
+	}
+	for _, k := range securityLockKeys {
+		if v, ok := va[k]; ok {
+			out[k] = v
+		}
 	}
 	return out
 }

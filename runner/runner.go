@@ -902,7 +902,9 @@ func noteLinks(u model.Update) string {
 	case n > 1:
 		parts = append(parts, fmt.Sprintf("%d releases", n))
 	}
-	if u.SecurityFix {
+	if u.SecurityFix && u.Type == model.UpdateLockFileMaintenance {
+		parts = append(parts, "security fix: "+transitiveNote(u.Dep.Advisories))
+	} else if u.SecurityFix {
 		if note := u.Dep.WithdrawnNote(); note != "" {
 			parts = append(parts, "security fix ("+note+")")
 		} else {
@@ -910,6 +912,31 @@ func noteLinks(u model.Update) string {
 		}
 	}
 	return strings.Join(parts, ", ")
+}
+
+// transitiveNote names the locked packages a security lock refresh is for:
+// "`a/b` 1.0.0 (GHSA-… fixed in 1.0.1)", one entry per package, each
+// advisory with its own fix, in the order they were found.
+func transitiveNote(advisories []model.Advisory) string {
+	var order []string
+	installed := map[string]string{}
+	ids := map[string][]string{}
+	for _, a := range advisories {
+		if _, ok := installed[a.Package]; !ok {
+			installed[a.Package] = a.Installed
+			order = append(order, a.Package)
+		}
+		id := a.ID
+		if a.Fixed != "" {
+			id += " fixed in " + a.Fixed
+		}
+		ids[a.Package] = append(ids[a.Package], id)
+	}
+	notes := make([]string, 0, len(order))
+	for _, name := range order {
+		notes = append(notes, fmt.Sprintf("`%s` %s (%s)", name, installed[name], strings.Join(ids[name], ", ")))
+	}
+	return strings.Join(notes, "; ")
 }
 
 func short(digest string) string {

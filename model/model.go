@@ -185,6 +185,11 @@ type Advisory struct {
 	// of the current version (ReleaseSet.Withdrawn), not a database record.
 	// Fixed is then the replacement.
 	Withdrawn bool `json:"withdrawn,omitempty"`
+	// Package and Installed name the locked package an advisory was found
+	// on when it is not the dependency itself: a transitive package in the
+	// lock a lock-file refresh moves (osvTransitiveAlerts).
+	Package   string `json:"package,omitempty"`
+	Installed string `json:"installed,omitempty"`
 }
 
 // WithdrawnNote says why a dependency's current version was withdrawn -

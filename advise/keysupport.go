@@ -38,7 +38,7 @@ var KeySupport = map[string]Support{
 	"ignoreUnstable": Supported, "prHourlyLimit": Supported, "prConcurrentLimit": Supported, "prConcurrentLimitIgnoreLabels": Supported, "labels": Supported,
 	"ignoreDeps": Supported, "allowedVersions": Supported, "rangeStrategy": Supported, "separateMajorMinor": Supported,
 	"separateMinorPatch": Partial, "separateMultipleMajor": Partial, "pinDigests": Supported,
-	"lockFileMaintenance": Supported, "osvVulnerabilityAlerts": Supported, "vulnerabilityAlerts": Supported,
+	"lockFileMaintenance": Supported, "osvVulnerabilityAlerts": Supported, "osvTransitiveAlerts": Supported, "vulnerabilityAlerts": Supported,
 	"postUpgradeTasks": Supported, "allowedCommands": Supported,
 	// postUpdateOptions: gomodTidy is what the gomod lock refresh does anyway; the other options are unread.
 	"postUpdateOptions": Partial, "prBodyDefinitions": Supported, "prBodyNotes": Supported, "addLabels": Supported,
