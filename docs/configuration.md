@@ -116,6 +116,7 @@ unsupported means nothing reads it and the run says so.
 | `minimumReleaseAge` | supported; for npm, a release age the project sets for npm, pnpm or yarn is a floor under it ([below](#a-projects-own-release-age)) |
 | `minimumReleaseAgeBehaviour` | supported |
 | `osvVulnerabilityAlerts` | supported |
+| `osvTransitiveAlerts` | pinup's own, off by default: also asks OSV about every package a composer, npm, pnpm or yarn lock pins that no manifest names. A finding makes that lock's refresh a security fix - planned even with `lockFileMaintenance` off, and taking `enabled`, `schedule`, `minimumReleaseAge`, `labels`, `automerge`, `prCreation`, `dependencyDashboardApproval` and `commitMessageSuffix` from `vulnerabilityAlerts` while keeping the maintenance branch. Each finding is also a plan warning, every run while it lasts: a fix outside the constraints of whatever requires the package is out of the refresh's reach. Nested npm copies (`node_modules/a/node_modules/b`) are not read |
 | `packageRules` | supported |
 | `pinDigests` | supported |
 | `platformAutomerge` | supported |
