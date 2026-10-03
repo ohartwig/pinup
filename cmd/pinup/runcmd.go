@@ -314,13 +314,17 @@ func rebaseSet(c report.Checks) map[string]bool {
 // grouped package at all (2026-09-27: structured-content 2.11.3, group
 // "first-party composer packages", waited for the next wave). open is the
 // set of source branches with an open request.
-func holdGroupsInNarrowedRun(o *runOptions, plan *model.Plan, open map[string]bool) {
+//
+// whole names the open group branches widenOpenGroups planned with every
+// member (2026-10-03); they are written. The hold remains for the branches
+// the widening could not plan whole - a failed lookup, a failed plan.
+func holdGroupsInNarrowedRun(o *runOptions, plan *model.Plan, open, whole map[string]bool) {
 	if o.pkg == "" && o.released == "" {
 		return
 	}
 	for i := range plan.Branches {
 		b := &plan.Branches[i]
-		if b.GroupName == "" || b.SuppressedBy != "" || !open[b.Name] {
+		if b.GroupName == "" || b.SuppressedBy != "" || !open[b.Name] || whole[b.Name] {
 			continue
 		}
 		holdBranch(b, plan.Updates, model.Block{
@@ -579,7 +583,9 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 		for _, m := range mrs {
 			open[m.SourceBranch] = true
 		}
-		holdGroupsInNarrowedRun(o, plan, open)
+		var whole map[string]bool
+		plan, whole = widenOpenGroups(ctx, opts, plan, open, errw)
+		holdGroupsInNarrowedRun(o, plan, open, whole)
 	}
 
 	var outcomes []runner.Outcome

@@ -197,6 +197,16 @@ type whatifOptions struct {
 	// external package an advisory names: the same narrowing as Released,
 	// by exact key, for the targeted run the advisory watch starts.
 	Package string
+	// Widen, in a run narrowed by Released or Package, names the open
+	// group branches the run writes whole: planned branch name -> group
+	// name. A dependency the rules may put in one of those groups is
+	// looked up and planned as the full scan would; its update joins the
+	// branch it is named for when that is one of these, and is held
+	// (narrowedRun) when it is not. See widenOpenGroups.
+	Widen map[string]string
+	// widened receives what the widening looked at, for the caller that
+	// decides whether the widened plan may be written.
+	widened *widenOutcome
 	// CustomDatasources builds the datasources a configuration declares;
 	// nil means customDatasources are unknown. wire supplies it.
 	CustomDatasources func(map[string]model.CustomDatasource) lookup.Registry
@@ -425,6 +435,9 @@ type whatifRun struct {
 	// releaseAges maps an npm manifest's directory to the release ages its
 	// project's package managers are told to enforce (releaseAgeFloor).
 	releaseAges map[string]releaseAgeFloor
+	// widened are the dependencies, by index key, a narrowed run plans
+	// because they may belong to a group in Widen.
+	widened map[string]bool
 
 	datasources   lookup.Registry
 	fetcher       *lookup.Fetcher
@@ -511,6 +524,7 @@ func (r *whatifRun) configure() error {
 // manager over it, applying the pre-lookup rules to what comes out.
 func (r *whatifRun) extractAll() error {
 	o, plan, decoded, resolved := r.o, r.plan, r.decoded, r.resolved
+	r.widened = map[string]bool{}
 	// ignoreDeps names dependencies that are never looked up.
 	ignored := map[string]bool{}
 	if list, ok := resolved.Raw["ignoreDeps"].([]any); ok {
@@ -621,13 +635,24 @@ func (r *whatifRun) extractAll() error {
 			if d.SkipReason == "" && ignored[d.DepName] {
 				d.SkipReason = "listed in ignoreDeps"
 			}
-			if o.Released != "" && d.SkipReason == "" && !report.RefersTo(report.Key(d), o.Released) {
+			if r.widens(d, resolved.Raw) {
+				// A member of an open group branch: planned as the full
+				// scan plans it, so the branch is written whole.
+				r.widened[report.Key(d)] = true
+			}
+			if o.Released != "" && d.SkipReason == "" && !r.widened[report.Key(d)] && !report.RefersTo(report.Key(d), o.Released) {
 				d.SkipReason = "not the released package " + o.Released + "; the scheduled run covers it"
 			}
-			if o.Package != "" && d.SkipReason == "" && report.Key(d) != o.Package {
+			if o.Package != "" && d.SkipReason == "" && !r.widened[report.Key(d)] && report.Key(d) != o.Package {
 				d.SkipReason = "not the package " + o.Package + " this run is for; the scheduled run covers it"
 			}
+			before := report.Key(d)
 			d = applyDepRules(r.engine, resolved.Raw, d)
+			if r.widened[before] {
+				// A rule may move the lookup elsewhere (packageName); the
+				// update and the lookup answer under the key it moved to.
+				r.widened[report.Key(d)] = true
+			}
 			if f, ok := r.releaseAgeFor(d.Manager, d.File, d.DepName, ""); ok && d.InternalChecksFilter != "" {
 				// strict and flexible choose among releases old enough;
 				// old enough is what the package manager will install, too.
@@ -678,10 +703,13 @@ func (r *whatifRun) lookupAll() error {
 	// dependencies share it - the same component pinned in three jobs is
 	// one round trip.
 	r.fetcher = &lookup.Fetcher{Registry: r.datasources, Cache: o.Cache, TTL: o.CacheTTL, OwnTTL: o.CacheTTLOwn, OwnHosts: o.OwnHosts, Now: r.now}
-	if o.Released != "" {
+	// The widened run follows a narrowed one that has just looked the
+	// package up past the cache and stored the answer: asking the registry
+	// a second time within seconds buys nothing.
+	if o.Released != "" && o.Widen == nil {
 		r.fetcher.Bypass = func(ref lookup.Ref) bool { return report.RefersTo(ref.Datasource+"|"+ref.PackageName, o.Released) }
 	}
-	if o.Package != "" {
+	if o.Package != "" && o.Widen == nil {
 		r.fetcher.Bypass = func(ref lookup.Ref) bool { return ref.Datasource+"|"+ref.PackageName == o.Package }
 	}
 	// A disabled dependency is not looked up - unless the advisory
@@ -722,6 +750,12 @@ func (r *whatifRun) lookupAll() error {
 	for _, res := range r.results {
 		if res.Warning != nil {
 			plan.Warnings = append(plan.Warnings, *res.Warning)
+		}
+		// A member whose lookup failed, or was answered from a stale
+		// cache, may plan an older version than the open branch carries,
+		// or none at all; the caller then keeps the hold.
+		if o.widened != nil && res.Warning != nil && r.widened[res.Ref.Datasource+"|"+res.Ref.PackageName] {
+			o.widened.Failed = append(o.widened.Failed, res.Warning.Msg)
 		}
 		if res.Releases != nil && res.Releases.FromCache {
 			r.fromCache++
@@ -792,11 +826,26 @@ func (r *whatifRun) planUpdates() error {
 		if off, _ := cfg["fetchChangeLogs"].(string); off == "off" {
 			r.changelogOff[u.Key()] = true
 		}
-		plan.Updates = append(plan.Updates, decided)
 		n, err := planner.Name(decided, cfg, wire.Versionings())
 		if err != nil {
 			return fmt.Errorf("%s: %w", u.DepKey, err)
 		}
+		if r.widened[report.Key(decided.Dep)] {
+			if _, member := o.Widen[n.Branch]; !member && !decided.Blocked() {
+				// Looked up because the rules may put it in an open
+				// group; this update is named for another branch, which
+				// the narrowed run leaves to the full scan.
+				blk := model.Block{Reason: model.BlockNarrowedRun, Org: model.Origin{Source: "pinup", Rule: model.NoRule},
+					Note: "planned only as a possible member of an open group; this update belongs to " + n.Branch + ", which the full scan writes"}
+				decided.Blocks = append(decided.Blocks, blk)
+				decided.SuppressedBy = blk.Reason
+				n.Update = decided
+			}
+			if o.widened != nil {
+				o.widened.Updates++
+			}
+		}
+		plan.Updates = append(plan.Updates, decided)
 		named = append(named, n)
 	}
 	branches, err := planner.Compose(named)
