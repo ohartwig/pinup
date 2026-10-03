@@ -246,12 +246,12 @@ func TestNarrowedRunsHoldGroupBranches(t *testing.T) {
 	open := map[string]bool{"pinup/apk": true, "pinup/y-2.x": true}
 	for name, o := range map[string]*runOptions{"package": {pkg: "npm|y"}, "released": {released: "x/y@2"}} {
 		plan := mk()
-		holdGroupsInNarrowedRun(o, plan, map[string]bool{})
+		holdGroupsInNarrowedRun(o, plan, map[string]bool{}, nil)
 		if g := plan.Branches[0]; g.SuppressedBy != "" || len(g.Edits) != 1 {
 			t.Errorf("%s: a group branch with no open request was held: %+v", name, g)
 		}
 		plan = mk()
-		holdGroupsInNarrowedRun(o, plan, open)
+		holdGroupsInNarrowedRun(o, plan, open, nil)
 		g, s := plan.Branches[0], plan.Branches[1]
 		if g.SuppressedBy != model.BlockNarrowedRun || g.Edits != nil || plan.Updates[0].SuppressedBy != model.BlockNarrowedRun {
 			t.Errorf("%s: the group branch is not held: %+v / %+v", name, g, plan.Updates[0])
@@ -259,9 +259,16 @@ func TestNarrowedRunsHoldGroupBranches(t *testing.T) {
 		if s.SuppressedBy != "" || len(s.Edits) != 1 || plan.Updates[1].SuppressedBy != "" {
 			t.Errorf("%s: an ungrouped branch was held: %+v", name, s)
 		}
+		// An open group branch the run planned whole (widenOpenGroups,
+		// 2026-10-03) is written.
+		plan = mk()
+		holdGroupsInNarrowedRun(o, plan, open, map[string]bool{"pinup/apk": true})
+		if g := plan.Branches[0]; g.SuppressedBy != "" || len(g.Edits) != 1 {
+			t.Errorf("%s: a group branch planned whole was held: %+v", name, g)
+		}
 	}
 	plan := mk()
-	holdGroupsInNarrowedRun(&runOptions{}, plan, open)
+	holdGroupsInNarrowedRun(&runOptions{}, plan, open, nil)
 	if plan.Branches[0].SuppressedBy != "" || len(plan.Branches[0].Edits) != 1 {
 		t.Errorf("a full run held the group branch: %+v", plan.Branches[0])
 	}

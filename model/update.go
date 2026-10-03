@@ -211,6 +211,10 @@ const (
 	// four TYPO3 sites' "apk" group with the runtime alone, dropping the
 	// php and config.platform.php updates it carried, and both checks went
 	// red. The full scan and the push runs write group branches.
+	// Since 2026-10-03 a narrowed run first widens to the members of an
+	// open group and writes the branch whole; this reason remains for the
+	// branch it could not plan whole (a member's lookup failed) and for a
+	// member's update that belongs to another branch.
 	BlockNarrowedRun BlockReason = "narrowedRun"
 )
 

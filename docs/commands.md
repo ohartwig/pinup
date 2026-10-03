@@ -35,7 +35,7 @@ requests, write the dashboard issue. One of `--repo`, `--project`,
 | `--repo`, `--dir` | an existing checkout with an `origin` remote |
 | `--project` | a project path to clone and run against |
 | `--autodiscover` | every project the token can see that matches these globs, a JSON list with `!` negations; eight at a time |
-| `--released` | the fast lane: a project that was just released, optionally `@version`; runs only its consumers from the index, only for that dependency, with fresh lookups |
+| `--released` | the fast lane: a project that was just released, optionally `@version`; runs only its consumers from the index, only for that dependency, with fresh lookups - and for the other members of a group whose request is open, so that request is written whole (see `narrowedRun` in [plan-format.md](plan-format.md)) |
 | `--package` | narrow the run to one external package, `datasource:name` (`npm:lodash`), with a fresh lookup for it; the advisory watch's targeted run |
 | `--index` | the consumer index (default `consumers.json` beside `--cache`); several, comma-separated or a pattern, are merged and read only |
 | `--base` | plan and branch from this branch instead of the project's default branch |

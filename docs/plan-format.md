@@ -79,12 +79,19 @@ cache's first-seen record), `securityFix` with the advisory, and:
   it), `taskRefused`, `nothingToRefresh`, `publishFailed`, `closedByHand`
   (the newest request on the branch was closed by a person without
   merging and carried exactly these edits; a changed update opens again).
-  `narrowedRun` holds a group branch in a run narrowed to one package
-  (the fast lane, `--package`) when an open request already sits on that
-  branch: the run sees only part of the group, and rewriting the branch
-  would drop the other members' updates, so the full scan writes it. A
-  group branch with no open request is written - there is nothing to
-  drop, and the next full run adds the rest of the group.
+  `narrowedRun` concerns a group branch in a run narrowed to one
+  package (the fast lane, `--package`) when an open request already
+  sits on that branch. Rewritten from the narrowed plan, the branch
+  would drop the other members' updates, so the run plans again with
+  every dependency the rules may put in that group looked up as the
+  full scan does, and writes the branch with all of them; every other
+  dependency stays skipped. The branch is held with `narrowedRun` only
+  when that cannot be trusted - a member's lookup failed or came from
+  a stale cache, or the plan failed (the warning says which) - and the
+  full scan writes it. A member's update the rules name for another
+  branch (its major, say) is held with `narrowedRun` too. A group
+  branch with no open request is written from the narrowed plan -
+  there is nothing to drop, and the next full run adds the rest.
   `disabled` and `allowedVersions` are the configuration's verdicts
   rather than waits: a full run closes a request whose branch is held
   for one (see `run` in [commands.md](commands.md)).

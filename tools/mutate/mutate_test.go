@@ -229,7 +229,7 @@ var mutators = []mutator{
 	// A narrowed run holds group branches (2026-09-26): the fast lane for
 	// php-runtime had rebuilt the sites' apk group with the runtime alone.
 	{60, "delivery", "a fast-lane run rewrites a group branch from part of the group", "cmd/pinup/runcmd.go",
-		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] {", "\t\tif true {", []string{"./cmd/pinup/"}, false, ""},
+		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] || whole[b.Name] {", "\t\tif true {", []string{"./cmd/pinup/"}, false, ""},
 	// apk underscore suffixes (2026-09-27): Wolfi's python-3.13
 	// 3.13.15_git20260912-r0 was rejected, so its CVE fix was never offered.
 	{61, "lookup", "an apk version with an underscore suffix is rejected", "versioning/apk/apk.go",
@@ -246,7 +246,7 @@ var mutators = []mutator{
 	// (2026-09-27): holding every group branch delivered nothing for a
 	// grouped package until the next wave.
 	{65, "delivery", "a fast-lane run holds a group branch nothing is waiting on", "cmd/pinup/runcmd.go",
-		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] {", "\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" {", []string{"./cmd/pinup/"}, false, ""},
+		"\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || !open[b.Name] || whole[b.Name] {", "\t\tif b.GroupName == \"\" || b.SuppressedBy != \"\" || whole[b.Name] {", []string{"./cmd/pinup/"}, false, ""},
 	// Withdrawn apk versions (2026-09-28): a repository's withdrawal list
 	// takes a version out of the releases and moves a dependency off it
 	// like an advisory, and every surface names it.
@@ -274,7 +274,16 @@ var mutators = []mutator{
 		"\tif f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {", "\tif false && f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {", []string{"./lookup/"}, false, ""},
 	{74, "lookup", "a registry URL does not make a host own", "lookup/lookup.go",
 		"\t\tif parsed, err := url.Parse(u); err == nil && strings.EqualFold(parsed.Hostname(), host) {", "\t\tif parsed, err := url.Parse(u); false && err == nil && strings.EqualFold(parsed.Hostname(), host) {", []string{"./lookup/"}, false, ""},
-	{75, "sentinel", "a comment changes", "model/model.go",
+	// A narrowed run widens to an open group (2026-10-03): the fast lane
+	// for only-ole-site 3.7.5 held the group request of ole-hartwig-blog,
+	// and nothing ran after it merged.
+	{75, "delivery", "a fast-lane run holds an open group it could plan whole", "cmd/pinup/runcmd.go",
+		"\t\tplan, whole = widenOpenGroups(ctx, opts, plan, open, errw)", "\t\t_ = opts", []string{"./cmd/pinup/"}, false, ""},
+	{76, "delivery", "a widened run writes a group branch past a failed member lookup", "cmd/pinup/widen.go",
+		"\tif len(w.widened.Failed) > 0 {", "\tif false {", []string{"./cmd/pinup/"}, false, ""},
+	{77, "delivery", "a widened run opens a member's branch outside the open group", "cmd/pinup/whatif.go",
+		"\t\t\tif _, member := o.Widen[n.Branch]; !member && !decided.Blocked() {", "\t\t\tif false {", []string{"./cmd/pinup/"}, false, ""},
+	{78, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
 }
 
