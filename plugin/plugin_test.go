@@ -153,6 +153,12 @@ func TestLockRefreshCommands(t *testing.T) {
 	if !ok || strings.Join(n.Command, " ") != "npm install --package-lock-only --no-audit --ignore-scripts lodash" {
 		t.Errorf("npm: %+v", n)
 	}
+	// Maintenance must move resolutions, not re-validate them: install
+	// without names leaves a valid lock as it is.
+	nm, _ := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, true)
+	if got := strings.Join(nm.Command, " "); got != "npm update --package-lock-only --no-audit --ignore-scripts" {
+		t.Errorf("npm maintenance: %q", got)
+	}
 	if _, ok := LockRefresh("dockerfile", "", "", nil, false); ok {
 		t.Error("dockerfile has no lock to refresh")
 	}

@@ -114,8 +114,18 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance b
 			AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
 		}, true
 	case "npm":
+		// install keeps every locked resolution that still satisfies its
+		// range, so without names it is a no-op on a valid lock: npm lock
+		// maintenance opened nothing in about fifteen repositories and
+		// their transitive packages moved only when a direct bump forced
+		// them (measured 2026-10-03; minimist locked at 1.2.5 under ^1.2.0
+		// stayed there). update moves every resolution within its range and
+		// leaves package.json alone - what maintenance means, the same
+		// split as pnpm install/update and yarn install/upgrade above.
 		argv = []string{"npm", "install", "--package-lock-only", "--no-audit", "--ignore-scripts"}
-		if !maintenance {
+		if maintenance {
+			argv = []string{"npm", "update", "--package-lock-only", "--no-audit", "--ignore-scripts"}
+		} else {
 			argv = append(argv, names...)
 		}
 		return model.Task{
