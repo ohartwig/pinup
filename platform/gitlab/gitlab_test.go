@@ -93,6 +93,10 @@ type fakeProject struct {
 	nextIID           int
 	signatures        map[string]string // sha -> verification_status
 	files             map[string]string // "path@ref" -> content
+	// createRejects answers the next merge request creates with 400, one
+	// per entry, the entry as GitLab's "message" - the way it refuses a
+	// branch it does not see yet.
+	createRejects []any
 }
 
 // requestLog is one request the fake received, kept so tests can assert on
@@ -339,6 +343,15 @@ func (s *gitlabServer) createMergeRequest(w http.ResponseWriter, proj *fakeProje
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	s.mu.Lock()
+	if len(proj.createRejects) > 0 {
+		msg := proj.createRejects[0]
+		proj.createRejects = proj.createRejects[1:]
+		s.mu.Unlock()
+		writeJSON(w, http.StatusBadRequest, map[string]any{"message": msg})
+		return
+	}
+	s.mu.Unlock()
 
 	s.mu.Lock()
 	proj.nextIID++
@@ -1289,5 +1302,50 @@ func TestDirectMergeWaitsWhileGitLabSaysTheRequestIsNotMergeable(t *testing.T) {
 	}
 	if out.State != "opened" || out.Automerge || slices.Contains(changed, "automerge") {
 		t.Errorf("state = %q automerge = %v changed = %v, want it left for the next run", out.State, out.Automerge, changed)
+	}
+}
+
+// A branch pushed a moment ago that GitLab does not see yet is asked for
+// again, three more times with growing pauses; any other 400 fails at
+// once. The fast lane's bump of devops/images/pinup in pinup-toolchain
+// stalled on the first answer on 2026-10-04.
+func TestCreateMergeRequestWaitsForABranchGitLabDoesNotSeeYet(t *testing.T) {
+	invisible := map[string]any{"source_branch": []string{"does not exist"}}
+	for _, tc := range []struct {
+		name     string
+		rejects  []any
+		wantErr  string
+		attempts int
+		waits    []time.Duration
+	}{
+		{"visible at once", nil, "", 1, nil},
+		{"visible on the third ask", []any{invisible, invisible}, "", 3, []time.Duration{time.Second, 2 * time.Second}},
+		{"never visible", []any{invisible, invisible, invisible, invisible, invisible}, "does not exist", 4, []time.Duration{time.Second, 2 * time.Second, 4 * time.Second}},
+		{"another 400", []any{"Another open merge request already exists for this source branch"}, "already exists", 1, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			pf, srv, _ := newFixture(t, "")
+			proj := srv.addProject("group/proj", "main")
+			proj.createRejects = tc.rejects
+			var waits []time.Duration
+			pf.Sleep = func(d time.Duration) { waits = append(waits, d) }
+
+			mr, err := pf.CreateMergeRequest(t.Context(), publish.Project{Path: "group/proj"},
+				publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"})
+			switch {
+			case tc.wantErr == "" && err != nil:
+				t.Fatal(err)
+			case tc.wantErr == "" && mr.IID == 0:
+				t.Errorf("no merge request: %+v", mr)
+			case tc.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tc.wantErr)):
+				t.Errorf("error %v, want one naming %q", err, tc.wantErr)
+			}
+			if n := srv.requestCountOf(http.MethodPost, "merge_requests"); n != tc.attempts {
+				t.Errorf("%d creates, want %d", n, tc.attempts)
+			}
+			if !slices.Equal(waits, tc.waits) {
+				t.Errorf("waited %v, want %v", waits, tc.waits)
+			}
+		})
 	}
 }

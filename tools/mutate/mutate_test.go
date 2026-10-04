@@ -297,6 +297,10 @@ var mutators = []mutator{
 	// I-237, 2026-10-04): vulnerabilityAlerts.automerge cannot arm one.
 	{82, "kev", "a major security fix is merged automatically", "cmd/pinup/whatif.go",
 		"\t\tif u.Type == model.UpdateMajor {\n\t\t\tif armed, _ := cfg[\"automerge\"].(bool); armed {", "\t\tif false {\n\t\t\tif armed, _ := cfg[\"automerge\"].(bool); armed {", []string{"./cmd/pinup/"}, false, ""},
+	// A branch GitLab does not see yet is asked for again (2026-10-04): the
+	// fast lane's bump in pinup-toolchain stalled on the first refusal.
+	{83, "delivery", "a merge request whose branch GitLab does not see yet is given up at once", "platform/gitlab/gitlab.go",
+		"\t\tif !branchNotVisibleYet(resp) || attempt == len(branchWaits) {", "\t\tif true || !branchNotVisibleYet(resp) || attempt == len(branchWaits) {", []string{"./platform/gitlab/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

@@ -66,7 +66,17 @@ type Platform struct {
 	// wrote, not any issue with the title (review S7, 2026-09-13).
 	userMu sync.Mutex
 	userID int
+
+	// Sleep waits out the pause before CreateMergeRequest asks again for a
+	// branch GitLab does not see yet; nil is time.Sleep. Tests set it to
+	// count the waits instead of taking them.
+	Sleep func(time.Duration)
 }
+
+// branchWaits are the pauses before each repeated create of a merge
+// request whose source branch GitLab does not see yet: three more asks,
+// seven seconds at most.
+var branchWaits = []time.Duration{time.Second, 2 * time.Second, 4 * time.Second}
 
 // selfUserID answers the id of the account behind the token, from /user,
 // once.
@@ -192,9 +202,27 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 		"remove_source_branch": r.RemoveSourceBranch,
 	}
 
-	resp, err := p.do(ctx, http.MethodPost, u, payload)
-	if err != nil {
-		return publish.MergeRequest{}, err
+	// A branch pushed a moment ago is not always visible to the API yet:
+	// GitLab answers 400 {"source_branch":["does not exist"]}, and a create
+	// a few seconds later succeeds. Given up on at once, the merge request
+	// waited for the next full scan - the fast lane's bump of
+	// devops/images/pinup in pinup-toolchain stalled that way on
+	// 2026-10-04. Only this answer is asked again; any other fails now.
+	sleep := p.Sleep
+	if sleep == nil {
+		sleep = time.Sleep
+	}
+	var resp *apiResponse
+	for attempt := 0; ; attempt++ {
+		var err error
+		resp, err = p.do(ctx, http.MethodPost, u, payload)
+		if err != nil {
+			return publish.MergeRequest{}, err
+		}
+		if !branchNotVisibleYet(resp) || attempt == len(branchWaits) {
+			break
+		}
+		sleep(branchWaits[attempt])
 	}
 	if err := classify(resp, proj.Path); err != nil {
 		return publish.MergeRequest{}, err
@@ -914,6 +942,24 @@ func classify(resp *apiResponse, projectPath string) error {
 		}
 		return fmt.Errorf("gitlab: unexpected status %d for project %q", resp.status, projectPath)
 	}
+}
+
+// branchNotVisibleYet reports GitLab's answer to a merge request whose
+// source branch it does not see: 400 with "does not exist" under
+// source_branch.
+func branchNotVisibleYet(resp *apiResponse) bool {
+	if resp.status != http.StatusBadRequest {
+		return false
+	}
+	var doc struct {
+		Message struct {
+			SourceBranch []string `json:"source_branch"`
+		} `json:"message"`
+	}
+	if err := json.Unmarshal(resp.body, &doc); err != nil {
+		return false
+	}
+	return slices.Contains(doc.Message.SourceBranch, "does not exist")
 }
 
 // apiMessage extracts GitLab's "message" from an error body, whatever its
