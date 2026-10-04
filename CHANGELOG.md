@@ -1,3 +1,9 @@
+## [0.54.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.53.2...v0.54.0) (2026-10-04)
+
+### :sparkles: Features
+
+* **security:** CISA KEV as a priority for security fixes ([fc77354](https://git.ole-hartwig.eu/pinup/pinup/commit/fc773546e284c06cc03efca4e460ba7883348e6e))
+
 ## [0.53.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.53.1...v0.53.2) (2026-10-04)
 
 ### :bug: Fixes
