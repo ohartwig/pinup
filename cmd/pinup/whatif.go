@@ -1784,11 +1784,26 @@ func fillNotes(ctx context.Context, f noteFetcher, plan *model.Plan, off map[str
 // for it: the named block leaves every member update, the branch's
 // suppression is recomputed from what remains, and the branch carries the
 // dashboard as an origin.
+//
+// A schedule hold that surfaces behind a lifted one goes in the same run.
+// The dashboard shows one box per branch, for the hold in front, and a run
+// clears every box it read. Without this, a branch held by its release age
+// AND its schedule could never be created by hand: the age box lifted the
+// age, the schedule held the branch, the box was cleared, and the next run
+// showed the age box again (wolfi-packages, frankenphp 1.13.0, 2026-10-04).
+// The schedule only says when; the tick said now - the reason liftForOpen
+// lifts it for an open request. An approval or a release age behind the
+// lifted hold stays: those are decisions, and each has its own box.
 func liftByDashboard(b *model.Branch, updates []model.Update, checks report.Checks) {
-	if b.SuppressedBy == "" || !checks.Lifted(b.Name, b.SuppressedBy) {
-		return
+	ticked := false
+	for b.SuppressedBy != "" {
+		reason := b.SuppressedBy
+		if !checks.Lifted(b.Name, reason) && !(ticked && reason == model.BlockSchedule) {
+			return
+		}
+		lift(b, updates, reason, model.Origin{Source: "dashboard", Pointer: string(reason), Rule: model.NoRule})
+		ticked = true
 	}
-	lift(b, updates, b.SuppressedBy, model.Origin{Source: "dashboard", Pointer: string(b.SuppressedBy), Rule: model.NoRule})
 }
 
 // liftForOpen clears a schedule hold on a branch whose merge request is
