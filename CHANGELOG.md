@@ -1,3 +1,9 @@
+## [0.54.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.54.1...v0.54.2) (2026-10-04)
+
+### :bug: Fixes
+
+* **gitlab:** ask again when GitLab does not see a just-pushed branch yet ([c7e847e](https://git.ole-hartwig.eu/pinup/pinup/commit/c7e847e0647efc1e42a9bf178e43abee86a98843))
+
 ## [0.54.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.54.0...v0.54.1) (2026-10-04)
 
 ### :bug: Fixes
