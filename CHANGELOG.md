@@ -1,3 +1,13 @@
+## [0.54.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.54.0...v0.54.1) (2026-10-04)
+
+### :bug: Fixes
+
+* **security:** a major security fix is never merged automatically ([449aa66](https://git.ole-hartwig.eu/pinup/pinup/commit/449aa664f96c7ac154bebf71d6773cfa57d5a552))
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([b1d8054](https://git.ole-hartwig.eu/pinup/pinup/commit/b1d8054cf67bd4317b76726b8e388c24e7f41e7b))
+
 ## [0.54.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.53.2...v0.54.0) (2026-10-04)
 
 ### :sparkles: Features
