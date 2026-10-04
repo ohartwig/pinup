@@ -1,3 +1,13 @@
+## [0.53.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.53.1...v0.53.2) (2026-10-04)
+
+### :bug: Fixes
+
+* **dashboard:** a ticked box also lifts the schedule hold behind it ([2a405d7](https://git.ole-hartwig.eu/pinup/pinup/commit/2a405d75d97d5d94dd76631244c3e8a63b968691))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to cbdc27e ([2e61953](https://git.ole-hartwig.eu/pinup/pinup/commit/2e61953932cd06bd9b0b9e28093fa2a5207cc680))
+
 ## [0.53.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.53.0...v0.53.1) (2026-10-03)
 
 ### :bug: Fixes
