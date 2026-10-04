@@ -141,3 +141,55 @@ func TestAnExploitedFixOpensFirstWithoutTheSoak(t *testing.T) {
 		})
 	}
 }
+
+// A major security fix is never merged on its own, even when
+// vulnerabilityAlerts.automerge is true and the CVE is in KEV; a minor one
+// keeps the configured automerge. Decided 2026-10-04 (I-055, I-237).
+func TestAMajorSecurityFixIsNeverAutomerged(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		fixed     string
+		catalog   kev.Catalog
+		automerge bool
+	}{
+		{"major, in KEV", "3.0.0", kev.Catalog{"CVE-2026-0001": {CVE: "CVE-2026-0001"}}, false},
+		{"major, not in KEV", "3.0.0", kev.Catalog{}, false},
+		{"minor, in KEV", "2.1.0", kev.Catalog{"CVE-2026-0001": {CVE: "CVE-2026-0001"}}, true},
+		{"minor, not in KEV", "2.1.0", kev.Catalog{}, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			root := t.TempDir()
+			os.WriteFile(root+"/composer.json", []byte(`{"name":"acme/site","require":{"zzz/vuln":"2.0.0"}}`), 0o644)
+			os.WriteFile(root+"/renovate.json", []byte(`{"extends": ["local>devops/renovate-runner"], "osvVulnerabilityAlerts": true,
+				"vulnerabilityAlerts": {"enabled": true, "automerge": true, "schedule": ["at any time"], "minimumReleaseAge": null}}`), 0o644)
+			at := time.Date(2026, 8, 2, 12, 0, 0, 0, time.UTC)
+			opts := treeOptions(t, root, "development/moselwal/site", at)
+			opts.Datasources["packagist"] = cannedDS{name: "packagist", scheme: "composer", releases: map[string][]string{
+				"zzz/vuln": {"2.0.0", tc.fixed},
+			}}
+			opts.Advisories = &askedAdvisories{answers: map[string][]osv.Advisory{
+				"zzz/vuln": {{ID: "GHSA-test-kev0-0001", Aliases: []string{"CVE-2026-0001"}, Fixed: tc.fixed}},
+			}}
+			opts.Exploited = &cannedCatalog{Cat: tc.catalog}
+			plan, err := whatif(context.Background(), opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var fix *model.Branch
+			for i := range plan.Branches {
+				if strings.Contains(plan.Branches[i].Name, "zzz") {
+					fix = &plan.Branches[i]
+				}
+			}
+			if fix == nil {
+				t.Fatalf("no fix branch: %+v", plan.Branches)
+			}
+			if fix.SuppressedBy != "" {
+				t.Fatalf("fix held by %q", fix.SuppressedBy)
+			}
+			if fix.Automerge != tc.automerge {
+				t.Errorf("automerge %t, want %t", fix.Automerge, tc.automerge)
+			}
+		})
+	}
+}

@@ -1224,6 +1224,21 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		// ^11.5.50" - the manager's bump, not the object's update-lockfile
 		// - so the strategy the pre-lookup rules gave the dependency
 		// stands; the planner already used it to pick the fix.
+		//
+		// A major fix is opened, never merged on its own, whatever
+		// vulnerabilityAlerts.automerge says - KEV included. A major
+		// changes behaviour, and the urgency of the CVE is a reason to
+		// open it now (KEV skips the soak and the approval), not a reason
+		// to merge it unread. Decided 2026-10-04 (I-055, I-237); in code,
+		// not only in the runner preset, so a project's own
+		// vulnerabilityAlerts cannot switch it back on.
+		if u.Type == model.UpdateMajor {
+			if armed, _ := cfg["automerge"].(bool); armed {
+				cfg["automerge"] = false
+				u.Evidence = append(u.Evidence, model.Evidence{Kind: "automerge", From: "vulnerabilityAlerts.automerge", To: "off",
+					Note: "not armed: a major security fix is opened for review, never merged automatically"})
+			}
+		}
 	}
 	policy := planner.PolicyOf(cfg, func(key string) model.Origin { return origin(res, key) })
 	if res.SkipReason != "" {

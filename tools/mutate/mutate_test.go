@@ -293,6 +293,10 @@ var mutators = []mutator{
 		"\t\tpolicy.MinimumReleaseAge = \"\"\n", "\t\t_ = policy.MinimumReleaseAge\n", []string{"./cmd/pinup/"}, false, ""},
 	{81, "kev", "an exploited CVE's fix sorts by name like any branch", "model/plan.go",
 		"\t\tif fa, fb := fixes(a), fixes(b); fa != fb {", "\t\tif fa, fb := fixes(a), fixes(b); false && fa != fb {", []string{"./model/"}, false, ""},
+	// Majors never automerge, security and KEV fixes included (I-055,
+	// I-237, 2026-10-04): vulnerabilityAlerts.automerge cannot arm one.
+	{82, "kev", "a major security fix is merged automatically", "cmd/pinup/whatif.go",
+		"\t\tif u.Type == model.UpdateMajor {\n\t\t\tif armed, _ := cfg[\"automerge\"].(bool); armed {", "\t\tif false {\n\t\t\tif armed, _ := cfg[\"automerge\"].(bool); armed {", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {
