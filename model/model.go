@@ -17,6 +17,7 @@
 package model
 
 import (
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -190,6 +191,33 @@ type Advisory struct {
 	// lock a lock-file refresh moves (osvTransitiveAlerts).
 	Package   string `json:"package,omitempty"`
 	Installed string `json:"installed,omitempty"`
+	// Exploited is the CISA KEV entry for the advisory's CVE: the
+	// vulnerability is being exploited, not only exploitable. nil when it
+	// is not listed, or the catalog was not read.
+	Exploited *Exploited `json:"exploited,omitempty"`
+}
+
+// Exploited is the part of a CISA Known Exploited Vulnerabilities entry a
+// plan, a dashboard and a merge request name. DateAdded and DueDate are as
+// the catalog writes them (YYYY-MM-DD); Ransomware is its
+// knownRansomwareCampaignUse.
+type Exploited struct {
+	CVE        string `json:"cve"`
+	DateAdded  string `json:"dateAdded,omitempty"`
+	DueDate    string `json:"dueDate,omitempty"`
+	Ransomware string `json:"ransomware,omitempty"`
+}
+
+// ExploitedCVEs names the dependency's advisories that CISA lists as
+// exploited, each CVE once, in advisory order. Empty when none is.
+func (d Dependency) ExploitedCVEs() []string {
+	var out []string
+	for _, a := range d.Advisories {
+		if a.Exploited != nil && !slices.Contains(out, a.Exploited.CVE) {
+			out = append(out, a.Exploited.CVE)
+		}
+	}
+	return out
 }
 
 // WithdrawnNote says why a dependency's current version was withdrawn -

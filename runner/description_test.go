@@ -213,3 +213,38 @@ func TestAutomergeIsWithheldForARevertedChangeNotForASharedTitle(t *testing.T) {
 		t.Errorf("the plan does not say: %+v", p.Warnings)
 	}
 }
+
+// A fix for an exploited CVE says so before the table, with the catalog's
+// dates; a major one adds that it was opened rather than held. A security
+// fix without a KEV mark carries no such line.
+func TestDescriptionNamesAnExploitedCVE(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		typ     model.UpdateType
+		kev     *model.Exploited
+		want    []string
+		mustNot []string
+	}{
+		{"major fix", model.UpdateMajor, &model.Exploited{CVE: "CVE-2021-44228", DateAdded: "2021-12-10", DueDate: "2021-12-24", Ransomware: "Known"},
+			[]string{"> **Known exploited:** CVE-2021-44228 (`log4j-core`) is in CISA's KEV catalog since 2021-12-10, remediation due 2021-12-24, used in ransomware campaigns. This fix was planned ahead of every other update. **It is a major update**"}, nil},
+		{"minor fix", model.UpdateMinor, &model.Exploited{CVE: "CVE-2021-44228", DateAdded: "2021-12-10"},
+			[]string{"> **Known exploited:** CVE-2021-44228 (`log4j-core`) is in CISA's KEV catalog since 2021-12-10. This fix was planned ahead of every other update.\n"}, []string{"major update"}},
+		{"not listed", model.UpdateMinor, nil, nil, []string{"Known exploited"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			u := model.Update{DepKey: "maven\x00pom.xml\x00log4j-core", NewValue: "2.17.1", Type: tc.typ, SecurityFix: true,
+				Dep: model.Dependency{DepName: "log4j-core", CurrentValue: "2.14.1", Advisories: []model.Advisory{{ID: "GHSA-jfh8-c2jp-5v3q", Exploited: tc.kev}}}}
+			got := description(&model.Branch{UpdateKeys: []string{u.Key()}}, []model.Update{u}, "")
+			for _, w := range tc.want {
+				if !strings.Contains(got, w) {
+					t.Errorf("description lacks %q\n%s", w, got)
+				}
+			}
+			for _, w := range tc.mustNot {
+				if strings.Contains(got, w) {
+					t.Errorf("description has %q\n%s", w, got)
+				}
+			}
+		})
+	}
+}

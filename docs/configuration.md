@@ -138,7 +138,7 @@ unsupported means nothing reads it and the run says so.
 | `timezone` | supported |
 | `trustEffective` | supported (pinup's own) |
 | `versioning` | supported |
-| `vulnerabilityAlerts` | supported |
+| `vulnerabilityAlerts` | supported; a fix for a CVE CISA lists as exploited goes first and waits for no release age or approval - see [Known exploited vulnerabilities](#known-exploited-vulnerabilities) |
 | `commitBody` | supported: rendered per branch with the update's variables (`updateType`, `depName`, …) |
 | `executionTimeout` | partial: the runner's `PINUP_EXECUTION_TIMEOUT` decides, never a repository |
 | `matchCurrentVersion` | partial: matched as a version, not as a range |
@@ -187,6 +187,35 @@ that did not happen. Turning it off never turns automerge *on*; it only
 changes how one that is already allowed is carried out.
 
 `automerge: false` remains the way to stop pinup merging at all.
+
+## Known exploited vulnerabilities
+
+With `osvVulnerabilityAlerts` on, every advisory OSV reports is also checked
+against CISA's [Known Exploited Vulnerabilities](https://www.cisa.gov/known-exploited-vulnerabilities-catalog)
+catalog by its CVE id and aliases. The catalog is read only when a run has an
+advisory to check, and kept in the cache for a day; when CISA cannot be
+reached a cached copy older than that is used, with a warning.
+
+A security fix for a CVE in the catalog:
+
+- is the first branch of the plan, so the run creates its merge request before
+  any routine update;
+- is held by no `minimumReleaseAge` and no `dependencyDashboardApproval`,
+  whatever `vulnerabilityAlerts` or the rules say - like every security fix it
+  already ignores `prConcurrentLimit` and `prHourlyLimit`;
+- carries the label `security:kev` beside the configured ones;
+- is listed in the dashboard's *Known exploited vulnerabilities* section with
+  CISA's dates and where its merge request stands, and named at the top of the
+  merge request.
+
+A fix that is only available as a major update is opened at once like any
+other, and says so in both places; whether it automerges is still
+`vulnerabilityAlerts.automerge`. A dependency whose exploited CVE has no fix
+release is listed in the same section with the reason.
+
+Two things the catalog does not override: a project's own release age (the
+next section), because the package manager would refuse the fix, and the
+schedule, which `vulnerabilityAlerts.schedule` decides.
 
 ## A project's own release age
 

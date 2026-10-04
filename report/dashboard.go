@@ -101,7 +101,7 @@ func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.M
 	b.WriteString("This issue lists pinup updates and detected dependencies. A ticked box is read on the next run and cleared.\n\n")
 	s := sortBranches(plan, states, open)
 	for _, section := range []func(*strings.Builder){
-		s.problems, s.unmanaged, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable, s.detected,
+		s.problems, s.exploited, s.unmanaged, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable, s.detected,
 	} {
 		section(&b)
 	}
@@ -189,6 +189,98 @@ func (s *sections) problems(b *strings.Builder) {
 		fmt.Fprintf(b, " - ⚠️ %s%s\n", where(w), w.Msg)
 	}
 	b.WriteString("\n")
+}
+
+// exploited lists every dependency with an advisory CISA's Known Exploited
+// Vulnerabilities catalog names, first after the problems: what someone is
+// exploiting, and where its fix stands - open, planned, held and why, or no
+// fix at all. A fix that is a major update says so here; it is opened, not
+// held, and the reader is the check a major deserves.
+func (s *sections) exploited(b *strings.Builder) {
+	var rows []string
+	covered := map[string]bool{}
+	byKey := map[string]model.Update{}
+	for _, u := range s.plan.Updates {
+		byKey[u.Key()] = u
+	}
+	for _, br := range s.plan.Branches {
+		var cves []string
+		major := false
+		for _, k := range br.UpdateKeys {
+			u, ok := byKey[k]
+			if !ok || !u.SecurityFix {
+				continue
+			}
+			for _, c := range u.Dep.ExploitedCVEs() {
+				if !slices.Contains(cves, c) {
+					cves = append(cves, c)
+				}
+			}
+			if len(u.Dep.ExploitedCVEs()) > 0 {
+				covered[u.DepKey] = true
+				major = major || u.Type == model.UpdateMajor
+			}
+		}
+		if len(cves) == 0 {
+			continue
+		}
+		state := "planned"
+		switch m, open := s.byMR[br.Name]; {
+		case open && br.SuppressedBy == "":
+			state = fmt.Sprintf("open !%d", m.IID)
+		case s.states[br.Name].Action == "failed":
+			state = "failed: " + s.states[br.Name].Message
+		case br.SuppressedBy != "":
+			state = "held: " + string(br.SuppressedBy)
+		}
+		line := fmt.Sprintf(" - 🚨 %s — %s%s · %s", br.Title, strings.Join(cves, ", "), exploitedSince(s.plan.Updates, br.UpdateKeys), state)
+		if major {
+			line += " · **major update**: opened at once, review before merging"
+		}
+		rows = append(rows, line)
+	}
+	for _, d := range s.plan.Deps {
+		cves := d.ExploitedCVEs()
+		if len(cves) == 0 || covered[d.Key()] {
+			continue
+		}
+		why := d.SkipReason
+		if why == "" {
+			why = "no fix planned"
+		}
+		rows = append(rows, fmt.Sprintf(" - 🚨 `%s` %s — %s · no fix branch: %s", d.DepName, d.CurrentValue, strings.Join(cves, ", "), why))
+	}
+	if len(rows) == 0 {
+		return
+	}
+	b.WriteString("## Known exploited vulnerabilities\n\nCISA lists these CVEs as exploited in the wild (KEV catalog). Their fixes are planned before every other update, wait for no release age, limit or approval, and carry the `security:kev` label.\n\n")
+	for _, r := range rows {
+		b.WriteString(r + "\n")
+	}
+	b.WriteString("\n")
+}
+
+// exploitedSince names when CISA listed the branch's first exploited CVE
+// and the due date it set: " (KEV since 2026-10-02, due 2026-10-05)".
+func exploitedSince(updates []model.Update, keys []string) string {
+	for _, u := range updates {
+		if !slices.Contains(keys, u.Key()) {
+			continue
+		}
+		for _, a := range u.Dep.Advisories {
+			if e := a.Exploited; e != nil {
+				out := " (KEV since " + e.DateAdded
+				if e.DueDate != "" {
+					out += ", due " + e.DueDate
+				}
+				if e.Ransomware == "Known" {
+					out += ", used by ransomware"
+				}
+				return out + ")"
+			}
+		}
+	}
+	return ""
 }
 
 // unmanagedShown caps the list; the plan keeps every entry.

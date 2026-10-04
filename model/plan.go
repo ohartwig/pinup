@@ -267,7 +267,25 @@ func (p *Plan) Sort() {
 	slices.SortStableFunc(p.Updates, func(a, b Update) int {
 		return cmp.Compare(a.Key(), b.Key())
 	})
+	// A branch that fixes a CVE CISA lists as exploited comes first: the
+	// runner works the branches in this order, and that fix must not queue
+	// behind routine updates. Otherwise by name.
+	exploited := map[string]bool{}
+	for _, u := range p.Updates {
+		if len(u.ExploitedFix()) > 0 {
+			exploited[u.Key()] = true
+		}
+	}
+	fixes := func(b Branch) bool {
+		return slices.ContainsFunc(b.UpdateKeys, func(k string) bool { return exploited[k] })
+	}
 	slices.SortStableFunc(p.Branches, func(a, b Branch) int {
+		if fa, fb := fixes(a), fixes(b); fa != fb {
+			if fa {
+				return -1
+			}
+			return 1
+		}
 		return cmp.Compare(a.Name, b.Name)
 	})
 	for i := range p.Branches {

@@ -26,6 +26,7 @@ import (
 	"github.com/ohartwig/pinup/discover"
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/kev"
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/manager/terraform"
 	"github.com/ohartwig/pinup/model"
@@ -96,6 +97,8 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts.Analyzers = wire.Analyzers(client, opts.Datasources)
 	advisories := &osv.Client{}
 	opts.Advisories = advisories
+	exploited := &kev.Client{HTTP: client}
+	opts.Exploited = exploited
 	notes := &changelog.Fetcher{Client: client, GitLabURL: env.gitLabURL(), TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
 	opts.Changelog = notes
 	opts.LookPath = exec.LookPath
@@ -116,6 +119,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		defer store.Close()
 		opts.Cache = store
 		advisories.Store = advisoryStore{cache: store, now: now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s\n", m) }}
+		exploited.Store = kevStore{cache: store, warn: func(m string) { fmt.Fprintf(errw, "warning: %s\n", m) }}
 		notes.Cache = store
 	}
 	plan, err := whatif(context.Background(), opts)
@@ -232,6 +236,11 @@ type whatifOptions struct {
 	// the configuration sets osvVulnerabilityAlerts; nil means it is never
 	// asked, whatever the configuration says.
 	Advisories advisoryChecker
+	// Exploited reads CISA's Known Exploited Vulnerabilities catalog; a
+	// security fix for a CVE listed there is planned first, labelled
+	// security:kev and released from its release age. nil means the
+	// catalog is never read.
+	Exploited exploitedCatalog
 	// Analyzers classify what actually changed for an update whose
 	// dependency a rule marked `analyze: true`; nil means no update gets
 	// an effective label. wire supplies them.
@@ -729,6 +738,7 @@ func (r *whatifRun) lookupAll() error {
 		var warns []model.Warning
 		r.transitive, warns = checkLockedAdvisories(ctx, o.Advisories, r.resolved.Raw, r.lockSets, plan.Deps, wire.DefaultVersioning(r.datasources))
 		plan.Warnings = append(plan.Warnings, warns...)
+		plan.Warnings = append(plan.Warnings, markExploited(ctx, o.Exploited, r.now, plan.Deps, r.transitive)...)
 	}
 	// A version its repository withdrew is moved off like an advisory -
 	// after the database, whose bound it may raise. It needs no database:
@@ -829,6 +839,9 @@ func (r *whatifRun) planUpdates() error {
 		n, err := planner.Name(decided, cfg, wire.Versionings())
 		if err != nil {
 			return fmt.Errorf("%s: %w", u.DepKey, err)
+		}
+		if len(decided.ExploitedFix()) > 0 && !slices.Contains(n.Labels, kevLabel) {
+			n.Labels = append(n.Labels, kevLabel)
 		}
 		if r.widened[report.Key(decided.Dep)] {
 			if _, member := o.Widen[n.Branch]; !member && !decided.Blocked() {
@@ -1220,6 +1233,18 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		if enabled, ok := cfg["enabled"].(bool); ok {
 			policy.Enabled = enabled
 		}
+	}
+	// A fix for a CVE CISA lists as exploited waits for no soak and no
+	// approval, whatever the configuration says: the soak guards against a
+	// bad release, and an exploited vulnerability is the worse risk. A major
+	// fix is no exception - it opens and says so (the dashboard's KEV
+	// section, the merge request), it is not held for a person to find.
+	if cves := u.ExploitedFix(); len(cves) > 0 {
+		kevOrigin := model.Origin{Source: "kev", Pointer: strings.Join(cves, ","), Rule: model.NoRule}
+		policy.MinimumReleaseAge = ""
+		policy.Origins["minimumReleaseAge"] = kevOrigin
+		policy.DashboardApproval = false
+		policy.Origins["dependencyDashboardApproval"] = kevOrigin
 	}
 	// The project's release age raises pinup's, never lowers it - and for a
 	// security fix too, which otherwise travels with none: the package

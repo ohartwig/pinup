@@ -189,7 +189,7 @@ var mutators = []mutator{
 	// Coverage in the scheduled run (2026-09-25): the scan's answer reaches
 	// the dashboard, and the switch is what turns it on.
 	{47, "coverage", "the dashboard drops the unmanaged-pins section", "report/dashboard.go",
-		"s.problems, s.unmanaged, s.pending,", "s.problems, s.pending,", []string{"./report/"}, false, ""},
+		"s.problems, s.exploited, s.unmanaged, s.pending,", "s.problems, s.exploited, s.pending,", []string{"./report/"}, false, ""},
 	{48, "coverage", "whatif ignores --coverage", "cmd/pinup/whatif.go",
 		"\tif o.Coverage {\n\t\tr.plan.Unmanaged =", "\tif false {\n\t\tr.plan.Unmanaged =", []string{"./cmd/pinup/"}, false, ""},
 	// advise --init (2026-09-25): the proposal passes its own advice, and
@@ -285,6 +285,14 @@ var mutators = []mutator{
 		"\t\t\tif _, member := o.Widen[n.Branch]; !member && !decided.Blocked() {", "\t\t\tif false {", []string{"./cmd/pinup/"}, false, ""},
 	{78, "sentinel", "a comment changes", "model/model.go",
 		"// NoCustomManager is the CustomManager value for a built-in manager.", "// NoCustomManager is the CustomManager value for a built-in manager (unchanged).", []string{"./model/"}, true, ""},
+	// CISA KEV as a priority (I-237, 2026-10-04): an exploited CVE's fix is
+	// marked, released from its soak, and planned first.
+	{79, "kev", "an advisory CISA lists as exploited is not marked", "cmd/pinup/kev.go",
+		"\t\t\t\ta.Exploited = &model.Exploited{", "\t\t\t\t_ = &model.Exploited{", []string{"./cmd/pinup/"}, false, ""},
+	{80, "kev", "an exploited CVE's fix waits for the soak", "cmd/pinup/whatif.go",
+		"\t\tpolicy.MinimumReleaseAge = \"\"\n", "\t\t_ = policy.MinimumReleaseAge\n", []string{"./cmd/pinup/"}, false, ""},
+	{81, "kev", "an exploited CVE's fix sorts by name like any branch", "model/plan.go",
+		"\t\tif fa, fb := fixes(a), fixes(b); fa != fb {", "\t\tif fa, fb := fixes(a), fixes(b); false && fa != fb {", []string{"./model/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

@@ -787,6 +787,33 @@ func description(b *model.Branch, updates []model.Update, footer string) string 
 		seen[row] = true
 		members = append(members, u)
 	}
+	// A fix for a CVE CISA lists as exploited says so before anything else:
+	// it was planned ahead of every other update and waited for no release
+	// age, and a major one was opened rather than held - the reader is the
+	// check left.
+	for _, u := range members {
+		if !u.SecurityFix {
+			continue
+		}
+		for _, a := range u.Dep.Advisories {
+			e := a.Exploited
+			if e == nil {
+				continue
+			}
+			fmt.Fprintf(&s, "> **Known exploited:** %s (`%s`) is in CISA's KEV catalog since %s", e.CVE, u.Dep.DepName, e.DateAdded)
+			if e.DueDate != "" {
+				fmt.Fprintf(&s, ", remediation due %s", e.DueDate)
+			}
+			if e.Ransomware == "Known" {
+				s.WriteString(", used in ransomware campaigns")
+			}
+			s.WriteString(". This fix was planned ahead of every other update.")
+			if u.Type == model.UpdateMajor {
+				s.WriteString(" **It is a major update** and was opened at once instead of being held: review it before merging.")
+			}
+			s.WriteString("\n\n")
+		}
+	}
 	if len(members) > 0 {
 		s.WriteString("| Dependency | Update | Change | Notes |\n|---|---|---|---|\n")
 		for _, u := range members {

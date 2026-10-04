@@ -357,6 +357,16 @@ func (u Update) Key() string {
 
 func (u Update) Blocked() bool { return len(u.Blocks) > 0 }
 
+// ExploitedFix names the CVEs CISA lists as exploited that this update
+// closes: a security fix's own advisories with a KEV mark. nil for any
+// other update, including an ordinary bump of the same dependency.
+func (u Update) ExploitedFix() []string {
+	if !u.SecurityFix {
+		return nil
+	}
+	return u.Dep.ExploitedCVEs()
+}
+
 // AutomergeRisk is the risk an automerge decision must be taken against:
 // the stricter of declared and effective, unless a rule trusts the effective
 // label. Phase 1 leaves Effective at RiskUnknown throughout, which makes this

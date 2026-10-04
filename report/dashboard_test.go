@@ -190,3 +190,47 @@ func TestWithdrawnVersionIsNamed(t *testing.T) {
 		t.Errorf("plan report does not name the withdrawal:\n%s", got)
 	}
 }
+
+// An exploited CVE is listed first after the problems, with where its fix
+// stands; a major fix says so, a dependency without a fix branch says why,
+// and a plan without a KEV mark has no section.
+func TestDashboardListsExploitedVulnerabilities(t *testing.T) {
+	now := time.Date(2026, 10, 4, 8, 0, 0, 0, time.UTC)
+	kev := &model.Exploited{CVE: "CVE-2021-44228", DateAdded: "2021-12-10", DueDate: "2021-12-24", Ransomware: "Known"}
+	log4j := model.Dependency{Manager: "maven", File: "pom.xml", DepName: "log4j-core", CurrentValue: "2.14.1", Datasource: "maven", CustomManager: model.NoCustomManager,
+		Advisories: []model.Advisory{{ID: "GHSA-jfh8-c2jp-5v3q", Exploited: kev}}}
+	stale := model.Dependency{Manager: "npm", File: "package.json", DepName: "abandoned", CurrentValue: "1.0.0", Datasource: "npm", CustomManager: model.NoCustomManager,
+		SkipReason: "vulnerable (GHSA-x): no release at or above the fix version 2.0.0", Advisories: []model.Advisory{{ID: "GHSA-x", Exploited: &model.Exploited{CVE: "CVE-2026-0002", DateAdded: "2026-10-01"}}}}
+	fix := model.Update{DepKey: log4j.Key(), Dep: log4j, NewValue: "3.0.0", Type: model.UpdateMajor, SecurityFix: true}
+	routine := model.Update{DepKey: log4j.Key(), Dep: log4j, NewValue: "2.14.2", Type: model.UpdatePatch}
+	plan := &model.Plan{PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"},
+		Deps:    []model.Dependency{log4j, stale},
+		Updates: []model.Update{fix, routine},
+		Branches: []model.Branch{
+			{Name: "pinup/log4j-vulnerability", Title: "fix(deps): update log4j-core to 3.0.0 [SECURITY]", UpdateKeys: []string{fix.Key()}},
+			{Name: "pinup/log4j-2.x", Title: "chore(deps): update log4j-core to 2.14.2", UpdateKeys: []string{routine.Key()}},
+		},
+	}
+	open := []publish.MergeRequest{{IID: 7, SourceBranch: "pinup/log4j-vulnerability", State: "opened"}}
+	body := Dashboard(plan, nil, open, now)
+	for _, want := range []string{
+		"## Known exploited vulnerabilities",
+		"🚨 fix(deps): update log4j-core to 3.0.0 [SECURITY] — CVE-2021-44228 (KEV since 2021-12-10, due 2021-12-24, used by ransomware) · open !7 · **major update**",
+		"🚨 `abandoned` 1.0.0 — CVE-2026-0002 · no fix branch: vulnerable (GHSA-x): no release at or above the fix version 2.0.0",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard lacks %q\n%s", want, body)
+		}
+	}
+	if strings.Contains(body, "🚨 chore(deps): update log4j-core to 2.14.2") {
+		t.Error("the ordinary bump of the same dependency is listed as the fix")
+	}
+	if strings.Index(body, "## Known exploited") > strings.Index(body, "## Open") {
+		t.Error("the KEV section must come before the open requests")
+	}
+	plan.Deps[0].Advisories[0].Exploited, plan.Deps[1].Advisories[0].Exploited = nil, nil
+	plan.Updates[0].Dep.Advisories[0].Exploited = nil
+	if body := Dashboard(plan, nil, open, now); strings.Contains(body, "Known exploited") {
+		t.Errorf("no KEV mark, yet a section:\n%s", body)
+	}
+}
