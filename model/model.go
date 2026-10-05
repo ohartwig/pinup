@@ -144,6 +144,12 @@ type Dependency struct {
 	// current version or the datasource has no advisory ecosystem.
 	Advisories         []Advisory `json:"advisories,omitempty"`
 	VulnerabilityBound string     `json:"vulnerabilityBound,omitempty"`
+	// OSVEcosystem is the advisory ecosystem a custom datasource's
+	// configuration names for this dependency (customDatasources.<name>.
+	// osvEcosystem); empty for the built-in datasources, whose ecosystem
+	// follows from the datasource. It travels into the consumer index so
+	// the advisory watch, which reads no configuration, asks the same.
+	OSVEcosystem string `json:"osvEcosystem,omitempty"`
 
 	// Captures holds every named regex group the manager matched, so
 	// templates can reference groups this package has never heard of.

@@ -71,6 +71,11 @@ type Query struct {
 	PackageName string
 	Version     string
 	Versioning  string
+	// Ecosystem names the OSV ecosystem to ask when the datasource has
+	// none of its own: a custom datasource whose configuration says which
+	// one it serves (customDatasources.<name>.osvEcosystem). Empty for the
+	// built-in datasources, which map through Ecosystem.
+	Ecosystem string
 }
 
 // Advisory is one OSV record that affects a Query's current version.
@@ -143,6 +148,33 @@ var ecosystems = map[string]string{
 	"nuget":     "NuGet",
 }
 
+// ecosystemVersioning is the versioning scheme an ecosystem's version
+// strings are written in, for the ecosystems a configuration names rather
+// than a datasource implies. A query under another scheme is not asked: the
+// same custom datasource serves Containerfile apk pins ("3.0.8-r0") and
+// composer's php platform entries resolved through it ("8.5.11", semver,
+// no revision), and only the first is a Wolfi package version.
+var ecosystemVersioning = map[string]string{
+	"Wolfi": "apk",
+}
+
+// Asks reports whether Check would send q to OSV at all: its datasource
+// has an ecosystem, or the query names one and is written in that
+// ecosystem's versioning. A caller counts the rest as not covered.
+func Asks(q Query) bool { return ecosystemOf(q) != "" }
+
+// ecosystemOf is the ecosystem a query is asked under, or "" when it is
+// not asked at all.
+func ecosystemOf(q Query) string {
+	if eco := Ecosystem(q.Datasource); eco != "" {
+		return eco
+	}
+	if want, ok := ecosystemVersioning[q.Ecosystem]; ok && q.Versioning != want {
+		return ""
+	}
+	return q.Ecosystem
+}
+
 // Ecosystem maps a pinup datasource name to the OSV ecosystem it corresponds
 // to, or "" when OSV has no ecosystem for that datasource at all (docker,
 // gitlab-*, github-*, terraform-*, custom.*, apk, ...): such a dependency is
@@ -173,7 +205,7 @@ func (c *Client) Check(ctx context.Context, vs versioning.Registry, queries []Qu
 	var batch []batchQuery
 
 	for i, q := range queries {
-		eco := Ecosystem(q.Datasource)
+		eco := ecosystemOf(q)
 		findings[i] = Finding{Query: q, Ecosystem: eco}
 		if eco == "" {
 			continue // no OSV ecosystem for this datasource: not queried.

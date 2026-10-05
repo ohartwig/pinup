@@ -161,6 +161,7 @@ A key not in this table is not read; `migrate` lists it as unsupported.
 | `analyze` | a rule | ask an analyzer what actually changed for this dependency's updates; off by default, since it fetches both versions ([effective classification](effective-classification.md)) |
 | `matchEffective` | a rule | match the analyzer's label: `patch`, `minor`, `major`, `breaking-values`; never fires while the label is unknown |
 | `trustEffective` | a rule | let an automerge a `matchEffective` rule switched on stand although the declared label is stricter; without it the stricter label wins |
+| `osvEcosystem` | `customDatasources.<name>` | the [OSV ecosystem](https://ossf.github.io/osv-schema/#appendix-ecosystems) this custom datasource's packages belong to, e.g. `"Wolfi"`; with it, `osvVulnerabilityAlerts` asks OSV about them ([advisory coverage](#advisory-coverage)) |
 
 ## Automerge
 
@@ -216,6 +217,35 @@ release is listed in the same section with the reason.
 Two things the catalog does not override: a project's own release age (the
 next section), because the package manager would refuse the fix, and the
 schedule, which `vulnerabilityAlerts.schedule` decides.
+
+## Advisory coverage
+
+`osvVulnerabilityAlerts` asks OSV about the dependencies whose datasource has
+an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems and nuget.
+A custom datasource has none of its own - a URL template says nothing about
+what it serves - unless its definition names one:
+
+```json
+"customDatasources": {
+  "wolfi": { "defaultRegistryUrlTemplate": "…", "osvEcosystem": "Wolfi" }
+}
+```
+
+A named ecosystem is asked only for dependencies written in its versioning:
+`Wolfi` for `versioning=apk` pins. A custom datasource that also resolves
+other values - composer's php platform entries resolved through the same
+datasource are semver - leaves those unasked. Findings behave like any
+other OSV finding: the `vulnerabilityAlerts` branch, no release age, CISA's
+catalog. The advisory watch asks the same, from the ecosystem the run wrote
+into the consumer index.
+
+Whatever no advisory database is asked about is counted, by datasource, and
+stated under *Detected dependencies* on the dashboard and in the watch's
+output - "not covered by advisories: 42 (docker 30, custom.koh-apk 12)" - so
+that no advisory is never read as checked.
+
+An older pinup ignores `osvEcosystem`: `customDatasources` reads only the
+keys it knows, so a configuration can carry it before the runner does.
 
 ## A project's own release age
 

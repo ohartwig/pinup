@@ -311,6 +311,19 @@ var mutators = []mutator{
 		"\tfor _, part := range strings.Split(strings.ReplaceAll(affected, \"||\", \"|\"), \"|\") {\n", "\tfor _, part := range []string{affected} {\n", []string{"./packagistadv/"}, false, ""},
 	{87, "advisories", "the watch reads Packagist and reports nothing from it", "cmd/pinup/advisories.go",
 		"\t\t\tmergePackagist(findings, queries, byPkg, vs, nil)\n", "\t\t\t_ = byPkg\n", []string{"./cmd/pinup/"}, false, ""},
+	// Advisory coverage beyond the built-in ecosystems (2026-10-05): a
+	// custom datasource asks the OSV ecosystem its configuration names, only
+	// in that ecosystem's versioning, the watch asks the same through the
+	// index, and what nobody asks is stated. Renumbered to 88-91
+	// after the Packagist-advisory change (pinup!102) took 84-87.
+	{88, "advisories", "a php platform entry is asked as a Wolfi package", "osv/osv.go",
+		"\tif want, ok := ecosystemVersioning[q.Ecosystem]; ok && q.Versioning != want {", "\tif want, ok := ecosystemVersioning[q.Ecosystem]; false && ok && q.Versioning != want {", []string{"./osv/"}, false, ""},
+	{89, "advisories", "customDatasources.<name>.osvEcosystem is ignored", "cmd/pinup/whatif.go",
+		"\t\t\tout[\"custom.\"+name] = eco", "\t\t\t_ = eco", []string{"./cmd/pinup/"}, false, ""},
+	{90, "advisories", "the consumer index drops the ecosystem the watch needs", "report/consumers.go",
+		", OSVEcosystem: d.OSVEcosystem}", "}", []string{"./cmd/pinup/"}, false, ""},
+	{91, "advisories", "the dashboard hides what advisories never looked up", "report/dashboard.go",
+		"\t\tif line := NotCoveredLine(c.NotCovered); line != \"\" {", "\t\tif line := NotCoveredLine(c.NotCovered); false && line != \"\" {", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

@@ -736,8 +736,9 @@ func (r *whatifRun) lookupAll() error {
 	}
 	r.results = r.fetcher.Fetch(ctx, plan.Deps)
 	if o.Advisories != nil {
-		plan.Warnings = append(plan.Warnings, checkAdvisories(ctx, o.Advisories, r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
-		var warns []model.Warning
+		warns, coverage := checkAdvisories(ctx, o.Advisories, r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)
+		plan.Warnings = append(plan.Warnings, warns...)
+		plan.AdvisoryCoverage = coverage
 		r.transitive, warns = checkLockedAdvisories(ctx, o.Advisories, r.resolved.Raw, r.lockSets, plan.Deps, wire.DefaultVersioning(r.datasources))
 		plan.Warnings = append(plan.Warnings, warns...)
 		plan.Warnings = append(plan.Warnings, markExploited(ctx, o.Exploited, r.now, plan.Deps, r.transitive)...)
@@ -1323,29 +1324,39 @@ type advisoryChecker interface {
 // that cannot be reached is a warning, never a failed run - the ordinary
 // updates still happen. Measured: Renovate queries npm and Packagist
 // dependencies this way and skips a range like ^1.2.5.
-func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string, releasesOf func(model.Dependency) *model.ReleaseSet) []model.Warning {
+func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, deps []model.Dependency, defaultVersioning func(string) string, releasesOf func(model.Dependency) *model.ReleaseSet) ([]model.Warning, *model.AdvisoryCoverage) {
 	if on, _ := cfg["osvVulnerabilityAlerts"].(bool); !on {
-		return nil
+		return nil, nil
 	}
 	if va, ok := cfg["vulnerabilityAlerts"].(map[string]any); ok {
 		if enabled, ok := va["enabled"].(bool); ok && !enabled {
-			return nil
+			return nil, nil
 		}
 	}
+	custom := customOSVEcosystems(cfg)
+	coverage := &model.AdvisoryCoverage{NotCovered: map[string]int{}}
 	var queries []osv.Query
 	var index []int
 	schemes := wire.Versionings()
 	for i, d := range deps {
-		if (d.SkipReason != "" && d.SkipReason != d.Disabled) || d.CurrentValue == "" || osv.Ecosystem(d.Datasource) == "" {
+		if (d.SkipReason != "" && d.SkipReason != d.Disabled) || d.CurrentValue == "" {
 			continue
-		}
-		name := d.PackageName
-		if name == "" {
-			name = d.DepName
 		}
 		scheme := d.Versioning
 		if scheme == "" {
 			scheme = defaultVersioning(d.Datasource)
+		}
+		eco := custom[d.Datasource]
+		if !osv.Asks(osv.Query{Datasource: d.Datasource, Versioning: scheme, Ecosystem: eco}) {
+			coverage.NotCovered[d.Datasource]++
+			continue
+		}
+		if osv.Ecosystem(d.Datasource) == "" {
+			deps[i].OSVEcosystem = eco
+		}
+		name := d.PackageName
+		if name == "" {
+			name = d.DepName
 		}
 		// The version actually in use: the lock's when there is one -
 		// a range like ^4.0.0 says nothing about what is installed, and
@@ -1367,11 +1378,12 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 				continue
 			}
 		}
-		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme})
+		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme, Ecosystem: eco})
 		index = append(index, i)
 	}
+	coverage.Asked = len(queries)
 	if len(queries) == 0 {
-		return nil
+		return nil, coverage
 	}
 	// A Packagist advisory names no fix, only the range it covers; with
 	// the releases the lookup found, the fix is the lowest one the range
@@ -1393,7 +1405,7 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 	}
 	findings, err := client.Check(ctx, schemes, queries)
 	if err != nil {
-		return []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; updates are planned without vulnerability alerts", err)}}
+		return []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; updates are planned without vulnerability alerts", err)}}, coverage
 	}
 	var warns []model.Warning
 	for k, f := range findings {
@@ -1411,7 +1423,27 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		}
 		d.VulnerabilityBound = f.Bound
 	}
-	return warns
+	return warns, coverage
+}
+
+// customOSVEcosystems maps "custom.<name>" to the advisory ecosystem its
+// configuration names (customDatasources.<name>.osvEcosystem). A custom
+// datasource without one is not asked - pinup cannot know what a URL
+// template serves - and counts as not covered.
+//
+// Not covered means neither source asks: Packagist (advisorySources) is
+// asked only about packagist dependencies, which OSV asks as well, so what
+// osv.Asks rejects is exactly what no advisory database sees.
+func customOSVEcosystems(cfg map[string]any) map[string]string {
+	out := map[string]string{}
+	defs, _ := cfg["customDatasources"].(map[string]any)
+	for name, v := range defs {
+		def, _ := v.(map[string]any)
+		if eco, _ := def["osvEcosystem"].(string); eco != "" {
+			out["custom."+name] = eco
+		}
+	}
+	return out
 }
 
 // lowestAdmitted is the lowest release a range admits, "" when none is
