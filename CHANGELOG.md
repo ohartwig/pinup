@@ -1,3 +1,9 @@
+## [0.56.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.55.0...v0.56.0) (2026-10-05)
+
+### :sparkles: Features
+
+* **advisories:** ask OSV about custom datasources that name an ecosystem, and state what is never asked ([2e0a580](https://git.ole-hartwig.eu/pinup/pinup/commit/2e0a580c4120185e5a146c34ccf9da62cf7b7d57)) ([!102](https://git.ole-hartwig.eu/pinup/pinup/merge_requests/102))
+
 ## [0.55.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.54.2...v0.55.0) (2026-10-05)
 
 ### :sparkles: Features
