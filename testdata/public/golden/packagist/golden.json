@@ -1,0 +1,15 @@
+{
+  "repo": "golden/packagist",
+  "now": "2026-10-05T20:02:00Z",
+  "covers": {
+    "managers": [
+      "composer"
+    ],
+    "datasources": [
+      "packagist"
+    ],
+    "versionings": [
+      "composer"
+    ]
+  }
+}

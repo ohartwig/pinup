@@ -31,6 +31,7 @@ import (
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/osv"
+	"github.com/ohartwig/pinup/packagistadv"
 	"github.com/ohartwig/pinup/publish"
 	"github.com/ohartwig/pinup/report"
 	"github.com/ohartwig/pinup/runner"
@@ -717,7 +718,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 	if o.cache != nil {
 		advisories.Store = advisoryStore{cache: o.cache, now: o.now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
 	}
-	opts.Advisories = advisories
+	opts.Advisories = advisorySources{osv: advisories, packagist: &packagistadv.Client{}}
 	exploited := &kev.Client{HTTP: o.client}
 	if o.cache != nil {
 		exploited.Store = kevStore{cache: o.cache, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}

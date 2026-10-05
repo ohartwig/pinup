@@ -26,3 +26,4 @@ commit that explains why.
 | `lock` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
 | `pyver` | `pypi` under `pep440`: three Python tools pinned in CI variables (the annotation managers for `.gitlab-ci.yml` and component templates), and `engines.node` through `node-version`, a range the current line already satisfies |
 | `osv` | the vulnerability fast path: lodash 4.17.20, guzzle 7.4.4, symfony/http-kernel 6.0.0 against OSV |
+| `packagist` | Packagist's security advisories beside OSV: typo3/cms-backend 14.3.6 against TYPO3-CORE-SA-2026-022 (CVE-2026-77132), which OSV did not carry when it was recorded on 2026-10-05 - the fix opens from Packagist alone |

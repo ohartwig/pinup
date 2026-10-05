@@ -301,6 +301,16 @@ var mutators = []mutator{
 	// fast lane's bump in pinup-toolchain stalled on the first refusal.
 	{83, "delivery", "a merge request whose branch GitLab does not see yet is given up at once", "platform/gitlab/gitlab.go",
 		"\t\tif !branchNotVisibleYet(resp) || attempt == len(branchWaits) {", "\t\tif true || !branchNotVisibleYet(resp) || attempt == len(branchWaits) {", []string{"./platform/gitlab/"}, false, ""},
+	// Packagist's advisories beside OSV's (2026-10-05): TYPO3-CORE-SA
+	// reach Packagist in a day or two and OSV weeks later, if at all.
+	{84, "advisories", "a Packagist advisory OSV does not know marks nothing", "cmd/pinup/packagistadvisories.go",
+		"\tmergePackagist(findings, queries, byPkg, vs, s.releases)\n", "\t_ = byPkg\n", []string{"./cmd/pinup/"}, false, ""},
+	{85, "advisories", "an advisory OSV already carries is listed twice", "cmd/pinup/packagistadvisories.go",
+		"\t\t\tif dup {\n", "\t\t\tif false && dup {\n", []string{"./cmd/pinup/"}, false, ""},
+	{86, "advisories", "an affected range's alternatives after the first are ignored", "packagistadv/packagistadv.go",
+		"\tfor _, part := range strings.Split(strings.ReplaceAll(affected, \"||\", \"|\"), \"|\") {\n", "\tfor _, part := range []string{affected} {\n", []string{"./packagistadv/"}, false, ""},
+	{87, "advisories", "the watch reads Packagist and reports nothing from it", "cmd/pinup/advisories.go",
+		"\t\t\tmergePackagist(findings, queries, byPkg, vs, nil)\n", "\t\t\t_ = byPkg\n", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

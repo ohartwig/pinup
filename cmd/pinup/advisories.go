@@ -17,7 +17,9 @@ import (
 
 	"github.com/ohartwig/pinup/glob"
 	"github.com/ohartwig/pinup/osv"
+	"github.com/ohartwig/pinup/packagistadv"
 	"github.com/ohartwig/pinup/report"
+	"github.com/ohartwig/pinup/versioning"
 	"github.com/ohartwig/pinup/wire"
 )
 
@@ -60,6 +62,9 @@ type advisoryControl struct {
 // "id|datasource|package", so a run reports each once.
 type advisoriesState struct {
 	Seen map[string]time.Time `json:"seen"`
+	// PackagistSince is when Packagist's advisories were last read in
+	// full; the next run asks only for what changed after it.
+	PackagistSince time.Time `json:"packagistSince,omitzero"`
 }
 
 // cmdAdvisories asks OSV about every dependency the consumer index carries
@@ -104,7 +109,7 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 	}
 	now := time.Now().UTC()
 
-	rep, err := watchAdvisories(context.Background(), &osv.Client{}, idx, only, *control, &state, now)
+	rep, err := watchAdvisories(context.Background(), &osv.Client{}, &packagistadv.Client{}, idx, only, *control, &state, now)
 	if err != nil {
 		return err
 	}
@@ -133,7 +138,7 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 
 // watchAdvisories is cmdAdvisories without the files: the index in, the
 // report out, the state updated.
-func watchAdvisories(ctx context.Context, client *osv.Client, idx *report.Index, only *glob.Set, control string, state *advisoriesState, now time.Time) (*advisoriesReport, error) {
+func watchAdvisories(ctx context.Context, client *osv.Client, pk *packagistadv.Client, idx *report.Index, only *glob.Set, control string, state *advisoriesState, now time.Time) (*advisoriesReport, error) {
 	// One query per distinct dependency; the repositories that carry it
 	// are remembered for the report.
 	type key struct{ datasource, pkg, version, versioning string }
@@ -172,13 +177,29 @@ func watchAdvisories(ctx context.Context, client *osv.Client, idx *report.Index,
 		}
 		queries = append(queries, osv.Query{Datasource: k.datasource, PackageName: k.pkg, Version: k.version, Versioning: versioning})
 	}
-	findings, err := client.Check(ctx, wire.Versionings(), queries)
+	vs := wire.Versionings()
+	findings, err := client.Check(ctx, vs, queries)
 	if err != nil {
 		return nil, fmt.Errorf("advisories: %w", err)
 	}
 	// Queried counts what OSV was asked: a dependency of a datasource
 	// OSV has no ecosystem for, or whose value is a range, is not.
 	rep := &advisoriesReport{GeneratedAt: now}
+	// Packagist carries a TYPO3-CORE-SA days to weeks before OSV. The
+	// watch reads all of it once, per package, and from then on only the
+	// advisories changed since the last read - about 1,900 a year across
+	// all of Packagist - with an hour of overlap; an advisory already
+	// reported stays in Seen. A dependency that joins the index later is
+	// checked in full by its repository's next run. Packagist that cannot
+	// be reached is a warning; OSV's answer stands.
+	if pk != nil {
+		if byPkg, err := packagistForWatch(ctx, pk, queries, findings, vs, state.PackagistSince); err != nil {
+			rep.Warnings = append(rep.Warnings, err.Error()+"; this watch checked composer packages against OSV only")
+		} else {
+			mergePackagist(findings, queries, byPkg, vs, nil)
+			state.PackagistSince = now
+		}
+	}
 	var ctl *advisoryControl
 	if control != "" {
 		ctl = &advisoryControl{Repository: control}
@@ -231,4 +252,22 @@ func watchAdvisories(ctx context.Context, client *osv.Client, idx *report.Index,
 		return rep.New[i].Advisory < rep.New[j].Advisory
 	})
 	return rep, nil
+}
+
+// packagistForWatch reads Packagist's advisories for the watch: per package
+// on the first run, and only what changed since the last read after that.
+func packagistForWatch(ctx context.Context, pk *packagistadv.Client, queries []osv.Query, findings []osv.Finding, vs versioning.Registry, since time.Time) (map[string][]packagistadv.Advisory, error) {
+	if !since.IsZero() {
+		return pk.UpdatedSince(ctx, since.Add(-time.Hour))
+	}
+	var names []string
+	for i, q := range queries {
+		if packagistQueried(findings[i], q, vs) {
+			names = append(names, q.PackageName)
+		}
+	}
+	if len(names) == 0 {
+		return nil, nil
+	}
+	return pk.ForPackages(ctx, names)
 }
