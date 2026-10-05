@@ -1,3 +1,13 @@
+## [0.55.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.54.2...v0.55.0) (2026-10-05)
+
+### :sparkles: Features
+
+* **advisories:** read Packagist's security advisories beside OSV ([8491970](https://git.ole-hartwig.eu/pinup/pinup/commit/8491970fa00df9acd2d17433659228d36406a2c8))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 777b331 ([96454bc](https://git.ole-hartwig.eu/pinup/pinup/commit/96454bc4162adfd1537b5421a3ce3cbfd9ba6f48))
+
 ## [0.54.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.54.1...v0.54.2) (2026-10-04)
 
 ### :bug: Fixes
