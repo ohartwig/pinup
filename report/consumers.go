@@ -53,6 +53,9 @@ type Dependency struct {
 	Version    string `json:"version"`
 	Versioning string `json:"versioning,omitempty"`
 	File       string `json:"file"`
+	// OSVEcosystem is the advisory ecosystem the run's configuration named
+	// for a custom datasource (model.Dependency.OSVEcosystem).
+	OSVEcosystem string `json:"osvEcosystem,omitempty"`
 }
 
 // NewIndex returns an empty index.
@@ -179,7 +182,7 @@ func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 		if version == "" {
 			version = d.CurrentValue
 		}
-		e := Dependency{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: d.Versioning, File: d.File}
+		e := Dependency{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: d.Versioning, File: d.File, OSVEcosystem: d.OSVEcosystem}
 		if !seen[e] {
 			seen[e] = true
 			deps = append(deps, e)

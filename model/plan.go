@@ -201,6 +201,31 @@ type Plan struct {
 	// PINUP_COVERAGE); empty otherwise, which says nothing either way.
 	Unmanaged []Unmanaged `json:"unmanaged,omitempty"`
 	Stats     Stats       `json:"stats"`
+	// AdvisoryCoverage counts the dependencies the advisory lookup could
+	// not ask about, by datasource - the gap the dashboard names so that
+	// "no advisory" is never read as "checked". Nil when the run asked
+	// no advisory database. In-process only: the dashboard renders it
+	// from the plan the run just made; plan.json does not carry it.
+	AdvisoryCoverage *AdvisoryCoverage `json:"-"`
+}
+
+// AdvisoryCoverage is how much of a plan's dependencies the advisory
+// lookup reached.
+type AdvisoryCoverage struct {
+	// Asked counts the dependencies sent to the advisory database.
+	Asked int
+	// NotCovered counts, by datasource, the dependencies it has no
+	// ecosystem for and therefore never asked about.
+	NotCovered map[string]int
+}
+
+// Uncovered is the total of NotCovered.
+func (c *AdvisoryCoverage) Uncovered() int {
+	n := 0
+	for _, v := range c.NotCovered {
+		n += v
+	}
+	return n
 }
 
 // Unmanaged is one pinned version in the repository no run updates: an

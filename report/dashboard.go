@@ -4,6 +4,7 @@
 package report
 
 import (
+	"cmp"
 	"fmt"
 	"regexp"
 	"slices"
@@ -431,6 +432,11 @@ func (s *sections) actionable(b *strings.Builder) {
 func (s *sections) detected(b *strings.Builder) {
 	plan := s.plan
 	b.WriteString("## Detected dependencies\n\n")
+	if c := plan.AdvisoryCoverage; c != nil {
+		if line := NotCoveredLine(c.NotCovered); line != "" {
+			fmt.Fprintf(b, "Advisories were asked for %d of them; %s. No advisory for those means not looked up, not safe.\n\n", c.Asked, line)
+		}
+	}
 	type fileDeps struct {
 		manager, file string
 		deps          []model.Dependency
@@ -528,4 +534,30 @@ func short(digest string) string {
 		return digest[:7]
 	}
 	return digest
+}
+
+// NotCoveredLine states the advisory gap: "not covered by advisories: 42
+// (docker 30, custom.koh-apk 12)", datasources by count, then by name. ""
+// when nothing is uncovered. The dashboard and the advisory watch both say
+// it this way.
+func NotCoveredLine(byDatasource map[string]int) string {
+	total := 0
+	names := make([]string, 0, len(byDatasource))
+	for ds, n := range byDatasource {
+		if n > 0 {
+			total += n
+			names = append(names, ds)
+		}
+	}
+	if total == 0 {
+		return ""
+	}
+	slices.SortFunc(names, func(a, b string) int {
+		return cmp.Or(cmp.Compare(byDatasource[b], byDatasource[a]), cmp.Compare(a, b))
+	})
+	parts := make([]string, len(names))
+	for i, ds := range names {
+		parts[i] = fmt.Sprintf("%s %d", ds, byDatasource[ds])
+	}
+	return fmt.Sprintf("not covered by advisories: %d (%s)", total, strings.Join(parts, ", "))
 }

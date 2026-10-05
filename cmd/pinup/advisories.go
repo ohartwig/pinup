@@ -27,12 +27,17 @@ import (
 // had not seen before, with the repositories and dependencies it affects,
 // so the watch job can start one targeted run per repository.
 type advisoriesReport struct {
-	GeneratedAt time.Time        `json:"generatedAt"`
-	Queried     int              `json:"queried"`
-	Findings    int              `json:"findings"`
-	New         []advisoryHit    `json:"new"`
-	Warnings    []string         `json:"warnings,omitempty"`
-	Control     *advisoryControl `json:"control,omitempty"`
+	GeneratedAt time.Time `json:"generatedAt"`
+	Queried     int       `json:"queried"`
+	Findings    int       `json:"findings"`
+	// NotCovered counts, by datasource, the distinct dependencies no
+	// advisory database is asked about: no ecosystem for the datasource,
+	// or a custom datasource whose configuration names none. The gap the
+	// watch cannot see, stated rather than left to look like "no findings".
+	NotCovered map[string]int   `json:"notCovered,omitempty"`
+	New        []advisoryHit    `json:"new"`
+	Warnings   []string         `json:"warnings,omitempty"`
+	Control    *advisoryControl `json:"control,omitempty"`
 }
 
 // advisoryHit is one advisory against one dependency, with its consumers.
@@ -127,6 +132,9 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 		fmt.Fprintf(errw, "warning: %s\n", w)
 	}
 	fmt.Fprintf(out, "advisories: %d dependencies queried, %d with findings, %d new\n", rep.Queried, rep.Findings, len(rep.New))
+	if line := report.NotCoveredLine(rep.NotCovered); line != "" {
+		fmt.Fprintln(out, "advisories: "+line)
+	}
 	for _, h := range rep.New {
 		fmt.Fprintf(out, "  %s %s %s@%s fixed %q: %v\n", h.Advisory, h.Datasource, h.PackageName, h.Version, h.Fixed, h.Repositories)
 	}
@@ -138,10 +146,10 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 
 // watchAdvisories is cmdAdvisories without the files: the index in, the
 // report out, the state updated.
-func watchAdvisories(ctx context.Context, client *osv.Client, pk *packagistadv.Client, idx *report.Index, only *glob.Set, control string, state *advisoriesState, now time.Time) (*advisoriesReport, error) {
+func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagistadv.Client, idx *report.Index, only *glob.Set, control string, state *advisoriesState, now time.Time) (*advisoriesReport, error) {
 	// One query per distinct dependency; the repositories that carry it
 	// are remembered for the report.
-	type key struct{ datasource, pkg, version, versioning string }
+	type key struct{ datasource, pkg, version, versioning, ecosystem string }
 	consumers := map[key][]string{}
 	var order []key
 	repos := make([]string, 0, len(idx.Dependencies))
@@ -157,7 +165,7 @@ func watchAdvisories(ctx context.Context, client *osv.Client, pk *packagistadv.C
 			if d.Version == "" {
 				continue
 			}
-			k := key{d.Datasource, d.PackageName, d.Version, d.Versioning}
+			k := key{d.Datasource, d.PackageName, d.Version, d.Versioning, d.OSVEcosystem}
 			if _, seen := consumers[k]; !seen {
 				order = append(order, k)
 			}
@@ -175,7 +183,7 @@ func watchAdvisories(ctx context.Context, client *osv.Client, pk *packagistadv.C
 		if versioning == "" {
 			versioning = defaults(k.datasource)
 		}
-		queries = append(queries, osv.Query{Datasource: k.datasource, PackageName: k.pkg, Version: k.version, Versioning: versioning})
+		queries = append(queries, osv.Query{Datasource: k.datasource, PackageName: k.pkg, Version: k.version, Versioning: versioning, Ecosystem: k.ecosystem})
 	}
 	vs := wire.Versionings()
 	findings, err := client.Check(ctx, vs, queries)
@@ -213,7 +221,14 @@ func watchAdvisories(ctx context.Context, client *osv.Client, pk *packagistadv.C
 			ctl.Queried++
 		}
 		rep.Warnings = append(rep.Warnings, f.Warnings...)
-		if f.Ecosystem == "" || len(f.Warnings) > 0 {
+		if f.Ecosystem == "" {
+			if rep.NotCovered == nil {
+				rep.NotCovered = map[string]int{}
+			}
+			rep.NotCovered[k.datasource]++
+			continue
+		}
+		if len(f.Warnings) > 0 {
 			continue
 		}
 		rep.Queried++
