@@ -4,6 +4,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"flag"
 	"fmt"
@@ -31,6 +32,7 @@ import (
 	"github.com/ohartwig/pinup/manager/terraform"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/osv"
+	"github.com/ohartwig/pinup/packagistadv"
 	"github.com/ohartwig/pinup/planner"
 	"github.com/ohartwig/pinup/plugin"
 	"github.com/ohartwig/pinup/report"
@@ -96,7 +98,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
 	opts.Analyzers = wire.Analyzers(client, opts.Datasources)
 	advisories := &osv.Client{}
-	opts.Advisories = advisories
+	opts.Advisories = advisorySources{osv: advisories, packagist: &packagistadv.Client{}}
 	exploited := &kev.Client{HTTP: client}
 	opts.Exploited = exploited
 	notes := &changelog.Fetcher{Client: client, GitLabURL: env.gitLabURL(), TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
@@ -1370,6 +1372,24 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 	}
 	if len(queries) == 0 {
 		return nil
+	}
+	// A Packagist advisory names no fix, only the range it covers; with
+	// the releases the lookup found, the fix is the lowest one the range
+	// no longer covers.
+	if ra, ok := client.(releaseAware); ok {
+		known := map[string][]string{}
+		for _, i := range index {
+			d := deps[i]
+			if d.Datasource != "packagist" {
+				continue
+			}
+			if rs := releasesOf(d); rs != nil {
+				for _, r := range rs.Releases {
+					known[cmp.Or(d.PackageName, d.DepName)] = append(known[cmp.Or(d.PackageName, d.DepName)], r.Version)
+				}
+			}
+		}
+		client = ra.withReleases(func(pkg string) []string { return known[pkg] })
 	}
 	findings, err := client.Check(ctx, schemes, queries)
 	if err != nil {

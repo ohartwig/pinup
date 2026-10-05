@@ -84,7 +84,7 @@ func TestAdvisoriesWatchReportsNewFindingsOnce(t *testing.T) {
 	only := glob.NewSet([]string{"development/**", "devops/**"})
 	now := time.Date(2026, 9, 14, 13, 0, 0, 0, time.UTC)
 
-	rep, err := watchAdvisories(context.Background(), client, advisoriesIndex(), only, "pinup/shadow-fixture", state, now)
+	rep, err := watchAdvisories(context.Background(), client, nil, advisoriesIndex(), only, "pinup/shadow-fixture", state, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,7 +111,7 @@ func TestAdvisoriesWatchReportsNewFindingsOnce(t *testing.T) {
 	}
 
 	// The same advisory is not news twice.
-	again, err := watchAdvisories(context.Background(), client, advisoriesIndex(), only, "pinup/shadow-fixture", state, now.Add(15*time.Minute))
+	again, err := watchAdvisories(context.Background(), client, nil, advisoriesIndex(), only, "pinup/shadow-fixture", state, now.Add(15*time.Minute))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func TestAdvisoriesControlMustYield(t *testing.T) {
 	rt.Handle("api.osv.dev", osvHandler(t, &calls))
 	idx := report.NewIndex()
 	idx.Dependencies["pinup/shadow-fixture"] = []report.Dependency{{Datasource: "npm", PackageName: "dayjs", Version: "1.11.13", Versioning: "npm"}}
-	rep, err := watchAdvisories(context.Background(), &osv.Client{Transport: rt}, idx, nil, "pinup/shadow-fixture", &advisoriesState{Seen: map[string]time.Time{}}, time.Now())
+	rep, err := watchAdvisories(context.Background(), &osv.Client{Transport: rt}, nil, idx, nil, "pinup/shadow-fixture", &advisoriesState{Seen: map[string]time.Time{}}, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

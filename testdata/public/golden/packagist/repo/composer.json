@@ -1,0 +1,5 @@
+{
+  "require": {
+    "typo3/cms-backend": "14.3.6"
+  }
+}

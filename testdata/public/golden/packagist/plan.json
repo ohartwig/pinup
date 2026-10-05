@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "pinupVersion": "golden",
+  "generatedAt": "2026-10-05T20:02:00Z",
+  "repo": {
+    "path": "golden/packagist"
+  },
+  "limits": {
+    "prHourlyLimit": 20,
+    "prConcurrentLimit": 10
+  },
+  "dashboard": {
+    "enabled": true,
+    "title": "pinup Dashboard"
+  },
+  "branching": {
+    "prefix": "renovate/"
+  },
+  "deps": [
+    {
+      "manager": "composer",
+      "file": "composer.json",
+      "customManager": -1,
+      "depName": "typo3/cms-backend",
+      "depType": "require",
+      "currentValue": "14.3.6",
+      "datasource": "packagist",
+      "versioning": "composer",
+      "sourceUrl": "https://github.com/TYPO3-CMS/backend.git",
+      "rangeStrategy": "update-lockfile",
+      "internalChecksFilter": "strict",
+      "advisories": [
+        {
+          "id": "PKSA-745m-816f-bzfy",
+          "aliases": [
+            "CVE-2026-77132"
+          ],
+          "summary": "TYPO3-CORE-SA-2026-022: Information Disclosure via Backend Localization Wizard",
+          "fixed": "v14.3.7",
+          "published": "2026-09-08T09:00:00Z"
+        }
+      ],
+      "vulnerabilityBound": "v14.3.7",
+      "locus": {
+        "valueStart": 43,
+        "valueEnd": 49,
+        "digestStart": -1,
+        "digestEnd": -1,
+        "line": 3
+      },
+      "lockFiles": [
+        "composer.lock"
+      ]
+    }
+  ],
+  "updates": [
+    {
+      "depKey": "composer.json|composer|typo3/cms-backend|14.3.6|43",
+      "dep": {
+        "manager": "composer",
+        "file": "composer.json",
+        "customManager": -1,
+        "depName": "typo3/cms-backend",
+        "depType": "require",
+        "currentValue": "14.3.6",
+        "datasource": "packagist",
+        "versioning": "composer",
+        "sourceUrl": "https://github.com/TYPO3-CMS/backend.git",
+        "rangeStrategy": "update-lockfile",
+        "internalChecksFilter": "strict",
+        "advisories": [
+          {
+            "id": "PKSA-745m-816f-bzfy",
+            "aliases": [
+              "CVE-2026-77132"
+            ],
+            "summary": "TYPO3-CORE-SA-2026-022: Information Disclosure via Backend Localization Wizard",
+            "fixed": "v14.3.7",
+            "published": "2026-09-08T09:00:00Z"
+          }
+        ],
+        "vulnerabilityBound": "v14.3.7",
+        "locus": {
+          "valueStart": 43,
+          "valueEnd": 49,
+          "digestStart": -1,
+          "digestEnd": -1,
+          "line": 3
+        },
+        "lockFiles": [
+          "composer.lock"
+        ]
+      },
+      "newValue": "14.3.7",
+      "newVersion": "v14.3.7",
+      "updateType": "patch",
+      "declared": "patch",
+      "effective": "unknown",
+      "releaseTime": "2026-09-08T09:17:25Z",
+      "timeSource": "datasource",
+      "securityFix": true
+    }
+  ],
+  "branches": [
+    {
+      "name": "renovate/packagist-typo3-cms-backend-vulnerability",
+      "slug": "packagist-typo3-cms-backend-vulnerability",
+      "title": "fix(deps): update dependency typo3/cms-backend to v14.3.7 [security]",
+      "commitBody": "Refs: RENOVATE\n\nUpdate-Type: patch",
+      "updateKeys": [
+        "composer.json|composer|typo3/cms-backend|14.3.6|43>14.3.7"
+      ],
+      "edits": [
+        {
+          "file": "composer.json",
+          "start": 43,
+          "end": 49,
+          "old": "14.3.6",
+          "new": "14.3.7",
+          "manager": "composer"
+        }
+      ],
+      "automerge": true,
+      "labels": [
+        "security"
+      ],
+      "schedule": {
+        "expr": "at any time",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": true
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "stage": "config",
+      "msg": "preset \"abandonments:recommended\" has no effect: abandonment detection is not implemented; the preset resolves to nothing"
+    },
+    {
+      "stage": "config",
+      "msg": "preset \"mergeConfidence:all-badges\" has no effect: merge confidence badges call developer.mend.io; pinup classifies risk itself (docs/plan.md §3.5) and contacts no third-party service, so the preset resolves to nothing"
+    }
+  ],
+  "stats": {
+    "filesDiscovered": 1,
+    "depsExtracted": 1,
+    "lookupsIssued": 1,
+    "lookupsFromCache": 0,
+    "updatesFound": 1,
+    "updatesBlocked": 0,
+    "branchesPlanned": 1
+  }
+}

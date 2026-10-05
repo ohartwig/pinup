@@ -21,6 +21,7 @@ import (
 	"github.com/ohartwig/pinup/lookup"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/osv"
+	"github.com/ohartwig/pinup/packagistadv"
 	"github.com/ohartwig/pinup/report"
 	"github.com/ohartwig/pinup/versioning"
 	"github.com/ohartwig/pinup/wire"
@@ -94,10 +95,20 @@ func (c cannedAdvisories) Check(_ context.Context, _ versioning.Registry, querie
 	return out, nil
 }
 
-// recordingAdvisories asks OSV and remembers every finding by query.
+// recordingAdvisories asks the live sources - OSV, and Packagist for
+// composer packages - and remembers every merged finding by query.
 type recordingAdvisories struct {
-	inner   *osv.Client
+	inner   advisoryChecker
 	answers *cannedLookups
+}
+
+// withReleases passes the run's release sets on to the live sources, so the
+// recorded fixes are the ones a live run derives.
+func (r recordingAdvisories) withReleases(releases func(string) []string) advisoryChecker {
+	if ra, ok := r.inner.(releaseAware); ok {
+		r.inner = ra.withReleases(releases)
+	}
+	return r
 }
 
 func (r recordingAdvisories) Check(ctx context.Context, vs versioning.Registry, queries []osv.Query) ([]osv.Finding, error) {
@@ -347,7 +358,7 @@ func recordGolden(t *testing.T, dir string, meta goldenMeta, now time.Time) {
 		live[n] = recordingDS{inner: ds, mu: mu, answers: answers}
 	}
 	opts := goldenOptions(t, dir, meta, live, now)
-	opts.Advisories = recordingAdvisories{inner: &osv.Client{}, answers: answers}
+	opts.Advisories = recordingAdvisories{inner: advisorySources{osv: &osv.Client{}, packagist: &packagistadv.Client{}}, answers: answers}
 	opts.CustomDatasources = func(defs map[string]model.CustomDatasource) lookup.Registry {
 		r := lookup.Registry{}
 		for n, ds := range wire.CustomDatasources(httpClient(env), defs, dsOpts.ApkViews) {
