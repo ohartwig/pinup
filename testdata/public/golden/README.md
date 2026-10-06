@@ -19,12 +19,12 @@ commit that explains why.
 
 | Repository | Covers |
 |---|---|
-| `estate.v2` | the fictional estate's own shapes: a digest-pinned base, annotated apk pins from Wolfi and the estate's index, component includes with a full version and a rolling `@N`, a first-party composer package through the templated gitlab-packages manager, a terraform provider and registry module, a bash tag versioned by its alpine suffix |
+| `estate.v2` | the estate's own shapes: a digest-pinned base, annotated apk pins from Wolfi and the estate's index, component includes with a full version and a rolling `@N`, a first-party composer package through the templated gitlab-packages manager, a terraform provider and registry module, a bash tag versioned by its alpine suffix |
 | `tfversion.v2` | `terraform-version` and `kustomize` (helm, git-tags declined and failing, docker, github) |
 | `gomod.v3` | `gomod` under the runner's own configuration: `go-mod-directive`, `go` and `golang-version`; a pseudo-version pin moving as a digest, an `// indirect` requirement reached only by its security fix, `go mod tidy` beside every module that has a `go.sum` and none for the tree that has not |
 | `gitrefs.v2` | `git-refs`: a branch pinned by commit (`expected-commit` under a `# renovate:` line, devops/wolfi-packages' shape) refreshed to the branch head, on the branch Renovate uses; and a `node:24-alpine` job image under the `node` versioning, where the tag is no version and the digest gets pinned - as Renovate pins it (measured on hub node:24-alpine), unlike a range no release satisfies |
-| `lock.v2` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
-| `pyver.v2` | `pypi` under `pep440`: three Python tools pinned in CI variables (the annotation managers for `.gitlab-ci.yml` and component templates), and `engines.node` through `node-version`, a range the current line already satisfies |
+| `lock.v3` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
+| `pyver.v2` | `pypi` under `pep440`: three Python tools pinned in CI variables (the runner's annotation managers for `.gitlab-ci.yml` and component templates), and `engines.node` through `node-version`, a range the current line already satisfies |
 | `osv.v2` | the vulnerability fast path: lodash 4.17.20, guzzle 7.4.4, symfony/http-kernel 6.0.0 against OSV |
 | `packagist.v2` | Packagist's security advisories beside OSV: typo3/cms-backend 14.3.6 against TYPO3-CORE-SA-2026-022 (CVE-2026-77132), which OSV did not carry when it was recorded on 2026-10-05 - the fix opens from Packagist alone |
 
@@ -47,3 +47,20 @@ Go 1.27.0 and 1.27.1, recorded live on 2026-10-06 (no advisories) and
 inserted beside the earlier recording, which is unchanged. The plan differs
 by the coverage of the three `golang-version` dependencies: the two toolchain
 versions are asked, the `go 1.26` language directive is `no-version`.
+
+## lock.v3 (2026-10-06)
+
+pinup merges an update's configuration in Renovate's order since this
+version (`resolveUpdate`, after `lib/workers/repository/updates/flatten.ts`):
+the package rules, the update type's own object, the rules again - so a rule
+wins over `digest`, `lockFileMaintenance` and the rest, where the object used
+to win. And a lock refresh shows the rules no dependency: Renovate builds it
+from the package file's configuration, so `matchPackageNames: ["*"]` does not
+match it, where pinup's placeholder name "lock file" used to. In this tree the
+fixture's `*` rule (`schedule: ["at any time"]`) matched the refresh and was
+named as the origin of a hold it did not cause; the object's
+`after 1am and before 6am` held it all along. `lock.v3` is `lock.v2` with the
+repository, the answers and `golden.json` unchanged; the three refreshes are
+held as before, until the same moment, and the plan now names `config` as the
+origin instead of `packageRules[67]` - `git diff -M` against v2 shows exactly
+that.

@@ -132,7 +132,7 @@ func (r *whatifRun) widens(d model.Dependency, base map[string]any) bool {
 		groups[g] = true
 	}
 	for t := model.UpdateMajor; t <= model.UpdateCompatibility; t++ {
-		res := r.engine.Apply(base, rules.SubjectOf(ruled, t.String()))
+		res := resolveUpdate(r.engine, base, rules.SubjectOf(ruled, t.String()), t)
 		if g, _ := planner.Overlay(res.Config, t)["groupName"].(string); groups[g] {
 			return true
 		}

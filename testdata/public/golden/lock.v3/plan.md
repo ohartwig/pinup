@@ -15,9 +15,9 @@
 | Branch | Update | Reason | Held by | Thaws |
 |---|---|---|---|---|
 | `renovate/js-tokens-10.x` | js-tokens ^4.0.0 → ^10.0.0 | dependencyDashboardApproval | packageRules[36] | — |
-| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[67] | 2026-09-14T23:00:00Z |
-| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[67] | 2026-09-14T23:00:00Z |
-| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | packageRules[67] | 2026-09-14T23:00:00Z |
+| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | config | 2026-09-14T23:00:00Z |
+| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | config | 2026-09-14T23:00:00Z |
+| `renovate/lock-file-maintenance` | lock file  →  | schedule `outside after 1am and before 6am (Europe/Berlin)` | config | 2026-09-14T23:00:00Z |
 
 ## Warnings
 

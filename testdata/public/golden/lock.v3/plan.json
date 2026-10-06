@@ -255,8 +255,8 @@
           "reason": "schedule",
           "until": "2026-09-14T23:00:00Z",
           "origin": {
-            "source": "packageRules",
-            "rule": 67,
+            "source": "config",
+            "rule": -1,
             "order": 0
           },
           "note": "outside after 1am and before 6am (Europe/Berlin)"
@@ -290,8 +290,8 @@
           "reason": "schedule",
           "until": "2026-09-14T23:00:00Z",
           "origin": {
-            "source": "packageRules",
-            "rule": 67,
+            "source": "config",
+            "rule": -1,
             "order": 0
           },
           "note": "outside after 1am and before 6am (Europe/Berlin)"
@@ -325,8 +325,8 @@
           "reason": "schedule",
           "until": "2026-09-14T23:00:00Z",
           "origin": {
-            "source": "packageRules",
-            "rule": 67,
+            "source": "config",
+            "rule": -1,
             "order": 0
           },
           "note": "outside after 1am and before 6am (Europe/Berlin)"

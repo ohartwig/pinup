@@ -1205,12 +1205,15 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 	// The rules were written for Renovate and see the type Renovate would
 	// report: a majorAvailable update is a major to them.
 	subject := rules.SubjectOf(u.Dep, u.Type.Renovate().String())
+	if u.Type == model.UpdateLockFileMaintenance {
+		subject = lockRefreshSubject(subject)
+	}
 	if u.Effective != model.RiskUnknown {
 		subject.Effective = u.Effective.String()
 	}
-	res := engine.Apply(base, subject)
-	// The update type's own object - lockFileMaintenance.schedule, say -
-	// applies over the rules' result before the policy is read.
+	res := resolveUpdate(engine, base, subject, u.Type)
+	// The update type's own object, already merged by resolveUpdate and
+	// rewritten to the values the rules left; this overlay is idempotent.
 	cfg := planner.Overlay(res.Config, u.Type)
 	// The safety rule of the effective label: it may relax an automerge
 	// only where a rule says the analyzer's word is to be trusted. An
@@ -1223,6 +1226,15 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 			// and merge request read the rules' own result.
 			cfg["automerge"] = false
 			res.Config["automerge"] = false
+			// The naming merges the update type's object again; it must
+			// carry the same answer, or digest.automerge arms it anyway.
+			if obj, ok := res.Config[planner.UpdateTypeKey(u.Type)].(map[string]any); ok {
+				if _, has := obj["automerge"]; has {
+					obj = maps.Clone(obj)
+					obj["automerge"] = false
+					res.Config[planner.UpdateTypeKey(u.Type)] = obj
+				}
+			}
 			// Opened, not merged on its own; the evidence table says why.
 			u.Evidence = append(u.Evidence, model.Evidence{Kind: "automerge", From: u.Declared.String(), To: u.Effective.String(),
 				Note: fmt.Sprintf("not armed: %s set it on the analyzer's %s over a declared %s; trustEffective: true would let it", lastWriter(res, "automerge"), u.Effective, u.Declared)})
@@ -1290,6 +1302,52 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		return decided, cfg, err
 	}
 	return decided, res.Config, err
+}
+
+// lockRefreshSubject is what a rule sees of a lock refresh. Renovate builds
+// the refresh from the package file's configuration (flatten.ts), with no
+// dependency in it: a rule naming packages, dependencies, datasources or
+// versions never matches it - matchPackageNames ["*"] included, since the
+// matcher returns false for a missing name. pinup's refresh carries the
+// placeholder name "lock file" for the plan and the dashboard; the rules
+// must not see it. The manager, the file and the update type stay.
+func lockRefreshSubject(s rules.Subject) rules.Subject {
+	return rules.Subject{Manager: s.Manager, PackageFile: s.PackageFile, UpdateType: s.UpdateType}
+}
+
+// resolveUpdate is Renovate's per-update merge (lib/workers/repository/
+// updates/flatten.ts): the package rules, the update type's own object over
+// their result, and the rules once more, "in case any were added by the
+// updateType config". A rule therefore wins over the object: automerge:
+// false on a digest update beats :automergeDigest's digest.automerge, and a
+// rule's schedule beats lockFileMaintenance.schedule. Until 2026-10-06 pinup
+// stopped after the object, so the object won and such a rule was inert.
+//
+// The object stays in the result, rewritten to the values the second pass
+// left, because the branch naming merges it again (planner.Name); merging
+// the final values over themselves changes nothing. description appends,
+// so the second pass would list every rule twice; it keeps the first pass's.
+func resolveUpdate(engine *rules.Engine, base map[string]any, subject rules.Subject, t model.UpdateType) rules.Resolution {
+	first := engine.Apply(base, subject)
+	second := engine.Apply(planner.Overlay(first.Config, t), subject)
+	if d, ok := first.Config["description"]; ok {
+		second.Config["description"] = d
+	} else {
+		delete(second.Config, "description")
+	}
+	key := planner.UpdateTypeKey(t)
+	if obj, ok := second.Config[key].(map[string]any); ok {
+		synced := make(map[string]any, len(obj))
+		for k, v := range obj {
+			if final, ok := second.Config[k]; ok {
+				synced[k] = final
+			} else {
+				synced[k] = v
+			}
+		}
+		second.Config[key] = synced
+	}
+	return second
 }
 
 // wroteByEffectiveRule reports whether the rule that last wrote key was one
