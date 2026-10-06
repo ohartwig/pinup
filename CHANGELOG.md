@@ -1,3 +1,13 @@
+## [0.62.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.61.0...v0.62.0) (2026-10-06)
+
+### :sparkles: Features
+
+* **docker:** an image withdrawal list speaks for its declared scope ([afdc34f](https://git.ole-hartwig.eu/pinup/pinup/commit/afdc34f3cb8473946d050d7f2236ab32f159e787))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 83bd953 ([4f71e3f](https://git.ole-hartwig.eu/pinup/pinup/commit/4f71e3fc4484459984fdd7b57c15ab3193b58cf7))
+
 ## [0.61.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.60.0...v0.61.0) (2026-10-06)
 
 ### :sparkles: Features
