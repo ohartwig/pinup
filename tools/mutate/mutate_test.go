@@ -345,6 +345,11 @@ var mutators = []mutator{
 		"\ts.checkPrivate(ctx, vs, queries, findings)\n", "\n", []string{"./cmd/pinup/"}, false, ""},
 	{98, "advisories", "a private advisory OSV already carries is listed twice", "cmd/pinup/packagistadvisories.go",
 		"\t\t\tif carried {\n", "\t\t\tif false && carried {\n", []string{"./cmd/pinup/"}, false, ""},
+	// An explicit OSV mapping per rule (2026-10-06).
+	{99, "advisories", "a rule's osvPackage never reaches the dependency", "cmd/pinup/whatif.go",
+		"\t\t\td.OSVPackage = &model.OSVPackage{Ecosystem: eco, Name: name}\n", "\n", []string{"./cmd/pinup/"}, false, ""},
+	{100, "advisories", "an explicit mapping loses to the datasource's ecosystem", "osv/osv.go",
+		"\tif q.Explicit && q.Ecosystem != \"\" {\n", "\tif false {\n", []string{"./osv/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

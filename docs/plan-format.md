@@ -73,6 +73,8 @@ word:
 | `withdrawal` | no advisory source has an ecosystem for it, but its publisher's withdrawal list speaks for it: an apk mirror that serves the package publishes `withdrawn.json`, or the installation's image list (`PINUP_WITHDRAWN_IMAGES`) names images on its registry |
 | `none` | nothing would say so |
 
+A dependency a rule mapped to an OSV package carries the mapping as
+`osvPackage` (`{"ecosystem", "name"}`) and the rule in `osvPackageBy`.
 `reason` says why no advisory source was asked: `no-ecosystem` (the
 datasource has no advisory ecosystem and the configuration names none),
 `other-versioning` (the datasource names one, but this dependency is not

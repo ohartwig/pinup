@@ -76,6 +76,10 @@ type Query struct {
 	// one it serves (customDatasources.<name>.osvEcosystem). Empty for the
 	// built-in datasources, which map through Ecosystem.
 	Ecosystem string
+	// Explicit says a rule mapped the dependency to Ecosystem and
+	// PackageName (packageRules[].osvPackage): asked there whatever the
+	// datasource's own ecosystem.
+	Explicit bool
 }
 
 // Advisory is one OSV record that affects a Query's current version.
@@ -166,6 +170,9 @@ func Asks(q Query) bool { return ecosystemOf(q) != "" }
 // ecosystemOf is the ecosystem a query is asked under, or "" when it is
 // not asked at all.
 func ecosystemOf(q Query) string {
+	if q.Explicit && q.Ecosystem != "" {
+		return q.Ecosystem
+	}
 	if eco := Ecosystem(q.Datasource); eco != "" {
 		return eco
 	}

@@ -150,6 +150,13 @@ type Dependency struct {
 	// follows from the datasource. It travels into the consumer index so
 	// the advisory watch, which reads no configuration, asks the same.
 	OSVEcosystem string `json:"osvEcosystem,omitempty"`
+	// OSVPackage is the advisory package a rule mapped this dependency to
+	// (packageRules[].osvPackage) - a pin whose datasource has no advisory
+	// ecosystem, such as a github-releases binary that is a Go module.
+	// OSVPackageBy names the rule. Nil without such a rule: pinup never
+	// guesses a mapping from a repository name.
+	OSVPackage   *OSVPackage `json:"osvPackage,omitempty"`
+	OSVPackageBy string      `json:"osvPackageBy,omitempty"`
 	// AdvisoryCoverage says whether anything would tell the run that this
 	// dependency's current version is vulnerable, and how: an advisory
 	// source was asked, only a withdrawal list speaks for it, or nothing
@@ -332,6 +339,12 @@ type ReleaseSet struct {
 	// whose index carries the package, the installation's image list for
 	// an image on a registry that list names. Empty when none does.
 	WithdrawalList string `json:"withdrawalList,omitempty"`
+}
+
+// OSVPackage names a package in an OSV ecosystem.
+type OSVPackage struct {
+	Ecosystem string `json:"ecosystem"`
+	Name      string `json:"name"`
 }
 
 // The three coverage states of a dependency (DependencyCoverage.State).

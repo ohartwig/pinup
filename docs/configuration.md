@@ -162,6 +162,7 @@ A key not in this table is not read; `migrate` lists it as unsupported.
 | `matchEffective` | a rule | match the analyzer's label: `patch`, `minor`, `major`, `breaking-values`; never fires while the label is unknown |
 | `trustEffective` | a rule | let an automerge a `matchEffective` rule switched on stand although the declared label is stricter; without it the stricter label wins |
 | `osvEcosystem` | `customDatasources.<name>` | the [OSV ecosystem](https://ossf.github.io/osv-schema/#appendix-ecosystems) this custom datasource's packages belong to, e.g. `"Wolfi"`; with it, `osvVulnerabilityAlerts` asks OSV about them ([advisory coverage](#advisory-coverage)) |
+| `osvPackage` | a rule | `{"ecosystem": "Go", "name": "github.com/aquasecurity/trivy"}`: ask OSV about the matched dependencies as this package, for a pin whose datasource has no advisory ecosystem ([advisory coverage](#mapping-a-pin-to-an-osv-package)) |
 
 ### pinup's own keys and Renovate
 
@@ -276,6 +277,28 @@ as checked.
 
 An older pinup ignores `osvEcosystem`: `customDatasources` reads only the
 keys it knows, so a configuration can carry it before the runner does.
+
+### Mapping a pin to an OSV package
+
+A binary released on GitHub, a terraform provider, a tool pinned by tag:
+their datasource has no advisory ecosystem, yet the software is often a
+package OSV knows. A rule says so, explicitly:
+
+```json
+"packageRules": [{
+  "matchDepNames": ["aquasecurity/trivy"],
+  "osvPackage": {"ecosystem": "Go", "name": "github.com/aquasecurity/trivy"}
+}]
+```
+
+The matched dependencies are asked in that ecosystem under that name - trivy
+0.50.0 has 8 advisories there (checked 2026-10-06) - and take OSV's path like
+any other finding; the plan names the rule (`osvPackageBy`). pinup never
+guesses a mapping from a repository name: a pin no rule maps stays
+`no-ecosystem`. An explicit mapping is asked in its ecosystem even where the
+datasource has one of its own. `osvPackage` is pinup's own key: it belongs in
+a `.pinup.*` file or the run's own configuration
+([pinup's own keys and Renovate](#pinups-own-keys-and-renovate)).
 
 ### Private advisories
 

@@ -28,7 +28,7 @@ var KeySupport = map[string]Support{
 	"matchPackageNames": Supported, "matchDepNames": Supported, "matchDatasources": Supported, "matchManagers": Supported,
 	"matchDepTypes": Supported, "matchUpdateTypes": Supported, "matchCurrentValue": Supported, "matchCurrentVersion": Partial,
 	"matchFileNames": Supported, "matchSourceUrls": Partial, "matchJsonata": Partial, "matchCategories": Unsupported,
-	"matchEffective": Supported, "analyze": Supported, "trustEffective": Supported,
+	"matchEffective": Supported, "analyze": Supported, "trustEffective": Supported, "osvPackage": Supported,
 	// Decisions.
 	"enabled": Supported, "minimumReleaseAge": Supported, "minimumReleaseAgeBehaviour": Supported, "schedule": Supported,
 	"timezone": Supported, "automerge": Supported, "automergeDirect": Supported, "dependencyDashboardApproval": Supported, "groupName": Supported,
@@ -70,6 +70,6 @@ var PinupOnly = struct {
 	Top, Rule, Datasource map[string]bool
 }{
 	Top:        map[string]bool{"osvTransitiveAlerts": true, "automergeDirect": true, "prConcurrentLimitIgnoreLabels": true},
-	Rule:       map[string]bool{"analyze": true, "matchEffective": true, "trustEffective": true, "automergeDirect": true},
+	Rule:       map[string]bool{"analyze": true, "matchEffective": true, "trustEffective": true, "automergeDirect": true, "osvPackage": true},
 	Datasource: map[string]bool{"osvEcosystem": true},
 }
