@@ -79,12 +79,15 @@ type Datasource struct {
 	// package -> entries. lists holds the read error, if any, per mirror.
 	withdrawn map[string]map[string][]model.Withdrawal
 	lists     map[string]error
+	// published is the mirrors that publish a withdrawal list at all; a
+	// mirror that answered 404 has none and speaks for no package.
+	published map[string]bool
 }
 
 // New returns a datasource of the given name over view.
 func New(name string, client *httpx.Client, view View) *Datasource {
 	return &Datasource{name: name, view: view, client: client, indexes: map[string]*apkindex.Index{}, errors: map[string]error{},
-		withdrawn: map[string]map[string][]model.Withdrawal{}, lists: map[string]error{}}
+		withdrawn: map[string]map[string][]model.Withdrawal{}, lists: map[string]error{}, published: map[string]bool{}}
 }
 
 func (d *Datasource) Name() string { return d.name }
@@ -99,12 +102,18 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		return nil, fmt.Errorf("%s: the view names no mirrors or no architectures", d.name)
 	}
 	var perArch []*apkindex.Index
+	// carries is the mirrors whose index has the package on any
+	// architecture: only their withdrawal lists speak for it.
+	carries := map[string]bool{}
 	for _, arch := range d.view.Arches {
 		var mirrors []*apkindex.Index
 		for _, m := range d.view.Mirrors {
 			idx, err := d.index(ctx, m+"/"+arch+"/APKINDEX.tar.gz")
 			if err != nil {
 				return nil, fmt.Errorf("%s: %w", d.name, err)
+			}
+			if len(idx.Versions(ref.PackageName)) > 0 {
+				carries[m] = true
 			}
 			mirrors = append(mirrors, idx)
 		}
@@ -125,6 +134,9 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 				gone[w.Version] = true
 				rs.Withdrawn = append(rs.Withdrawn, w)
 			}
+		}
+		if carries[m] && rs.WithdrawalList == "" && d.hasList(m) {
+			rs.WithdrawalList = m + "/withdrawn.json"
 		}
 	}
 	rs.WithdrawnErr = strings.Join(listErrs, "; ")
@@ -210,7 +222,16 @@ func (d *Datasource) withdrawals(ctx context.Context, mirror string) (map[string
 		byPkg[e.Package] = append(byPkg[e.Package], e.Withdrawal)
 	}
 	d.withdrawn[mirror] = byPkg
+	d.published[mirror] = true
 	return byPkg, nil
+}
+
+// hasList reports whether mirror publishes a withdrawal list (read
+// without error, not a 404).
+func (d *Datasource) hasList(mirror string) bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.published[mirror]
 }
 
 // seriesName splits a package name of a series - "kubectl-1.36",

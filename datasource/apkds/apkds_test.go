@@ -287,3 +287,40 @@ func TestUnreadableWithdrawalListIsAWarning(t *testing.T) {
 		}
 	}
 }
+
+// A withdrawal list speaks for the packages its own mirror serves: a
+// package only another mirror carries, a mirror without a list (404) and a
+// list that cannot be read leave the release set without one.
+func TestWithdrawalListSpeaksForItsOwnMirror(t *testing.T) {
+	for _, c := range []struct {
+		name, pkg string
+		list      []byte
+		status    int
+		want      string
+	}{
+		{"own package, list published", "grafana-alloy", []byte(`{"version":1,"withdrawn":[]}`), 0, "https://mirror.example.org/withdrawn.json"},
+		{"package only the public mirror carries", "busybox", []byte(`{"version":1,"withdrawn":[]}`), 0, ""},
+		{"own package, no list", "grafana-alloy", nil, 0, ""},
+		{"own package, list unreadable", "grafana-alloy", nil, http.StatusInternalServerError, ""},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			own := &mirror{arches: map[string][]byte{
+				"x86_64":  indexOf(t, map[string][]string{"grafana-alloy": {"1.20.0-r0"}}),
+				"aarch64": indexOf(t, map[string][]string{"grafana-alloy": {"1.20.0-r0"}}),
+			}, withdrawn: c.list, listStatus: c.status}
+			public := &mirror{arches: map[string][]byte{
+				"x86_64":  indexOf(t, map[string][]string{"busybox": {"1.37.0-r0"}}),
+				"aarch64": indexOf(t, map[string][]string{"busybox": {"1.37.0-r0"}}),
+			}}
+			rt := harness.NewRefusingTransport(t).Handle("mirror.example.org", own).Handle("packages.wolfi.dev", public)
+			ds := New("custom.wolfi", client(rt), View{Mirrors: []string{"https://packages.wolfi.dev/os", "https://mirror.example.org"}, Arches: []string{"x86_64", "aarch64"}})
+			rs, err := ds.Releases(context.Background(), lookup.Ref{Datasource: ds.Name(), PackageName: c.pkg})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if rs.WithdrawalList != c.want {
+				t.Errorf("withdrawal list %q, want %q", rs.WithdrawalList, c.want)
+			}
+		})
+	}
+}

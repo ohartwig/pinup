@@ -261,10 +261,15 @@ other OSV finding: the `vulnerabilityAlerts` branch, no release age, CISA's
 catalog. The advisory watch asks the same, from the ecosystem the run wrote
 into the consumer index.
 
-Whatever no advisory database is asked about is counted, by datasource, and
-stated under *Detected dependencies* on the dashboard and in the watch's
-output - "not covered by advisories: 42 (docker 30, custom.koh-apk 12)" - so
-that no advisory is never read as checked.
+Every dependency the run checks lands in one of three states, written on it
+in the plan ([`advisoryCoverage`](plan-format.md#advisorycoverage)): an
+advisory source was asked; only its publisher's withdrawal list speaks for
+it (an apk mirror's `withdrawn.json`, the installation's
+`PINUP_WITHDRAWN_IMAGES` list); or nothing does, with the reason. The
+dashboard states both gaps under *Detected dependencies*, and the watch in
+its output - "covered by a withdrawal list only: 12 (custom.koh-apk 12); not
+covered by advisories: 30 (docker 30)" - so that no advisory is never read
+as checked.
 
 An older pinup ignores `osvEcosystem`: `customDatasources` reads only the
 keys it knows, so a configuration can carry it before the runner does.

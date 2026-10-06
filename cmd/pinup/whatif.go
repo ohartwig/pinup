@@ -747,6 +747,7 @@ func (r *whatifRun) lookupAll() error {
 	// after the database, whose bound it may raise. It needs no database:
 	// the list travels on the release set.
 	plan.Warnings = append(plan.Warnings, applyWithdrawals(r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
+	coverWithdrawals(plan.AdvisoryCoverage, plan.Deps, r.releasesOf)
 	{
 		var vulnerable []model.Dependency
 		for i := range plan.Deps {
@@ -1334,7 +1335,12 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		}
 	}
 	custom := customOSVEcosystems(cfg)
-	coverage := &model.AdvisoryCoverage{NotCovered: map[string]int{}}
+	coverage := &model.AdvisoryCoverage{NotCovered: map[string]int{}, WithdrawalOnly: map[string]int{}, Reasons: map[string]int{}}
+	notAsked := func(d *model.Dependency, reason string) {
+		d.AdvisoryCoverage = &model.DependencyCoverage{State: model.NotCovered, Reason: reason}
+		coverage.NotCovered[d.Datasource]++
+		coverage.Reasons[reason]++
+	}
 	var queries []osv.Query
 	var index []int
 	schemes := wire.Versionings()
@@ -1348,7 +1354,11 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		}
 		eco := custom[d.Datasource]
 		if !osv.Asks(osv.Query{Datasource: d.Datasource, Versioning: scheme, Ecosystem: eco}) {
-			coverage.NotCovered[d.Datasource]++
+			reason := model.ReasonNoEcosystem
+			if eco != "" || osv.Ecosystem(d.Datasource) != "" {
+				reason = model.ReasonOtherVersioning
+			}
+			notAsked(&deps[i], reason)
 			continue
 		}
 		if osv.Ecosystem(d.Datasource) == "" {
@@ -1370,16 +1380,19 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 		}
 		v, err := schemes.Get(scheme)
 		if err != nil {
+			notAsked(&deps[i], model.ReasonNoVersion)
 			continue
 		}
 		if !v.IsVersion(version) {
 			version = lowestAdmitted(v, version, releasesOf(d))
 			if version == "" {
+				notAsked(&deps[i], model.ReasonNoVersion)
 				continue
 			}
 		}
 		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme, Ecosystem: eco})
 		index = append(index, i)
+		deps[i].AdvisoryCoverage = &model.DependencyCoverage{State: model.CoveredByAdvisories, Sources: advisorySourceNames(client, d.Datasource)}
 	}
 	coverage.Asked = len(queries)
 	if len(queries) == 0 {
@@ -2205,4 +2218,49 @@ func (r *whatifRun) terraformLockEdits(root string, b model.Branch, updates []mo
 		edits = append(edits, es...)
 	}
 	return edits, nil
+}
+
+// advisorySourceNames are the advisory sources a query about a dependency
+// of datasource reaches, by the names the plan and the dashboard use.
+func advisorySourceNames(client advisoryChecker, datasource string) []string {
+	if n, ok := client.(sourceNamer); ok {
+		return n.sourcesFor(datasource)
+	}
+	return []string{"osv"}
+}
+
+// sourceNamer is an advisory checker that knows which sources it asks for
+// a datasource; one that does not is OSV alone.
+type sourceNamer interface {
+	sourcesFor(datasource string) []string
+}
+
+// coverWithdrawals completes the coverage once the release sets are known:
+// a dependency no advisory source was asked about, but its publisher's
+// withdrawal list speaks for, moves from NotCovered to WithdrawalOnly; one
+// that was asked keeps its state and names the list beside the sources.
+func coverWithdrawals(c *model.AdvisoryCoverage, deps []model.Dependency, releasesOf func(model.Dependency) *model.ReleaseSet) {
+	if c == nil {
+		return
+	}
+	for i := range deps {
+		d := &deps[i]
+		if d.AdvisoryCoverage == nil {
+			continue
+		}
+		rs := releasesOf(*d)
+		if rs == nil || rs.WithdrawalList == "" {
+			continue
+		}
+		d.AdvisoryCoverage.Withdrawal = rs.WithdrawalList
+		if d.AdvisoryCoverage.State != model.NotCovered {
+			continue
+		}
+		d.AdvisoryCoverage.State = model.CoveredByWithdrawal
+		c.NotCovered[d.Datasource]--
+		if c.NotCovered[d.Datasource] == 0 {
+			delete(c.NotCovered, d.Datasource)
+		}
+		c.WithdrawalOnly[d.Datasource]++
+	}
 }

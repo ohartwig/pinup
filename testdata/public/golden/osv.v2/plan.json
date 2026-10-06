@@ -143,6 +143,13 @@
         }
       ],
       "vulnerabilityBound": "7.15.2",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv",
+          "packagist"
+        ]
+      },
       "locus": {
         "valueStart": 43,
         "valueEnd": 48,
@@ -181,6 +188,13 @@
         }
       ],
       "vulnerabilityBound": "6.0.20",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv",
+          "packagist"
+        ]
+      },
       "locus": {
         "valueStart": 79,
         "valueEnd": 84,
@@ -266,6 +280,12 @@
         }
       ],
       "vulnerabilityBound": "4.18.0",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 82,
         "valueEnd": 89,
@@ -306,6 +326,12 @@
         }
       ],
       "vulnerabilityBound": "1.2.6",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 109,
         "valueEnd": 115,
@@ -450,6 +476,13 @@
           }
         ],
         "vulnerabilityBound": "7.15.2",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv",
+            "packagist"
+          ]
+        },
         "locus": {
           "valueStart": 43,
           "valueEnd": 48,
@@ -499,6 +532,13 @@
           }
         ],
         "vulnerabilityBound": "6.0.20",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv",
+            "packagist"
+          ]
+        },
         "locus": {
           "valueStart": 79,
           "valueEnd": 84,
@@ -595,6 +635,12 @@
           }
         ],
         "vulnerabilityBound": "4.18.0",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 82,
           "valueEnd": 89,
@@ -646,6 +692,12 @@
           }
         ],
         "vulnerabilityBound": "1.2.6",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 109,
           "valueEnd": 115,

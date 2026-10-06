@@ -330,6 +330,15 @@ var mutators = []mutator{
 		"\tif !renovateFiles[name] {", "\tif true {", []string{"./advise/"}, false, ""},
 	{93, "compat", "a pinup-only key in a rule of renovate.json goes unnamed", "advise/compat.go",
 		"\t\t\tif PinupOnly.Rule[k] {", "\t\t\tif false {", []string{"./advise/"}, false, ""},
+	// Three coverage states per dependency (2026-10-06): a withdrawal list
+	// is not "no coverage", and a range nothing can be asked about is not
+	// silently left out of the count.
+	{94, "advisories", "a dependency only a withdrawal list speaks for stays counted as not covered", "cmd/pinup/whatif.go",
+		"\t\td.AdvisoryCoverage.State = model.CoveredByWithdrawal\n", "\t\tcontinue\n", []string{"./cmd/pinup/"}, false, ""},
+	{95, "advisories", "a range no version can be asked about vanishes from the coverage", "cmd/pinup/whatif.go",
+		"\t\t\t\tnotAsked(&deps[i], model.ReasonNoVersion)\n", "\n", []string{"./cmd/pinup/"}, false, ""},
+	{96, "advisories", "the watch counts what a withdrawal list covers as not covered", "cmd/pinup/advisories.go",
+		"\t\t\t\tgap = &rep.WithdrawalOnly\n", "\n", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

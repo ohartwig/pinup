@@ -54,6 +54,40 @@ the update its rule admits while the rule keeps out something newer carries
 the same sentence in `heldBack`, and the dashboard shows it after the
 update.
 
+### advisoryCoverage
+
+With `osvVulnerabilityAlerts` on, every dependency the run checks says
+whether anything would tell it that its current version is vulnerable - the
+question Renovate leaves unanswered when it skips a dependency without a
+word:
+
+```json
+"advisoryCoverage": {"state": "advisories", "sources": ["osv", "packagist"]}
+"advisoryCoverage": {"state": "withdrawal", "reason": "no-ecosystem", "withdrawal": "https://apk.example.org/withdrawn.json"}
+"advisoryCoverage": {"state": "none", "reason": "other-versioning"}
+```
+
+| `state` | Meaning |
+|---|---|
+| `advisories` | an advisory source was asked about the current version; `sources` names them (`osv`, `packagist`) |
+| `withdrawal` | no advisory source has an ecosystem for it, but its publisher's withdrawal list speaks for it: an apk mirror that serves the package publishes `withdrawn.json`, or the installation's image list (`PINUP_WITHDRAWN_IMAGES`) names images on its registry |
+| `none` | nothing would say so |
+
+`reason` says why no advisory source was asked: `no-ecosystem` (the
+datasource has no advisory ecosystem and the configuration names none),
+`other-versioning` (the datasource names one, but this dependency is not
+written in its versioning - composer's php platform entries resolved through
+an apk datasource), `no-version` (no single version to ask about: a range
+without a lock that admits no known release). `withdrawal` names the list in
+either covered state. A skipped dependency, and every dependency of a run
+with `osvVulnerabilityAlerts` off, carries no `advisoryCoverage`.
+
+The dashboard sums it up under *Detected dependencies* - "covered by a
+withdrawal list only: 68 (custom.koh-apk 68); not covered by advisories: 219
+(docker 219)" - and so does the advisory watch, as `withdrawalOnly` and
+`notCovered` in its report. `notCovered` counts what nothing covers;
+`withdrawalOnly` is not part of it.
+
 ## updates
 
 One entry per move: `dep` (the dependency as above), `newValue` (the

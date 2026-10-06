@@ -29,6 +29,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 0,
         "valueEnd": 5,
@@ -50,6 +54,10 @@
       "pinDigests": true,
       "internalChecksFilter": "strict",
       "timestampOptional": true,
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 106,
         "valueEnd": 107,
@@ -71,6 +79,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 0,
         "valueEnd": 6,
@@ -92,6 +104,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 176,
         "valueEnd": 182,
@@ -114,6 +130,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 253,
         "valueEnd": 260,
@@ -134,6 +154,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 332,
         "valueEnd": 337,
@@ -155,6 +179,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 412,
         "valueEnd": 418,
@@ -177,6 +205,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 504,
         "valueEnd": 510,
@@ -199,6 +231,10 @@
       "pinDigests": true,
       "internalChecksFilter": "strict",
       "timestampOptional": true,
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 581,
         "valueEnd": 587,
@@ -222,6 +258,10 @@
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
       "timestampOptional": true,
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 672,
         "valueEnd": 678,
@@ -289,6 +329,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 992,
         "valueEnd": 997,
@@ -310,6 +354,10 @@
       "pinDigests": true,
       "internalChecksFilter": "strict",
       "timestampOptional": true,
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 1081,
         "valueEnd": 1087,
@@ -335,6 +383,10 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "none",
+          "reason": "no-ecosystem"
+        },
         "locus": {
           "valueStart": 0,
           "valueEnd": 5,
@@ -378,6 +430,10 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "none",
+          "reason": "no-ecosystem"
+        },
         "locus": {
           "valueStart": 0,
           "valueEnd": 6,
@@ -468,6 +524,10 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "none",
+          "reason": "no-ecosystem"
+        },
         "locus": {
           "valueStart": 253,
           "valueEnd": 260,
@@ -520,6 +580,10 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "none",
+          "reason": "no-ecosystem"
+        },
         "locus": {
           "valueStart": 253,
           "valueEnd": 260,
@@ -583,6 +647,10 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "none",
+          "reason": "no-ecosystem"
+        },
         "locus": {
           "valueStart": 992,
           "valueEnd": 997,
@@ -639,6 +707,10 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "none",
+          "reason": "no-ecosystem"
+        },
         "locus": {
           "valueStart": 992,
           "valueEnd": 997,

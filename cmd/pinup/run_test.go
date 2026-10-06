@@ -304,7 +304,7 @@ func TestMigrateToYAML(t *testing.T) {
 func TestNotifyEstateFromPlans(t *testing.T) {
 	dir := t.TempDir()
 	for _, g := range []string{"estate", "lock"} {
-		src, err := os.ReadFile(fixture.Path(t, "golden", g, "plan.json"))
+		src, err := os.ReadFile(fixture.Path(t, "golden", g+".v2", "plan.json"))
 		if err != nil {
 			t.Fatal(err)
 		}

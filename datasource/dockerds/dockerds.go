@@ -122,6 +122,10 @@ type Datasource struct {
 	listRead   bool
 	listByImg  map[string][]model.Withdrawal
 	listErr    error
+	// listHosts are the registries the list names images on: the
+	// installation's own. Its list speaks for every image there, withdrawn
+	// or not, and for none elsewhere.
+	listHosts map[string]bool
 }
 
 // WithWithdrawals makes Releases leave out the tags the list at url
@@ -180,8 +184,22 @@ func (d *Datasource) withdrawals(ctx context.Context) (map[string][]model.Withdr
 		}
 		key := strings.TrimSuffix(imageKey(e.Image, ""), "/")
 		d.listByImg[key] = append(d.listByImg[key], e.Withdrawal)
+		if host, _, ok := strings.Cut(key, "/"); ok {
+			if d.listHosts == nil {
+				d.listHosts = map[string]bool{}
+			}
+			d.listHosts[host] = true
+		}
 	}
 	return d.listByImg, nil
+}
+
+// speaksFor reports whether the list names images on registry's host.
+func (d *Datasource) speaksFor(registry string) bool {
+	d.listMu.Lock()
+	defer d.listMu.Unlock()
+	host, _, _ := strings.Cut(imageKey(registry, ""), "/")
+	return d.listHosts[host]
 }
 
 // New returns a Datasource that dials the registry (and any token realm)
@@ -279,6 +297,9 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	if err != nil {
 		rs.WithdrawnErr = err.Error()
 		return rs, nil
+	}
+	if d.speaksFor(registry) {
+		rs.WithdrawalList = d.listURL
 	}
 	if ws := list[imageKey(registry, repository)]; len(ws) > 0 {
 		gone := make(map[string]bool, len(ws))
