@@ -126,6 +126,11 @@ type Datasource struct {
 	// installation's own. Its list speaks for every image there, withdrawn
 	// or not, and for none elsewhere.
 	listHosts map[string]bool
+	// listScope are the registries, or registry paths, the installation
+	// declares its list speaks for, whether it names an image there or not
+	// (WithWithdrawalScope). An empty list - nothing withdrawn - names no
+	// host, and without a scope it would speak for no image at all.
+	listScope []string
 }
 
 // WithWithdrawals makes Releases leave out the tags the list at url
@@ -134,6 +139,23 @@ type Datasource struct {
 // failure is ReleaseSet.WithdrawnErr - a warning, never a failed lookup.
 func (d *Datasource) WithWithdrawals(client *httpx.Client, url string) *Datasource {
 	d.listClient, d.listURL = client, url
+	return d
+}
+
+// WithWithdrawalScope declares the registries, or registry paths
+// ("registry.example.org" or "registry.example.org/group/images"), the
+// withdrawal list speaks for besides the hosts it names images on. Every
+// image there carries the list as its withdrawal list, even while the list
+// withdraws nothing - an empty list is still the installation's word that
+// none of its images is withdrawn. An image outside the scope and on no
+// host the list names keeps none.
+func (d *Datasource) WithWithdrawalScope(scope []string) *Datasource {
+	for _, s := range scope {
+		s = strings.Trim(strings.TrimPrefix(strings.TrimPrefix(strings.TrimSpace(s), "https://"), "http://"), "/")
+		if s != "" {
+			d.listScope = append(d.listScope, s)
+		}
+	}
 	return d
 }
 
@@ -194,12 +216,22 @@ func (d *Datasource) withdrawals(ctx context.Context) (map[string][]model.Withdr
 	return d.listByImg, nil
 }
 
-// speaksFor reports whether the list names images on registry's host.
-func (d *Datasource) speaksFor(registry string) bool {
+// speaksFor reports whether the list speaks for an image: it names images
+// on the image's host, or the image lies in the declared scope.
+func (d *Datasource) speaksFor(registry, repository string) bool {
 	d.listMu.Lock()
 	defer d.listMu.Unlock()
-	host, _, _ := strings.Cut(imageKey(registry, ""), "/")
-	return d.listHosts[host]
+	key := imageKey(registry, repository)
+	host, _, _ := strings.Cut(key, "/")
+	if d.listHosts[host] {
+		return true
+	}
+	for _, s := range d.listScope {
+		if key == s || strings.HasPrefix(key, s+"/") {
+			return true
+		}
+	}
+	return false
 }
 
 // New returns a Datasource that dials the registry (and any token realm)
@@ -298,7 +330,7 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		rs.WithdrawnErr = err.Error()
 		return rs, nil
 	}
-	if d.speaksFor(registry) {
+	if d.speaksFor(registry, repository) {
 		rs.WithdrawalList = d.listURL
 	}
 	if ws := list[imageKey(registry, repository)]; len(ws) > 0 {

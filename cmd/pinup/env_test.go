@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 
@@ -273,6 +274,31 @@ func TestWithdrawnImagesFromEnv(t *testing.T) {
 	}
 	if _, err := datasourceOptions(platformEnv{}, env("http://git.example.test/list.json")); err == nil {
 		t.Error("a plain http list was accepted")
+	}
+}
+
+// PINUP_WITHDRAWN_IMAGES_SCOPE names the registries or paths the list
+// speaks for, comma-separated with blanks dropped; it means nothing
+// without a list.
+func TestWithdrawnImagesScopeFromEnv(t *testing.T) {
+	env := func(list, scope string) func(string) string {
+		return func(k string) string {
+			switch k {
+			case "PINUP_WITHDRAWN_IMAGES":
+				return list
+			case "PINUP_WITHDRAWN_IMAGES_SCOPE":
+				return scope
+			}
+			return ""
+		}
+	}
+	const u = "https://git.example.test/withdrawn-images.json"
+	o, err := datasourceOptions(platformEnv{}, env(u, " registry.example.test/devops/images, ,registry.example.test/development "))
+	if err != nil || !slices.Equal(o.WithdrawnImagesScope, []string{"registry.example.test/devops/images", "registry.example.test/development"}) {
+		t.Errorf("scope = %q, %v", o.WithdrawnImagesScope, err)
+	}
+	if o, _ := datasourceOptions(platformEnv{}, env("", "registry.example.test")); o.WithdrawnImagesScope != nil {
+		t.Errorf("a scope without a list = %q", o.WithdrawnImagesScope)
 	}
 }
 

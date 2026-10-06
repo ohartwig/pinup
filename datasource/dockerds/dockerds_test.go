@@ -592,3 +592,42 @@ func TestWithdrawalListSpeaksForItsRegistryOnly(t *testing.T) {
 		t.Errorf("a list for registry.example.net speaks for registry.ole-hartwig.eu: %q", rs.WithdrawalList)
 	}
 }
+
+// An empty list - nothing withdrawn - names no host, so on its own it
+// speaks for no image: the advisory watch counted all 219 docker
+// dependencies as covered by nothing (pinup/runner job 2077501,
+// 2026-10-06). The declared scope makes it speak for the images in it,
+// and for those only.
+func TestWithdrawalScopeCoversImagesAnEmptyListNames(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		scope []string
+		image string
+		want  bool
+	}{
+		{"no scope, empty list", nil, "registry.ole-hartwig.eu/devops/images/crowdsec", false},
+		{"registry path in scope", []string{"registry.ole-hartwig.eu/devops/images"}, "registry.ole-hartwig.eu/devops/images/crowdsec", true},
+		{"whole registry in scope", []string{"https://registry.ole-hartwig.eu/"}, "registry.ole-hartwig.eu/devops/images/other", true},
+		{"sibling path outside scope", []string{"registry.ole-hartwig.eu/devops/images"}, "registry.ole-hartwig.eu/devops/images-mirror/x", false},
+		{"other registry outside scope", []string{"registry.ole-hartwig.eu"}, "registry.example.net/devops/images/x", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ds, _ := withdrawnDS(t, &listServer{body: []byte(`{"version":1,"withdrawn":[]}`)})
+			ds.WithWithdrawalScope(tc.scope)
+			registry, repository, _ := strings.Cut(tc.image, "/")
+			if got := ds.speaksFor(registry, repository); got != tc.want {
+				t.Errorf("speaksFor(%s) = %t, want %t", tc.image, got, tc.want)
+			}
+		})
+	}
+	// End to end through Releases: the empty list reaches the release set.
+	ds, ref := withdrawnDS(t, &listServer{body: []byte(`{"version":1,"withdrawn":[]}`)})
+	ds.WithWithdrawalScope([]string{"registry.ole-hartwig.eu/devops/images"})
+	rs, err := ds.Releases(context.Background(), ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rs.WithdrawalList != "https://lists.example.org/withdrawn-images.json" || len(rs.Releases) != 2 {
+		t.Errorf("withdrawal list %q, releases %+v", rs.WithdrawalList, rs.Releases)
+	}
+}

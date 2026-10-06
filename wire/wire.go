@@ -129,6 +129,9 @@ type DatasourceOptions struct {
 	// image versions (withdrawn-images.json); empty means none. The docker
 	// datasource reads it through the shared client.
 	WithdrawnImages string
+	// WithdrawnImagesScope are the registries or registry paths the list
+	// speaks for even where it names no image (dockerds.WithWithdrawalScope).
+	WithdrawnImagesScope []string
 }
 
 // DefaultApkViews is the one apk view every installation has: the public
@@ -190,7 +193,7 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 func docker(client *httpx.Client, o DatasourceOptions) *dockerds.Datasource {
 	d := dockerds.New(o.Transport, o.RegistryCredentials)
 	if o.WithdrawnImages != "" && client != nil {
-		d.WithWithdrawals(client, o.WithdrawnImages)
+		d.WithWithdrawals(client, o.WithdrawnImages).WithWithdrawalScope(o.WithdrawnImagesScope)
 	}
 	return d
 }

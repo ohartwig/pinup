@@ -18,7 +18,7 @@ sources were asked - or why none was ([`advisoryCoverage`](plan-format.md#adviso
 | [Packagist](https://packagist.org/apidoc#list-security-advisories) | `packagist` | composer packages (`packagist`), beside OSV | 0.55.0 |
 | OSV, by an explicit mapping | `osv` | any pin a rule maps to an OSV package (`packageRules[].osvPackage`, e.g. a github-releases binary that is a Go module) ([mapping a pin](configuration.md#mapping-a-pin-to-an-osv-package)) | next release |
 | the installation's own feed | `private` | packagist, gitlab-packages, gitlab-tags, gitlab-releases, npm, go, pypi - records in the OSV schema named by purl ([private advisories](configuration.md#private-advisories), `PINUP_PRIVATE_ADVISORIES`) | next release |
-| a withdrawal list | — (`withdrawal`) | apk pins whose mirror publishes `withdrawn.json`; images on the registry the installation's `PINUP_WITHDRAWN_IMAGES` list names | apk 0.50.0, images 0.51.0 |
+| a withdrawal list | — (`withdrawal`) | apk pins whose mirror publishes `withdrawn.json`; images on the registry the installation's `PINUP_WITHDRAWN_IMAGES` list names, or in its declared `PINUP_WITHDRAWN_IMAGES_SCOPE` | apk 0.50.0, images 0.51.0, scope 0.62.0 |
 
 All of them are switched on by `osvVulnerabilityAlerts` and off by
 `vulnerabilityAlerts.enabled: false`. A source that cannot be reached is a
