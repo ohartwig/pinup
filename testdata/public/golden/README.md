@@ -21,7 +21,7 @@ commit that explains why.
 |---|---|
 | `estate.v2` | the fictional estate's own shapes: a digest-pinned base, annotated apk pins from Wolfi and the estate's index, component includes with a full version and a rolling `@N`, a first-party composer package through the templated gitlab-packages manager, a terraform provider and registry module, a bash tag versioned by its alpine suffix |
 | `tfversion.v2` | `terraform-version` and `kustomize` (helm, git-tags declined and failing, docker, github) |
-| `gomod.v2` | `gomod` under the runner's own configuration: `go-mod-directive`, `go` and `golang-version`; a pseudo-version pin moving as a digest, an `// indirect` requirement reached only by its security fix, `go mod tidy` beside every module that has a `go.sum` and none for the tree that has not |
+| `gomod.v3` | `gomod` under the runner's own configuration: `go-mod-directive`, `go` and `golang-version`; a pseudo-version pin moving as a digest, an `// indirect` requirement reached only by its security fix, `go mod tidy` beside every module that has a `go.sum` and none for the tree that has not |
 | `gitrefs.v2` | `git-refs`: a branch pinned by commit (`expected-commit` under a `# renovate:` line, devops/wolfi-packages' shape) refreshed to the branch head, on the branch Renovate uses; and a `node:24-alpine` job image under the `node` versioning, where the tag is no version and the digest gets pinned - as Renovate pins it (measured on hub node:24-alpine), unlike a range no release satisfies |
 | `lock.v2` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
 | `pyver.v2` | `pypi` under `pep440`: three Python tools pinned in CI variables (the annotation managers for `.gitlab-ci.yml` and component templates), and `engines.node` through `node-version`, a range the current line already satisfies |
@@ -38,3 +38,12 @@ only by the `advisoryCoverage` objects, and every `plan.md` is unchanged -
 `git diff -M` against v1 shows exactly that. The recorded release sets
 predate `withdrawalList`, so no golden dependency is in the `withdrawal`
 state; that state is covered by the unit tests.
+
+## gomod.v3 (2026-10-06)
+
+The Go toolchain (`golang-version`) is asked as OSV's Go `stdlib` since this
+version. `gomod.v3` is `gomod.v2` plus the two OSV answers that asks for -
+Go 1.27.0 and 1.27.1, recorded live on 2026-10-06 (no advisories) and
+inserted beside the earlier recording, which is unchanged. The plan differs
+by the coverage of the three `golang-version` dependencies: the two toolchain
+versions are asked, the `go 1.26` language directive is `no-version`.

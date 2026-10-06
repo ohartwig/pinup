@@ -36,6 +36,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -142,14 +143,19 @@ func (c *Client) httpClient() *http.Client {
 // (https://ossf.github.io/osv-schema/#appendix-ecosystems) and are
 // unmeasured against Renovate's own choices.
 var ecosystems = map[string]string{
-	"npm":       "npm",
-	"packagist": "Packagist",
-	"go":        "Go",
-	"pypi":      "PyPI",
-	"maven":     "Maven",
-	"crate":     "crates.io",
-	"rubygems":  "RubyGems",
-	"nuget":     "NuGet",
+	// golang-version is the Go toolchain: OSV's Go ecosystem carries its
+	// advisories under the package "stdlib" (Go 1.22.0 has 68, checked
+	// 2026-10-06). Only a full toolchain version x.y.z is asked
+	// (StdlibVersion); a `go 1.26` language directive names none.
+	"golang-version": "Go",
+	"npm":            "npm",
+	"packagist":      "Packagist",
+	"go":             "Go",
+	"pypi":           "PyPI",
+	"maven":          "Maven",
+	"crate":          "crates.io",
+	"rubygems":       "RubyGems",
+	"nuget":          "NuGet",
 }
 
 // ecosystemVersioning is the versioning scheme an ecosystem's version
@@ -182,6 +188,22 @@ func ecosystemOf(q Query) string {
 	return q.Ecosystem
 }
 
+// osvName is the package name a query is asked under: the Go toolchain
+// is OSV's "stdlib", every other package its own name.
+func osvName(q Query) string {
+	if q.Datasource == "golang-version" && !q.Explicit {
+		return "stdlib"
+	}
+	return q.PackageName
+}
+
+var stdlibVersion = regexp.MustCompile(`^v?[0-9]+\.[0-9]+\.[0-9]+$`)
+
+// StdlibVersion reports whether a golang-version value names a toolchain
+// release, x.y.z: the only value OSV's stdlib advisories can be asked
+// about. "1.26" in a go.mod is a language version and names none.
+func StdlibVersion(v string) bool { return stdlibVersion.MatchString(v) }
+
 // Ecosystem maps a pinup datasource name to the OSV ecosystem it corresponds
 // to, or "" when OSV has no ecosystem for that datasource at all (docker,
 // gitlab-*, github-*, terraform-*, custom.*, apk, ...): such a dependency is
@@ -213,6 +235,9 @@ func (c *Client) Check(ctx context.Context, vs versioning.Registry, queries []Qu
 
 	for i, q := range queries {
 		eco := ecosystemOf(q)
+		if q.Datasource == "golang-version" && !q.Explicit && !StdlibVersion(q.Version) {
+			eco = ""
+		}
 		findings[i] = Finding{Query: q, Ecosystem: eco}
 		if eco == "" {
 			continue // no OSV ecosystem for this datasource: not queried.
@@ -240,7 +265,7 @@ func (c *Client) Check(ctx context.Context, vs versioning.Registry, queries []Qu
 			continue
 		}
 		toQuery = append(toQuery, queued{findingIdx: i, version: version, scheme: scheme})
-		batch = append(batch, batchQuery{Package: pkgRef{Name: q.PackageName, Ecosystem: eco}, Version: version})
+		batch = append(batch, batchQuery{Package: pkgRef{Name: osvName(q), Ecosystem: eco}, Version: version})
 	}
 
 	results, err := c.queryBatch(ctx, batch)
@@ -259,7 +284,7 @@ func (c *Client) Check(ctx context.Context, vs versioning.Registry, queries []Qu
 				f.Warnings = append(f.Warnings, fmt.Sprintf("osv: fetch advisory %s: %v", ref.ID, err))
 				continue
 			}
-			adv, affected := evaluateAdvisory(docs[key], f.Query.PackageName, f.Ecosystem, qd.version, qd.scheme)
+			adv, affected := evaluateAdvisory(docs[key], osvName(f.Query), f.Ecosystem, qd.version, qd.scheme)
 			if !affected {
 				continue
 			}

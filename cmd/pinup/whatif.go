@@ -1402,6 +1402,10 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 			notAsked(&deps[i], model.ReasonNoVersion)
 			continue
 		}
+		if d.Datasource == "golang-version" && !explicit && !osv.StdlibVersion(version) {
+			notAsked(&deps[i], model.ReasonNoVersion)
+			continue
+		}
 		if !v.IsVersion(version) {
 			version = lowestAdmitted(v, version, releasesOf(d))
 			if version == "" {
