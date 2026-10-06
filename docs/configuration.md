@@ -163,6 +163,28 @@ A key not in this table is not read; `migrate` lists it as unsupported.
 | `trustEffective` | a rule | let an automerge a `matchEffective` rule switched on stand although the declared label is stricter; without it the stricter label wins |
 | `osvEcosystem` | `customDatasources.<name>` | the [OSV ecosystem](https://ossf.github.io/osv-schema/#appendix-ecosystems) this custom datasource's packages belong to, e.g. `"Wolfi"`; with it, `osvVulnerabilityAlerts` asks OSV about them ([advisory coverage](#advisory-coverage)) |
 
+### pinup's own keys and Renovate
+
+Renovate refuses a configuration that carries a key it does not know - not
+the key, the whole file. Measured with `renovate-config-validator` 43.204.0
+(2026-10-06): every key in the table above, and `osvTransitiveAlerts`,
+`automergeDirect` and `prConcurrentLimitIgnoreLabels`, is an *"Invalid
+configuration option"*; `osvEcosystem` inside a custom datasource is *"key
+is not allowed"*.
+
+So a pinup-only key belongs in a file Renovate never reads:
+
+- the repository's **`.pinup.*`** file (`pinup migrate --to yaml` writes one), or
+- the **run's own configuration** (`--config`), the estate's shared preset that
+  only pinup runs against.
+
+A `renovate.json` keeps Renovate's keys only. That is what keeps a shadow run
+working - Renovate and pinup side by side against the same repository while
+an estate moves - and what lets a repository go back. `pinup advise` names
+each pinup-only key such a file carries (`compat/renovate-rejects`), with its
+pointer. An estate that runs pinup alone may keep pinup's keys in its shared
+preset; Renovate never reads it there.
+
 ## Automerge
 
 `automerge: true` asks the platform to merge the request once its checks

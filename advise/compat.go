@@ -30,6 +30,7 @@ var compatChecks = []Check{
 	{ID: "compat/datasource-unknown", Run: datasourceUnknown},
 	{ID: "compat/schedule-invalid", Run: scheduleInvalid},
 	{ID: "compat/regex-not-re2", Run: regexNotRE2},
+	{ID: "compat/renovate-rejects", Run: renovateRejects},
 }
 
 var inertName = regexp.MustCompile(`^preset "([^"]+)"`)
@@ -328,4 +329,57 @@ func (in *Input) filePointer(resolved string) (string, bool) {
 
 func unescape(seg string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(seg, "~1", "/"), "~0", "~")
+}
+
+// renovateFiles are the names Renovate reads a repository's configuration
+// from. A .pinup.* file is pinup's alone, and so is the run's own
+// configuration: an estate that runs pinup only may keep pinup's keys in its
+// shared preset.
+var renovateFiles = map[string]bool{
+	"renovate.json": true, "renovate.json5": true, ".renovaterc": true, ".renovaterc.json": true, ".renovaterc.json5": true,
+}
+
+// renovateRejects names the pinup-only keys a file Renovate also reads
+// carries. Renovate refuses the whole configuration for one unknown key, so
+// such a file stops working under Renovate - in a shadow run beside pinup,
+// or the day a repository goes back. The key belongs in a .pinup.* file or
+// in the run's own configuration (docs/configuration.md, "pinup's own keys
+// and Renovate").
+func renovateRejects(in *Input) []Finding {
+	name := in.Layer.Source
+	if i := strings.LastIndexAny(name, "/:"); i >= 0 {
+		name = name[i+1:]
+	}
+	if !renovateFiles[name] {
+		return nil
+	}
+	var out []Finding
+	emit := func(pointer, key string, rule int) {
+		out = append(out, Finding{ID: "compat/renovate-rejects", Category: Compat, Severity: Warn, Pointer: pointer, Frame: FrameFile,
+			Origin: in.fileOrigin(pointer, rule),
+			Msg:    fmt.Sprintf("`%s` is pinup's own and Renovate rejects it (\"Invalid configuration option\"): %s would stop working under Renovate; keep the key in a .pinup.* file or the run's own configuration", key, name)})
+	}
+	for _, k := range slices.Sorted(maps.Keys(in.Layer.Raw)) {
+		if PinupOnly.Top[k] {
+			emit(ptr(k), k, model.NoRule)
+		}
+	}
+	for i, rule := range in.ownRules() {
+		for _, k := range slices.Sorted(maps.Keys(rule)) {
+			if PinupOnly.Rule[k] {
+				emit(ptr("packageRules", i, k), k, in.base("packageRules")+i)
+			}
+		}
+	}
+	if ds, ok := in.Layer.Raw["customDatasources"].(map[string]any); ok {
+		for _, n := range slices.Sorted(maps.Keys(ds)) {
+			def, _ := ds[n].(map[string]any)
+			for _, k := range slices.Sorted(maps.Keys(def)) {
+				if PinupOnly.Datasource[k] {
+					emit(ptr("customDatasources", n, k), "customDatasources."+n+"."+k, model.NoRule)
+				}
+			}
+		}
+	}
+	return out
 }

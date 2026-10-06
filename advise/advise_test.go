@@ -33,7 +33,14 @@ var sources = preset.Chain{base, preset.Builtin()}
 
 func load(t *testing.T, cfg string, plans ...*model.Plan) *Input {
 	t.Helper()
-	layer, err := config.Parse([]byte(cfg), "x.json")
+	return loadNamed(t, cfg, "x.json", plans...)
+}
+
+// loadNamed is load for a file whose name matters: the renovate-rejects
+// check reads it.
+func loadNamed(t *testing.T, cfg, name string, plans ...*model.Plan) *Input {
+	t.Helper()
+	layer, err := config.Parse([]byte(cfg), name)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,6 +75,7 @@ var cases = []struct {
 	fix       *Fix
 	absent    []string // IDs that must not fire on this configuration
 	repo      fstest.MapFS
+	file      string // the configuration's file name; x.json when empty
 }{
 	{name: "inert preset the file names", cfg: `{"extends": ["config:recommended", "abandonments:recommended"]}`,
 		want: "compat/preset-inert", pointer: "/extends/1", fix: &Fix{Pointer: "/extends/1", Op: OpRemove}},
@@ -203,12 +211,19 @@ var cases = []struct {
 		plans: []*model.Plan{plan([]model.Dependency{dockerDep}, nil)},
 		repo:  fstest.MapFS{"compose.yaml": {Data: []byte("services:\n  ca:\n    image: smallstep/step-ca:0.28.1\n")}},
 		want:  "coverage/unmanaged-pin", pointer: "compose.yaml"},
+	{name: "a pinup-only key in a file Renovate reads", file: "renovate.json",
+		cfg:  `{"osvTransitiveAlerts": true, "customDatasources": {"wolfi": {"defaultRegistryUrlTemplate": "https://x/{{packageName}}", "osvEcosystem": "Wolfi"}}, "packageRules": [{"matchDatasources": ["helm"], "analyze": true}]}`,
+		want: "compat/renovate-rejects", pointer: "/osvTransitiveAlerts"},
 }
 
 func TestEachCheckFiresWhereItShould(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			in := load(t, c.cfg, c.plans...)
+			name := c.file
+			if name == "" {
+				name = "x.json"
+			}
+			in := loadNamed(t, c.cfg, name, c.plans...)
 			if c.repo != nil {
 				in.Repo = c.repo
 			}
@@ -403,5 +418,39 @@ func TestSortIsStable(t *testing.T) {
 	}
 	if len(want) < 4 || want[0].Severity != Error {
 		t.Errorf("errors first, got %s", describe(want))
+	}
+}
+
+// Renovate rejects a pinup-only key wherever it stands in a file Renovate
+// reads - top level, a rule, a custom datasource - and a .pinup.* file or
+// the run's own overlay may carry the same keys without a word.
+func TestRenovateRejectsOnlyWhereRenovateReads(t *testing.T) {
+	cfg := `{"osvTransitiveAlerts": true, "prConcurrentLimitIgnoreLabels": ["needs-runbook"],
+		"customDatasources": {"wolfi": {"defaultRegistryUrlTemplate": "https://x/{{packageName}}", "osvEcosystem": "Wolfi"}},
+		"packageRules": [{"matchDatasources": ["helm"], "analyze": true, "matchEffective": ["patch"], "trustEffective": true}]}`
+	for _, c := range []struct {
+		file string
+		want []string
+	}{
+		{"renovate.json", []string{"/customDatasources/wolfi/osvEcosystem", "/osvTransitiveAlerts", "/packageRules/0/analyze", "/packageRules/0/matchEffective", "/packageRules/0/trustEffective", "/prConcurrentLimitIgnoreLabels"}},
+		{".renovaterc.json", []string{"/customDatasources/wolfi/osvEcosystem", "/osvTransitiveAlerts", "/packageRules/0/analyze", "/packageRules/0/matchEffective", "/packageRules/0/trustEffective", "/prConcurrentLimitIgnoreLabels"}},
+		{"default.json", nil},
+		{".pinup.json", nil},
+		{"pinup.json", nil},
+		{"release-fast.json", nil},
+	} {
+		t.Run(c.file, func(t *testing.T) {
+			findings, _ := Run(loadNamed(t, cfg, c.file), Catalogue())
+			var got []string
+			for _, f := range findings {
+				if f.ID == "compat/renovate-rejects" {
+					got = append(got, f.Pointer)
+				}
+			}
+			slices.Sort(got)
+			if !slices.Equal(got, c.want) {
+				t.Errorf("pointers %v, want %v", got, c.want)
+			}
+		})
 	}
 }
