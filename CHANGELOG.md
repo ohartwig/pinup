@@ -1,3 +1,9 @@
+## [0.57.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.56.0...v0.57.0) (2026-10-06)
+
+### :sparkles: Features
+
+* **advise:** name pinup-only keys in a file Renovate reads ([ab9f10d](https://git.ole-hartwig.eu/pinup/pinup/commit/ab9f10d0257c696e3862710478f7d61962d633ce))
+
 ## [0.56.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.55.0...v0.56.0) (2026-10-05)
 
 ### :sparkles: Features
