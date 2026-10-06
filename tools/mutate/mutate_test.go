@@ -339,6 +339,12 @@ var mutators = []mutator{
 		"\t\t\t\tnotAsked(&deps[i], model.ReasonNoVersion)\n", "\n", []string{"./cmd/pinup/"}, false, ""},
 	{96, "advisories", "the watch counts what a withdrawal list covers as not covered", "cmd/pinup/advisories.go",
 		"\t\t\t\tgap = &rep.WithdrawalOnly\n", "\n", []string{"./cmd/pinup/"}, false, ""},
+	// The installation's own advisory feed (2026-10-06): OSV's path for a
+	// first-party artefact, without listing an advisory twice.
+	{97, "advisories", "a private advisory never reaches the dependency", "cmd/pinup/packagistadvisories.go",
+		"\ts.checkPrivate(ctx, vs, queries, findings)\n", "\n", []string{"./cmd/pinup/"}, false, ""},
+	{98, "advisories", "a private advisory OSV already carries is listed twice", "cmd/pinup/packagistadvisories.go",
+		"\t\t\tif carried {\n", "\t\t\tif false && carried {\n", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

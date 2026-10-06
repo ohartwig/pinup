@@ -98,7 +98,11 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
 	opts.Analyzers = wire.Analyzers(client, opts.Datasources)
 	advisories := &osv.Client{}
-	opts.Advisories = advisorySources{osv: advisories, packagist: &packagistadv.Client{}}
+	feed, err := privateFeed(os.Getenv, client)
+	if err != nil {
+		return err
+	}
+	opts.Advisories = advisorySources{osv: advisories, packagist: &packagistadv.Client{}, private: feed}
 	exploited := &kev.Client{HTTP: client}
 	opts.Exploited = exploited
 	notes := &changelog.Fetcher{Client: client, GitLabURL: env.gitLabURL(), TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
@@ -1353,7 +1357,7 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 			scheme = defaultVersioning(d.Datasource)
 		}
 		eco := custom[d.Datasource]
-		if !osv.Asks(osv.Query{Datasource: d.Datasource, Versioning: scheme, Ecosystem: eco}) {
+		if !asks(client, osv.Query{Datasource: d.Datasource, Versioning: scheme, Ecosystem: eco}) {
 			reason := model.ReasonNoEcosystem
 			if eco != "" || osv.Ecosystem(d.Datasource) != "" {
 				reason = model.ReasonOtherVersioning
@@ -2263,4 +2267,13 @@ func coverWithdrawals(c *model.AdvisoryCoverage, deps []model.Dependency, releas
 		}
 		c.WithdrawalOnly[d.Datasource]++
 	}
+}
+
+// asks reports whether client asks any source about q: a checker that
+// knows (advisorySources, with a private feed) says so, any other is OSV.
+func asks(client advisoryChecker, q osv.Query) bool {
+	if a, ok := client.(interface{ asks(osv.Query) bool }); ok {
+		return a.asks(q)
+	}
+	return osv.Asks(q)
 }

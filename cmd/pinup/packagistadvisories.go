@@ -26,6 +26,9 @@ import (
 type advisorySources struct {
 	osv       advisoryChecker
 	packagist *packagistadv.Client
+	// private is the installation's own advisory feed
+	// (PINUP_PRIVATE_ADVISORIES); nil or without sources asks nothing.
+	private *osv.PrivateFeed
 	// releases, when set, names a composer package's known releases, so a
 	// fix is the lowest release the advisory no longer covers rather than
 	// the bound its range names.
@@ -36,10 +39,24 @@ type advisorySources struct {
 // every datasource it has an ecosystem for, Packagist beside it for
 // composer packages when the run reads Packagist.
 func (s advisorySources) sourcesFor(datasource string) []string {
-	if datasource == "packagist" && s.packagist != nil {
-		return []string{"osv", "packagist"}
+	var out []string
+	if osv.Ecosystem(datasource) != "" || strings.HasPrefix(datasource, "custom.") {
+		out = append(out, "osv")
 	}
-	return []string{"osv"}
+	if datasource == "packagist" && s.packagist != nil {
+		out = append(out, "packagist")
+	}
+	if s.private.Asks(datasource) {
+		out = append(out, osv.PrivateName)
+	}
+	return out
+}
+
+// asks reports whether any source is asked about q: OSV by its ecosystem,
+// the private feed by its naming. A gitlab-* dependency has no OSV
+// ecosystem; with a private feed it is asked all the same.
+func (s advisorySources) asks(q osv.Query) bool {
+	return osv.Asks(q) || s.private.Asks(q.Datasource)
 }
 
 // withReleases is the run's release knowledge for one call.
@@ -54,6 +71,72 @@ type releaseAware interface {
 }
 
 func (s advisorySources) Check(ctx context.Context, vs versioning.Registry, queries []osv.Query) ([]osv.Finding, error) {
+	findings, err := s.checkPublic(ctx, vs, queries)
+	if err != nil {
+		return findings, err
+	}
+	s.checkPrivate(ctx, vs, queries, findings)
+	return findings, nil
+}
+
+// checkPrivate adds the private feed's advisories to the findings, as
+// mergePackagist adds Packagist's: an advisory a finding already carries
+// under one of its ids is not listed twice, and the bound is recomputed.
+// A finding the feed answers is marked queried even when OSV has no
+// ecosystem for it - a gitlab-* dependency the feed covers.
+func (s advisorySources) checkPrivate(ctx context.Context, vs versioning.Registry, queries []osv.Query, findings []osv.Finding) {
+	if s.private == nil || len(s.private.Sources) == 0 {
+		return
+	}
+	var pq []osv.PrivateQuery
+	var at []int
+	for i, q := range queries {
+		if s.private.Asks(q.Datasource) {
+			pq = append(pq, osv.PrivateQuery{Datasource: q.Datasource, PackageName: q.PackageName, Version: q.Version, Versioning: q.Versioning})
+			at = append(at, i)
+		}
+	}
+	if len(pq) == 0 {
+		return
+	}
+	answers, warns := s.private.Check(ctx, vs, pq)
+	for k, i := range at {
+		f := &findings[i]
+		if k == 0 {
+			f.Warnings = append(f.Warnings, warns...)
+		}
+		if f.Ecosystem == "" {
+			f.Ecosystem = osv.PrivateName
+		}
+		known := map[string]bool{}
+		for _, a := range f.Advisories {
+			known[strings.ToUpper(a.ID)] = true
+			for _, al := range a.Aliases {
+				known[strings.ToUpper(al)] = true
+			}
+		}
+		v, err := vs.Get(queries[i].Versioning)
+		if err != nil {
+			continue
+		}
+		for _, a := range answers[k] {
+			carried := known[strings.ToUpper(a.ID)]
+			for _, al := range a.Aliases {
+				carried = carried || known[strings.ToUpper(al)]
+			}
+			if carried {
+				continue
+			}
+			f.Advisories = append(f.Advisories, a)
+			if a.Fixed != "" && (f.Bound == "" || v.Compare(a.Fixed, f.Bound) > 0) {
+				f.Bound = a.Fixed
+			}
+		}
+	}
+}
+
+// checkPublic asks OSV and, for composer packages, Packagist.
+func (s advisorySources) checkPublic(ctx context.Context, vs versioning.Registry, queries []osv.Query) ([]osv.Finding, error) {
 	findings, err := s.osv.Check(ctx, vs, queries)
 	if err != nil || s.packagist == nil {
 		return findings, err

@@ -69,7 +69,7 @@ word:
 
 | `state` | Meaning |
 |---|---|
-| `advisories` | an advisory source was asked about the current version; `sources` names them (`osv`, `packagist`) |
+| `advisories` | an advisory source was asked about the current version; `sources` names them (`osv`, `packagist`, `private` - the installation's feed, configuration.md#private-advisories) |
 | `withdrawal` | no advisory source has an ecosystem for it, but its publisher's withdrawal list speaks for it: an apk mirror that serves the package publishes `withdrawn.json`, or the installation's image list (`PINUP_WITHDRAWN_IMAGES`) names images on its registry |
 | `none` | nothing would say so |
 

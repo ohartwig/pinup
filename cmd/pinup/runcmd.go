@@ -165,7 +165,12 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		defer s.Close()
 		store = s
 	}
+	feed, err := privateFeed(os.Getenv, httpClient(env))
+	if err != nil {
+		return err
+	}
 	one := &runOptions{
+		private: feed,
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, cacheTTLOwn: *cacheTTLOwn, ownHosts: splitHosts(*ownHosts), dryRun: *dryRun, env: env, pkg: *pkg,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: os.Getenv("PINUP_DASHBOARD_TITLE"),
@@ -396,6 +401,8 @@ func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platf
 type runOptions struct {
 	cfgPath       string
 	runnerDefault string
+	// private is the installation's advisory feed (PINUP_PRIVATE_ADVISORIES).
+	private       *osv.PrivateFeed
 	runnerProject string
 	cache         lookup.Cache
 	cacheTTL      time.Duration
@@ -718,7 +725,7 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 	if o.cache != nil {
 		advisories.Store = advisoryStore{cache: o.cache, now: o.now, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
 	}
-	opts.Advisories = advisorySources{osv: advisories, packagist: &packagistadv.Client{}}
+	opts.Advisories = advisorySources{osv: advisories, packagist: &packagistadv.Client{}, private: o.private}
 	exploited := &kev.Client{HTTP: o.client}
 	if o.cache != nil {
 		exploited.Store = kevStore{cache: o.cache, warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
