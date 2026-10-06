@@ -1,3 +1,9 @@
+## [0.58.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.57.0...v0.58.0) (2026-10-06)
+
+### :sparkles: Features
+
+* **advisories:** three coverage states per dependency ([089afaf](https://git.ole-hartwig.eu/pinup/pinup/commit/089afafdd102fc7a11466e4741e3ba7372b2052e))
+
 ## [0.57.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.56.0...v0.57.0) (2026-10-06)
 
 ### :sparkles: Features
