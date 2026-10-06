@@ -433,8 +433,15 @@ func (s *sections) detected(b *strings.Builder) {
 	plan := s.plan
 	b.WriteString("## Detected dependencies\n\n")
 	if c := plan.AdvisoryCoverage; c != nil {
+		parts := []string{}
+		if line := WithdrawalOnlyLine(c.WithdrawalOnly); line != "" {
+			parts = append(parts, line)
+		}
 		if line := NotCoveredLine(c.NotCovered); line != "" {
-			fmt.Fprintf(b, "Advisories were asked for %d of them; %s. No advisory for those means not looked up, not safe.\n\n", c.Asked, line)
+			parts = append(parts, line)
+		}
+		if len(parts) > 0 {
+			fmt.Fprintf(b, "Advisories were asked for %d of them; %s. No advisory for those means not looked up, not safe.\n\n", c.Asked, strings.Join(parts, "; "))
 		}
 	}
 	type fileDeps struct {
@@ -541,6 +548,19 @@ func short(digest string) string {
 // when nothing is uncovered. The dashboard and the advisory watch both say
 // it this way.
 func NotCoveredLine(byDatasource map[string]int) string {
+	return countLine("not covered by advisories", byDatasource)
+}
+
+// WithdrawalOnlyLine states what only a withdrawal list speaks for:
+// "covered by a withdrawal list only: 68 (custom.koh-apk 68)" - moved off a
+// version its publisher withdrew, but asked about at no advisory source.
+func WithdrawalOnlyLine(byDatasource map[string]int) string {
+	return countLine("covered by a withdrawal list only", byDatasource)
+}
+
+// countLine is "<label>: <total> (<datasource> <n>, …)", largest first;
+// empty when the total is zero.
+func countLine(label string, byDatasource map[string]int) string {
 	total := 0
 	names := make([]string, 0, len(byDatasource))
 	for ds, n := range byDatasource {
@@ -559,5 +579,5 @@ func NotCoveredLine(byDatasource map[string]int) string {
 	for i, ds := range names {
 		parts[i] = fmt.Sprintf("%s %d", ds, byDatasource[ds])
 	}
-	return fmt.Sprintf("not covered by advisories: %d (%s)", total, strings.Join(parts, ", "))
+	return fmt.Sprintf("%s: %d (%s)", label, total, strings.Join(parts, ", "))
 }

@@ -53,7 +53,7 @@ func TestAdviseReportsTheRunnerConfiguration(t *testing.T) {
 	if len(r.Skipped) == 0 {
 		t.Error("without --plan the plan checks are skipped, and the report says so")
 	}
-	plan := fixture.Path(t, "golden", "estate", "plan.json")
+	plan := fixture.Path(t, "golden", "estate.v2", "plan.json")
 	r, err = adviseJSON(t, "--config", fixture.Config(t), "--plan", plan, "--strict")
 	if err != nil {
 		t.Fatalf("--strict fails a configuration without errors: %v", err)

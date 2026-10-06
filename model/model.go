@@ -150,6 +150,12 @@ type Dependency struct {
 	// follows from the datasource. It travels into the consumer index so
 	// the advisory watch, which reads no configuration, asks the same.
 	OSVEcosystem string `json:"osvEcosystem,omitempty"`
+	// AdvisoryCoverage says whether anything would tell the run that this
+	// dependency's current version is vulnerable, and how: an advisory
+	// source was asked, only a withdrawal list speaks for it, or nothing
+	// does - with the reason. Nil when the run asked no advisory source
+	// (osvVulnerabilityAlerts off) or skipped the dependency.
+	AdvisoryCoverage *DependencyCoverage `json:"advisoryCoverage,omitempty"`
 
 	// Captures holds every named regex group the manager matched, so
 	// templates can reference groups this package has never heard of.
@@ -321,6 +327,53 @@ type ReleaseSet struct {
 	// warning, never a failed lookup: without the list the run plans as it
 	// did before there was one.
 	WithdrawnErr string `json:"withdrawnErr,omitempty"`
+	// WithdrawalList is the withdrawal list that speaks for this package:
+	// read without error from a source that serves it - an apk mirror
+	// whose index carries the package, the installation's image list for
+	// an image on a registry that list names. Empty when none does.
+	WithdrawalList string `json:"withdrawalList,omitempty"`
+}
+
+// The three coverage states of a dependency (DependencyCoverage.State).
+const (
+	// CoveredByAdvisories: an advisory source was asked about the
+	// current version.
+	CoveredByAdvisories = "advisories"
+	// CoveredByWithdrawal: no advisory source has an ecosystem for it, but
+	// its publisher's withdrawal list would move it off a withdrawn version.
+	CoveredByWithdrawal = "withdrawal"
+	// NotCovered: nothing would tell the run that the version is
+	// vulnerable.
+	NotCovered = "none"
+)
+
+// The reasons a dependency is not asked about (DependencyCoverage.Reason).
+const (
+	// ReasonNoEcosystem: the datasource has no advisory ecosystem, and its
+	// configuration names none.
+	ReasonNoEcosystem = "no-ecosystem"
+	// ReasonOtherVersioning: the datasource names an ecosystem, but this
+	// dependency is not written in that ecosystem's versioning (composer's
+	// php platform entries resolved through an apk datasource).
+	ReasonOtherVersioning = "other-versioning"
+	// ReasonNoVersion: no single version could be asked about - a range
+	// without a lock that admits no known release, or a value the
+	// versioning does not read.
+	ReasonNoVersion = "no-version"
+)
+
+// DependencyCoverage is one dependency's advisory coverage.
+type DependencyCoverage struct {
+	// State is CoveredByAdvisories, CoveredByWithdrawal or NotCovered.
+	State string `json:"state"`
+	// Sources are the advisory sources asked: "osv", "packagist", "private".
+	Sources []string `json:"sources,omitempty"`
+	// Withdrawal is the withdrawal list that speaks for the dependency,
+	// in either covered state.
+	Withdrawal string `json:"withdrawal,omitempty"`
+	// Reason is why no advisory source was asked; set unless State is
+	// CoveredByAdvisories.
+	Reason string `json:"reason,omitempty"`
 }
 
 // Withdrawal is one withdrawn version of a package: the advisory ids that

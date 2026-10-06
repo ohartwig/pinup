@@ -29,6 +29,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "captures": {
         "currentValue": "1.43.93",
         "datasource": "pypi",
@@ -60,6 +66,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 68,
         "valueEnd": 72,
@@ -81,6 +91,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "captures": {
         "currentValue": "1.35.1",
         "datasource": "pypi",
@@ -106,6 +122,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "captures": {
         "currentValue": "2.45.0",
         "datasource": "pypi",
@@ -135,6 +157,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "captures": {
           "currentValue": "1.43.93",
           "datasource": "pypi",
@@ -198,6 +226,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "captures": {
           "currentValue": "2.45.0",
           "datasource": "pypi",
@@ -246,6 +280,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "captures": {
           "currentValue": "1.35.1",
           "datasource": "pypi",

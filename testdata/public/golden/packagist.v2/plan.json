@@ -41,6 +41,13 @@
         }
       ],
       "vulnerabilityBound": "v14.3.7",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv",
+          "packagist"
+        ]
+      },
       "locus": {
         "valueStart": 43,
         "valueEnd": 49,
@@ -80,6 +87,13 @@
           }
         ],
         "vulnerabilityBound": "v14.3.7",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv",
+            "packagist"
+          ]
+        },
         "locus": {
           "valueStart": 43,
           "valueEnd": 49,

@@ -34,10 +34,15 @@ type advisoriesReport struct {
 	// advisory database is asked about: no ecosystem for the datasource,
 	// or a custom datasource whose configuration names none. The gap the
 	// watch cannot see, stated rather than left to look like "no findings".
-	NotCovered map[string]int   `json:"notCovered,omitempty"`
-	New        []advisoryHit    `json:"new"`
-	Warnings   []string         `json:"warnings,omitempty"`
-	Control    *advisoryControl `json:"control,omitempty"`
+	NotCovered map[string]int `json:"notCovered,omitempty"`
+	// WithdrawalOnly counts, by datasource, the distinct dependencies no
+	// advisory database is asked about but a withdrawal list speaks for -
+	// moved off a withdrawn version by their repository's next run. Not
+	// part of NotCovered.
+	WithdrawalOnly map[string]int   `json:"withdrawalOnly,omitempty"`
+	New            []advisoryHit    `json:"new"`
+	Warnings       []string         `json:"warnings,omitempty"`
+	Control        *advisoryControl `json:"control,omitempty"`
 }
 
 // advisoryHit is one advisory against one dependency, with its consumers.
@@ -132,6 +137,9 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 		fmt.Fprintf(errw, "warning: %s\n", w)
 	}
 	fmt.Fprintf(out, "advisories: %d dependencies queried, %d with findings, %d new\n", rep.Queried, rep.Findings, len(rep.New))
+	if line := report.WithdrawalOnlyLine(rep.WithdrawalOnly); line != "" {
+		fmt.Fprintln(out, "advisories: "+line)
+	}
 	if line := report.NotCoveredLine(rep.NotCovered); line != "" {
 		fmt.Fprintln(out, "advisories: "+line)
 	}
@@ -151,6 +159,7 @@ func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagista
 	// are remembered for the report.
 	type key struct{ datasource, pkg, version, versioning, ecosystem string }
 	consumers := map[key][]string{}
+	withdrawal := map[key]bool{}
 	var order []key
 	repos := make([]string, 0, len(idx.Dependencies))
 	for r := range idx.Dependencies {
@@ -170,6 +179,9 @@ func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagista
 				order = append(order, k)
 			}
 			consumers[k] = append(consumers[k], r)
+			if d.Withdrawal != "" {
+				withdrawal[k] = true
+			}
 		}
 	}
 	// A dependency's own versioning is set where a manager or a rule named
@@ -222,10 +234,14 @@ func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagista
 		}
 		rep.Warnings = append(rep.Warnings, f.Warnings...)
 		if f.Ecosystem == "" {
-			if rep.NotCovered == nil {
-				rep.NotCovered = map[string]int{}
+			gap := &rep.NotCovered
+			if withdrawal[k] {
+				gap = &rep.WithdrawalOnly
 			}
-			rep.NotCovered[k.datasource]++
+			if *gap == nil {
+				*gap = map[string]int{}
+			}
+			(*gap)[k.datasource]++
 			continue
 		}
 		if len(f.Warnings) > 0 {

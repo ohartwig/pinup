@@ -95,6 +95,12 @@ func (c cannedAdvisories) Check(_ context.Context, _ versioning.Registry, querie
 	return out, nil
 }
 
+// sourcesFor names what the recording asked: OSV, and Packagist beside it
+// for composer packages - the replay stands for the same sources.
+func (c cannedAdvisories) sourcesFor(datasource string) []string {
+	return advisorySources{packagist: &packagistadv.Client{}}.sourcesFor(datasource)
+}
+
 // recordingAdvisories asks the live sources - OSV, and Packagist for
 // composer packages - and remembers every merged finding by query.
 type recordingAdvisories struct {

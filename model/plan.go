@@ -212,11 +212,17 @@ type Plan struct {
 // AdvisoryCoverage is how much of a plan's dependencies the advisory
 // lookup reached.
 type AdvisoryCoverage struct {
-	// Asked counts the dependencies sent to the advisory database.
+	// Asked counts the dependencies sent to an advisory source.
 	Asked int
-	// NotCovered counts, by datasource, the dependencies it has no
-	// ecosystem for and therefore never asked about.
+	// NotCovered counts, by datasource, the dependencies nothing covers:
+	// no advisory source was asked and no withdrawal list speaks for them.
 	NotCovered map[string]int
+	// WithdrawalOnly counts, by datasource, the dependencies no advisory
+	// source was asked about but a withdrawal list speaks for.
+	WithdrawalOnly map[string]int
+	// Reasons counts, by reason (model.ReasonNoEcosystem, …), why the
+	// dependencies in NotCovered and WithdrawalOnly were not asked.
+	Reasons map[string]int
 }
 
 // Uncovered is the total of NotCovered.

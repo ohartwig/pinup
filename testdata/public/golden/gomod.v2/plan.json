@@ -29,6 +29,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 41,
         "valueEnd": 47,
@@ -50,6 +54,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 61,
         "valueEnd": 67,
@@ -72,6 +80,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 97,
         "valueEnd": 103,
@@ -97,6 +111,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 122,
         "valueEnd": 128,
@@ -145,6 +165,12 @@
         }
       ],
       "vulnerabilityBound": "0.40.0",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 160,
         "valueEnd": 167,
@@ -169,6 +195,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 198,
         "valueEnd": 205,
@@ -196,6 +228,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 249,
         "valueEnd": 283,
@@ -221,6 +259,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 322,
         "valueEnd": 329,
@@ -246,6 +290,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 400,
         "valueEnd": 407,
@@ -269,6 +319,10 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "none",
+        "reason": "no-ecosystem"
+      },
       "locus": {
         "valueStart": 47,
         "valueEnd": 51,
@@ -292,6 +346,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 87,
         "valueEnd": 93,
@@ -315,6 +375,12 @@
       "rangeStrategy": "replace",
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
+      "advisoryCoverage": {
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
+      },
       "locus": {
         "valueStart": 114,
         "valueEnd": 121,
@@ -346,6 +412,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 400,
           "valueEnd": 407,
@@ -394,6 +466,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 322,
           "valueEnd": 329,
@@ -442,6 +520,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 249,
           "valueEnd": 283,
@@ -513,6 +597,12 @@
           }
         ],
         "vulnerabilityBound": "0.40.0",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 160,
           "valueEnd": 167,
@@ -549,6 +639,12 @@
         "rangeStrategy": "replace",
         "minimumReleaseAge": "24 hours",
         "internalChecksFilter": "strict",
+        "advisoryCoverage": {
+          "state": "advisories",
+          "sources": [
+            "osv"
+          ]
+        },
         "locus": {
           "valueStart": 87,
           "valueEnd": 93,

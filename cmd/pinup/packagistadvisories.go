@@ -32,6 +32,16 @@ type advisorySources struct {
 	releases func(pkg string) []string
 }
 
+// sourcesFor names the sources a query about datasource reaches: OSV for
+// every datasource it has an ecosystem for, Packagist beside it for
+// composer packages when the run reads Packagist.
+func (s advisorySources) sourcesFor(datasource string) []string {
+	if datasource == "packagist" && s.packagist != nil {
+		return []string{"osv", "packagist"}
+	}
+	return []string{"osv"}
+}
+
 // withReleases is the run's release knowledge for one call.
 func (s advisorySources) withReleases(releases func(pkg string) []string) advisoryChecker {
 	s.releases = releases

@@ -540,6 +540,11 @@ func TestWithdrawnImageTagsLeaveTheReleases(t *testing.T) {
 	if err != nil || len(other.Releases) != 1 || len(other.Withdrawn) != 0 {
 		t.Errorf("other image = %+v, %v", other, err)
 	}
+	// The list speaks for every image on the registry it names, withdrawn
+	// or not: both carry it as their withdrawal list.
+	if rs.WithdrawalList != "https://lists.example.org/withdrawn-images.json" || other.WithdrawalList != rs.WithdrawalList {
+		t.Errorf("withdrawal list: crowdsec %q, other %q", rs.WithdrawalList, other.WithdrawalList)
+	}
 	if list.hits != 1 {
 		t.Errorf("list read %d times, want once", list.hits)
 	}
@@ -568,5 +573,22 @@ func TestWithdrawnImagesListFailures(t *testing.T) {
 		if (rs.WithdrawnErr != "") != tc.wantErr {
 			t.Errorf("%s: WithdrawnErr = %q", name, rs.WithdrawnErr)
 		}
+		if rs.WithdrawalList != "" {
+			t.Errorf("%s: no readable list speaks for the image, got %q", name, rs.WithdrawalList)
+		}
+	}
+}
+
+// A list that names images on one registry says nothing about an image on
+// another: docker.io keeps no withdrawal list here.
+func TestWithdrawalListSpeaksForItsRegistryOnly(t *testing.T) {
+	list := &listServer{body: []byte(`{"version":1,"withdrawn":[{"image":"registry.example.net/devops/images/x","version":"1.0.0","replacement":"1.0.1","ids":["CVE-1"],"reason":"r","date":"2026-09-29T00:00:00Z","source":"auto"}]}`)}
+	ds, ref := withdrawnDS(t, list)
+	rs, err := ds.Releases(context.Background(), ref)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rs.WithdrawalList != "" {
+		t.Errorf("a list for registry.example.net speaks for registry.ole-hartwig.eu: %q", rs.WithdrawalList)
 	}
 }
