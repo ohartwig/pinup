@@ -60,6 +60,10 @@ type Dependency struct {
 	// (model.DependencyCoverage.Withdrawal), so the watch can tell
 	// "covered by a withdrawal list only" from "not covered".
 	Withdrawal string `json:"withdrawal,omitempty"`
+	// OSVName is the package name a rule mapped the dependency to
+	// (model.Dependency.OSVPackage), asked in OSVEcosystem instead of its
+	// datasource's own ecosystem.
+	OSVName string `json:"osvName,omitempty"`
 }
 
 // NewIndex returns an empty index.
@@ -189,6 +193,9 @@ func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 		e := Dependency{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: d.Versioning, File: d.File, OSVEcosystem: d.OSVEcosystem}
 		if d.AdvisoryCoverage != nil {
 			e.Withdrawal = d.AdvisoryCoverage.Withdrawal
+		}
+		if d.OSVPackage != nil {
+			e.OSVEcosystem, e.OSVName = d.OSVPackage.Ecosystem, d.OSVPackage.Name
 		}
 		if !seen[e] {
 			seen[e] = true

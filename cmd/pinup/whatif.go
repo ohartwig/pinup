@@ -1152,6 +1152,14 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	if a, ok := res.Config["analyze"].(bool); ok {
 		d.Analyze = a
 	}
+	if m, ok := res.Config["osvPackage"].(map[string]any); ok && len(res.Wrote["osvPackage"]) > 0 {
+		eco, _ := m["ecosystem"].(string)
+		name, _ := m["name"].(string)
+		if eco != "" && name != "" {
+			d.OSVPackage = &model.OSVPackage{Ecosystem: eco, Name: name}
+			d.OSVPackageBy = lastWriter(res, "osvPackage")
+		}
+	}
 	if f, ok := res.Config["internalChecksFilter"].(string); ok && f != "" && f != "none" {
 		d.InternalChecksFilter = f
 		if age, ok := res.Config["minimumReleaseAge"].(string); ok {
@@ -1357,7 +1365,11 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 			scheme = defaultVersioning(d.Datasource)
 		}
 		eco := custom[d.Datasource]
-		if !asks(client, osv.Query{Datasource: d.Datasource, Versioning: scheme, Ecosystem: eco}) {
+		explicit := d.OSVPackage != nil
+		if explicit {
+			eco = d.OSVPackage.Ecosystem
+		}
+		if !asks(client, osv.Query{Datasource: d.Datasource, Versioning: scheme, Ecosystem: eco, Explicit: explicit}) {
 			reason := model.ReasonNoEcosystem
 			if eco != "" || osv.Ecosystem(d.Datasource) != "" {
 				reason = model.ReasonOtherVersioning
@@ -1365,12 +1377,15 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 			notAsked(&deps[i], reason)
 			continue
 		}
-		if osv.Ecosystem(d.Datasource) == "" {
+		if osv.Ecosystem(d.Datasource) == "" || explicit {
 			deps[i].OSVEcosystem = eco
 		}
 		name := d.PackageName
 		if name == "" {
 			name = d.DepName
+		}
+		if explicit {
+			name = d.OSVPackage.Name
 		}
 		// The version actually in use: the lock's when there is one -
 		// a range like ^4.0.0 says nothing about what is installed, and
@@ -1394,7 +1409,7 @@ func checkAdvisories(ctx context.Context, client advisoryChecker, cfg map[string
 				continue
 			}
 		}
-		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme, Ecosystem: eco})
+		queries = append(queries, osv.Query{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: scheme, Ecosystem: eco, Explicit: explicit})
 		index = append(index, i)
 		deps[i].AdvisoryCoverage = &model.DependencyCoverage{State: model.CoveredByAdvisories, Sources: advisorySourceNames(client, d.Datasource)}
 	}

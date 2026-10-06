@@ -172,7 +172,10 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagistadv.Client, idx *report.Index, only *glob.Set, control string, state *advisoriesState, now time.Time) (*advisoriesReport, error) {
 	// One query per distinct dependency; the repositories that carry it
 	// are remembered for the report.
-	type key struct{ datasource, pkg, version, versioning, ecosystem string }
+	type key struct {
+		datasource, pkg, version, versioning, ecosystem string
+		explicit                                        bool
+	}
 	consumers := map[key][]string{}
 	withdrawal := map[key]bool{}
 	var order []key
@@ -189,7 +192,10 @@ func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagista
 			if d.Version == "" {
 				continue
 			}
-			k := key{d.Datasource, d.PackageName, d.Version, d.Versioning, d.OSVEcosystem}
+			k := key{d.Datasource, d.PackageName, d.Version, d.Versioning, d.OSVEcosystem, false}
+			if d.OSVName != "" {
+				k.pkg, k.explicit = d.OSVName, true
+			}
 			if _, seen := consumers[k]; !seen {
 				order = append(order, k)
 			}
@@ -210,7 +216,7 @@ func watchAdvisories(ctx context.Context, client advisoryChecker, pk *packagista
 		if versioning == "" {
 			versioning = defaults(k.datasource)
 		}
-		queries = append(queries, osv.Query{Datasource: k.datasource, PackageName: k.pkg, Version: k.version, Versioning: versioning, Ecosystem: k.ecosystem})
+		queries = append(queries, osv.Query{Datasource: k.datasource, PackageName: k.pkg, Version: k.version, Versioning: versioning, Ecosystem: k.ecosystem, Explicit: k.explicit})
 	}
 	vs := wire.Versionings()
 	findings, err := client.Check(ctx, vs, queries)

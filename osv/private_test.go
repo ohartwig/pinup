@@ -175,3 +175,22 @@ func TestPrivateFeedAnswersLikeOSV(t *testing.T) {
 		t.Error("Asks: a configured feed asks the datasources it names, an empty or nil one nothing")
 	}
 }
+
+// An explicit mapping (packageRules[].osvPackage) is asked in its own
+// ecosystem even where the datasource has one; without Explicit the
+// datasource's ecosystem wins and a configured one only fills a gap.
+func TestExplicitMappingWinsOverTheDatasource(t *testing.T) {
+	for _, tc := range []struct {
+		q    Query
+		want string
+	}{
+		{Query{Datasource: "npm", Ecosystem: "Go", Explicit: true, Versioning: "npm"}, "Go"},
+		{Query{Datasource: "npm", Ecosystem: "Go", Versioning: "npm"}, "npm"},
+		{Query{Datasource: "github-releases", Ecosystem: "Go", Explicit: true, Versioning: "semver"}, "Go"},
+		{Query{Datasource: "github-releases", Versioning: "semver"}, ""},
+	} {
+		if got := ecosystemOf(tc.q); got != tc.want {
+			t.Errorf("ecosystemOf(%+v) = %q, want %q", tc.q, got, tc.want)
+		}
+	}
+}
