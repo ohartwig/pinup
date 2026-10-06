@@ -277,6 +277,42 @@ as checked.
 An older pinup ignores `osvEcosystem`: `customDatasources` reads only the
 keys it knows, so a configuration can carry it before the runner does.
 
+### Private advisories
+
+No public advisory database carries an installation's own artefacts - a
+composer package on its GitLab registry, a CI component, a project tagged
+on its instance. `PINUP_PRIVATE_ADVISORIES` names a feed of their
+advisories in the [OSV schema](https://ossf.github.io/osv-schema/), and pinup
+answers it like OSV: a finding takes the `vulnerabilityAlerts` path, its
+labels, no release age, CISA's catalog through the record's CVE alias; an
+advisory OSV or Packagist already carries under one of its ids is not
+listed twice. With a feed, gitlab-packages, gitlab-tags and gitlab-releases
+dependencies are asked and count as covered (`sources: ["private"]`).
+
+It is an installation setting, not a configuration key: the runs and the
+advisory watch - which reads no configuration - ask the same feed, and no
+repository's file carries a key Renovate would refuse. A feed on the
+instance's package registry is read with the platform token.
+
+A record names its package by purl, the form a CSAF product tree carries,
+or by OSV ecosystem and name; a dependency is asked as:
+
+| Datasource | purl | Ecosystem, name |
+|---|---|---|
+| `packagist`, `gitlab-packages` | `pkg:composer/<vendor>/<name>` | `Packagist`, `<vendor>/<name>` |
+| `gitlab-tags`, `gitlab-releases` | `pkg:gitlab/<group>/<project>` | `GitLab`, `<group>/<project>` |
+| `npm` | `pkg:npm/<name>` (`@` as `%40`) | `npm`, `<name>` |
+| `go` | `pkg:golang/<module>` | `Go`, `<module>` |
+| `pypi` | `pkg:pypi/<name>` | `PyPI`, `<name>` |
+
+A gitlab-packages dependency's package name is `<project>:<vendor>/<name>`;
+the purl names the composer package, so `pkg:composer/koh/sylius-passkey`
+matches it on whichever project's registry it lives. Versions are compared
+under the dependency's versioning with OSV's range walk (`SEMVER` and
+`ECOSYSTEM` ranges, `versions` lists). A source that cannot be read is a
+warning; the others still count. The withdrawal lists stay: they take a
+version out of the releases, which an advisory does not.
+
 ## A project's own release age
 
 npm, pnpm and yarn can each be told to refuse a version younger than a
@@ -381,3 +417,4 @@ platform token is never sent to a URL a repository configuration names
 | `PINUP_DASHBOARD_TITLE` | the operator's override of `dependencyDashboardTitle`; empty means the configuration names the issue |
 | `PINUP_APK_VIEWS` | apk indexes served natively besides the public Wolfi repository: `{"custom.<name>": {"mirrors": [...], "arches": [...]}}`; each mirror's `withdrawn.json` is read too (see managers-and-datasources.md) |
 | `PINUP_WITHDRAWN_IMAGES` | https URL of the installation's `withdrawn-images.json`: withdrawn image tags leave the docker releases, and a dependency on one is moved to the replacement as a security fix (see managers-and-datasources.md) |
+| `PINUP_PRIVATE_ADVISORIES` | the installation's own advisory feed in the OSV schema: comma-separated https URLs of an OSV export (`.zip`) or a `.json` document, or `file://` directories of records; runs and the advisory watch read it ([private advisories](#private-advisories)) |

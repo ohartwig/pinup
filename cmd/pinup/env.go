@@ -18,6 +18,7 @@ import (
 
 	"github.com/ohartwig/pinup/datasource/apkds"
 	"github.com/ohartwig/pinup/httpx"
+	"github.com/ohartwig/pinup/osv"
 	"github.com/ohartwig/pinup/plugin"
 	"github.com/ohartwig/pinup/sandbox"
 	"github.com/ohartwig/pinup/wire"
@@ -239,6 +240,30 @@ func apkViews(getenv func(string) string) (map[string]apkds.View, error) {
 // the bytes. The file path keeps `.+` deliberately: a repository file path
 // contains slashes, and the `/raw` suffix bounds it.
 const instancePaths = `^/api/v4/(projects/[^/]+/(releases|repository/tags|repository/files/.+/raw|packages)(/|$)|group/[^/]+/-/packages/composer|user$|personal_access_tokens/self)`
+
+// privateFeed is the installation's own advisory feed,
+// PINUP_PRIVATE_ADVISORIES: comma-separated https URLs of an OSV export
+// (.zip) or document (.json), or file:// directories of OSV records. Read
+// through client, so a feed on the instance's package registry is read with
+// the platform token. Nil when the variable is unset.
+func privateFeed(getenv func(string) string, client *httpx.Client) (*osv.PrivateFeed, error) {
+	raw := strings.TrimSpace(getenv("PINUP_PRIVATE_ADVISORIES"))
+	if raw == "" {
+		return nil, nil
+	}
+	f := &osv.PrivateFeed{HTTP: client}
+	for s := range strings.SplitSeq(raw, ",") {
+		s = strings.TrimSpace(s)
+		if s == "" {
+			continue
+		}
+		if !strings.HasPrefix(s, "https://") && !strings.HasPrefix(s, "file://") {
+			return nil, fmt.Errorf("PINUP_PRIVATE_ADVISORIES: %q is neither an https URL nor a file:// directory", s)
+		}
+		f.Sources = append(f.Sources, s)
+	}
+	return f, nil
+}
 
 // httpClient builds the one HTTP client every datasource shares. The token
 // is bound to the instance's host and nothing else: httpx sends a host rule's

@@ -16,6 +16,7 @@ sources were asked - or why none was ([`advisoryCoverage`](plan-format.md#adviso
 |---|---|---|---|
 | [OSV](https://osv.dev) | `osv` | every datasource with an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems, nuget; a custom datasource whose configuration names its ecosystem (`customDatasources.<name>.osvEcosystem`, e.g. `Wolfi` for apk pins) | 0.1.0; custom ecosystems 0.56.0 |
 | [Packagist](https://packagist.org/apidoc#list-security-advisories) | `packagist` | composer packages (`packagist`), beside OSV | 0.55.0 |
+| the installation's own feed | `private` | packagist, gitlab-packages, gitlab-tags, gitlab-releases, npm, go, pypi - records in the OSV schema named by purl ([private advisories](configuration.md#private-advisories), `PINUP_PRIVATE_ADVISORIES`) | next release |
 | a withdrawal list | — (`withdrawal`) | apk pins whose mirror publishes `withdrawn.json`; images on the registry the installation's `PINUP_WITHDRAWN_IMAGES` list names | apk 0.50.0, images 0.51.0 |
 
 All of them are switched on by `osvVulnerabilityAlerts` and off by
@@ -36,7 +37,8 @@ version where there is a lock, the lowest release a range admits otherwise.
 
 - **One advisory, listed once.** An advisory a finding already carries under
   any of its ids - OSV id, CVE, GHSA, Packagist's PKSA - is not listed again
-  from a later source. OSV is asked first; Packagist adds only what OSV lacks.
+  from a later source. OSV is asked first; Packagist and the private feed add
+  only what is not already there.
 - **One bound.** The fix is the highest of the fixes the advisories name for
   the range that contains the current version: the lowest release that is out
   of every advisory's reach. Packagist names no fix, only the affected range;

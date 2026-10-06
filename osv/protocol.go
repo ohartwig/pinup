@@ -21,6 +21,10 @@ import (
 type pkgRef struct {
 	Name      string `json:"name"`
 	Ecosystem string `json:"ecosystem"`
+	// Purl is the package URL an advisory may name the package by
+	// instead of, or beside, ecosystem and name. OSV's own API is asked by
+	// ecosystem and name and never sends it.
+	Purl string `json:"purl,omitempty"`
 }
 
 // batchQuery is one entry of a querybatch request.

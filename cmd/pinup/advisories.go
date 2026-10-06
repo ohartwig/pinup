@@ -119,7 +119,22 @@ func cmdAdvisories(args []string, out, errw io.Writer) error {
 	}
 	now := time.Now().UTC()
 
-	rep, err := watchAdvisories(context.Background(), &osv.Client{}, &packagistadv.Client{}, idx, only, *control, &state, now)
+	// The watch reads no configuration, but the installation's own feed is
+	// an installation setting: it reads PINUP_PRIVATE_ADVISORIES as the
+	// runs do.
+	env, err := platformFromEnv(os.Getenv)
+	if err != nil {
+		return err
+	}
+	feed, err := privateFeed(os.Getenv, httpClient(env))
+	if err != nil {
+		return err
+	}
+	var client advisoryChecker = &osv.Client{}
+	if feed != nil {
+		client = advisorySources{osv: client, private: feed}
+	}
+	rep, err := watchAdvisories(context.Background(), client, &packagistadv.Client{}, idx, only, *control, &state, now)
 	if err != nil {
 		return err
 	}
