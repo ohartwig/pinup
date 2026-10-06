@@ -1,3 +1,13 @@
+## [0.59.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.58.0...v0.59.0) (2026-10-06)
+
+### :sparkles: Features
+
+* **advisories:** the installation's own advisory feed in the OSV schema ([4aa01f8](https://git.ole-hartwig.eu/pinup/pinup/commit/4aa01f84a9e80123af3225fd8078f34bd61e5c51))
+
+### :memo: Documentation
+
+* advisory sources as one concept, with the TYPO3 lag behind it ([1ff919f](https://git.ole-hartwig.eu/pinup/pinup/commit/1ff919f82dd3340ba5a0a7a005d3571505da800f))
+
 ## [0.58.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.57.0...v0.58.0) (2026-10-06)
 
 ### :sparkles: Features
