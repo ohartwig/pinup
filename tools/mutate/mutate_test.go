@@ -324,6 +324,12 @@ var mutators = []mutator{
 		", OSVEcosystem: d.OSVEcosystem}", "}", []string{"./cmd/pinup/"}, false, ""},
 	{91, "advisories", "the dashboard hides what advisories never looked up", "report/dashboard.go",
 		"\t\tif line := NotCoveredLine(c.NotCovered); line != \"\" {", "\t\tif line := NotCoveredLine(c.NotCovered); false && line != \"\" {", []string{"./cmd/pinup/"}, false, ""},
+	// pinup-only keys in a file Renovate reads (2026-10-06): Renovate refuses
+	// the whole file for one, so the warning must fire there and only there.
+	{92, "compat", "a pinup-only key in renovate.json goes unnamed", "advise/compat.go",
+		"\tif !renovateFiles[name] {", "\tif true {", []string{"./advise/"}, false, ""},
+	{93, "compat", "a pinup-only key in a rule of renovate.json goes unnamed", "advise/compat.go",
+		"\t\t\tif PinupOnly.Rule[k] {", "\t\t\tif false {", []string{"./advise/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

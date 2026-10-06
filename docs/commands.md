@@ -206,6 +206,7 @@ write by hand, until the YAML rewriter lands.
 | `compat/datasource-unknown` | warn | a `matchDatasources` or `datasourceTemplate` no lookup serves | — |
 | `compat/schedule-invalid` | error | a schedule or timezone that does not parse | — |
 | `compat/regex-not-re2` | error | a regex with a lookaround or backreference (tech-spec §0.2) | — |
+| `compat/renovate-rejects` | warn | a pinup-only key in a `renovate.json`, `renovate.json5` or `.renovaterc*`; Renovate refuses the whole file for it ([configuration](configuration.md#pinups-own-keys-and-renovate)) | — |
 | `hygiene/redundant-inherited` | info | a top-level key repeating what a preset sets | remove it |
 | `hygiene/redundant-default` | info | a top-level key set to the builtin default | remove it |
 | `hygiene/null-clears-nothing` | warn | a `null` over a key no preset sets | remove it |
