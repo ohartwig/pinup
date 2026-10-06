@@ -2197,6 +2197,34 @@
    "Advisories": null,
    "Bound": "",
    "Warnings": null
+  },
+  "golang-version\u0000go\u00001.27.0": {
+   "Query": {
+    "Datasource": "golang-version",
+    "PackageName": "go",
+    "Version": "1.27.0",
+    "Versioning": "go-mod-directive",
+    "Ecosystem": "",
+    "Explicit": false
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
+  },
+  "golang-version\u0000go\u00001.27.1": {
+   "Query": {
+    "Datasource": "golang-version",
+    "PackageName": "go",
+    "Version": "1.27.1",
+    "Versioning": "semver",
+    "Ecosystem": "",
+    "Explicit": false
+   },
+   "Ecosystem": "Go",
+   "Advisories": null,
+   "Bound": "",
+   "Warnings": null
   }
  }
 }

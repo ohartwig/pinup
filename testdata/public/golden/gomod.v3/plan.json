@@ -30,8 +30,10 @@
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
       "advisoryCoverage": {
-        "state": "none",
-        "reason": "no-ecosystem"
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
       },
       "locus": {
         "valueStart": 41,
@@ -55,8 +57,10 @@
       "minimumReleaseAge": "24 hours",
       "internalChecksFilter": "strict",
       "advisoryCoverage": {
-        "state": "none",
-        "reason": "no-ecosystem"
+        "state": "advisories",
+        "sources": [
+          "osv"
+        ]
       },
       "locus": {
         "valueStart": 61,
@@ -321,7 +325,7 @@
       "internalChecksFilter": "strict",
       "advisoryCoverage": {
         "state": "none",
-        "reason": "no-ecosystem"
+        "reason": "no-version"
       },
       "locus": {
         "valueStart": 47,

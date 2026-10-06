@@ -247,7 +247,11 @@ The sources, how their answers merge and why there is more than one:
 [advisory sources](advisory-sources.md).
 
 `osvVulnerabilityAlerts` asks OSV about the dependencies whose datasource has
-an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems and nuget.
+an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems and nuget -
+and the Go toolchain, `golang-version`, as OSV's Go package `stdlib` (Go
+1.22.0 has 68 advisories there). Only a toolchain release `x.y.z` is asked; a
+`go 1.26` language directive in a go.mod names no toolchain and is
+`no-version`.
 A custom datasource has none of its own - a URL template says nothing about
 what it serves - unless its definition names one:
 

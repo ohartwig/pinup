@@ -350,6 +350,11 @@ var mutators = []mutator{
 		"\t\t\td.OSVPackage = &model.OSVPackage{Ecosystem: eco, Name: name}\n", "\n", []string{"./cmd/pinup/"}, false, ""},
 	{100, "advisories", "an explicit mapping loses to the datasource's ecosystem", "osv/osv.go",
 		"\tif q.Explicit && q.Ecosystem != \"\" {\n", "\tif false {\n", []string{"./osv/"}, false, ""},
+	// The Go toolchain as OSV's stdlib (2026-10-06).
+	{101, "advisories", "the Go toolchain is asked under its own name, not stdlib", "osv/osv.go",
+		"\t\treturn \"stdlib\"\n", "\t\treturn q.PackageName\n", []string{"./osv/"}, false, ""},
+	{102, "advisories", "a go.mod language version is asked as a toolchain release", "osv/osv.go",
+		"\t\tif q.Datasource == \"golang-version\" && !q.Explicit && !StdlibVersion(q.Version) {\n", "\t\tif false {\n", []string{"./osv/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {
