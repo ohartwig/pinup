@@ -1,3 +1,9 @@
+## [0.60.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.59.0...v0.60.0) (2026-10-06)
+
+### :sparkles: Features
+
+* **advisories:** a rule maps a pin to an OSV package ([ae0017e](https://git.ole-hartwig.eu/pinup/pinup/commit/ae0017e590cf09e04c617aa6175121340ab9edf8))
+
 ## [0.59.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.58.0...v0.59.0) (2026-10-06)
 
 ### :sparkles: Features
