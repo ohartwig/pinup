@@ -168,6 +168,12 @@ func firstSet(getenv func(string) string, names ...string) string {
 // hides those tags and the run moves a dependency still on one like a
 // security fix. A list on the instance's package registry is read with the
 // platform token: its path is one instancePaths allows.
+//
+// PINUP_WITHDRAWN_IMAGES_SCOPE names, comma-separated, the registries or
+// registry paths that list speaks for even where it names no image
+// ("registry.example.org/devops/images"): an empty list - nothing withdrawn
+// - names no host, and without a scope the advisory coverage would count
+// every image there as covered by nothing.
 func datasourceOptions(p platformEnv, getenv func(string) string) (wire.DatasourceOptions, error) {
 	o := wire.DatasourceOptions{GitLabURL: p.gitLabURL()}
 	views, err := apkViews(getenv)
@@ -180,6 +186,11 @@ func datasourceOptions(p platformEnv, getenv func(string) string) (wire.Datasour
 			return o, fmt.Errorf("PINUP_WITHDRAWN_IMAGES: %q is not an https URL", u)
 		}
 		o.WithdrawnImages = u
+		for s := range strings.SplitSeq(getenv("PINUP_WITHDRAWN_IMAGES_SCOPE"), ",") {
+			if s = strings.TrimSpace(s); s != "" {
+				o.WithdrawnImagesScope = append(o.WithdrawnImagesScope, s)
+			}
+		}
 	}
 	if p.Kind != "gitlab" || p.Host == "" || p.Token == "" || p.RegistryHost == "" {
 		return o, nil

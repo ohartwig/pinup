@@ -355,6 +355,12 @@ var mutators = []mutator{
 		"\t\treturn \"stdlib\"\n", "\t\treturn q.PackageName\n", []string{"./osv/"}, false, ""},
 	{102, "advisories", "a go.mod language version is asked as a toolchain release", "osv/osv.go",
 		"\t\tif q.Datasource == \"golang-version\" && !q.Explicit && !StdlibVersion(q.Version) {\n", "\t\tif false {\n", []string{"./osv/"}, false, ""},
+	// The withdrawal scope (2026-10-06): an empty image list speaks for
+	// the declared registries, so their images count as withdrawal-covered.
+	{103, "coverage", "a declared withdrawal scope covers no image", "datasource/dockerds/dockerds.go",
+		"\t\tif key == s || strings.HasPrefix(key, s+\"/\") {", "\t\tif false && (key == s || strings.HasPrefix(key, s+\"/\")) {", []string{"./datasource/dockerds/"}, false, ""},
+	{104, "coverage", "PINUP_WITHDRAWN_IMAGES_SCOPE is not read", "cmd/pinup/env.go",
+		"\t\t\t\to.WithdrawnImagesScope = append(o.WithdrawnImagesScope, s)\n", "\t\t\t\t_ = s\n", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {
