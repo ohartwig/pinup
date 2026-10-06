@@ -242,6 +242,9 @@ schedule, which `vulnerabilityAlerts.schedule` decides.
 
 ## Advisory coverage
 
+The sources, how their answers merge and why there is more than one:
+[advisory sources](advisory-sources.md).
+
 `osvVulnerabilityAlerts` asks OSV about the dependencies whose datasource has
 an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems and nuget.
 A custom datasource has none of its own - a URL template says nothing about
