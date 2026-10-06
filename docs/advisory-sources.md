@@ -14,10 +14,10 @@ sources were asked - or why none was ([`advisoryCoverage`](plan-format.md#adviso
 
 | Source | `sources` name | Asked for | Since |
 |---|---|---|---|
-| [OSV](https://osv.dev) | `osv` | every datasource with an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems, nuget; the Go toolchain (`golang-version`) as Go `stdlib`, toolchain releases x.y.z only; a custom datasource whose configuration names its ecosystem (`customDatasources.<name>.osvEcosystem`, e.g. `Wolfi` for apk pins) | 0.1.0; custom ecosystems 0.56.0 |
+| [OSV](https://osv.dev) | `osv` | every datasource with an OSV ecosystem: npm, packagist, go, pypi, maven, crate, rubygems, nuget; the Go toolchain (`golang-version`) as Go `stdlib`, toolchain releases x.y.z only; a custom datasource whose configuration names its ecosystem (`customDatasources.<name>.osvEcosystem`, e.g. `Wolfi` for apk pins) | 0.1.0; custom ecosystems 0.56.0; Go `stdlib` 0.61.0 |
 | [Packagist](https://packagist.org/apidoc#list-security-advisories) | `packagist` | composer packages (`packagist`), beside OSV | 0.55.0 |
-| OSV, by an explicit mapping | `osv` | any pin a rule maps to an OSV package (`packageRules[].osvPackage`, e.g. a github-releases binary that is a Go module) ([mapping a pin](configuration.md#mapping-a-pin-to-an-osv-package)) | next release |
-| the installation's own feed | `private` | packagist, gitlab-packages, gitlab-tags, gitlab-releases, npm, go, pypi - records in the OSV schema named by purl ([private advisories](configuration.md#private-advisories), `PINUP_PRIVATE_ADVISORIES`) | next release |
+| OSV, by an explicit mapping | `osv` | any pin a rule maps to an OSV package (`packageRules[].osvPackage`, e.g. a github-releases binary that is a Go module) ([mapping a pin](configuration.md#mapping-a-pin-to-an-osv-package)) | 0.60.0 |
+| the installation's own feed | `private` | packagist, gitlab-packages, gitlab-tags, gitlab-releases, npm, go, pypi - records in the OSV schema named by purl ([private advisories](configuration.md#private-advisories), `PINUP_PRIVATE_ADVISORIES`) | 0.59.0 |
 | a withdrawal list | — (`withdrawal`) | apk pins whose mirror publishes `withdrawn.json`; images on the registry the installation's `PINUP_WITHDRAWN_IMAGES` list names, or in its declared `PINUP_WITHDRAWN_IMAGES_SCOPE` | apk 0.50.0, images 0.51.0, scope 0.62.0 |
 
 All of them are switched on by `osvVulnerabilityAlerts` and off by
