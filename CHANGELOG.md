@@ -1,3 +1,13 @@
+## [0.62.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.62.0...v0.62.1) (2026-10-06)
+
+### :bug: Fixes
+
+* **planner:** a package rule wins over the update type's own object ([a8fd942](https://git.ole-hartwig.eu/pinup/pinup/commit/a8fd94201e34a668fc611b55b4f57ae66cb1e935))
+
+### :memo: Documentation
+
+* **advisories:** name the releases that shipped the explicit mapping and the private feed ([4f9733b](https://git.ole-hartwig.eu/pinup/pinup/commit/4f9733b9b89f462f690f89ab3ee4dd03ac14380e))
+
 ## [0.62.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.61.0...v0.62.0) (2026-10-06)
 
 ### :sparkles: Features
