@@ -1,3 +1,9 @@
+## [0.61.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.60.0...v0.61.0) (2026-10-06)
+
+### :sparkles: Features
+
+* **advisories:** the Go toolchain is asked as OSV's stdlib ([ee8a386](https://git.ole-hartwig.eu/pinup/pinup/commit/ee8a386804ede6a55a46b81ec780f0bdd877174f))
+
 ## [0.60.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.59.0...v0.60.0) (2026-10-06)
 
 ### :sparkles: Features
