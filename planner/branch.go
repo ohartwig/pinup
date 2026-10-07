@@ -310,6 +310,17 @@ func branchLevelBlock(u model.Update) (model.Block, bool) {
 	return model.Block{}, false
 }
 
+// carriesSecurityLockRefresh reports whether an actionable member of a
+// branch is a lock refresh planned as a security fix.
+func carriesSecurityLockRefresh(members []Named) bool {
+	for _, n := range members {
+		if n.Update.SecurityFix && n.Update.Type == model.UpdateLockFileMaintenance && !n.Update.Blocked() {
+			return true
+		}
+	}
+	return false
+}
+
 func Compose(named []Named) ([]model.Branch, error) {
 	type member struct {
 		branch  *model.Branch
@@ -324,6 +335,16 @@ func Compose(named []Named) ([]model.Branch, error) {
 	for _, n := range ordered {
 		m, ok := byName[n.Branch]
 		if ok && n.Update.Blocked() {
+			// A security lock refresh on the branch is not held by a
+			// sibling's window: the lock-file-maintenance branch carries
+			// every lock's refresh, and a composer.lock outside its
+			// window held the package-lock.json refresh that fixed an
+			// advisory with it (ai-ready-platform/platform/commerce,
+			// source-map-js 1.2.1, 2026-10-07). The sibling stays off the
+			// branch until its own window, as a release age would keep it.
+			if blk, level := branchLevelBlock(n.Update); level && blk.Reason == model.BlockSchedule && !n.Update.SecurityFix && carriesSecurityLockRefresh(m.members) {
+				continue
+			}
 			if m.branch.SuppressedBy == "" {
 				if blk, level := branchLevelBlock(n.Update); level {
 					// A schedule or a dashboard approval is decided for

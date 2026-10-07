@@ -744,6 +744,9 @@ func (r *whatifRun) lookupAll() error {
 		plan.Warnings = append(plan.Warnings, warns...)
 		plan.AdvisoryCoverage = coverage
 		r.transitive, warns = checkLockedAdvisories(ctx, o.Advisories, r.resolved.Raw, r.lockSets, plan.Deps, wire.DefaultVersioning(r.datasources))
+		for _, l := range transitiveLocked(r.resolved.Raw, r.lockSets, plan.Deps, wire.DefaultVersioning(r.datasources)) {
+			plan.LockedPackages = append(plan.LockedPackages, l.pkg)
+		}
 		plan.Warnings = append(plan.Warnings, warns...)
 		plan.Warnings = append(plan.Warnings, markExploited(ctx, o.Exploited, r.now, plan.Deps, r.transitive)...)
 	}
@@ -2147,15 +2150,70 @@ var lockDatasources = map[string]string{"composer": "packagist", "npm": "npm"}
 // lasts. Opt-in (osvTransitiveAlerts) under the same switches as the
 // dependency check.
 func checkLockedAdvisories(ctx context.Context, client advisoryChecker, cfg map[string]any, locks map[string]lockSet, deps []model.Dependency, defaultVersioning func(string) string) (map[string][]model.Advisory, []model.Warning) {
-	if on, _ := cfg["osvTransitiveAlerts"].(bool); !on {
+	locked := transitiveLocked(cfg, locks, deps, defaultVersioning)
+	if len(locked) == 0 {
 		return nil, nil
 	}
+	schemes := wire.Versionings()
+	queries := make([]osv.Query, 0, len(locked))
+	for _, l := range locked {
+		queries = append(queries, osv.Query{Datasource: l.pkg.Datasource, PackageName: l.pkg.PackageName, Version: l.pkg.Version, Versioning: l.pkg.Versioning})
+	}
+	findings, err := client.Check(ctx, schemes, queries)
+	if err != nil {
+		return nil, []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; transitive packages are not checked", err)}}
+	}
+	out := map[string][]model.Advisory{}
+	var warns []model.Warning
+	for k, f := range findings {
+		l := locked[k]
+		path := locks[l.key].path
+		for _, w := range f.Warnings {
+			warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: l.pkg.PackageName + ": " + w})
+		}
+		if len(f.Advisories) == 0 {
+			continue
+		}
+		ids := make([]string, 0, len(f.Advisories))
+		for _, a := range f.Advisories {
+			out[l.key] = append(out[l.key], model.Advisory{
+				ID: a.ID, Aliases: a.Aliases, Summary: a.Summary, Severity: a.Severity, Fixed: a.Fixed, Published: a.Published,
+				Package: l.pkg.PackageName, Installed: l.pkg.Version,
+			})
+			ids = append(ids, a.ID)
+		}
+		fix := "no fixed version"
+		if f.Bound != "" {
+			fix = "fixed in " + f.Bound
+		}
+		warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: fmt.Sprintf(
+			"transitive %s %s: %s (%s); the lock refresh moves it only as far as the constraints that require it allow", l.pkg.PackageName, l.pkg.Version, strings.Join(ids, ", "), fix)})
+	}
+	return out, warns
+}
+
+// lockedEntry is one transitive package of a lock, with the lockSets key
+// its findings go back to.
+type lockedEntry struct {
+	key string
+	pkg model.LockedPackage
+}
+
+// transitiveLocked lists every package a lock pins that no manifest names
+// and whose pin is a version an advisory range can contain - what the lock
+// advisory check asks about, and what the consumer index records for the
+// watch. Empty unless osvTransitiveAlerts is on under the same switches as
+// the dependency check.
+func transitiveLocked(cfg map[string]any, locks map[string]lockSet, deps []model.Dependency, defaultVersioning func(string) string) []lockedEntry {
+	if on, _ := cfg["osvTransitiveAlerts"].(bool); !on {
+		return nil
+	}
 	if on, _ := cfg["osvVulnerabilityAlerts"].(bool); !on {
-		return nil, nil
+		return nil
 	}
 	if va, ok := cfg["vulnerabilityAlerts"].(map[string]any); ok {
 		if enabled, ok := va["enabled"].(bool); ok && !enabled {
-			return nil, nil
+			return nil
 		}
 	}
 	direct := map[string]bool{}
@@ -2166,9 +2224,7 @@ func checkLockedAdvisories(ctx context.Context, client advisoryChecker, cfg map[
 		}
 		direct[d.Manager+"|"+name] = true
 	}
-	type locked struct{ key, name, version string }
-	var queries []osv.Query
-	var at []locked
+	var out []lockedEntry
 	schemes := wire.Versionings()
 	for _, key := range slices.Sorted(maps.Keys(locks)) {
 		ls := locks[key]
@@ -2188,44 +2244,10 @@ func checkLockedAdvisories(ctx context.Context, client advisoryChecker, cfg map[
 			if direct[ls.manager+"|"+name] || !v.IsVersion(version) {
 				continue
 			}
-			queries = append(queries, osv.Query{Datasource: ds, PackageName: name, Version: version, Versioning: scheme})
-			at = append(at, locked{key: key, name: name, version: version})
+			out = append(out, lockedEntry{key: key, pkg: model.LockedPackage{Datasource: ds, PackageName: name, Version: version, Versioning: scheme, Lock: ls.path}})
 		}
 	}
-	if len(queries) == 0 {
-		return nil, nil
-	}
-	findings, err := client.Check(ctx, schemes, queries)
-	if err != nil {
-		return nil, []model.Warning{{Stage: "lookup", Msg: fmt.Sprintf("advisory database: %v; transitive packages are not checked", err)}}
-	}
-	out := map[string][]model.Advisory{}
-	var warns []model.Warning
-	for k, f := range findings {
-		l := at[k]
-		path := locks[l.key].path
-		for _, w := range f.Warnings {
-			warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: l.name + ": " + w})
-		}
-		if len(f.Advisories) == 0 {
-			continue
-		}
-		ids := make([]string, 0, len(f.Advisories))
-		for _, a := range f.Advisories {
-			out[l.key] = append(out[l.key], model.Advisory{
-				ID: a.ID, Aliases: a.Aliases, Summary: a.Summary, Severity: a.Severity, Fixed: a.Fixed, Published: a.Published,
-				Package: l.name, Installed: l.version,
-			})
-			ids = append(ids, a.ID)
-		}
-		fix := "no fixed version"
-		if f.Bound != "" {
-			fix = "fixed in " + f.Bound
-		}
-		warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: fmt.Sprintf(
-			"transitive %s %s: %s (%s); the lock refresh moves it only as far as the constraints that require it allow", l.name, l.version, strings.Join(ids, ", "), fix)})
-	}
-	return out, warns
+	return out
 }
 
 // securityLockKeys are the vulnerabilityAlerts keys a security lock refresh

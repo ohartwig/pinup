@@ -207,6 +207,19 @@ type Plan struct {
 	// no advisory database. In-process only: the dashboard renders it
 	// from the plan the run just made; plan.json does not carry it.
 	AdvisoryCoverage *AdvisoryCoverage `json:"-"`
+	// LockedPackages are the packages a lock pins that no manifest names -
+	// the transitive ones the lock advisory check asks about
+	// (osvTransitiveAlerts). The run records them in the consumer index so
+	// the advisory watch asks about them between full runs too. In-process
+	// only, like AdvisoryCoverage: plan.json does not carry them.
+	LockedPackages []LockedPackage `json:"-"`
+}
+
+// LockedPackage is one transitive package of a lock: the datasource its
+// manager's packages come from, its name and resolved version, and the
+// lock that pins it.
+type LockedPackage struct {
+	Datasource, PackageName, Version, Versioning, Lock string
 }
 
 // AdvisoryCoverage is how much of a plan's dependencies the advisory
