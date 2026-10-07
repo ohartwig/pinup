@@ -361,6 +361,15 @@ var mutators = []mutator{
 		"\t\tif key == s || strings.HasPrefix(key, s+\"/\") {", "\t\tif false && (key == s || strings.HasPrefix(key, s+\"/\")) {", []string{"./datasource/dockerds/"}, false, ""},
 	{104, "coverage", "PINUP_WITHDRAWN_IMAGES_SCOPE is not read", "cmd/pinup/env.go",
 		"\t\t\t\to.WithdrawnImagesScope = append(o.WithdrawnImagesScope, s)\n", "\t\t\t\t_ = s\n", []string{"./cmd/pinup/"}, false, ""},
+	// Lock-only packages (2026-10-07, ai-ready-platform/platform/commerce,
+	// source-map-js 1.2.1): a security lock refresh is not held by a
+	// sibling's window, and the transitive packages reach the watch.
+	{105, "lockwatch", "a sibling's window holds the security lock refresh", "planner/branch.go",
+		"if blk, level := branchLevelBlock(n.Update); level && blk.Reason == model.BlockSchedule && !n.Update.SecurityFix && carriesSecurityLockRefresh(m.members) {", "if blk, level := branchLevelBlock(n.Update); false && level && blk.Reason == model.BlockSchedule && !n.Update.SecurityFix && carriesSecurityLockRefresh(m.members) {", []string{"./cmd/pinup/"}, false, ""},
+	{106, "lockwatch", "the run does not hand lock-only packages to the index", "cmd/pinup/whatif.go",
+		"\t\t\tplan.LockedPackages = append(plan.LockedPackages, l.pkg)", "\t\t\t_ = l", []string{"./cmd/pinup/"}, false, ""},
+	{107, "lockwatch", "the index drops lock-only packages", "report/consumers.go",
+		"\tfor _, l := range plan.LockedPackages {", "\tfor _, l := range plan.LockedPackages[:0] {", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

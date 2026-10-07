@@ -64,6 +64,12 @@ type Dependency struct {
 	// (model.Dependency.OSVPackage), asked in OSVEcosystem instead of its
 	// datasource's own ecosystem.
 	OSVName string `json:"osvName,omitempty"`
+	// Lock is set on a package only a lock pins (model.LockedPackage):
+	// the lock file, which is also File. The watch asks about it like any
+	// dependency; a hit starts the targeted run, whose lock advisory check
+	// plans the lock's security refresh. Such an entry names no consumer:
+	// a release of a transitive package is not news to the fast lane.
+	Lock string `json:"lock,omitempty"`
 }
 
 // NewIndex returns an empty index.
@@ -197,6 +203,13 @@ func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 		if d.OSVPackage != nil {
 			e.OSVEcosystem, e.OSVName = d.OSVPackage.Ecosystem, d.OSVPackage.Name
 		}
+		if !seen[e] {
+			seen[e] = true
+			deps = append(deps, e)
+		}
+	}
+	for _, l := range plan.LockedPackages {
+		e := Dependency{Datasource: l.Datasource, PackageName: l.PackageName, Version: l.Version, Versioning: l.Versioning, File: l.Lock, Lock: l.Lock}
 		if !seen[e] {
 			seen[e] = true
 			deps = append(deps, e)
