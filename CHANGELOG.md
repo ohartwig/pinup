@@ -1,3 +1,13 @@
+## [0.62.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.62.1...v0.62.2) (2026-10-07)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 2353314 ([26d52b1](https://git.ole-hartwig.eu/pinup/pinup/commit/26d52b1ea8c3e78ad4413ad1e57e74dd3d114d3b))
+
+### :repeat: Chores
+
+* **deps:** update dependency npm-12 to v12.2.0-r2 [security] ([a7a069c](https://git.ole-hartwig.eu/pinup/pinup/commit/a7a069c1b5bb1d4b5603b985f7a9f07bf6284fb2))
+
 ## [0.62.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.62.0...v0.62.1) (2026-10-06)
 
 ### :bug: Fixes
