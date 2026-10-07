@@ -1,3 +1,9 @@
+## [0.63.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.62.2...v0.63.0) (2026-10-07)
+
+### :sparkles: Features
+
+* **advisories:** lock-only packages reach the watch, and their security refresh opens now ([76265db](https://git.ole-hartwig.eu/pinup/pinup/commit/76265db4db89e175b487776329abc234bff8bd8e))
+
 ## [0.62.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.62.1...v0.62.2) (2026-10-07)
 
 ### :repeat: Continuous Integrations
