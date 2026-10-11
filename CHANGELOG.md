@@ -1,3 +1,14 @@
+## [0.63.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.0...v0.63.1) (2026-10-11)
+
+### :bug: Fixes
+
+* **planner:** reach a prerelease replacement and honour ignoreUnstable ([52a1ab8](https://git.ole-hartwig.eu/pinup/pinup/commit/52a1ab8ad48b4f4a78a75a88b6e16ebb7f1335ae))
+
+### :repeat: Continuous Integrations
+
+* **lint:** build staticcheck against x/tools v0.52.0 for go1.27.2 ([51a607e](https://git.ole-hartwig.eu/pinup/pinup/commit/51a607e099450e59ed8da1efaa1419559544f026))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to e1086c2 ([9921ac4](https://git.ole-hartwig.eu/pinup/pinup/commit/9921ac42e7f9d17ae200d7393e00cd782e6fa676))
+
 ## [0.63.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.62.2...v0.63.0) (2026-10-07)
 
 ### :sparkles: Features
