@@ -248,9 +248,17 @@ lint:ci-resolved:
   script:
     - go run tools/cilint.go
 
-# staticcheck, pinned, fetched by go run: no dependency in go.mod, no tool
-# in the image. The review of 2026-09-13 found eight leftovers this would
-# have named on the day they were written.
+# staticcheck, pinned, built in a throwaway module: no dependency in go.mod,
+# no tool in the image. The review of 2026-09-13 found eight leftovers this
+# would have named on the day they were written.
+#
+# Not `go run ...@v0.8.1` any more. go1.27.2 writes export data version 5,
+# and the x/tools staticcheck v0.8.1 pins (v0.44.1-0.20260420...) reads up to
+# 4: every package failed to import, and this job held main red from
+# 2026-10-09, when the golang:1.27 image moved to 1.27.2, so nothing in
+# pinup could merge or release. x/tools v0.52.0 reads version 5; raising it
+# needs a module of its own, which `go run pkg@version` cannot give. Drop the
+# x/tools line once a staticcheck release requires a version that new.
 lint:staticcheck:
   stage: quick
   image: ${GO_IMAGE}
@@ -258,7 +266,10 @@ lint:staticcheck:
     GIT_DEPTH: "1"
     GOFLAGS: ""
   script:
-    - go run honnef.co/go/tools/cmd/staticcheck@v0.8.1 ./...
+    - mkdir -p /tmp/staticcheck && (cd /tmp/staticcheck && go mod init staticcheck >/dev/null 2>&1
+      && go get honnef.co/go/tools/cmd/staticcheck@v0.8.1 golang.org/x/tools@v0.52.0
+      && go build -o /tmp/staticcheck/staticcheck honnef.co/go/tools/cmd/staticcheck)
+    - /tmp/staticcheck/staticcheck ./...
 
 # --------------------------------------------------------------------------- #
 # Test
