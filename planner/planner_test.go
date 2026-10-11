@@ -209,6 +209,38 @@ func TestUnstableCandidatesAreSkippedForAStableCurrent(t *testing.T) {
 	if len(res.Updates) != 1 || res.Updates[0].NewValue != "1.1.0" {
 		t.Fatalf("an unstable current may move to the latest, got %+v", res.Updates)
 	}
+
+	// ignoreUnstable: false on a rule lets them in for a stable pin too.
+	open := dep("lint", "1.0.0", "semver")
+	open.AllowUnstable = true
+	res = plan(t, open, releases("1.1.0-rc.1"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "1.1.0-rc.1" {
+		t.Fatalf("a rule that allows prereleases must get one, got %+v", res.Updates)
+	}
+}
+
+// A security bound that is itself a prerelease - a withdrawn version whose
+// repository names an _rc build as the replacement - is reached from a
+// stable pin. Before, the fast path held the pin to stable releases and
+// reported no fix, so the dependency stayed on the withdrawn version until
+// the build broke (koh crowdsec-firewall-bouncer, 2026-10-11). A stable
+// bound still passes prereleases over.
+func TestAPrereleaseBoundIsReachedFromAStablePin(t *testing.T) {
+	d := dep("bouncer", "0.0.37", "semver")
+	d.VulnerabilityBound = "0.0.38-rc.1"
+	d.Advisories = []model.Advisory{{ID: "withdrawn", Fixed: "0.0.38-rc.1", Withdrawn: true}}
+	res := plan(t, d, releases("0.0.38-rc.1", "0.0.38-rc.2"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "0.0.38-rc.1" || !res.Updates[0].SecurityFix {
+		t.Fatalf("want a security fix to 0.0.38-rc.1, got %+v %q", res.Updates, res.Deps[0].SkipReason)
+	}
+
+	stable := dep("bouncer", "0.0.37", "semver")
+	stable.VulnerabilityBound = "0.0.38"
+	stable.Advisories = []model.Advisory{{ID: "GHSA-x", Fixed: "0.0.38"}}
+	res = plan(t, stable, releases("0.0.39-rc.1", "0.0.39"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "0.0.39" {
+		t.Fatalf("a stable bound must still skip prereleases, got %+v", res.Updates)
+	}
 }
 
 func TestDockerKeepsFamilyAndPrecision(t *testing.T) {

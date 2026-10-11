@@ -123,6 +123,11 @@ type Dependency struct {
 	// updates, from a rule's `analyze: true`; off by default, since an
 	// analyzer fetches both versions of the thing.
 	Analyze bool `json:"analyze,omitempty"`
+	// AllowUnstable is a rule's `ignoreUnstable: false`: prereleases are
+	// candidates even for a stable current version. The default (true,
+	// Renovate's and the estate's) leaves it off, and a stable pin then
+	// moves to stable releases only.
+	AllowUnstable bool `json:"allowUnstable,omitempty"`
 	// MinimumReleaseAge and InternalChecksFilter, from the pre-lookup rule
 	// pass, let the planner choose among candidates by age: under
 	// "strict" the newest release that already satisfies the age is the
