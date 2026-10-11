@@ -1155,6 +1155,9 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 	if a, ok := res.Config["analyze"].(bool); ok {
 		d.Analyze = a
 	}
+	if iu, ok := res.Config["ignoreUnstable"].(bool); ok {
+		d.AllowUnstable = !iu
+	}
 	if m, ok := res.Config["osvPackage"].(map[string]any); ok && len(res.Wrote["osvPackage"]) > 0 {
 		eco, _ := m["ecosystem"].(string)
 		name, _ := m["name"].(string)

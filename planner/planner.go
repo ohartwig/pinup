@@ -238,8 +238,10 @@ type planning struct {
 	// admits, what a bump of the range is measured from.
 	cur, base, floor string
 	isRange          bool
-	baseStable       bool
-	strategy         versioning.RangeStrategy
+	// stableOnly keeps prereleases out of the candidates: the base is
+	// stable and no rule set ignoreUnstable: false.
+	stableOnly bool
+	strategy   versioning.RangeStrategy
 	// seen counts the releases the scheme could read at all.
 	seen int
 	// excluded counts the newer releases allowedVersions alone kept out,
@@ -394,7 +396,7 @@ func (p *planning) resolveBase() string {
 			p.base = d.LockedVersion
 		}
 	}
-	p.baseStable = v.IsStable(p.base)
+	p.stableOnly = v.IsStable(p.base) && !d.AllowUnstable
 	return ""
 }
 
@@ -441,7 +443,7 @@ func (p *planning) candidates() (candidateSet, string, *model.Warning) {
 		if !versioning.IsCompatible(v, cand, base) {
 			continue
 		}
-		if p.baseStable && !v.IsStable(cand) {
+		if p.stableOnly && !v.IsStable(cand) {
 			continue
 		}
 		if r.Deprecated {
@@ -523,9 +525,16 @@ func (p *planning) securityFix() ([]model.Update, string, *model.Warning) {
 	// admitted release, and the fix may sit inside the range (minimist
 	// ^1.2.5 is vulnerable at 1.2.5 and fixed at 1.2.6).
 	all := byVersionOf(p.rs, v)
+	// A bound that is itself a prerelease is the only way out its source
+	// names - a repository that withdrew a version and replaced it with an
+	// _rc build, say. Holding the stable pin to stable releases then
+	// leaves it on the withdrawn version, and the build breaks the day
+	// that version leaves the index (koh crowdsec-firewall-bouncer
+	// 0.0.37-r3, 2026-10-11).
+	stableOnly := p.stableOnly && v.IsStable(d.VulnerabilityBound)
 	fix, ok := "", false
 	for c, r := range all {
-		if v.Compare(c, d.VulnerabilityBound) < 0 || r.Deprecated || (p.baseStable && !v.IsStable(c)) {
+		if v.Compare(c, d.VulnerabilityBound) < 0 || r.Deprecated || (stableOnly && !v.IsStable(c)) {
 			continue
 		}
 		if !ok || v.Compare(c, fix) < 0 {

@@ -72,16 +72,25 @@ func applyWithdrawals(cfg map[string]any, deps []model.Dependency, defaultVersio
 		if err != nil {
 			continue
 		}
+		// A stable current version moves to a stable one: the fast path
+		// passes over prereleases for it too - unless a rule lets them in,
+		// or the repository's own replacement is one. Then a prerelease at
+		// or above the replacement is a way out as well: the replacement's
+		// exact revision may have rolled out of the index while a later
+		// one of the same build is there (crowdsec-firewall-bouncer
+		// 0.0.37-r3 -> 0.0.38_rc1-r1, carried as -r2, 2026-10-11).
+		rcReplacement := v.IsVersion(w.Replacement) && !v.IsStable(w.Replacement)
 		bound := ""
 		var newer []string
 		for _, r := range rs.Releases {
 			if r.Version == w.Replacement {
 				bound = w.Replacement
 			}
-			// A stable current version moves to a stable one: the fast path
-			// passes over prereleases for it too.
-			if v.IsVersion(r.Version) && v.IsVersion(current) && v.Compare(r.Version, current) > 0 &&
-				(!v.IsStable(current) || v.IsStable(r.Version)) {
+			if !v.IsVersion(r.Version) || !v.IsVersion(current) || v.Compare(r.Version, current) <= 0 {
+				continue
+			}
+			if !v.IsStable(current) || v.IsStable(r.Version) || d.AllowUnstable ||
+				(rcReplacement && v.Compare(r.Version, w.Replacement) >= 0) {
 				newer = append(newer, r.Version)
 			}
 		}

@@ -41,6 +41,9 @@ func TestWithdrawnVersionsAreMovedOffLikeAnAdvisory(t *testing.T) {
 		{"replacement carried", map[string]any{}, dep("1.19.2-r6"), rs("1.20.0-r0", "1.20.0-r0", "1.21.0-r0"), "1.20.0-r0", 2},
 		{"replacement absent: newest stable above", map[string]any{}, dep("1.19.2-r6"), rs("1.20.0-r0", "1.20.1-r0", "1.21.0-r0", "1.22.0_rc1-r0"), "1.21.0-r0", 2},
 		{"nothing above: advisory, no bound", map[string]any{}, dep("1.19.2-r6"), rs("1.20.0-r0"), "", 2},
+		{"rc replacement carried", map[string]any{}, dep("1.19.2-r6"), rs("1.20.0_rc1-r1", "1.20.0_rc1-r1"), "1.20.0_rc1-r1", 2},
+		{"rc replacement rolled to a later revision", map[string]any{}, dep("1.19.2-r6"), rs("1.20.0_rc1-r1", "1.20.0_rc1-r2"), "1.20.0_rc1-r2", 2},
+		{"rc below the rc replacement is no way out", map[string]any{}, dep("1.19.2-r6"), rs("1.20.0_rc2-r0", "1.20.0_rc1-r5"), "", 2},
 		{"not withdrawn", map[string]any{}, dep("1.19.1-r0"), rs("1.20.0-r0", "1.20.0-r0"), "", 0},
 		{"alerts off", map[string]any{"vulnerabilityAlerts": map[string]any{"enabled": false}}, dep("1.19.2-r6"), rs("1.20.0-r0", "1.20.0-r0"), "", 0},
 	} {
@@ -58,7 +61,7 @@ func TestWithdrawnVersionsAreMovedOffLikeAnAdvisory(t *testing.T) {
 		if c.ids > 0 && !strings.HasPrefix(d.WithdrawnNote(), "withdrawn: CVE-2026-33997, CVE-2026-34040") {
 			t.Errorf("%s: note %q", c.name, d.WithdrawnNote())
 		}
-		if c.name == "nothing above: advisory, no bound" && len(warns) != 1 {
+		if c.bound == "" && c.ids > 0 && len(warns) != 1 {
 			t.Errorf("%s: warnings %v", c.name, warns)
 		}
 	}
