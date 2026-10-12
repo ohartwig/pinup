@@ -1,3 +1,14 @@
+## [0.63.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.1...v0.63.2) (2026-10-12)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 44ac9c0 ([a7d13de](https://git.ole-hartwig.eu/pinup/pinup/commit/a7d13de8eb084dd267faead748c8f60667137782))
+* **deps:** pin the exact Go version of the golden image ([8f19db6](https://git.ole-hartwig.eu/pinup/pinup/commit/8f19db69086c17e4b0c1f51803f428fd73b4a3cb))
+
+### :repeat: Chores
+
+* **deps:** update alpine + wolfi packages ([ab58cca](https://git.ole-hartwig.eu/pinup/pinup/commit/ab58cca04b867946bc30cbeb5b13bb873c6b597b))
+
 ## [0.63.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.0...v0.63.1) (2026-10-11)
 
 ### :bug: Fixes
