@@ -42,7 +42,7 @@ RUN printf 'label     ::1/128       0\nlabel     ::/0          1\nlabel     ::ff
 # pinup: datasource=custom.wolfi depName=php-8.5 versioning=apk
 ARG PHP_VERSION=8.5.11-r2
 # pinup: datasource=custom.wolfi depName=composer versioning=apk
-ARG COMPOSER_VERSION=2.10.3-r0
+ARG COMPOSER_VERSION=2.10.3-r1
 # pinup: datasource=custom.wolfi depName=nodejs-24 versioning=apk
 ARG NODEJS_VERSION=24.21.0-r4
 # npm-12, not npm: Wolfi's `npm` is the retired name of the family, `npm-12`
@@ -50,7 +50,7 @@ ARG NODEJS_VERSION=24.21.0-r4
 # pinup: datasource=custom.wolfi depName=npm-12 versioning=apk
 ARG NPM_VERSION=12.2.0-r2
 # pinup: datasource=custom.wolfi depName=go-1.27 versioning=apk
-ARG GO_VERSION=1.27.1-r0
+ARG GO_VERSION=1.27.2-r0
 # yarn classic, for the repositories whose lock is a yarn.lock.
 # pinup: datasource=custom.wolfi depName=yarn versioning=apk
 ARG YARN_VERSION=1.22.22-r8
