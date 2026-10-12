@@ -194,8 +194,12 @@ variables:
   # quoted version, not an image reference. Until 2026-09-18 the line
   # annotated GO_IMAGE itself and named no dependency at all - pinup's
   # own orphan-annotation warning found it, in pinup's own pipeline.
+  # The exact Go version, not the rolling 1.27: a Go patch in
+  # devops/images/golang changed no file here, so nothing cut a release and
+  # the binary kept the old standard library. Its patch bump is fix(deps)
+  # (pinup/runner!40), which releases.
   # pinup: datasource=docker depName=registry.ole-hartwig.eu/devops/images/golang
-  GOLANG_IMAGE_TAG: "1.27"
+  GOLANG_IMAGE_TAG: "1.27.2"
   GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:$GOLANG_IMAGE_TAG"
   # update:pinup runs on the toolchain image: gpg for the signature, git,
   # go for the go.sum refresh. The binary it runs is this tree's own, built
