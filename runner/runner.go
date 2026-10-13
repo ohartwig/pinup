@@ -132,7 +132,24 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			}
 		}
 	}
-	for i := range plan.Branches {
+	// Composer branches whose lock refresh was unresolvable, as planned;
+	// after the regular branches, those that need each other are tried
+	// once more as one branch (coresolve.go).
+	var unresolved []pushFailure
+	original := len(plan.Branches)
+	extended := false
+	for i := 0; ; i++ {
+		if i == original && !extended {
+			extended = true
+			combined, warnings := coResolve(unresolved)
+			for _, w := range warnings {
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: w})
+			}
+			plan.Branches = append(plan.Branches, combined...)
+		}
+		if i >= len(plan.Branches) {
+			break
+		}
 		b := &plan.Branches[i]
 		// A branch with neither edits nor tasks has nothing to write; a
 		// lock-file maintenance branch has only tasks and still writes.
@@ -203,8 +220,12 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		// four 24-job pipelines per bump, and pinup/runner ~1,200 pipelines a
 		// day, while the GitLab server sat at 99 % CPU.
 		keep := hasMR && !mr.Conflict && (mr.PipelineBusy || o.RebaseWhen == "conflicted")
+		planned := *b
 		sha, pushed, err := pushBranch(ctx, o, b, keep)
 		if err != nil {
+			if i < original {
+				unresolved = append(unresolved, pushFailure{branch: planned, err: err.Error()})
+			}
 			outcomes = append(outcomes, fail(plan, b, "push", err))
 			continue
 		}
