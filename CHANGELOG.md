@@ -1,3 +1,9 @@
+## [0.64.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.3...v0.64.0) (2026-10-13)
+
+### :sparkles: Features
+
+* **runner:** co-resolve composer branches that only resolve together ([e29b70b](https://git.ole-hartwig.eu/pinup/pinup/commit/e29b70bd3b603a350aa0159b96231720e246f5a5))
+
 ## [0.63.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.2...v0.63.3) (2026-10-13)
 
 ### :bug: Fixes
