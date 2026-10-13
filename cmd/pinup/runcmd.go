@@ -627,7 +627,33 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 	}
 	lap("publish")
 	summarise(out, errw, proj.Path, plan, outcomes, took)
-	return nil
+	return narrowedRunFailure(o, proj.Path, outcomes)
+}
+
+// narrowedRunFailure turns a branch that failed to publish into a failed
+// project - in a narrowed run only. A full run puts the failure on the
+// dashboard, where it stays until fixed. A narrowed run (the fast lane,
+// --package) leaves the dashboard alone, so there the failure was a warning
+// line in a green job and nothing else: on 2026-10-13 the fast lane for a
+// bridge fix could not refresh composer.lock in any installation (a locked
+// package had a security advisory, and composer refused to resolve), the job
+// stayed green, no merge request appeared, and the release sat unshipped
+// with nobody told. Failing the project makes the job red, and keeps the
+// release out of the debounce record so the next trigger tries again.
+func narrowedRunFailure(o *runOptions, project string, outcomes []runner.Outcome) error {
+	if o.pkg == "" && o.released == "" {
+		return nil
+	}
+	var failed []string
+	for _, oc := range outcomes {
+		if oc.Action == "failed" {
+			failed = append(failed, oc.Branch+": "+oc.Message)
+		}
+	}
+	if len(failed) == 0 {
+		return nil
+	}
+	return fmt.Errorf("run: %s: %d branch(es) failed to publish: %s", project, len(failed), strings.Join(failed, "; "))
 }
 
 // checkout is the repository the run works on: a fresh blobless clone of
