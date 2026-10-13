@@ -1,3 +1,13 @@
+## [0.63.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.2...v0.63.3) (2026-10-13)
+
+### :bug: Fixes
+
+* **run:** a branch that fails to publish in a narrowed run fails the job ([14cc0f7](https://git.ole-hartwig.eu/pinup/pinup/commit/14cc0f7de6e568651b342eeebe60ac8f620542ae))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 98959c4 ([8783e8e](https://git.ole-hartwig.eu/pinup/pinup/commit/8783e8e886211e6d73491487b922ffd467be4958))
+
 ## [0.63.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.1...v0.63.2) (2026-10-12)
 
 ### :repeat: Continuous Integrations
