@@ -26,11 +26,12 @@ and which rule imposed it.
 
 ## Why
 
-A Renovate runner across two hundred repositories took twenty to thirty
-minutes an hour on a Node runtime with a sidecar for every datasource it did
-not speak. pinup replaces that runner for the same repositories and the same
-configuration in three to nine minutes, with no runtime and two third-party
-dependencies, and without moving a line of anyone's `renovate.json`:
+An hourly Renovate run across two hundred repositories took 40 minutes of
+wall time and 128 runner minutes, on a Node runtime with a sidecar for every
+datasource it did not speak. pinup replaces that runner for the same
+repositories and the same configuration in 10.6 minutes of wall time and 75
+runner minutes, with no runtime and two third-party dependencies, and without
+moving a line of anyone's `renovate.json`:
 
 - **Renovate-compatible configuration.** `extends`, presets, `packageRules`
   (concatenated, applied in order), custom regex managers with Handlebars
