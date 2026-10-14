@@ -1,3 +1,17 @@
+## [0.64.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.0...v0.64.1) (2026-10-14)
+
+### :memo: Documentation
+
+* **readme:** state the measured hourly run, 40 vs 10.6 minutes ([be9940c](https://git.ole-hartwig.eu/pinup/pinup/commit/be9940c6d861c8312d44cacf5e9372d000aca411))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to e13a2d8 ([4308a38](https://git.ole-hartwig.eu/pinup/pinup/commit/4308a3893fc3cc6274b98d269157879b4f421d4a))
+
+### :repeat: Chores
+
+* **deps:** update dependency php-8.5 to v8.5.11-r3 ([43d1296](https://git.ole-hartwig.eu/pinup/pinup/commit/43d12967e550bb29782fb84b5d8dd1e5f32138e6))
+
 ## [0.64.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.63.3...v0.64.0) (2026-10-13)
 
 ### :sparkles: Features
