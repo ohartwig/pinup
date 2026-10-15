@@ -752,6 +752,38 @@ func TestBumpRaisesARangeToItsHighestAdmittedRelease(t *testing.T) {
 	}
 }
 
+// allowedVersions bounds a range's bump as it bounds the candidates: the
+// highest release the range admits is the highest the rule allows, not
+// the highest the range would take. Measured 2026-10-15 in sylius-consent:
+// doctrine/orm "^3.6.9" under allowedVersions "<3.7" was bumped to
+// "^3.7.5", the version the rule exists to keep out, and composer could
+// not resolve it against Sylius 2.3. The exclusion is counted once, by
+// the candidate pass, and named on the dependency.
+func TestAllowedVersionsBoundsTheRangeBump(t *testing.T) {
+	d := dep("doctrine/orm", "^3.6.9", "semver")
+	d.RangeStrategy = "bump"
+	d.AllowedVersions = "!/^3\\.7/"
+	d.AllowedVersionsBy = "packageRules[67]"
+	res := plan(t, d, releases("3.6.9", "3.6.10", "3.7.5"))
+	if len(res.Updates) != 1 || res.Updates[0].NewValue != "^3.6.10" {
+		t.Fatalf("updates = %+v, want one bump to ^3.6.10", res.Updates)
+	}
+	if !strings.Contains(res.Deps[0].HeldBack, "allowedVersions") || !strings.Contains(res.Deps[0].HeldBack, "1 newer release excluded") {
+		t.Errorf("heldBack = %q", res.Deps[0].HeldBack)
+	}
+	// Nothing above the floor is allowed: no bump, and the reason is the
+	// rule, not "up to date" and not "no release satisfies".
+	res = plan(t, d, releases("3.6.9", "3.7.5"))
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "held by allowedVersions") {
+		t.Fatalf("updates %+v, skip %q", res.Updates, res.Deps[0].SkipReason)
+	}
+	// Every admitted release kept out: the same reason, from the base.
+	res = plan(t, d, releases("3.7.5", "3.7.6"))
+	if len(res.Updates) != 0 || !strings.Contains(res.Deps[0].SkipReason, "held by allowedVersions") {
+		t.Fatalf("all kept out: updates %+v, skip %q", res.Updates, res.Deps[0].SkipReason)
+	}
+}
+
 // A vulnerable range without a lock runs its lowest admitted release; the
 // fix may sit inside the range and is typed from that floor, never as a
 // rollback from the range's ceiling.
