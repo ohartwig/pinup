@@ -44,7 +44,7 @@ ARG PHP_VERSION=8.5.11-r3
 # pinup: datasource=custom.wolfi depName=composer versioning=apk
 ARG COMPOSER_VERSION=2.10.3-r1
 # pinup: datasource=custom.wolfi depName=nodejs-24 versioning=apk
-ARG NODEJS_VERSION=24.21.0-r4
+ARG NODEJS_VERSION=24.22.0-r0
 # npm-12, not npm: Wolfi's `npm` is the retired name of the family, `npm-12`
 # the maintained series with the same binary.
 # pinup: datasource=custom.wolfi depName=npm-12 versioning=apk
