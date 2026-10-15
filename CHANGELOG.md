@@ -1,3 +1,9 @@
+## [0.64.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.3...v0.64.4) (2026-10-15)
+
+### :bug: Fixes
+
+* **planner:** allowedVersions bounds a range's bump, not only the candidates ([5961b96](https://git.ole-hartwig.eu/pinup/pinup/commit/5961b96f729dc52fc16ebfa9cbf5a84c64d4568e))
+
 ## [0.64.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.2...v0.64.3) (2026-10-15)
 
 ### :bug: Fixes
