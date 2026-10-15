@@ -363,26 +363,55 @@ func (p *planning) digestOnly() (ups []model.Update, skip string, warn *model.Wa
 // what candidates are compared against. Measured: semver-partial says
 // isGreaterThan("2.0.0", "1") is false, so comparing against the range
 // itself would find nothing newer, ever.
+//
+// "Admits" is read together with allowedVersions. A range admits every
+// release inside it, including one the rule keeps out, and under bump the
+// highest admitted release is written back as the new floor without ever
+// meeting the candidate check - that check only sees releases above the
+// base. Measured 2026-10-15: sylius-consent pins doctrine/orm "^3.6.9" with
+// allowedVersions "<3.7" (Sylius 2.3 conflicts with orm >=3.7), and the
+// bump proposed "^3.7.5", the one version the rule exists to refuse;
+// composer could not resolve the branch. A release the rule keeps out is
+// not admitted here either; the candidate pass counts what it excluded.
 func (p *planning) resolveBase() string {
 	d, v, cur := p.d, p.v, p.cur
 	p.isRange = !v.IsVersion(cur)
 	p.base = cur
 	if p.isRange {
 		var admitted []string
+		keptOut := 0
 		for _, r := range p.rs.Releases {
 			if !v.IsVersion(r.Version) {
 				continue
 			}
 			p.seen++
-			if v.Satisfies(r.Version, cur) {
-				admitted = append(admitted, r.Version)
+			if !v.Satisfies(r.Version, cur) {
+				continue
 			}
+			if d.AllowedVersions != "" {
+				ok, err := allowed(p.req.Versionings, v, d.AllowedVersions, r.Version)
+				if err != nil {
+					return fmt.Sprintf("allowedVersions %q: %v", d.AllowedVersions, err)
+				}
+				if !ok {
+					keptOut++
+					continue
+				}
+			}
+			admitted = append(admitted, r.Version)
 		}
 		if p.seen == 0 {
 			return fmt.Sprintf("none of the %d releases is a valid %s version", len(p.rs.Releases), p.scheme)
 		}
 		best, ok := versioning.Latest(v, admitted)
 		if !ok {
+			if keptOut > 0 {
+				by := d.AllowedVersionsBy
+				if by == "" {
+					by = "the configuration"
+				}
+				return fmt.Sprintf("held by allowedVersions %q (%s): every release %q admits is kept out", d.AllowedVersions, by, cur)
+			}
 			return fmt.Sprintf("no release satisfies %q", cur)
 		}
 		p.base = best
