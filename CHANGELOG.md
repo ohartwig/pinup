@@ -1,3 +1,13 @@
+## [0.64.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.1...v0.64.2) (2026-10-15)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 6e5ff8b ([3cf44d3](https://git.ole-hartwig.eu/pinup/pinup/commit/3cf44d30e45afae31986751ed1d29eb00b1c8c71))
+
+### :repeat: Chores
+
+* **deps:** update dependency nodejs-24 to v24.22.0-r0 ([fab9140](https://git.ole-hartwig.eu/pinup/pinup/commit/fab9140c0f6707a06fc0b1650597fc06b510f887))
+
 ## [0.64.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.0...v0.64.1) (2026-10-14)
 
 ### :memo: Documentation
