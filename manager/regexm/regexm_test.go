@@ -345,6 +345,43 @@ func TestEditMovesTheDigestAMatchBound(t *testing.T) {
 	}
 }
 
+// The koh/gitlab-checkout pin of devops/wolfi-packages: the annotation, the
+// tag and the commit on three lines. Edits moves tag and commit; Edit, one
+// range only, refuses rather than moving the tag alone - which is how seven
+// epoch-only merge requests came about between 2026-10-14 and 2026-10-15.
+func TestEditsMoveATagAndCommitWrittenApart(t *testing.T) {
+	cm := &model.CustomManager{
+		Index:              4,
+		MatchStrings:       []string{`#\s*renovate:\s*datasource=(?<datasource>gitlab-tags)\s+depName=(?<depName>\S+?)\s*\n\s*tag:\s*(?<currentValue>v?[0-9]\S*)\s*\n\s*expected-commit:\s*(?<currentDigest>[0-9a-f]{40})`},
+		VersioningTemplate: "semver",
+	}
+	const oldCommit = "d2463c13229a748e589111696df1320b0714d487"
+	const newCommit = "c509e9cf891b81cc7a42b5f875b27154201887e0"
+	src := "  - uses: koh/gitlab-checkout\n    with:\n      project: ai-ready-platform/platform/caddy-fs-s3cache\n" +
+		"      # renovate: datasource=gitlab-tags depName=ai-ready-platform/platform/caddy-fs-s3cache\n" +
+		"      tag: v1.0.1\n      expected-commit: " + oldCommit + "\n      destination: caddy-fs-s3cache\n"
+	f := extract.File{Path: "frankenphp-8.5.yaml", Content: []byte(src)}
+	res, err := New().Extract(context.Background(), f, extract.ManagerConfig{Custom: cm})
+	if err != nil || len(res.Deps) != 1 || res.Deps[0].CurrentValue != "v1.0.1" || res.Deps[0].CurrentDigest != oldCommit {
+		t.Fatalf("extract: %v, %+v", err, res.Deps)
+	}
+	up := model.Update{Dep: res.Deps[0], NewValue: "v1.0.2", NewDigest: newCommit, Type: model.UpdatePatch}
+	edits, err := New().Edits(context.Background(), f, up)
+	if err != nil || len(edits) != 2 {
+		t.Fatalf("edits: %v, %+v", err, edits)
+	}
+	out := src
+	for i := len(edits) - 1; i >= 0; i-- {
+		out = out[:edits[i].Start] + edits[i].New + out[edits[i].End:]
+	}
+	if !strings.Contains(out, "tag: v1.0.2\n      expected-commit: "+newCommit+"\n") || strings.Contains(out, oldCommit) {
+		t.Errorf("edited = %q", out)
+	}
+	if _, err := New().Edit(context.Background(), f, up); err == nil {
+		t.Error("Edit returned one range for a tag and a commit written apart; the tag would have moved alone")
+	}
+}
+
 // combination is not implemented, and says so rather than guessing at
 // semantics nothing in the estate exercises.
 func TestCombinationStrategyIsRefused(t *testing.T) {

@@ -1006,8 +1006,17 @@ func (r *whatifRun) realise() error {
 			}
 			continue
 		}
-		edits, warnings := editsFor(r.ctx, branches[i], plan.Updates, r.contents, r.decoded, r.managers)
+		edits, warnings, refused := editsFor(r.ctx, branches[i], plan.Updates, r.contents, r.decoded, r.managers)
 		plan.Warnings = append(plan.Warnings, warnings...)
+		if refused != "" {
+			// An update whose edit the manager refused leaves the branch
+			// incomplete; written anyway it would carry its tasks and the
+			// other members' edits around a hole. Hold it and say which
+			// edit (measured 2026-10-15: the epoch-only merge requests in
+			// devops/wolfi-packages, see model.BlockEditRefused).
+			holdBranch(&branches[i], plan.Updates, model.Block{Reason: model.BlockEditRefused, Org: model.Origin{Source: "pinup", Rule: model.NoRule}, Note: refused})
+			continue
+		}
 		// A terraform provider bump moves its lock too, in the same branch:
 		// the version and the hashes of the new release, computed here,
 		// never by a tool on the checkout. A lock that cannot be moved
@@ -1074,12 +1083,12 @@ func (r *whatifRun) finish() (*model.Plan, error) {
 	return plan, nil
 }
 
-// editsFor asks each update's manager for its edit and checks the set for
-// overlaps. The warnings name what could not be edited and why.
+// editsFor asks each update's manager for its edits and checks the set for
+// overlaps. The warnings name what could not be edited and why; refused
+// repeats the first such reason, for the caller to hold the branch on - a
+// branch missing one member's edit is not written.
 func editsFor(ctx context.Context, b model.Branch, updates []model.Update, contents map[string][]byte,
-	decoded config.Decoded, managers extract.Registry) ([]model.Edit, []model.Warning) {
-	var edits []model.Edit
-	var warnings []model.Warning
+	decoded config.Decoded, managers extract.Registry) (edits []model.Edit, warnings []model.Warning, refused string) {
 	keys := map[string]bool{}
 	for _, k := range b.UpdateKeys {
 		keys[k] = true
@@ -1103,14 +1112,20 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		p, err := wire.Resolve(key, decoded, managers)
 		if err != nil {
 			warnings = append(warnings, model.Warning{Stage: "apply", File: u.Dep.File, Msg: err.Error()})
+			if refused == "" {
+				refused = err.Error()
+			}
 			continue
 		}
-		e, err := p.Manager.Edit(ctx, extract.File{Path: u.Dep.File, Content: body}, u)
+		es, err := extract.EditsOf(ctx, p.Manager, extract.File{Path: u.Dep.File, Content: body}, u)
 		if err != nil {
 			warnings = append(warnings, model.Warning{Stage: "apply", File: u.Dep.File, Msg: err.Error()})
+			if refused == "" {
+				refused = err.Error()
+			}
 			continue
 		}
-		edits = append(edits, e)
+		edits = append(edits, es...)
 	}
 	// Two managers reading the same line and proposing the same bytes -
 	// the estate's custom manager and gitlabci on a component include -
@@ -1120,9 +1135,12 @@ func editsFor(ctx context.Context, b model.Branch, updates []model.Update, conte
 		for _, c := range conflicts {
 			warnings = append(warnings, model.Warning{Stage: "apply", File: c.A.File, Msg: b.Name + ": " + c.Error()})
 		}
-		return nil, warnings
+		if refused == "" {
+			refused = conflicts[0].Error()
+		}
+		return nil, warnings, refused
 	}
-	return edits, warnings
+	return edits, warnings, refused
 }
 
 // applyDepRules is the pre-lookup pass: a rule may disable the dependency

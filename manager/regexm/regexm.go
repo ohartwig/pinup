@@ -341,6 +341,16 @@ func (*Manager) Edit(_ context.Context, f extract.File, up model.Update) (model.
 	return extract.EditRef("custom.regex", f, up)
 }
 
+// Edits is Edit for a match whose value and digest sit apart - `tag:` on
+// one line and `expected-commit:` on the next, the koh/gitlab-checkout
+// shape in devops/wolfi-packages. Edit can carry one range and refused
+// that match; the branch then went out with its raise-epoch task and
+// nothing else, seven times between 2026-10-14 and 2026-10-15, each one a
+// rebuild of the image chain that changed no pin.
+func (*Manager) Edits(_ context.Context, f extract.File, up model.Update) ([]model.Edit, error) {
+	return extract.EditRefs("custom.regex", f, up)
+}
+
 // Describe renders a one-line summary of a definition, for diagnostics that
 // have to name which of thirty-seven definitions did something.
 func Describe(def *model.CustomManager) string {
