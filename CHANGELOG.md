@@ -1,3 +1,9 @@
+## [0.64.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.2...v0.64.3) (2026-10-15)
+
+### :bug: Fixes
+
+* **extract:** move a tag and its commit written apart, and hold a branch whose edit was refused ([6d1696a](https://git.ole-hartwig.eu/pinup/pinup/commit/6d1696a4d4ccdb91dc6e096bc13c77a0672d2383))
+
 ## [0.64.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.1...v0.64.2) (2026-10-15)
 
 ### :repeat: Continuous Integrations
