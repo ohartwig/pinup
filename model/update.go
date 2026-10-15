@@ -182,6 +182,16 @@ const (
 	// refresh for weeks without a red job; pinup holds the branch and
 	// names the command instead.
 	BlockTaskRefused BlockReason = "taskRefused"
+	// BlockEditRefused holds a branch one of whose manifest edits its
+	// manager refused - the file changed since extraction, a digest-pinned
+	// reference without a digest for the new value. Before 2026-10-15 the
+	// refusal was a warning and the branch went out with whatever else it
+	// had, which for a melange recipe is the raise-epoch task alone: seven
+	// merge requests "update caddy-fs-s3cache to v1.0.2" in
+	// devops/wolfi-packages moved the epoch and never the tag, and each
+	// one rebuilt and rolled the whole image chain. Half a branch is worse
+	// than none; the warning still names the edit and why.
+	BlockEditRefused BlockReason = "editRefused"
 	// BlockNothingToRefresh holds a task-only branch - a lock file
 	// maintenance - whose tool ran and changed nothing: the lock is
 	// current, there is nothing to commit and nothing to open. The plan

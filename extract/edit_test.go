@@ -86,3 +86,40 @@ func TestEditRefRefusesANewTagAgainstTheOldDigest(t *testing.T) {
 		t.Errorf("edited = %q", got)
 	}
 }
+
+// A value and a digest written apart - `tag:` on one line and
+// `expected-commit:` on the next, the koh/gitlab-checkout shape in melange
+// recipes - move as two edits in file order. EditRef, which hands back one
+// edit, refuses the case rather than moving the tag alone (measured
+// 2026-10-14/15 in devops/wolfi-packages: seven epoch-only merge requests).
+func TestEditRefsMovesATagAndItsCommitWrittenApart(t *testing.T) {
+	const oldCommit = "d2463c13229a748e589111696df1320b0714d487"
+	const newCommit = "c509e9cf891b81cc7a42b5f875b27154201887e0"
+	src := "    with:\n      tag: v1.0.1\n      expected-commit: " + oldCommit + "\n      destination: x\n"
+	d := refDep(src, "v1.0.1", oldCommit)
+	up := model.Update{Dep: d, NewValue: "v1.0.2", NewDigest: newCommit, Type: model.UpdatePatch}
+	edits, err := EditRefs("t", File{Path: "f", Content: []byte(src)}, up)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(edits) != 2 || edits[0].Start >= edits[1].Start || edits[0].End > edits[1].Start {
+		t.Fatalf("edits = %+v", edits)
+	}
+	out := src
+	for i := len(edits) - 1; i >= 0; i-- {
+		out = apply(out, edits[i])
+	}
+	want := "    with:\n      tag: v1.0.2\n      expected-commit: " + newCommit + "\n      destination: x\n"
+	if out != want {
+		t.Errorf("got %q", out)
+	}
+	if _, err := EditRef("t", File{Path: "f", Content: []byte(src)}, up); err == nil || !strings.Contains(err.Error(), "two") {
+		t.Errorf("EditRef on separated spans: err = %v", err)
+	}
+	// The contiguous shape still comes back as one edit through EditRefs.
+	joined := "FROM a:1.0@sha256:aaaa\n"
+	one, err := EditRefs("t", File{Path: "f", Content: []byte(joined)}, model.Update{Dep: refDep(joined, "1.0", "sha256:aaaa"), NewValue: "1.1", NewDigest: "sha256:bbbb", Type: model.UpdateMinor})
+	if err != nil || len(one) != 1 || apply(joined, one[0]) != "FROM a:1.1@sha256:bbbb\n" {
+		t.Errorf("joined: %+v, %v", one, err)
+	}
+}

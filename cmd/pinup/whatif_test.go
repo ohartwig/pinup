@@ -721,10 +721,33 @@ func TestEachBranchCarriesOnlyItsOwnUpdate(t *testing.T) {
 		want   string
 	}{{"renovate/alpine-3.x", minor.Key(), "3.21"}, {"renovate/alpine-4.x", major.Key(), "4.0"}} {
 		b := model.Branch{Name: tc.branch, UpdateKeys: []string{tc.key}}
-		edits, warns := editsFor(context.Background(), b, updates, contents, config.Decoded{}, wire.Managers())
-		if len(warns) != 0 || len(edits) != 1 || edits[0].New != tc.want {
-			t.Errorf("%s: edits %+v warnings %+v", tc.branch, edits, warns)
+		edits, warns, refused := editsFor(context.Background(), b, updates, contents, config.Decoded{}, wire.Managers())
+		if len(warns) != 0 || refused != "" || len(edits) != 1 || edits[0].New != tc.want {
+			t.Errorf("%s: edits %+v warnings %+v refused %q", tc.branch, edits, warns, refused)
 		}
+	}
+}
+
+// An edit the manager refuses - here a file that changed since extraction -
+// is not a warning the branch sails past: editsFor names it as refused and
+// the branch is held (measured 2026-10-15: devops/wolfi-packages, where the
+// refused tag edit left a branch with its raise-epoch task alone, seven
+// times, each one a rebuild of the image chain that moved no pin).
+func TestARefusedEditHoldsTheBranch(t *testing.T) {
+	dep := model.Dependency{Manager: "dockerfile", File: "Containerfile", DepName: "alpine", CurrentValue: "3.20",
+		Datasource: "docker", CustomManager: model.NoCustomManager,
+		Locus: model.Locus{ValueStart: 12, ValueEnd: 16, DigestStart: model.NoDigest, DigestEnd: model.NoDigest}}
+	up := model.Update{DepKey: dep.Key(), Dep: dep, NewValue: "3.21", NewVersion: "3.21", Type: model.UpdateMinor}
+	b := model.Branch{Name: "renovate/alpine-3.x", UpdateKeys: []string{up.Key()}}
+	moved := map[string][]byte{"Containerfile": []byte("FROM alpine:3.19\n")}
+	edits, warns, refused := editsFor(context.Background(), b, []model.Update{up}, moved, config.Decoded{}, wire.Managers())
+	if len(edits) != 0 || len(warns) != 1 || !strings.Contains(refused, "changed since extraction") {
+		t.Errorf("edits %+v warnings %+v refused %q", edits, warns, refused)
+	}
+	updates := []model.Update{up}
+	holdBranch(&b, updates, model.Block{Reason: model.BlockEditRefused, Org: model.Origin{Source: "pinup", Rule: model.NoRule}, Note: refused})
+	if b.SuppressedBy != model.BlockEditRefused || updates[0].SuppressedBy != model.BlockEditRefused || b.Edits != nil {
+		t.Errorf("branch %+v update %+v", b, updates[0])
 	}
 }
 
