@@ -163,6 +163,7 @@ A key not in this table is not read; `migrate` lists it as unsupported.
 | `trustEffective` | a rule | let an automerge a `matchEffective` rule switched on stand although the declared label is stricter; without it the stricter label wins |
 | `osvEcosystem` | `customDatasources.<name>` | the [OSV ecosystem](https://ossf.github.io/osv-schema/#appendix-ecosystems) this custom datasource's packages belong to, e.g. `"Wolfi"`; with it, `osvVulnerabilityAlerts` asks OSV about them ([advisory coverage](#advisory-coverage)) |
 | `osvPackage` | a rule | `{"ecosystem": "Go", "name": "github.com/aquasecurity/trivy"}`: ask OSV about the matched dependencies as this package, for a pin whose datasource has no advisory ecosystem ([advisory coverage](#mapping-a-pin-to-an-osv-package)) |
+| `artifactManifests` | top level | the manifests of what the build shipped - an SBOM, a Trivy report, a module list - whose components are watched for advisories and, where `pin` says how, raised past a fix ([artifact manifests](artifact-manifests.md)) |
 
 ### pinup's own keys and Renovate
 
@@ -339,6 +340,16 @@ under the dependency's versioning with OSV's range walk (`SEMVER` and
 `ECOSYSTEM` ranges, `versions` lists). A source that cannot be read is a
 warning; the others still count. The withdrawal lists stay: they take a
 version out of the releases, which an advisory does not.
+
+### What the build shipped
+
+A dependency pinup can see is a line; a build ships the module graph it
+resolved. `artifactManifests` names the manifest of what a file's build
+produced - a CycloneDX or SPDX SBOM, a Trivy report, a `go version -m`
+list - and every component pinup can look up becomes a dependency of that
+file: asked about advisories, carried into the consumer index for the
+watch, and raised past a fix where `pin` says how the missing line is
+written. One page describes it: [artifact manifests](artifact-manifests.md).
 
 ## A project's own release age
 

@@ -4,6 +4,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -111,5 +112,55 @@ func TestStringSliceAcceptsBothShapes(t *testing.T) {
 		if got := len(stringSlice(c.in)); got != c.want {
 			t.Errorf("stringSlice(%#v) has %d entries, want %d", c.in, got, c.want)
 		}
+	}
+}
+
+// An artifactManifests entry is refused, not half-read, when it names no
+// files, an unknown format, no source or two, or a pin without its two
+// halves; a complete one is decoded with its discovery key.
+func TestDecodeArtifactManifests(t *testing.T) {
+	for _, c := range []struct {
+		name  string
+		entry string
+		want  string
+	}{
+		{"no files", `{"format": "cyclonedx", "path": "sbom.json"}`, "names no matchFileNames"},
+		{"unknown format", `{"matchFileNames": ["*.yaml"], "format": "syft", "path": "sbom.json"}`, `format "syft"`},
+		{"no source", `{"matchFileNames": ["*.yaml"], "format": "spdx"}`, "exactly one of path, url and artifact, has 0"},
+		{"two sources", `{"matchFileNames": ["*.yaml"], "format": "spdx", "path": "a", "url": "https://x/a"}`, "has 2"},
+		{"artifact without job", `{"matchFileNames": ["*.yaml"], "format": "trivy", "artifact": {"path": "a.json"}}`, "needs job and path"},
+		{"half a pin", `{"matchFileNames": ["*.yaml"], "format": "go-modules", "path": "mods.txt", "pin": {"after": "x"}}`, "pin needs after and line"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			var raw map[string]any
+			if err := json.Unmarshal([]byte(`{"artifactManifests": [`+c.entry+`]}`), &raw); err != nil {
+				t.Fatal(err)
+			}
+			_, err := Decode(raw)
+			if err == nil || !strings.Contains(err.Error(), c.want) {
+				t.Fatalf("err = %v, want %q", err, c.want)
+			}
+		})
+	}
+	var raw map[string]any
+	if err := json.Unmarshal([]byte(`{"artifactManifests": [{"description": "the apk's modules", "matchFileNames": ["/^[^/]+\\.yaml$/"], "format": "trivy",
+		"artifact": {"project": "devops/wolfi-packages", "ref": "main", "job": "audit:published:aarch64", "path": "scan-reports/{{{fileStem}}}.trivy.json"},
+		"datasources": ["go"], "pin": {"after": "\\n(?<indent>[ \\t]+)x@v1", "line": "{{{indent}}}{{{depName}}}@{{{newValue}}}", "datasources": ["go"]}}]}`), &raw); err != nil {
+		t.Fatal(err)
+	}
+	d, err := Decode(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d.ArtifactManifests) != 1 {
+		t.Fatalf("manifests = %+v", d.ArtifactManifests)
+	}
+	m := d.ArtifactManifests[0]
+	if m.Index != 0 || m.Format != "trivy" || m.Artifact == nil || m.Artifact.Project != "devops/wolfi-packages" || m.Artifact.Job != "audit:published:aarch64" ||
+		m.Pin == nil || !m.Pin.Covers("go") || m.Pin.Covers("npm") || len(m.Datasources) != 1 || len(m.FilePatterns) != 1 {
+		t.Errorf("manifest = %+v, artifact %+v, pin %+v", m, m.Artifact, m.Pin)
+	}
+	if got := d.FilePatterns[ArtifactManifestName(0)]; len(got) != 1 || got[0] != `/^[^/]+\.yaml$/` {
+		t.Errorf("file patterns under %s = %v", ArtifactManifestName(0), got)
 	}
 }

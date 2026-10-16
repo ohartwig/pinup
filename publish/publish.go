@@ -155,6 +155,12 @@ type Platform interface {
 	// default branch) - how local> presets are fetched.
 	ReadFile(ctx context.Context, project, path, ref string) ([]byte, error)
 
+	// ReadArtifact returns one file out of the artifacts of the newest
+	// successful job named job on ref (empty means the default branch) -
+	// how an artifact manifest is read (artifactManifests). A platform
+	// that serves artifacts only as archives returns an error naming it.
+	ReadArtifact(ctx context.Context, project, ref, job, path string) ([]byte, error)
+
 	// ListProjects returns the paths of every project the token can see
 	// that is not archived, sorted. Autodiscovery filters this list.
 	ListProjects(ctx context.Context) ([]string, error)

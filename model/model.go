@@ -169,6 +169,13 @@ type Dependency struct {
 	// (osvVulnerabilityAlerts off) or skipped the dependency.
 	AdvisoryCoverage *DependencyCoverage `json:"advisoryCoverage,omitempty"`
 
+	// Artifact is set on a component read from an artifact manifest
+	// (artifactManifests): a module or package the build of File shipped
+	// without a line that names it. It says which manifest named the
+	// component and how a pin for it is written when an advisory names a
+	// fix. Nil for every dependency a manager extracted from the file.
+	Artifact *ArtifactRef `json:"artifact,omitempty"`
+
 	// Captures holds every named regex group the manager matched, so
 	// templates can reference groups this package has never heard of.
 	Captures map[string]string `json:"captures,omitempty"`
@@ -411,6 +418,89 @@ type Withdrawal struct {
 type Stream struct {
 	Package  string   `json:"package"`
 	Versions []string `json:"versions"`
+}
+
+// ArtifactManager is the manager name a component of an artifact manifest
+// is recorded under. It extracts nothing - the manifest stage reads the
+// components - and edits one thing: the line a configured pin writes.
+const ArtifactManager = "artifact"
+
+// ArtifactRef is what a dependency read from an artifact manifest carries:
+// the manifest that named it and, when the configuration says how, the
+// place and the shape of the pin an advisory would make pinup write.
+type ArtifactRef struct {
+	// Manifest is the index into the flattened artifactManifests list.
+	Manifest int `json:"manifest"`
+	// Source is where the manifest was read from, for the reader of the
+	// plan: a path in the repository, a URL, or "artifact <project>@<ref>
+	// <job>:<path>".
+	Source string `json:"source"`
+	// After and Line are the pin's `after` pattern and `line` template as
+	// configured; both empty when the manifest configures no pin, or the
+	// pin does not cover this component's datasource. The edit is computed
+	// from them against the file as read, so a file that changed under the
+	// run is refused rather than patched.
+	After string `json:"after,omitempty"`
+	Line  string `json:"line,omitempty"`
+}
+
+// Pinnable reports whether the configuration says how a pin for this
+// component is written.
+func (a *ArtifactRef) Pinnable() bool { return a != nil && a.After != "" && a.Line != "" }
+
+// ArtifactManifest is one `artifactManifests` entry from the configuration:
+// the files whose build a manifest describes, where the manifest is read
+// from, its format, and how a missing pin is written.
+type ArtifactManifest struct {
+	// Index is the position in the flattened artifactManifests list; it
+	// travels onto every dependency the manifest produces.
+	Index int
+	// FilePatterns are matchFileNames, in the `/regex/` or glob form.
+	FilePatterns []string
+	// Format is "cyclonedx", "spdx", "trivy" or "go-modules".
+	Format string
+	// Exactly one of Path, URL and Artifact names the source; each is a
+	// template rendered per matching file.
+	Path     string
+	URL      string
+	Artifact *ArtifactSource
+	// Datasources, when set, keeps only components of these datasources.
+	Datasources []string
+	// Pin, when set, says how a component without a line is written.
+	Pin         *ArtifactPin
+	Description []string
+}
+
+// ArtifactSource is a CI artifact read through the platform.
+type ArtifactSource struct {
+	// Project is the platform project; "" means the repository itself.
+	Project string
+	// Ref is the branch or tag whose latest successful pipeline is read;
+	// "" means the project's default branch.
+	Ref  string
+	Job  string
+	Path string
+}
+
+// ArtifactPin says how a component without a line is written into the file
+// the manifest belongs to.
+type ArtifactPin struct {
+	// After is the RE2 pattern whose last match marks the place: the line
+	// is inserted after the line that match ends on.
+	After string
+	// Line is the template of the new line.
+	Line string
+	// Datasources, when set, narrows the pin to components of these
+	// datasources; the rest stay reported.
+	Datasources []string
+}
+
+// Covers reports whether the pin writes components of a datasource.
+func (p *ArtifactPin) Covers(datasource string) bool {
+	if p == nil || p.After == "" || p.Line == "" {
+		return false
+	}
+	return len(p.Datasources) == 0 || slices.Contains(p.Datasources, datasource)
 }
 
 // CustomDatasource is one `customDatasources` entry from the configuration:

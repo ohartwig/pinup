@@ -37,6 +37,7 @@ import (
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/lookup"
+	"github.com/ohartwig/pinup/manager/artifactm"
 	"github.com/ohartwig/pinup/manager/composerman"
 	"github.com/ohartwig/pinup/manager/dockerfile"
 	"github.com/ohartwig/pinup/manager/githubactions"
@@ -103,6 +104,10 @@ func Managers() extract.Registry {
 		// The registry key is the manager's Renovate name, which the
 		// enabledManagers list and the rules' matchManagers use.
 		"terraform-version": tfversion.New(),
+		// The components of an artifact manifest (artifactManifests): read
+		// by the manifest stage, not extracted; registered for the one edit
+		// a configured pin writes.
+		model.ArtifactManager: artifactm.New(),
 	}
 }
 
@@ -319,6 +324,21 @@ func Resolve(key string, decoded config.Decoded, managers extract.Registry) (Pla
 	}, nil
 }
 
+// ArtifactIndex reads the manifest number out of a discovery key written
+// by config.ArtifactManifestName: the files such a key matched belong to
+// the manifest stage, not to extraction.
+func ArtifactIndex(key string) (int, bool) {
+	const prefix = "artifact#"
+	if !strings.HasPrefix(key, prefix) {
+		return 0, false
+	}
+	var n int
+	if _, err := fmt.Sscanf(key[len(prefix):], "%d", &n); err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
 // customIndex reads the definition number out of a discovery key.
 func customIndex(key string) (int, bool) {
 	const prefix = "custom.regex#"
@@ -342,6 +362,10 @@ func DiscoveryPatterns(decoded config.Decoded, managers extract.Registry) map[st
 	out := map[string][]string{}
 	for name, patterns := range decoded.FilePatterns {
 		if _, isCustom := customIndex(name); isCustom {
+			out[name] = patterns
+			continue
+		}
+		if _, isManifest := ArtifactIndex(name); isManifest {
 			out[name] = patterns
 			continue
 		}
@@ -381,6 +405,13 @@ func EnabledKeys(decoded config.Decoded) []string {
 		}
 		for i := range decoded.CustomManagers {
 			out = append(out, config.CustomManagerName(i))
+		}
+	}
+	// A configured manifest is enabled by being configured: its files are
+	// walked whatever enabledManagers says, since it names no manager.
+	if len(out) > 0 {
+		for i := range decoded.ArtifactManifests {
+			out = append(out, config.ArtifactManifestName(i))
 		}
 	}
 	return out

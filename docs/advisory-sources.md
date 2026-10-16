@@ -74,3 +74,10 @@ advisory": per dependency in the plan (`state: none` with its reason), and
 summed up on the dashboard and in the advisory watch - "covered by a
 withdrawal list only: 68 (custom.koh-apk 68); not covered by advisories: 219
 (docker 219, …)". That gap is what the next source has to close.
+
+A second gap is not a source's but the repository's: what a build ships
+without writing it down. A module a Go binary carries transitively has no
+line, so no manager extracts it and no source is asked about it - whatever
+the source knows. [Artifact manifests](artifact-manifests.md) close that
+one from the other side: the manifest of what the build produced names
+the components, and pinup asks the same sources about them.
