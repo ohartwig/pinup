@@ -276,6 +276,36 @@ func privateFeed(getenv func(string) string, client *httpx.Client) (*osv.Private
 	return f, nil
 }
 
+// privateHosts names the hosts a dial may reach on a private, loopback or
+// link-local address (httpx.Guard): the instance and the registry the
+// environment names - an installation on a private range keeps working -
+// plus PINUP_PRIVATE_HOSTS, comma-separated, for a self-hosted registry or
+// mirror on one; "*" switches the guard off. Every other host that
+// resolves to such an address is refused: a configuration's registryUrls,
+// customDatasources and advisory feeds are URLs a repository writes, and a
+// metadata endpoint or a neighbour on the runner's bridge is where they
+// must not point (AUD-007).
+func privateHosts(getenv func(string) string) []string {
+	var hosts []string
+	for _, v := range []string{firstSet(getenv, "PINUP_GITLAB_URL", "CI_SERVER_URL"), firstSet(getenv, "PINUP_GITHUB_URL", "GITHUB_SERVER_URL"), firstSet(getenv, "PINUP_REGISTRY_HOST", "CI_REGISTRY")} {
+		if v == "" {
+			continue
+		}
+		if strings.Contains(v, "://") {
+			if u, err := url.Parse(v); err == nil && u.Host != "" {
+				v = u.Host
+			}
+		}
+		hosts = append(hosts, v)
+	}
+	for h := range strings.SplitSeq(getenv("PINUP_PRIVATE_HOSTS"), ",") {
+		if h = strings.TrimSpace(h); h != "" {
+			hosts = append(hosts, h)
+		}
+	}
+	return hosts
+}
+
 // httpClient builds the one HTTP client every datasource shares. The token
 // is bound to the instance's host and nothing else: httpx sends a host rule's
 // credential only to that host, and drops it - Authorization and the rule's

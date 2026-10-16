@@ -30,10 +30,14 @@ func main() {
 	if len(os.Args) > 1 && os.Args[1] == sandbox.Arg {
 		os.Exit(sandbox.Main(os.Args[1:]))
 	}
-	// Every client in the process leaves over IPv6 where it can, and says
-	// who it is (httpx.DialPreferringIPv6, httpx.WithUserAgent say why).
+	// Every client in the process leaves over IPv6 where it can, reaches
+	// no private or special address a configuration names, and says who it
+	// is (httpx.DialPreferringIPv6, httpx.Guard, httpx.WithUserAgent say
+	// why). The platform and the registry are admitted whatever they
+	// resolve to; PINUP_PRIVATE_HOSTS names further hosts (privateHosts).
 	if t, ok := http.DefaultTransport.(*http.Transport); ok {
 		httpx.PreferIPv6(t)
+		httpx.GuardPrivate(t, httpx.AllowHosts(privateHosts(os.Getenv)...))
 		http.DefaultTransport = httpx.WithUserAgent(t, "pinup/"+version)
 	}
 	if err := run(os.Args[1:], os.Stdout, os.Stderr); err != nil {

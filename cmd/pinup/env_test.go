@@ -333,3 +333,22 @@ func TestAllowedCommandsComeFromTheRunnerNotTheRepository(t *testing.T) {
 		t.Errorf("the repository's allowedCommands survived into the resolved document: %q", got)
 	}
 }
+
+// The guard admits the instance and the registry whatever they resolve
+// to, and the hosts PINUP_PRIVATE_HOSTS names; a URL is reduced to its
+// host, and the list is empty without any of them.
+func TestPrivateHostsFromEnv(t *testing.T) {
+	env := map[string]string{
+		"CI_SERVER_URL":       "https://git.example.org",
+		"CI_REGISTRY":         "registry.example.org:5000",
+		"PINUP_PRIVATE_HOSTS": " mirror.internal, apk.internal ,",
+	}
+	got := privateHosts(func(k string) string { return env[k] })
+	want := []string{"git.example.org", "registry.example.org:5000", "mirror.internal", "apk.internal"}
+	if strings.Join(got, ",") != strings.Join(want, ",") {
+		t.Errorf("privateHosts = %v, want %v", got, want)
+	}
+	if got := privateHosts(func(string) string { return "" }); len(got) != 0 {
+		t.Errorf("nothing set: %v", got)
+	}
+}
