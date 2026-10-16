@@ -13,6 +13,7 @@ package wire
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"fmt"
 	"net/http"
 	"slices"
@@ -137,6 +138,11 @@ type DatasourceOptions struct {
 	// WithdrawnImagesScope are the registries or registry paths the list
 	// speaks for even where it names no image (dockerds.WithWithdrawalScope).
 	WithdrawnImagesScope []string
+	// WithdrawnImagesKey verifies the list's detached signature
+	// (<url>.sig); nil takes the list on trust. WithdrawnImagesSignature
+	// says what a missing or failed signature means (dockerds.SignatureMode).
+	WithdrawnImagesKey       *ecdsa.PublicKey
+	WithdrawnImagesSignature dockerds.SignatureMode
 }
 
 // DefaultApkViews is the one apk view every installation has: the public
@@ -198,7 +204,8 @@ func Datasources(client *httpx.Client, o DatasourceOptions) lookup.Registry {
 func docker(client *httpx.Client, o DatasourceOptions) *dockerds.Datasource {
 	d := dockerds.New(o.Transport, o.RegistryCredentials)
 	if o.WithdrawnImages != "" && client != nil {
-		d.WithWithdrawals(client, o.WithdrawnImages).WithWithdrawalScope(o.WithdrawnImagesScope)
+		d.WithWithdrawals(client, o.WithdrawnImages).WithWithdrawalScope(o.WithdrawnImagesScope).
+			WithWithdrawalSignature(o.WithdrawnImagesKey, o.WithdrawnImagesSignature)
 	}
 	return d
 }

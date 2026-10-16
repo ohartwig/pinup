@@ -549,6 +549,20 @@ func (p *planning) securityFix() ([]model.Update, string, *model.Warning) {
 			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s: advisory fix version %q is not a %s version", d.DepName, d.VulnerabilityBound, p.scheme),
 		}
 	}
+	// Typed from the version in use: the lock's, or a range's lowest
+	// admitted release - the one the advisory was asked about.
+	from := base
+	if p.isRange && p.floor != "" && (d.LockedVersion == "" || !v.IsVersion(d.LockedVersion)) {
+		from = p.floor
+	}
+	// A bound at or below the version in use asks for nothing: the fix is
+	// already there. The fast path never moves a dependency down - a
+	// withdrawal list that names a lower replacement, or an advisory whose
+	// fix version is wrong, must not become a downgrade that the security
+	// rule then automerges (AUD-007).
+	if v.IsVersion(from) && v.Compare(d.VulnerabilityBound, from) <= 0 {
+		return nil, fmt.Sprintf("up to date: %s is at or above the fix version %s", from, d.VulnerabilityBound), nil
+	}
 	// The fix is searched among every release, not only those above
 	// the base: a range without a lock is taken to run its lowest
 	// admitted release, and the fix may sit inside the range (minimist
@@ -578,12 +592,6 @@ func (p *planning) securityFix() ([]model.Update, string, *model.Warning) {
 		return nil, fmt.Sprintf("vulnerable (%s): no release at or above the fix version %s", strings.Join(ids, ", "), d.VulnerabilityBound), &model.Warning{
 			Stage: "plan", File: d.File, Msg: fmt.Sprintf("%s %s is affected by %s and no release at or above %s exists", d.DepName, cur, strings.Join(ids, ", "), d.VulnerabilityBound),
 		}
-	}
-	// Typed from the version in use: the lock's, or a range's lowest
-	// admitted release - the one the advisory was asked about.
-	from := base
-	if p.isRange && p.floor != "" && (d.LockedVersion == "" || !v.IsVersion(d.LockedVersion)) {
-		from = p.floor
 	}
 	u, skip := buildUpdate(v, d, cur, from, fix, all[fix], p.scheme)
 	if strings.HasPrefix(skip, unchangedPrefix) {

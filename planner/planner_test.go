@@ -1143,3 +1143,26 @@ func TestCoerce(t *testing.T) {
 		}
 	}
 }
+
+// A withdrawal list - or a mistaken advisory - may name a fix version
+// below the one in use. The fast path then has nothing to do: it never
+// moves a dependency down, and it never reports the lower bound as a
+// missing fix either (AUD-007, the withdrawn-images list drives the fast
+// path with no signature; a downgrade through it must be impossible).
+func TestASecurityFixNeverMovesBelowTheVersionInUse(t *testing.T) {
+	d := dep("lodash", "4.18.1", "semver")
+	d.VulnerabilityBound = "4.17.21"
+	d.Advisories = []model.Advisory{{ID: "GHSA-x", Fixed: "4.17.21"}}
+	res := plan(t, d, releases("4.17.20", "4.17.21", "4.18.0", "4.18.1"))
+	for _, u := range res.Updates {
+		if u.NewValue != "4.18.1" && u.NewVersion != "4.18.1" {
+			t.Fatalf("planned a move to %s from a bound below the version in use", u.NewValue)
+		}
+	}
+	if len(res.Updates) != 0 {
+		t.Errorf("want no update, got %+v", res.Updates)
+	}
+	if len(res.Warnings) != 0 {
+		t.Errorf("a bound already satisfied is not a missing fix: %+v", res.Warnings)
+	}
+}

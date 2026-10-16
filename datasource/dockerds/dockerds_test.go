@@ -5,7 +5,14 @@ package dockerds
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -629,5 +636,127 @@ func TestWithdrawalScopeCoversImagesAnEmptyListNames(t *testing.T) {
 	}
 	if rs.WithdrawalList != "https://lists.example.org/withdrawn-images.json" || len(rs.Releases) != 2 {
 		t.Errorf("withdrawal list %q, releases %+v", rs.WithdrawalList, rs.Releases)
+	}
+}
+
+// signedList serves a list and, beside it, the detached signature cosign
+// sign-blob writes: base64 of the ASN.1 ECDSA signature over SHA-256 of
+// the file. sigStatus answers the .sig path with a status instead.
+type signedList struct {
+	list      listServer
+	sig       []byte
+	sigStatus int
+}
+
+func (s *signedList) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if strings.HasSuffix(r.URL.Path, ".sig") {
+		if s.sigStatus != 0 {
+			w.WriteHeader(s.sigStatus)
+			return
+		}
+		_, _ = w.Write(s.sig)
+		return
+	}
+	s.list.ServeHTTP(w, r)
+}
+
+func signList(t *testing.T, body []byte) (*ecdsa.PublicKey, []byte) {
+	t.Helper()
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(body)
+	raw, err := ecdsa.SignASN1(rand.Reader, key, sum[:])
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &key.PublicKey, []byte(base64.StdEncoding.EncodeToString(raw) + "\n")
+}
+
+func signedDS(t *testing.T, srv *signedList, key *ecdsa.PublicKey, mode SignatureMode) (*Datasource, lookup.Ref) {
+	t.Helper()
+	registry := &glRegistry{tags: map[string][]string{"devops/images/crowdsec": {"2.8.6", "2.8.9"}}}
+	realm := &glRealm{wantUser: "gitlab-ci-token", wantPass: "glcbt-secret"}
+	rt := harness.NewRefusingTransport(t).
+		Handle("registry.ole-hartwig.eu", registry).
+		Handle("git.ole-hartwig.eu", realm).
+		Handle("lists.example.org", srv)
+	creds := func(registry string, realm *url.URL) (string, string, bool) {
+		return "gitlab-ci-token", "glcbt-secret", registry == "registry.ole-hartwig.eu"
+	}
+	hc := httpx.New(httpx.Options{Transport: rt, Now: func() time.Time { return time.Unix(0, 0) }, Sleep: func(time.Duration) {}})
+	ds := New(rt, creds).WithWithdrawals(hc, "https://lists.example.org/withdrawn-images.json").WithWithdrawalSignature(key, mode)
+	return ds, lookup.Ref{Datasource: Name, PackageName: "registry.ole-hartwig.eu/devops/images/crowdsec"}
+}
+
+// The list drives the security fast path with automerge, so who may
+// publish it is the trust question (AUD-007). With a key, a list whose
+// signature verifies is used and nothing is said; one whose signature is
+// missing or wrong is used with a recorded doubt under warn, and refused
+// under require; off asks for no signature at all.
+func TestWithdrawnImagesListSignature(t *testing.T) {
+	body := []byte(`{"version":1,"withdrawn":[{"image":"registry.ole-hartwig.eu/devops/images/crowdsec","version":"2.8.6","replacement":"2.8.9","ids":["CVE-1"],"reason":"r","date":"2026-09-29T00:00:00Z","source":"auto"}]}`)
+	key, sig := signList(t, body)
+	otherKey, _ := signList(t, body)
+	for name, tc := range map[string]struct {
+		srv          *signedList
+		key          *ecdsa.PublicKey
+		mode         SignatureMode
+		wantWithdraw bool
+		wantWarn     bool
+		wantErr      bool
+	}{
+		"verified":               {&signedList{list: listServer{body: body}, sig: sig}, key, SignatureRequire, true, false, false},
+		"verified, warn mode":    {&signedList{list: listServer{body: body}, sig: sig}, key, SignatureWarn, true, false, false},
+		"wrong key, warn":        {&signedList{list: listServer{body: body}, sig: sig}, otherKey, SignatureWarn, true, true, false},
+		"wrong key, require":     {&signedList{list: listServer{body: body}, sig: sig}, otherKey, SignatureRequire, false, false, true},
+		"tampered body, warn":    {&signedList{list: listServer{body: append(body[:len(body)-2], []byte(" ]}")...)}, sig: sig}, key, SignatureWarn, true, true, false},
+		"tampered body, require": {&signedList{list: listServer{body: append(body[:len(body)-2], []byte(" ]}")...)}, sig: sig}, key, SignatureRequire, false, false, true},
+		"no signature, warn":     {&signedList{list: listServer{body: body}, sigStatus: http.StatusNotFound}, key, SignatureWarn, true, true, false},
+		"no signature, require":  {&signedList{list: listServer{body: body}, sigStatus: http.StatusNotFound}, key, SignatureRequire, false, false, true},
+		"garbage signature":      {&signedList{list: listServer{body: body}, sig: []byte("not base64!")}, key, SignatureRequire, false, false, true},
+		"off":                    {&signedList{list: listServer{body: body}, sigStatus: http.StatusNotFound}, key, SignatureOff, true, false, false},
+		"no key":                 {&signedList{list: listServer{body: body}, sigStatus: http.StatusNotFound}, nil, SignatureRequire, true, false, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ds, ref := signedDS(t, tc.srv, tc.key, tc.mode)
+			rs, err := ds.Releases(context.Background(), ref)
+			if err != nil {
+				t.Fatalf("the lookup failed: %v", err)
+			}
+			if got := len(rs.Withdrawn) == 1 && len(rs.Releases) == 1; got != tc.wantWithdraw {
+				t.Errorf("withdrawn applied = %v, want %v (withdrawn %+v, releases %+v)", got, tc.wantWithdraw, rs.Withdrawn, rs.Releases)
+			}
+			if (rs.WithdrawnWarn != "") != tc.wantWarn {
+				t.Errorf("WithdrawnWarn = %q, want warn=%v", rs.WithdrawnWarn, tc.wantWarn)
+			}
+			if (rs.WithdrawnErr != "") != tc.wantErr {
+				t.Errorf("WithdrawnErr = %q, want err=%v", rs.WithdrawnErr, tc.wantErr)
+			}
+			if tc.wantErr && !strings.Contains(rs.WithdrawnErr, "signature") {
+				t.Errorf("the refusal does not name the signature: %q", rs.WithdrawnErr)
+			}
+		})
+	}
+}
+
+// The key arrives as the PEM cosign writes; anything else is refused.
+func TestParsePublicKey(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, _ := x509.MarshalPKIXPublicKey(&key.PublicKey)
+	pemText := string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der}))
+	if _, err := ParsePublicKey("  " + pemText + "\n"); err != nil {
+		t.Errorf("a PEM public key: %v", err)
+	}
+	if _, err := ParsePublicKey("not a key"); err == nil {
+		t.Error("garbage parsed as a key")
+	}
+	rsaDER := []byte("-----BEGIN PUBLIC KEY-----\nMFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKj34GkxFhD90vcNLYLInFEX6Ppy1tPf9Cnzj4p4WGeKLs1Pt8QuKUpRKfFLfRYC9AIKjbJTWit+CqvjWYzvQwECAwEAAQ==\n-----END PUBLIC KEY-----\n")
+	if _, err := ParsePublicKey(string(rsaDER)); err == nil || !strings.Contains(err.Error(), "not an ECDSA") {
+		t.Errorf("an RSA key: %v", err)
 	}
 }

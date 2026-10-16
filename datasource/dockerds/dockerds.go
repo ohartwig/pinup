@@ -47,9 +47,13 @@ package dockerds
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -122,6 +126,13 @@ type Datasource struct {
 	listRead   bool
 	listByImg  map[string][]model.Withdrawal
 	listErr    error
+	// listKey verifies the detached signature published beside the list
+	// (<url>.sig, a cosign sign-blob signature: base64 of an ECDSA
+	// signature over the SHA-256 of the file); listSig says what a missing
+	// or failed signature means. nil means the list is taken on trust.
+	listKey  *ecdsa.PublicKey
+	listSig  SignatureMode
+	listWarn string
 	// listHosts are the registries the list names images on: the
 	// installation's own. Its list speaks for every image there, withdrawn
 	// or not, and for none elsewhere.
@@ -140,6 +151,93 @@ type Datasource struct {
 func (d *Datasource) WithWithdrawals(client *httpx.Client, url string) *Datasource {
 	d.listClient, d.listURL = client, url
 	return d
+}
+
+// SignatureMode says what a withdrawal list without a verifiable
+// signature means to the run.
+type SignatureMode string
+
+const (
+	// SignatureOff takes the list on trust: no signature is fetched.
+	SignatureOff SignatureMode = "off"
+	// SignatureWarn uses the list and records the doubt as
+	// ReleaseSet.WithdrawnWarn: the run says so and plans with it.
+	SignatureWarn SignatureMode = "warn"
+	// SignatureRequire refuses the list: ReleaseSet.WithdrawnErr, nothing
+	// withdrawn, the run plans as it did before there was a list.
+	SignatureRequire SignatureMode = "require"
+)
+
+// WithWithdrawalSignature makes the list's detached signature (<url>.sig,
+// as build-provenance's sign-artifact publishes it) count: verified with
+// key, a signature that is missing or does not verify means what mode
+// says. The list drives the security fast path - its own branch, no age,
+// no schedule, automerge - so who may publish it is the trust question;
+// the signature answers it with the installation's signing key rather
+// than with whoever may write the package (AUD-007).
+func (d *Datasource) WithWithdrawalSignature(key *ecdsa.PublicKey, mode SignatureMode) *Datasource {
+	d.listKey, d.listSig = key, mode
+	return d
+}
+
+// ParsePublicKey reads a PEM-encoded ECDSA public key, the form cosign
+// writes and the signing templates publish as COSIGN_PUBLIC_KEY.
+func ParsePublicKey(pemText string) (*ecdsa.PublicKey, error) {
+	block, _ := pem.Decode([]byte(strings.TrimSpace(pemText)))
+	if block == nil {
+		return nil, errors.New("not a PEM block")
+	}
+	pub, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+	key, ok := pub.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, fmt.Errorf("%T is not an ECDSA public key", pub)
+	}
+	return key, nil
+}
+
+// verifySignature checks a cosign sign-blob signature (base64 of the
+// ASN.1 ECDSA signature over SHA-256 of the body) against the key.
+func verifySignature(key *ecdsa.PublicKey, body, sig []byte) error {
+	raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(sig)))
+	if err != nil {
+		return fmt.Errorf("signature is not base64: %w", err)
+	}
+	sum := sha256.Sum256(body)
+	if !ecdsa.VerifyASN1(key, sum[:], raw) {
+		return errors.New("signature does not verify against the configured public key")
+	}
+	return nil
+}
+
+// checkListSignature fetches and verifies the list's signature once the
+// list itself is read; it returns the error a refusal means, and records
+// a warning instead when the mode says so.
+func (d *Datasource) checkListSignature(ctx context.Context, body []byte) error {
+	if d.listKey == nil || d.listSig == "" || d.listSig == SignatureOff {
+		return nil
+	}
+	sigURL := d.listURL + ".sig"
+	var problem error
+	resp, err := d.listClient.Get(ctx, sigURL, httpx.ReqOptions{})
+	switch {
+	case err != nil:
+		problem = fmt.Errorf("signature %s: %w", sigURL, err)
+	default:
+		if err := verifySignature(d.listKey, body, resp.Body); err != nil {
+			problem = fmt.Errorf("signature %s: %w", sigURL, err)
+		}
+	}
+	if problem == nil {
+		return nil
+	}
+	if d.listSig == SignatureRequire {
+		return problem
+	}
+	d.listWarn = fmt.Sprintf("withdrawn images list %s: %v", d.listURL, problem)
+	return nil
 }
 
 // WithWithdrawalScope declares the registries, or registry paths
@@ -188,6 +286,10 @@ func (d *Datasource) withdrawals(ctx context.Context) (map[string][]model.Withdr
 		return d.listByImg, nil
 	}
 	if err != nil {
+		d.listErr = fmt.Errorf("withdrawn images list %s: %w", d.listURL, err)
+		return nil, d.listErr
+	}
+	if err := d.checkListSignature(ctx, resp.Body); err != nil {
 		d.listErr = fmt.Errorf("withdrawn images list %s: %w", d.listURL, err)
 		return nil, d.listErr
 	}
@@ -333,6 +435,7 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	if d.speaksFor(registry, repository) {
 		rs.WithdrawalList = d.listURL
 	}
+	rs.WithdrawnWarn = d.listWarn
 	if ws := list[imageKey(registry, repository)]; len(ws) > 0 {
 		gone := make(map[string]bool, len(ws))
 		for _, w := range ws {
