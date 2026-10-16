@@ -75,3 +75,50 @@ func TestPlanDiffOfTheSamePlanSaysSo(t *testing.T) {
 		t.Errorf("identical plans:\n%s", got)
 	}
 }
+
+// The diff is posted as a note by the bot on a merge request whose head
+// branch supplied the plan. A regex manager in that branch can capture a
+// dependency name with a newline in it, and a line in a note that starts
+// with "/" is a quick action GitLab runs as the note's author: "/merge"
+// merged the request as pinup-bot (AUD-007-F01, 2026-10-16). Every plan
+// string has to stay on the line it is placed on, and nothing the diff
+// renders may start a line with a slash.
+func TestPlanDiffLetsNoPlanStringStartALine(t *testing.T) {
+	hostile := "alpine\n/merge\n/approve"
+	upd := model.Update{
+		DepKey: hostile + "|3.18.0", NewValue: "3.19.0\n/label ~trusted",
+		Dep:    model.Dependency{DepName: hostile, CurrentValue: "3.18.0"},
+		Blocks: []model.Block{{Reason: model.BlockConcurrentLimit, Note: "held\n/merge", Org: model.Origin{Source: "config", Rule: model.NoRule}}},
+	}
+	base := &model.Plan{
+		Branches: []model.Branch{{Name: "pinup/gone", Title: "update gone\n/merge"}},
+	}
+	head := &model.Plan{
+		Branches: []model.Branch{
+			{Name: "pinup/new\n/approve", Title: "update " + hostile},
+			{Name: "pinup/held", Title: "update held", UpdateKeys: []string{upd.Key()}, SuppressedBy: model.BlockConcurrentLimit},
+		},
+		Updates:  []model.Update{upd},
+		Warnings: []model.Warning{{Msg: "lookup failed for " + hostile + "\n/label ~x"}},
+	}
+
+	got := PlanDiff(base, head)
+	for i, l := range strings.Split(got, "\n") {
+		if strings.HasPrefix(strings.TrimLeft(l, " \t"), "/") {
+			t.Errorf("line %d starts with a slash, which GitLab runs as a quick action: %q\n%s", i+1, l, got)
+		}
+	}
+	for _, want := range []string{
+		"`pinup/new /approve` — update alpine /merge /approve",
+		"`alpine /merge /approve` 3.18.0 → 3.19.0 /label ~trusted — " + string(model.BlockConcurrentLimit) + ": held /merge",
+		"lookup failed for alpine /merge /approve /label ~x",
+		"`pinup/gone` — update gone /merge",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("diff lacks the collapsed line %q\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "\n/") {
+		t.Errorf("a newline followed by a slash survived\n%s", got)
+	}
+}
