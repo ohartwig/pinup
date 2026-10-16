@@ -1,3 +1,10 @@
+## [0.65.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.1...v0.65.2) (2026-10-16)
+
+### :bug: Fixes
+
+* **report:** keep a failed branch's message on its dashboard line ([f11015e](https://git.ole-hartwig.eu/pinup/pinup/commit/f11015e5884721f6a56eb399d5ef3bdce866cc0e))
+* **httpx:** refuse dials to private and special addresses a configuration names ([271a6bb](https://git.ole-hartwig.eu/pinup/pinup/commit/271a6bbf84aaa4c7142abc83f49793cbb965955c))
+
 ## [0.65.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.0...v0.65.1) (2026-10-16)
 
 ### :bug: Fixes
