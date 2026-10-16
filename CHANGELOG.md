@@ -1,3 +1,10 @@
+## [0.64.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.4...v0.64.5) (2026-10-16)
+
+### :bug: Fixes
+
+* **gitlab:** cancel automerge via cancel_auto_merge, arm with auto_merge ([cce40a5](https://git.ole-hartwig.eu/pinup/pinup/commit/cce40a5f2b1160dab5235c91b637b9b7a246665e))
+* **plugin:** let npm lock refreshes read bundled packages under allow-remote=root ([91d0643](https://git.ole-hartwig.eu/pinup/pinup/commit/91d06434c985498a9138f6fc9138048e0d913b16))
+
 ## [0.64.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.3...v0.64.4) (2026-10-15)
 
 ### :bug: Fixes
