@@ -33,6 +33,8 @@ type Platform struct {
 	Verification string
 	// Files answers ReadFile, keyed "project|path|ref".
 	Files map[string]string
+	// Artifacts answers ReadArtifact, keyed "project|ref|job|path".
+	Artifacts map[string]string
 	// Projects answers ListProjects.
 	Projects []string
 	// Issues holds every issue upserted, by title.
@@ -166,6 +168,14 @@ func (p *Platform) ReadFile(_ context.Context, project, path, ref string) ([]byt
 		return []byte(s), nil
 	}
 	return nil, fmt.Errorf("fake: %s has no file %s at %q", project, path, ref)
+}
+
+func (p *Platform) ReadArtifact(_ context.Context, project, ref, job, path string) ([]byte, error) {
+	p.record("ReadArtifact " + project + "/" + job + ":" + path)
+	if s, ok := p.Artifacts[project+"|"+ref+"|"+job+"|"+path]; ok {
+		return []byte(s), nil
+	}
+	return nil, fmt.Errorf("fake: %s has no artifact %s from job %q at %q", project, path, job, ref)
 }
 
 func (p *Platform) ListProjects(context.Context) ([]string, error) {

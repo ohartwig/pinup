@@ -444,6 +444,9 @@ func (s *sections) detected(b *strings.Builder) {
 			fmt.Fprintf(b, "Advisories were asked for %d of them; %s. No advisory for those means not looked up, not safe.\n\n", c.Asked, strings.Join(parts, "; "))
 		}
 	}
+	if line := ArtifactsLine(plan.Artifacts); line != "" {
+		fmt.Fprintf(b, "%s\n\n", line)
+	}
 	type fileDeps struct {
 		manager, file string
 		deps          []model.Dependency
@@ -541,6 +544,56 @@ func short(digest string) string {
 		return digest[:7]
 	}
 	return digest
+}
+
+// ArtifactsLine sums the artifact manifests a run read up: "Shipped by the
+// build: 523 components from 1 manifest, 519 watched, 4 declared, 23
+// skipped (apk 23); 1 manifest could not be read." Empty without manifests.
+func ArtifactsLine(reports []model.ArtifactReport) string {
+	if len(reports) == 0 {
+		return ""
+	}
+	var components, watched, declared, failed int
+	skipped := map[string]int{}
+	for _, r := range reports {
+		if r.Err != "" {
+			failed++
+			continue
+		}
+		components += r.Components
+		watched += r.Watched
+		declared += r.Declared
+		for k, n := range r.Skipped {
+			skipped[k] += n
+		}
+	}
+	manifests := "manifests"
+	if len(reports) == 1 {
+		manifests = "manifest"
+	}
+	line := fmt.Sprintf("Shipped by the build: %d components from %d %s, %d watched, %d declared", components, len(reports), manifests, watched, declared)
+	if len(skipped) > 0 {
+		kinds := make([]string, 0, len(skipped))
+		total := 0
+		for k := range skipped {
+			kinds = append(kinds, k)
+		}
+		sort.Strings(kinds)
+		parts := make([]string, 0, len(kinds))
+		for _, k := range kinds {
+			parts = append(parts, fmt.Sprintf("%s %d", k, skipped[k]))
+			total += skipped[k]
+		}
+		line += fmt.Sprintf(", %d skipped (%s)", total, strings.Join(parts, ", "))
+	}
+	if failed > 0 {
+		noun := "manifests"
+		if failed == 1 {
+			noun = "manifest"
+		}
+		line += fmt.Sprintf("; %d %s could not be read", failed, noun)
+	}
+	return line + "."
 }
 
 // NotCoveredLine states the advisory gap: "not covered by advisories: 42

@@ -504,6 +504,13 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 	return resp.body, nil
 }
 
+// ReadArtifact is not offered: GitHub serves workflow artifacts as zip
+// archives of a run, not as files of the newest successful job, and
+// pinup does not unpack archives it was not asked to trust.
+func (p *Platform) ReadArtifact(_ context.Context, project, _, job, path string) ([]byte, error) {
+	return nil, fmt.Errorf("github: artifacts are served as archives only; %s cannot be read from job %q of %s (artifactManifests: use path or url on GitHub)", path, job, project)
+}
+
 // escapePath escapes each segment of a repository path, keeping the slashes.
 func escapePath(path string) string {
 	parts := strings.Split(strings.Trim(path, "/"), "/")

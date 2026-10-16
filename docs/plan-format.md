@@ -54,6 +54,14 @@ the update its rule admits while the rule keeps out something newer carries
 the same sentence in `heldBack`, and the dashboard shows it after the
 update.
 
+A dependency read from an artifact manifest rather than from the file
+carries `manager: "artifact"` and an `artifact` object: the manifest's
+index, its `source` (a path, a URL, or `artifact <project>@<ref>
+<job>:<path>`), and - where the configuration says how the pin is written -
+the pin's `after` pattern and `line` template. It is a disabled
+dependency until an advisory names a fix
+([artifact manifests](artifact-manifests.md)).
+
 ### advisoryCoverage
 
 With `osvVulnerabilityAlerts` on, every dependency the run checks says
@@ -150,10 +158,21 @@ lock refreshes and post-upgrade commands with their scope), `automerge`,
 `heldWith` where the branch as a whole is held - a limit, a task the
 allowlist refused, a lock found current, a push that failed.
 
+## artifacts
+
+One entry per artifact manifest the run read (`artifactManifests`): `file`
+(the repository file whose build it describes), `manifest` (the index of
+the configuration entry), `source`, `format`, and the counts - `components`
+the manifest named, `watched` the ones that became dependencies, `declared`
+the ones a line of the file already declares, `skipped` by purl type (or
+`no-version`, `no-purl`) - with `err` when the manifest could not be read.
+Absent from a run without manifests. The dashboard sums the entries up
+under *Detected dependencies*.
+
 ## warnings
 
-`stage` (`config`, `extract`, `lookup`, `analyze`, `apply`, `publish`,
-`cache`), `file` where one applies, `msg`. A datasource that could not be
+`stage` (`config`, `extract`, `lookup`, `plan`, `analyze`, `apply`,
+`publish`, `cache`), `file` where one applies, `msg`. A datasource that could not be
 reached, a preset that resolves to nothing, a task whose output left its
 scope, a cache too young to judge release ages: warnings, never a failed
 run for the rest of the repository.

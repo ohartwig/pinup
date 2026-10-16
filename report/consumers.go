@@ -70,6 +70,11 @@ type Dependency struct {
 	// plans the lock's security refresh. Such an entry names no consumer:
 	// a release of a transitive package is not news to the fast lane.
 	Lock string `json:"lock,omitempty"`
+	// Artifact is set on a component an artifact manifest named
+	// (model.Dependency.Artifact): the manifest's source. Like a lock-only
+	// package it names no consumer; the watch asks about it, and a hit
+	// starts the targeted run that writes the pin.
+	Artifact string `json:"artifact,omitempty"`
 }
 
 // NewIndex returns an empty index.
@@ -188,7 +193,7 @@ func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 			continue
 		}
 		k := Key(d)
-		if !contains(x.Consumers[k], repo) {
+		if d.Artifact == nil && !contains(x.Consumers[k], repo) {
 			x.Consumers[k] = append(x.Consumers[k], repo)
 		}
 		_, name, _ := strings.Cut(k, "|")
@@ -197,6 +202,9 @@ func (x *Index) Record(repo string, plan *model.Plan, now time.Time) {
 			version = d.CurrentValue
 		}
 		e := Dependency{Datasource: d.Datasource, PackageName: name, Version: version, Versioning: d.Versioning, File: d.File, OSVEcosystem: d.OSVEcosystem}
+		if d.Artifact != nil {
+			e.Artifact = d.Artifact.Source
+		}
 		if d.AdvisoryCoverage != nil {
 			e.Withdrawal = d.AdvisoryCoverage.Withdrawal
 		}

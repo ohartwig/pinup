@@ -10,5 +10,9 @@
   "versioning:semver-coerced": {
     "owner": "pinup",
     "reason": "Set only by preset rules for upstream packages the twin does not depend on. The scheme conforms to its captured table; a golden repository follows the first use."
+  },
+  "manager:artifact": {
+    "owner": "pinup",
+    "reason": "Extracts nothing by design: the components of an artifact manifest are read by the manifest stage, not from a file, so no recorded repository can cover it through extraction. Its one edit - the pin line a configured artifactManifests[].pin writes - and the whole chain from manifest to advisory to branch are exercised hermetically in cmd/pinup/artifacts_test.go against the recipe shape of devops/wolfi-packages (2026-10-16). A golden repository follows the first estate configuration that names a manifest."
   }
 }

@@ -713,6 +713,10 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		RunnerProject: o.runnerProject,
 	}
 	opts.CustomDatasources = customDatasourcesHook(o.client, o.dsOptions)
+	opts.Fetch = fetchWith(o.client)
+	if o.platform != nil {
+		opts.ReadArtifact = o.platform.ReadArtifact
+	}
 	opts.checksRead = new(report.Checks)
 	// The dashboard's ticked boxes, read before planning: an approval, a
 	// window or a release age lifted by a person, a rebase asked for.

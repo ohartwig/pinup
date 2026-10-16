@@ -25,6 +25,7 @@ not run, and `custom.regex` must be named to run the custom managers.
 | `terraform` | `*.tf`, `.terraform.lock.hcl` | `required_providers`, registry modules; a provider bump moves the lock's version and hashes with it |
 | `terraform-version` | `.terraform-version` | tfenv's file, the value taken as written |
 | `custom.regex` | what `managerFilePatterns` name | [configuration](configuration.md) |
+| `artifact` | nothing - the components of an artifact manifest, as the manifest stage reads them | writes the one line a configured pin inserts when an advisory names a fix ([artifact manifests](artifact-manifests.md)); `matchManagers: ["artifact"]` reaches the components in rules |
 
 Both `# renovate:` and `# pinup:` annotation prefixes are read.
 

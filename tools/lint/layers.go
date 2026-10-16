@@ -20,7 +20,7 @@ var layerOf = map[string]int{
 	// here rather than beside config because config consumes it: the
 	// library and the extends resolver know nothing about files.
 	"model": 0, "hbs": 0, "glob": 0, "sched": 0, "jsonata": 0,
-	"jsonc": 0, "yamlx": 0, "apkindex": 0, "re2x": 0, "semverx": 0,
+	"jsonc": 0, "yamlx": 0, "apkindex": 0, "re2x": 0, "semverx": 0, "sbom": 0,
 	"config/preset": 0,
 
 	// L1 - services.

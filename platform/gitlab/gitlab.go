@@ -459,6 +459,36 @@ func (p *Platform) ReadFile(ctx context.Context, project, path, ref string) ([]b
 	return resp.body, nil
 }
 
+// ReadArtifact reads one file out of the newest successful job's artifacts
+// on ref: GitLab's "latest artifact" endpoint, which needs no pipeline id.
+// The job name is a query parameter, the file path is a path - escaped per
+// segment, so a nested report path keeps its slashes.
+func (p *Platform) ReadArtifact(ctx context.Context, project, ref, job, path string) ([]byte, error) {
+	if ref == "" {
+		proj, err := p.Project(ctx, project)
+		if err != nil {
+			return nil, err
+		}
+		ref = proj.DefaultBranch
+	}
+	segments := strings.Split(strings.Trim(path, "/"), "/")
+	for i, s := range segments {
+		segments[i] = url.PathEscape(s)
+	}
+	u := fmt.Sprintf("%s/api/v4/projects/%s/jobs/artifacts/%s/raw/%s?job=%s", p.base, url.PathEscape(project), url.PathEscape(ref), strings.Join(segments, "/"), url.QueryEscape(job))
+	resp, err := p.do(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return nil, err
+	}
+	if resp.status == http.StatusNotFound {
+		return nil, fmt.Errorf("gitlab: %s has no artifact %s from a successful %q job on %q, or the token cannot read it", project, path, job, ref)
+	}
+	if err := classify(resp, project); err != nil {
+		return nil, err
+	}
+	return resp.body, nil
+}
+
 // ReadIssue returns the open issue with exactly this title and its
 // description, or false when there is none.
 func (p *Platform) ReadIssue(ctx context.Context, proj publish.Project, title string) (publish.Issue, string, bool, error) {

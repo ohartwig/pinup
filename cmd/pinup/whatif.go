@@ -96,6 +96,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		RunnerProject: project,
 	}
 	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
+	opts.Fetch = fetchWith(client)
 	opts.Analyzers = wire.Analyzers(client, opts.Datasources)
 	advisories := &osv.Client{}
 	feed, err := privateFeed(os.Getenv, client)
@@ -271,6 +272,13 @@ type whatifOptions struct {
 	// RunnerProject is the platform project the repositories extend the
 	// runner configuration from; empty means defaultRunnerProject.
 	RunnerProject string
+	// ReadArtifact reads one file out of a project's CI artifacts through
+	// the platform, for an artifactManifests entry with an `artifact`
+	// source; nil means such a manifest cannot be read and says so.
+	ReadArtifact func(ctx context.Context, project, ref, job, path string) ([]byte, error)
+	// Fetch reads a URL through the shared HTTP client, for an entry with
+	// a `url` source; nil means such a manifest cannot be read.
+	Fetch func(ctx context.Context, url string) ([]byte, error)
 }
 
 // defaultRunnerProject is the project the estate's repositories extend -
@@ -391,7 +399,7 @@ func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote pr
 // update, where the update type is known and a rule can hold it.
 func whatif(ctx context.Context, o whatifOptions) (*model.Plan, error) {
 	r := &whatifRun{ctx: ctx, o: o, now: o.Now}
-	for _, stage := range []func() error{r.configure, r.extractAll, r.lookupAll, r.planUpdates, r.realise} {
+	for _, stage := range []func() error{r.configure, r.extractAll, r.readArtifacts, r.lookupAll, r.planUpdates, r.realise} {
 		if err := stage(); err != nil {
 			return nil, err
 		}
@@ -558,6 +566,12 @@ func (r *whatifRun) extractAll() error {
 		if _, ok := r.contents[m.Path]; ok {
 			continue
 		}
+		if _, isManifest := wire.ArtifactIndex(m.Manager); isManifest {
+			// The file of an artifact manifest is read by the manifest
+			// stage when a pin needs it; here it would only be read for
+			// managers that never claimed it.
+			continue
+		}
 		b, err := os.ReadFile(filepath.Join(o.Root, m.Path))
 		if err != nil {
 			plan.Warnings = append(plan.Warnings, model.Warning{
@@ -576,6 +590,9 @@ func (r *whatifRun) extractAll() error {
 	r.foreignLocks = map[string]string{}
 	r.releaseAges = map[string]releaseAgeFloor{}
 	for _, match := range r.found.Matches {
+		if _, isManifest := wire.ArtifactIndex(match.Manager); isManifest {
+			continue
+		}
 		body, ok := r.contents[match.Path]
 		if !ok {
 			continue
@@ -755,6 +772,10 @@ func (r *whatifRun) lookupAll() error {
 	// the list travels on the release set.
 	plan.Warnings = append(plan.Warnings, applyWithdrawals(r.resolved.Raw, plan.Deps, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
 	coverWithdrawals(plan.AdvisoryCoverage, plan.Deps, r.releasesOf)
+	// A manifest component nothing can pin stays skipped, with the
+	// finding as its reason; one a pin covers is reactivated below like
+	// every vulnerable disabled dependency.
+	plan.Warnings = append(plan.Warnings, stateArtifactFindings(plan.Deps)...)
 	{
 		var vulnerable []model.Dependency
 		for i := range plan.Deps {
@@ -1030,6 +1051,10 @@ func (r *whatifRun) realise() error {
 			edits = append(edits, lockEdits...)
 		}
 		branches[i].Edits = edits
+		// A pin an artifact manifest writes must be a line a manager reads
+		// afterwards, or it is written once and never moved; the run checks
+		// by extracting the edited file (docs/artifact-manifests.md).
+		plan.Warnings = append(plan.Warnings, r.pinProof(branches[i], plan.Updates, edits)...)
 		// The commands the branch needs beyond its edits: a lock refresh
 		// where a manifest with a lock changed, and the configuration's
 		// postUpgradeTasks. A command the allowlist refuses or a toolchain
@@ -1609,6 +1634,22 @@ func (s advisoryStore) Put(key string, payload []byte) {
 
 // customDatasourcesHook lets whatif build the datasources a configuration
 // declares, with the same client the fixed ones use.
+// fetchWith reads a URL's body through the shared client, for the
+// manifests an artifactManifests entry names by url: host rules apply as
+// for a custom datasource, and a non-2xx answer is the error.
+func fetchWith(client *httpx.Client) func(context.Context, string) ([]byte, error) {
+	if client == nil {
+		return nil
+	}
+	return func(ctx context.Context, rawURL string) ([]byte, error) {
+		resp, err := client.Get(ctx, rawURL, httpx.ReqOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return resp.Body, nil
+	}
+}
+
 func customDatasourcesHook(client *httpx.Client, o wire.DatasourceOptions) func(map[string]model.CustomDatasource) lookup.Registry {
 	views := o.ApkViews
 	if views == nil {

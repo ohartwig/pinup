@@ -18,6 +18,7 @@ For people who run pinup. The same pages, as a website:
 | [Managers, datasources, versionings](managers-and-datasources.md) | what pinup extracts, where it looks versions up, how it orders them |
 | [The plan](plan-format.md) | the JSON every run writes before it writes anything else |
 | [Advisory sources](advisory-sources.md) | which advisory databases pinup asks, how their answers merge, what none of them covers |
+| [Artifact manifests](artifact-manifests.md) | what the build shipped without writing it down: SBOMs and reports as dependencies, watched and pinned |
 | [Effective classification](effective-classification.md) | the analyzer's label beside the version's, and the rules that read it |
 | [Tasks and plugins](tasks-and-plugins.md) | lock refreshes and post-upgrade commands: what runs, in what scope, with what |
 | [Platforms](platforms.md) | GitLab and GitHub: credentials, what each can and cannot do |

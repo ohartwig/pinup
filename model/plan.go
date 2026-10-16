@@ -200,7 +200,12 @@ type Plan struct {
 	// only when the run was asked for coverage (--coverage,
 	// PINUP_COVERAGE); empty otherwise, which says nothing either way.
 	Unmanaged []Unmanaged `json:"unmanaged,omitempty"`
-	Stats     Stats       `json:"stats"`
+	// Artifacts lists every artifact manifest the run read
+	// (artifactManifests): where it came from, what it held and what became
+	// a dependency, so the components in Deps have their denominator and a
+	// manifest that could not be read is stated rather than absent.
+	Artifacts []ArtifactReport `json:"artifacts,omitempty"`
+	Stats     Stats            `json:"stats"`
 	// AdvisoryCoverage counts the dependencies the advisory lookup could
 	// not ask about, by datasource - the gap the dashboard names so that
 	// "no advisory" is never read as "checked". Nil when the run asked
@@ -213,6 +218,28 @@ type Plan struct {
 	// the advisory watch asks about them between full runs too. In-process
 	// only, like AdvisoryCoverage: plan.json does not carry them.
 	LockedPackages []LockedPackage `json:"-"`
+}
+
+// ArtifactReport is one artifact manifest as the run read it.
+type ArtifactReport struct {
+	// File is the repository file whose build the manifest describes.
+	File string `json:"file"`
+	// Manifest is the index of the artifactManifests entry.
+	Manifest int `json:"manifest"`
+	// Source is where the manifest was read from (ArtifactRef.Source).
+	Source string `json:"source"`
+	Format string `json:"format"`
+	// Components counts every component the manifest names; Watched the
+	// ones that became dependencies; Declared the ones a line of the file
+	// already declares, which stay with that line; Skipped the rest by
+	// purl type, or "no-version" for a component without one.
+	Components int            `json:"components"`
+	Watched    int            `json:"watched"`
+	Declared   int            `json:"declared"`
+	Skipped    map[string]int `json:"skipped,omitempty"`
+	// Err is why the manifest could not be read or parsed; the run goes
+	// on without it.
+	Err string `json:"err,omitempty"`
 }
 
 // LockedPackage is one transitive package of a lock: the datasource its
@@ -341,6 +368,12 @@ func (p *Plan) Sort() {
 			return cmp.Compare(a.Start, b.Start)
 		})
 	}
+	slices.SortStableFunc(p.Artifacts, func(a, b ArtifactReport) int {
+		if c := cmp.Compare(a.File, b.File); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.Manifest, b.Manifest)
+	})
 	slices.SortStableFunc(p.Warnings, func(a, b Warning) int {
 		if c := cmp.Compare(a.Stage, b.Stage); c != 0 {
 			return c
