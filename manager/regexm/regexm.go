@@ -27,6 +27,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/hbs"
@@ -239,6 +240,19 @@ func (m *Manager) dependency(file string, def *model.CustomManager, s span) (mod
 			}
 		}
 		if ok {
+			if hasControl(v) {
+				// A name or version that spans lines is not a dependency;
+				// it is a capture group that ran past the token it was
+				// written for. Every place downstream puts the value on a
+				// line of its own - a branch title, a dashboard row, a
+				// note the bot posts - and a line the value starts is a
+				// line GitLab reads as a command (AUD-007-F01). %q keeps
+				// the warning itself on one line.
+				return model.Dependency{}, &model.Warning{
+					Stage: "extract", File: file,
+					Msg: fmt.Sprintf("custom manager %d: %s %q contains a control character and was dropped", def.Index, field.what, v),
+				}
+			}
 			field.set(v)
 		}
 	}
@@ -268,6 +282,13 @@ func (m *Manager) dependency(file string, def *model.CustomManager, s span) (mod
 		dep.SkipReason = "the match bound no currentValue and no currentDigest, so there is nothing to compare"
 	}
 	return dep, nil
+}
+
+// hasControl reports whether a rendered field carries a newline, a tab or
+// another control character: nothing a dependency name, version or
+// datasource can legitimately contain.
+func hasControl(s string) bool {
+	return strings.ContainsFunc(s, unicode.IsControl)
 }
 
 // locus reports where the bytes this dependency owns sit in the whole file.

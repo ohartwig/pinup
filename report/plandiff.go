@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ohartwig/pinup/markdown"
 	"github.com/ohartwig/pinup/model"
 )
 
@@ -21,6 +22,15 @@ import (
 // with the runner's tokens (the k3s group of koh-gitops!2923, 2026-09-24,
 // was checked that way). Two plans, one before and one after, answer it for
 // whoever reviews the change. Deterministic: no clock, sorted output.
+//
+// The result is posted as a note by the bot on a merge request whose head
+// branch the plan came from, so every string the plan contributes is
+// somebody else's text: a dependency name a regex manager captured from a
+// file in that branch, a lookup's message. Each one is collapsed to a
+// single line where it is placed, and the whole diff goes through
+// markdown.Sanitize last, as a description does. A name carrying a
+// newline and "/merge" rendered a quick action the bot then executed
+// (AUD-007-F01, 2026-10-16).
 func PlanDiff(base, head *model.Plan) string {
 	var b strings.Builder
 	b.WriteString("### What this configuration change does\n\n")
@@ -31,16 +41,16 @@ func PlanDiff(base, head *model.Plan) string {
 		hb := headW[name]
 		bb, ok := baseW[name]
 		if !ok {
-			added = append(added, fmt.Sprintf("`%s` — %s%s", name, hb.Title, automergeNote(hb)))
+			added = append(added, fmt.Sprintf("`%s` — %s%s", line(name), line(hb.Title), automergeNote(hb)))
 			continue
 		}
 		if what := branchChanges(bb, hb); len(what) > 0 {
-			changed = append(changed, fmt.Sprintf("`%s` — %s", name, strings.Join(what, "; ")))
+			changed = append(changed, fmt.Sprintf("`%s` — %s", line(name), strings.Join(what, "; ")))
 		}
 	}
 	for _, name := range sortedKeys(baseW) {
 		if _, ok := headW[name]; !ok {
-			removed = append(removed, fmt.Sprintf("`%s` — %s%s", name, baseW[name].Title, heldNow(head, name)))
+			removed = append(removed, fmt.Sprintf("`%s` — %s%s", line(name), line(baseW[name].Title), heldNow(head, name)))
 		}
 	}
 
@@ -64,7 +74,7 @@ func PlanDiff(base, head *model.Plan) string {
 	}
 	for _, w := range head.Warnings {
 		if !seen[w.Msg] {
-			warnings = append(warnings, w.Msg)
+			warnings = append(warnings, line(w.Msg))
 			seen[w.Msg] = true
 		}
 	}
@@ -89,7 +99,13 @@ func PlanDiff(base, head *model.Plan) string {
 	if len(added)+len(removed)+len(changed)+len(nowHeld)+len(released)+len(warnings) == 0 {
 		b.WriteString("No difference: with this change pinup proposes, holds and warns about exactly what it did before.\n")
 	}
-	return b.String()
+	return markdown.Sanitize(b.String())
+}
+
+// line is markdown.Line: a plan string placed into a list item stays on
+// that item's line.
+func line(s string) string {
+	return markdown.Line(s)
 }
 
 // written is the branches a run would push, by name.
@@ -115,15 +131,15 @@ func held(p *model.Plan) map[string]heldUpdate {
 			continue
 		}
 		blk := u.Blocks[0]
-		change := fmt.Sprintf("`%s` %s → %s", u.Dep.DepName, u.Dep.CurrentValue, u.NewValue)
-		line := change + " — " + string(blk.Reason)
+		change := fmt.Sprintf("`%s` %s → %s", line(u.Dep.DepName), line(u.Dep.CurrentValue), line(u.NewValue))
+		text := change + " — " + line(string(blk.Reason))
 		if blk.Note != "" {
-			line += ": " + blk.Note
+			text += ": " + line(blk.Note)
 		}
 		if o := heldBy(blk.Org); o != "—" {
-			line += " (held by " + o + ")"
+			text += " (held by " + line(o) + ")"
 		}
-		out[u.Key()] = heldUpdate{reason: string(blk.Reason), line: line, change: change}
+		out[u.Key()] = heldUpdate{reason: string(blk.Reason), line: text, change: change}
 	}
 	return out
 }
@@ -131,13 +147,13 @@ func held(p *model.Plan) map[string]heldUpdate {
 func branchChanges(a, b model.Branch) []string {
 	var out []string
 	if a.Title != b.Title {
-		out = append(out, fmt.Sprintf("title %q → %q", a.Title, b.Title))
+		out = append(out, fmt.Sprintf("title %q → %q", line(a.Title), line(b.Title)))
 	}
 	if a.Automerge != b.Automerge {
 		out = append(out, fmt.Sprintf("automerge %v → %v", a.Automerge, b.Automerge))
 	}
 	if !sameSet(a.Labels, b.Labels) {
-		out = append(out, fmt.Sprintf("labels %v → %v", sortedCopy(a.Labels), sortedCopy(b.Labels)))
+		out = append(out, line(fmt.Sprintf("labels %v → %v", sortedCopy(a.Labels), sortedCopy(b.Labels))))
 	}
 	if !sameSet(a.UpdateKeys, b.UpdateKeys) {
 		out = append(out, fmt.Sprintf("updates %d → %d", len(a.UpdateKeys), len(b.UpdateKeys)))
@@ -157,7 +173,7 @@ func automergeNote(br model.Branch) string {
 func heldNow(head *model.Plan, name string) string {
 	for _, br := range head.Branches {
 		if br.Name == name && br.SuppressedBy != "" {
-			return " — now held: " + string(br.SuppressedBy)
+			return " — now held: " + line(string(br.SuppressedBy))
 		}
 	}
 	return ""

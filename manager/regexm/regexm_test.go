@@ -497,3 +497,42 @@ func TestPinupPrefixReadsLikeRenovatePrefix(t *testing.T) {
 		}
 	}
 }
+
+// A capture group that runs past the token it was written for binds a name
+// with a newline in it. Such a name is not a dependency: every consumer
+// downstream places the value on a line of its own, and a line it starts
+// with "/merge" is a quick action the bot would execute when it posts it
+// (AUD-007-F01, 2026-10-16). The match is dropped with a warning that
+// stays on one line itself.
+func TestAMultiLineCaptureIsNotADependency(t *testing.T) {
+	cm := &model.CustomManager{
+		Index:        5,
+		MatchStrings: []string{`name=(?<depName>[^=]+)\nversion=(?<currentValue>[^\s]+)`},
+	}
+	content := "name=alpine\n/merge\n/approve\nversion=3.19.0\n"
+	res, err := New().Extract(context.Background(),
+		extract.File{Path: "x", Content: []byte(content)}, extract.ManagerConfig{Custom: cm})
+	if err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	if len(res.Deps) != 0 {
+		t.Errorf("a name spanning lines produced %d deps, want none: %+v", len(res.Deps), res.Deps)
+	}
+	if len(res.Warnings) != 1 {
+		t.Fatalf("got %d warnings, want 1", len(res.Warnings))
+	}
+	w := res.Warnings[0].Msg
+	if strings.ContainsAny(w, "\n\r") {
+		t.Errorf("the warning carries the newline it warns about: %q", w)
+	}
+	if !strings.Contains(w, "depName") || !strings.Contains(w, "control character") {
+		t.Errorf("warning does not name the field and the reason: %q", w)
+	}
+
+	// The same definition over a well-formed file still extracts.
+	res, err = New().Extract(context.Background(),
+		extract.File{Path: "x", Content: []byte("name=alpine\nversion=3.19.0\n")}, extract.ManagerConfig{Custom: cm})
+	if err != nil || len(res.Deps) != 1 || res.Deps[0].DepName != "alpine" {
+		t.Errorf("well-formed file: err=%v deps=%+v", err, res.Deps)
+	}
+}
