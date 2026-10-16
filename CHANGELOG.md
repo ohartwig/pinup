@@ -1,3 +1,9 @@
+## [0.65.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.0...v0.65.1) (2026-10-16)
+
+### :bug: Fixes
+
+* **report:** keep plan strings on one line and sanitise the plan diff ([e988d04](https://git.ole-hartwig.eu/pinup/pinup/commit/e988d04bb6430a8d7cf554bad13a73fcd53c62aa))
+
 ## [0.65.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.6...v0.65.0) (2026-10-16)
 
 ### :sparkles: Features
