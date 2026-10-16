@@ -4,6 +4,7 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/ohartwig/pinup/datasource/apkds"
+	"github.com/ohartwig/pinup/datasource/dockerds"
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/osv"
 	"github.com/ohartwig/pinup/plugin"
@@ -191,6 +193,11 @@ func datasourceOptions(p platformEnv, getenv func(string) string) (wire.Datasour
 				o.WithdrawnImagesScope = append(o.WithdrawnImagesScope, s)
 			}
 		}
+		key, mode, err := withdrawnImagesSignature(getenv)
+		if err != nil {
+			return o, err
+		}
+		o.WithdrawnImagesKey, o.WithdrawnImagesSignature = key, mode
 	}
 	if p.Kind != "gitlab" || p.Host == "" || p.Token == "" || p.RegistryHost == "" {
 		return o, nil
@@ -304,6 +311,43 @@ func privateHosts(getenv func(string) string) []string {
 		}
 	}
 	return hosts
+}
+
+// withdrawnImagesSignature reads PINUP_WITHDRAWN_IMAGES_PUBKEY - the PEM of
+// the key the list is signed with, or env://NAME for the variable that
+// holds it (COSIGN_PUBLIC_KEY, say) - and PINUP_WITHDRAWN_IMAGES_SIGNATURE:
+// warn (the default once a key is set: the list is used, the doubt
+// recorded), require (an unverifiable list is refused), off. Without a
+// key nothing is verified; require without a key is a configuration error
+// rather than a silent pass.
+func withdrawnImagesSignature(getenv func(string) string) (*ecdsa.PublicKey, dockerds.SignatureMode, error) {
+	mode := dockerds.SignatureMode(strings.ToLower(strings.TrimSpace(getenv("PINUP_WITHDRAWN_IMAGES_SIGNATURE"))))
+	switch mode {
+	case "", dockerds.SignatureWarn, dockerds.SignatureRequire, dockerds.SignatureOff:
+	default:
+		return nil, "", fmt.Errorf("PINUP_WITHDRAWN_IMAGES_SIGNATURE: %q is none of warn, require, off", mode)
+	}
+	pemText := getenv("PINUP_WITHDRAWN_IMAGES_PUBKEY")
+	if name, ok := strings.CutPrefix(strings.TrimSpace(pemText), "env://"); ok {
+		pemText = getenv(name)
+		if pemText == "" {
+			return nil, "", fmt.Errorf("PINUP_WITHDRAWN_IMAGES_PUBKEY: env://%s names a variable that is not set", name)
+		}
+	}
+	if strings.TrimSpace(pemText) == "" {
+		if mode == dockerds.SignatureRequire {
+			return nil, "", fmt.Errorf("PINUP_WITHDRAWN_IMAGES_SIGNATURE=require needs PINUP_WITHDRAWN_IMAGES_PUBKEY")
+		}
+		return nil, dockerds.SignatureOff, nil
+	}
+	key, err := dockerds.ParsePublicKey(pemText)
+	if err != nil {
+		return nil, "", fmt.Errorf("PINUP_WITHDRAWN_IMAGES_PUBKEY: %w", err)
+	}
+	if mode == "" {
+		mode = dockerds.SignatureWarn
+	}
+	return key, mode, nil
 }
 
 // httpClient builds the one HTTP client every datasource shares. The token

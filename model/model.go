@@ -346,6 +346,11 @@ type ReleaseSet struct {
 	// warning, never a failed lookup: without the list the run plans as it
 	// did before there was one.
 	WithdrawnErr string `json:"withdrawnErr,omitempty"`
+	// WithdrawnWarn is a doubt about the withdrawal list that did not stop
+	// it from being used: its signature could not be verified and the
+	// installation chose to warn rather than refuse (docker, the image
+	// list). The run says so once and plans with the list.
+	WithdrawnWarn string `json:"withdrawnWarn,omitempty"`
 	// WithdrawalList is the withdrawal list that speaks for this package:
 	// read without error from a source that serves it - an apk mirror
 	// whose index carries the package, the installation's image list for

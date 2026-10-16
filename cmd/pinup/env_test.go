@@ -4,6 +4,11 @@
 package main
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/pem"
 	"io"
 	"os"
 	"path/filepath"
@@ -13,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/datasource/dockerds"
 )
 
 func envOf(m map[string]string) func(string) string {
@@ -350,5 +356,47 @@ func TestPrivateHostsFromEnv(t *testing.T) {
 	}
 	if got := privateHosts(func(string) string { return "" }); len(got) != 0 {
 		t.Errorf("nothing set: %v", got)
+	}
+}
+
+// The key comes as PEM or as env://NAME; warn is the default once a key is
+// set, require without a key is an error, and without a key nothing is
+// verified.
+func TestWithdrawnImagesSignatureFromEnv(t *testing.T) {
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, _ := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pemKey := string(pem.EncodeToMemory(&pem.Block{Type: "PUBLIC KEY", Bytes: der}))
+	for name, tc := range map[string]struct {
+		env      map[string]string
+		wantKey  bool
+		wantMode dockerds.SignatureMode
+		wantErr  string
+	}{
+		"nothing":         {map[string]string{}, false, dockerds.SignatureOff, ""},
+		"pem, default":    {map[string]string{"PINUP_WITHDRAWN_IMAGES_PUBKEY": pemKey}, true, dockerds.SignatureWarn, ""},
+		"env reference":   {map[string]string{"PINUP_WITHDRAWN_IMAGES_PUBKEY": "env://COSIGN_PUBLIC_KEY", "COSIGN_PUBLIC_KEY": pemKey, "PINUP_WITHDRAWN_IMAGES_SIGNATURE": "require"}, true, dockerds.SignatureRequire, ""},
+		"env unset":       {map[string]string{"PINUP_WITHDRAWN_IMAGES_PUBKEY": "env://NOPE"}, false, "", "not set"},
+		"require, no key": {map[string]string{"PINUP_WITHDRAWN_IMAGES_SIGNATURE": "require"}, false, "", "needs PINUP_WITHDRAWN_IMAGES_PUBKEY"},
+		"bad mode":        {map[string]string{"PINUP_WITHDRAWN_IMAGES_SIGNATURE": "maybe"}, false, "", "none of"},
+		"bad key":         {map[string]string{"PINUP_WITHDRAWN_IMAGES_PUBKEY": "garbage"}, false, "", "PINUP_WITHDRAWN_IMAGES_PUBKEY"},
+		"off with key":    {map[string]string{"PINUP_WITHDRAWN_IMAGES_PUBKEY": pemKey, "PINUP_WITHDRAWN_IMAGES_SIGNATURE": "off"}, true, dockerds.SignatureOff, ""},
+	} {
+		key, mode, err := withdrawnImagesSignature(func(k string) string { return tc.env[k] })
+		if tc.wantErr != "" {
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+				t.Errorf("%s: err = %v, want %q", name, err, tc.wantErr)
+			}
+			continue
+		}
+		if err != nil {
+			t.Errorf("%s: %v", name, err)
+			continue
+		}
+		if (key != nil) != tc.wantKey || mode != tc.wantMode {
+			t.Errorf("%s: key=%v mode=%q, want key=%v mode=%q", name, key != nil, mode, tc.wantKey, tc.wantMode)
+		}
 	}
 }

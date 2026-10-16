@@ -47,6 +47,10 @@ func applyWithdrawals(cfg map[string]any, deps []model.Dependency, defaultVersio
 			seen[rs.WithdrawnErr] = true
 			warns = append(warns, model.Warning{Stage: "lookup", Msg: fmt.Sprintf("%s: %s; planned without it", rs.Datasource, rs.WithdrawnErr)})
 		}
+		if rs.WithdrawnWarn != "" && !seen[rs.WithdrawnWarn] {
+			seen[rs.WithdrawnWarn] = true
+			warns = append(warns, model.Warning{Stage: "lookup", Msg: fmt.Sprintf("%s: %s; planned with it anyway", rs.Datasource, rs.WithdrawnWarn)})
+		}
 		if !on || len(rs.Withdrawn) == 0 {
 			continue
 		}
