@@ -36,6 +36,11 @@ func DialPreferringIPv6(base *net.Dialer) func(ctx context.Context, network, add
 		base = &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
 	}
 	return func(ctx context.Context, network, addr string) (net.Conn, error) {
+		// The host as asked for, for a Guard's control hook: the hook sees
+		// the resolved address alone.
+		if host, _, err := net.SplitHostPort(addr); err == nil {
+			ctx = context.WithValue(ctx, dialHostKey{}, host)
+		}
 		if network != "tcp" {
 			return base.DialContext(ctx, network, addr)
 		}
