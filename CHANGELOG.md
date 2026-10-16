@@ -1,3 +1,9 @@
+## [0.65.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.2...v0.65.3) (2026-10-16)
+
+### :bug: Fixes
+
+* **planner:** never move a dependency below the version in use, and verify the withdrawal list's signature ([6fc5fc9](https://git.ole-hartwig.eu/pinup/pinup/commit/6fc5fc98690cc3d1f9f35d6fad6aa6780c96d90a))
+
 ## [0.65.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.1...v0.65.2) (2026-10-16)
 
 ### :bug: Fixes
