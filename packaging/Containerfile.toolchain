@@ -48,7 +48,7 @@ ARG NODEJS_VERSION=24.22.0-r0
 # npm-12, not npm: Wolfi's `npm` is the retired name of the family, `npm-12`
 # the maintained series with the same binary.
 # pinup: datasource=custom.wolfi depName=npm-12 versioning=apk
-ARG NPM_VERSION=12.2.0-r2
+ARG NPM_VERSION=12.2.1-r0
 # pinup: datasource=custom.wolfi depName=go-1.27 versioning=apk
 ARG GO_VERSION=1.27.2-r0
 # yarn classic, for the repositories whose lock is a yarn.lock.
