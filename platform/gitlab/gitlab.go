@@ -320,8 +320,8 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 
 	// Automerge, handled the same way as CreateMergeRequest: a separate call
 	// to the merge endpoint, tolerant of "not yet". Turning it off is its
-	// own endpoint, cancel_merge_when_pipeline_succeeds - a rule that
-	// stopped allowing automerge must be able to take it back.
+	// own endpoint (see cancelAutomerge) - a rule that stopped allowing
+	// automerge must be able to take it back.
 	switch {
 	case r.Automerge && !cur.Automerge:
 		merged, ok, why, err := p.trySetAutomerge(ctx, proj.Path, iid, headFor(r, cur.SHA), r.AutomergeDirect)
@@ -334,19 +334,11 @@ func (p *Platform) UpdateMergeRequest(ctx context.Context, proj publish.Project,
 		}
 		refused = why
 	case !r.Automerge && cur.Automerge:
-		u := fmt.Sprintf("%s/cancel_merge_when_pipeline_succeeds", mrURL)
-		resp, err := p.do(ctx, http.MethodPost, u, nil)
+		armed, err := p.cancelAutomerge(ctx, mrURL, proj.Path, iid)
 		if err != nil {
 			return publish.MergeRequest{}, nil, err
 		}
-		if err := classify(resp, proj.Path); err != nil {
-			return publish.MergeRequest{}, nil, err
-		}
-		var after mrJSON
-		if err := json.Unmarshal(resp.body, &after); err != nil {
-			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: decode cancelled automerge of %q !%d: %w", proj.Path, iid, err)
-		}
-		if after.Automerge {
+		if armed {
 			return publish.MergeRequest{}, nil, fmt.Errorf("gitlab: %q !%d accepted the automerge cancellation but is still armed", proj.Path, iid)
 		}
 		cur.Automerge = false
@@ -681,7 +673,11 @@ func (p *Platform) ListProjects(ctx context.Context) ([]string, error) {
 // a later run, which is the behaviour every version before this had.
 func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid int, sha string, direct bool) (mrJSON, bool, string, error) {
 	u := fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d/merge", p.base, url.PathEscape(projectPath), iid)
+	// auto_merge is the parameter since GitLab 17.11, which deprecated
+	// merge_when_pipeline_succeeds. Both are sent: an older instance knows
+	// only the second, a newer one reads the first.
 	payload := map[string]any{
+		"auto_merge":                   true,
 		"merge_when_pipeline_succeeds": true,
 		"should_remove_source_branch":  true,
 	}
@@ -735,6 +731,56 @@ func (p *Platform) trySetAutomerge(ctx context.Context, projectPath string, iid 
 	default:
 		return mrJSON{}, false, "", classify(resp, projectPath)
 	}
+}
+
+// cancelAutomerge takes an armed automerge back and reports whether the
+// request is still armed afterwards.
+//
+// GitLab 19.5 added cancel_auto_merge and deprecated
+// cancel_merge_when_pipeline_succeeds. The new endpoint answers 201 with the
+// merge request, which is what the "still armed" check reads, and 409 when
+// nothing was armed - the outcome asked for, so not an error. The old one
+// answers with a status hash rather than the request, so a decode of its
+// body never saw the flag: that check could not fail. An instance without
+// the new endpoint (404) gets the old one, and the request is read back to
+// learn whether the cancellation held.
+func (p *Platform) cancelAutomerge(ctx context.Context, mrURL, projectPath string, iid int) (bool, error) {
+	resp, err := p.do(ctx, http.MethodPost, mrURL+"/cancel_auto_merge", nil)
+	if err != nil {
+		return false, err
+	}
+	switch {
+	case resp.status == http.StatusConflict:
+		return false, nil
+	case resp.status == http.StatusNotFound:
+		resp, err := p.do(ctx, http.MethodPost, mrURL+"/cancel_merge_when_pipeline_succeeds", nil)
+		if err != nil {
+			return false, err
+		}
+		if err := classify(resp, projectPath); err != nil {
+			return false, err
+		}
+		resp, err = p.do(ctx, http.MethodGet, mrURL, nil)
+		if err != nil {
+			return false, err
+		}
+		if err := classify(resp, projectPath); err != nil {
+			return false, err
+		}
+		var after mrJSON
+		if err := json.Unmarshal(resp.body, &after); err != nil {
+			return false, fmt.Errorf("gitlab: decode %q !%d after cancelling automerge: %w", projectPath, iid, err)
+		}
+		return after.Automerge, nil
+	}
+	if err := classify(resp, projectPath); err != nil {
+		return false, err
+	}
+	var after mrJSON
+	if err := json.Unmarshal(resp.body, &after); err != nil {
+		return false, fmt.Errorf("gitlab: decode cancelled automerge of %q !%d: %w", projectPath, iid, err)
+	}
+	return after.Automerge, nil
 }
 
 // mergeNow merges a request GitLab has just called mergeable, for the case
