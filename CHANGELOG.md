@@ -1,3 +1,9 @@
+## [0.65.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.6...v0.65.0) (2026-10-16)
+
+### :sparkles: Features
+
+* **artifacts:** read what the build shipped and pin what an advisory names ([b4e1589](https://git.ole-hartwig.eu/pinup/pinup/commit/b4e15891c9ee4f03fcde21c04d65feefc4b122a1))
+
 ## [0.64.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.64.5...v0.64.6) (2026-10-16)
 
 ### :repeat: Continuous Integrations
