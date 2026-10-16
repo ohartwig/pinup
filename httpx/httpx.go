@@ -186,8 +186,11 @@ func New(opts Options) *Client {
 	for _, r := range opts.HostRules {
 		hostRules[strings.ToLower(r.MatchHost)] = r
 		if r.PathPattern != "" {
-			// A pattern that does not compile binds the credential to
-			// nothing: anonymous is the safe direction.
+			// The patterns are constants of the binary (cmd/pinup's
+			// instancePaths), never configuration: MustCompile, so one that
+			// does not compile fails the first test of the build, not a run
+			// with the credential bound to nothing. Until 2026-10-16 this
+			// comment claimed the latter (AUD-007).
 			paths[strings.ToLower(r.MatchHost)] = regexp.MustCompile(r.PathPattern)
 		}
 	}
