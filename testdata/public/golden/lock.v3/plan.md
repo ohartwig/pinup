@@ -7,7 +7,7 @@
 | Branch | Title | Changes |
 |---|---|---|
 | `renovate/monolog-monolog-3.x` | fix(deps): update dependency monolog/monolog to v3.12.0 | `composer.json` 3.5.0 → 3.12.0; `composer update monolog/monolog --with-all-dependencies --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs` |
-| `renovate/npm` | fix(deps): update dependency minimist to v1.2.8 | `package.json` 1.2.7 → 1.2.8; `npm install --package-lock-only --no-audit --ignore-scripts minimist` |
+| `renovate/npm` | fix(deps): update dependency minimist to v1.2.8 | `package.json` 1.2.7 → 1.2.8; `npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all minimist` |
 | `renovate/psr-log-3.x` | fix(deps): update dependency psr/log to v3.0.2 | `composer.json` 3.0.0 → 3.0.2; `composer update psr/log --with-all-dependencies --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs` |
 
 ## Held

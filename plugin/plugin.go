@@ -122,9 +122,25 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance b
 		// stayed there). update moves every resolution within its range and
 		// leaves package.json alone - what maintenance means, the same
 		// split as pnpm install/update and yarn install/upgrade above.
-		argv = []string{"npm", "install", "--package-lock-only", "--no-audit", "--ignore-scripts"}
+		//
+		// --allow-remote=all: npm 12 turned the default of allow-remote from
+		// "all" to "none", and the repositories answer with "root" so that
+		// their own scoped tarballs still install. Arborist, however, learns
+		// what a package with bundleDependencies bundles by extracting it from
+		// its `resolved` URL (build-ideal-tree.js, #buildDepStep -> pacote
+		// extract), and that fetch is typed "remote" even when the URL is the
+		// registry's own - @tailwindcss/oxide-wasm32-wasi, a transitive
+		// optional dependency, was refused with EALLOWREMOTE in twelve
+		// repositories from 2026-10-13 on, measured 2026-10-16 with npm
+		// 11.17.0 and 12.2.0 alike. `npm ci` never takes that path (the lock
+		// already says what is bundled), which is why the same repositories
+		// built green while every lock refresh failed. The permission is
+		// scoped to this command: the merge request's own `npm ci` still runs
+		// under the repository's .npmrc and keeps refusing a third-party
+		// tarball that a refresh might have let in.
+		argv = []string{"npm", "install", "--package-lock-only", "--no-audit", "--ignore-scripts", "--allow-remote=all"}
 		if maintenance {
-			argv = []string{"npm", "update", "--package-lock-only", "--no-audit", "--ignore-scripts"}
+			argv = []string{"npm", "update", "--package-lock-only", "--no-audit", "--ignore-scripts", "--allow-remote=all"}
 		} else {
 			argv = append(argv, names...)
 		}

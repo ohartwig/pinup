@@ -561,6 +561,7 @@
             "--package-lock-only",
             "--no-audit",
             "--ignore-scripts",
+            "--allow-remote=all",
             "minimist"
           ],
           "executionMode": "branch",
