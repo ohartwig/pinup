@@ -118,6 +118,9 @@ type gitlabServer struct {
 	projects    map[string]*fakeProject // URL-encoded project path -> project
 	requests    []requestLog
 	mayNotMerge bool // the token's user lacks merge permission everywhere: /merge answers 401
+	// beforeGitLab195 answers 404 on cancel_auto_merge, the endpoint GitLab
+	// 19.5 added; only cancel_merge_when_pipeline_succeeds exists.
+	beforeGitLab195 bool
 }
 
 func newGitlabServer(token string) *gitlabServer {
@@ -402,14 +405,31 @@ func (s *gitlabServer) serveOneMergeRequest(w http.ResponseWriter, r *http.Reque
 		s.mergeMergeRequest(w, mr, body)
 		return
 	}
+	if sub == "cancel_auto_merge" && r.Method == http.MethodPost {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		switch {
+		case s.beforeGitLab195:
+			w.WriteHeader(http.StatusNotFound)
+		case !mr.automerge:
+			writeJSON(w, http.StatusConflict, map[string]string{"message": "Can't cancel the automatic merge"})
+		default:
+			if !mr.acceptsButIgnores {
+				mr.automerge = false
+			}
+			writeJSON(w, http.StatusCreated, mr.toJSON())
+		}
+		return
+	}
 	if sub == "cancel_merge_when_pipeline_succeeds" && r.Method == http.MethodPost {
+		// Deprecated in 19.5. It answers with a status hash, not with the
+		// merge request.
 		s.mu.Lock()
 		if !mr.acceptsButIgnores {
 			mr.automerge = false
 		}
-		out := mr.toJSON()
 		s.mu.Unlock()
-		writeJSON(w, http.StatusCreated, out)
+		writeJSON(w, http.StatusCreated, map[string]string{"status": "success"})
 		return
 	}
 	w.WriteHeader(http.StatusNotFound)
@@ -455,12 +475,14 @@ func (s *gitlabServer) updateMergeRequest(w http.ResponseWriter, mr *fakeMR, bod
 }
 
 // mergeMergeRequest is GitLab's one merge endpoint, which does two jobs
-// depending on the payload: with merge_when_pipeline_succeeds it arms, and
-// without it it merges now.
+// depending on the payload: with auto_merge (or the deprecated
+// merge_when_pipeline_succeeds) it arms, and without it it merges now.
 func (s *gitlabServer) mergeMergeRequest(w http.ResponseWriter, mr *fakeMR, body []byte) {
 	var payload map[string]any
 	_ = json.Unmarshal(body, &payload)
-	arming, _ := payload["merge_when_pipeline_succeeds"].(bool)
+	autoMerge, _ := payload["auto_merge"].(bool)
+	legacy, _ := payload["merge_when_pipeline_succeeds"].(bool)
+	arming := autoMerge || legacy
 
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -1020,6 +1042,18 @@ func TestAChangeGitLabAcceptsButDoesNotApplyIsNotReported(t *testing.T) {
 			t.Errorf("err %v, changed %v: a kept automerge must be an error", err, changed)
 		}
 	})
+	t.Run("automerge cancellation before GitLab 19.5", func(t *testing.T) {
+		// The old endpoint does not return the request; only reading it
+		// back shows the cancellation did not hold.
+		p, srv, _, mr := setup(t, true)
+		srv.mu.Lock()
+		srv.beforeGitLab195 = true
+		srv.mu.Unlock()
+		_, changed, err := p.UpdateMergeRequest(ctx, pr, mr.IID, publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"})
+		if err == nil || !strings.Contains(err.Error(), "still armed") {
+			t.Errorf("err %v, changed %v: a kept automerge must be an error", err, changed)
+		}
+	})
 	t.Run("close", func(t *testing.T) {
 		p, _, _, mr := setup(t, false)
 		if err := p.CloseMergeRequest(ctx, pr, mr.IID, "autoclosed"); err == nil || !strings.Contains(err.Error(), "still opened") {
@@ -1347,5 +1381,89 @@ func TestCreateMergeRequestWaitsForABranchGitLabDoesNotSeeYet(t *testing.T) {
 				t.Errorf("waited %v, want %v", waits, tc.waits)
 			}
 		})
+	}
+}
+
+// GitLab 19.5 deprecated cancel_merge_when_pipeline_succeeds for
+// cancel_auto_merge. An instance that does not know the new endpoint gets
+// the old one, and the request is read back because the old answer is a
+// status hash: GET, POST (404), POST, GET.
+func TestCancelAutomergeFallsBackBeforeGitLab195(t *testing.T) {
+	pf, srv, rt := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	req := publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.mu.Lock()
+	proj.mrs[0].automerge = true
+	srv.beforeGitLab195 = true
+	srv.mu.Unlock()
+	before := rt.Count("git.example.org")
+
+	out, changed, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if out.Automerge || !slices.Contains(changed, "automerge") {
+		t.Errorf("automerge must be cleared and reported: %+v %v", out, changed)
+	}
+	if n := rt.Count("git.example.org") - before; n != 4 {
+		t.Errorf("made %d requests, want 4", n)
+	}
+	if n := srv.requestCountOf(http.MethodPost, "cancel_merge_when_pipeline_succeeds"); n != 1 {
+		t.Errorf("legacy endpoint called %d times, want 1", n)
+	}
+	if proj.mrs[0].automerge {
+		t.Error("the fake still has automerge set")
+	}
+}
+
+// On GitLab 19.5 the new endpoint is used, and the old one never.
+func TestCancelAutomergeUsesCancelAutoMerge(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	req := publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.mu.Lock()
+	proj.mrs[0].automerge = true
+	srv.mu.Unlock()
+
+	if _, _, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req); err != nil {
+		t.Fatal(err)
+	}
+	if n := srv.requestCountOf(http.MethodPost, "cancel_auto_merge"); n != 1 {
+		t.Errorf("cancel_auto_merge called %d times, want 1", n)
+	}
+	if n := srv.requestCountOf(http.MethodPost, "cancel_merge_when_pipeline_succeeds"); n != 0 {
+		t.Errorf("deprecated endpoint called %d times, want 0", n)
+	}
+}
+
+// Arming sends auto_merge, the parameter since GitLab 17.11.
+func TestArmingSendsAutoMerge(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	req := publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x", Automerge: true}
+	mr, err := pf.CreateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv.mu.Lock()
+	proj.mrs[0].canMerge = true
+	srv.mu.Unlock()
+	if _, _, err := pf.UpdateMergeRequest(context.Background(), publish.Project{Path: "group/proj"}, mr.IID, req); err != nil {
+		t.Fatal(err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(srv.lastRequestBody(http.MethodPut, "/merge"), &body); err != nil {
+		t.Fatal(err)
+	}
+	if v, _ := body["auto_merge"].(bool); !v {
+		t.Errorf("merge payload %v lacks auto_merge=true", body)
 	}
 }
