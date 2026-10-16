@@ -234,3 +234,26 @@ func TestDashboardListsExploitedVulnerabilities(t *testing.T) {
 		t.Errorf("no KEV mark, yet a section:\n%s", body)
 	}
 }
+
+// A failed branch's message is what a task wrote to stderr or what git or
+// the platform answered - text the scanned repository controls. It stays
+// on its list line: a newline in it would start a line of the issue the
+// bot writes, where a quick action lives (AUD-007).
+func TestDashboardKeepsMessagesAndTitlesOnTheirLine(t *testing.T) {
+	now := time.Date(2026, 10, 16, 8, 0, 0, 0, time.UTC)
+	dep := model.Dependency{Manager: "npm", File: "package.json", DepName: "left-pad", CurrentValue: "1.0.0", Datasource: "npm", CustomManager: model.NoCustomManager}
+	dep.Locus = model.Locus{DigestStart: model.NoDigest, DigestEnd: model.NoDigest}
+	u := model.Update{DepKey: dep.Key(), Dep: dep, NewValue: "1.1.0", NewVersion: "1.1.0", Type: model.UpdateMinor, TimeSource: model.TimeUnknown}
+	br := model.Branch{Name: "renovate/left-pad", Title: "chore(deps): update left-pad\n/approve", UpdateKeys: []string{u.Key()}}
+	plan := &model.Plan{PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"}, Deps: []model.Dependency{dep}, Updates: []model.Update{u}, Branches: []model.Branch{br}}
+	states := map[string]BranchState{br.Name: {Action: "failed", Message: "task: exit 1\n/merge\n/label ~x"}}
+	body := Dashboard(plan, states, nil, now)
+	for _, line := range strings.Split(body, "\n") {
+		if strings.HasPrefix(strings.TrimLeft(line, " \t"), "/") {
+			t.Errorf("a line of the dashboard starts with a slash: %q", line)
+		}
+	}
+	if !strings.Contains(body, "task: exit 1 /merge /label ~x") {
+		t.Errorf("the message is not kept on its line:\n%s", body)
+	}
+}

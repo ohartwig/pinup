@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ohartwig/pinup/markdown"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/publish"
 )
@@ -230,11 +231,11 @@ func (s *sections) exploited(b *strings.Builder) {
 		case open && br.SuppressedBy == "":
 			state = fmt.Sprintf("open !%d", m.IID)
 		case s.states[br.Name].Action == "failed":
-			state = "failed: " + s.states[br.Name].Message
+			state = "failed: " + markdown.Line(s.states[br.Name].Message)
 		case br.SuppressedBy != "":
 			state = "held: " + string(br.SuppressedBy)
 		}
-		line := fmt.Sprintf(" - 🚨 %s — %s%s · %s", br.Title, strings.Join(cves, ", "), exploitedSince(s.plan.Updates, br.UpdateKeys), state)
+		line := fmt.Sprintf(" - 🚨 %s — %s%s · %s", markdown.Line(br.Title), strings.Join(cves, ", "), exploitedSince(s.plan.Updates, br.UpdateKeys), state)
 		if major {
 			line += " · **major update**: opened at once, review before merging"
 		}
@@ -392,8 +393,13 @@ func (s *sections) errored(b *strings.Builder) {
 		return
 	}
 	b.WriteString("## Errored\n\nThese updates ran into an error and are retried next run. Tick a box to push the branch again from scratch.\n\n")
+	// The message is what a task wrote to stderr, or what git or the
+	// platform answered: text from the scanned repository or its
+	// toolchain, kept to the line it is listed on. A newline in it would
+	// start a line of its own in an issue the bot writes - where a quick
+	// action lives (AUD-007).
 	for _, br := range s.failed {
-		fmt.Fprintf(b, " - [ ] <!-- retry-branch=%s -->%s — %s\n", br.Name, br.Title, s.states[br.Name].Message)
+		fmt.Fprintf(b, " - [ ] <!-- retry-branch=%s -->%s — %s\n", br.Name, markdown.Line(br.Title), markdown.Line(s.states[br.Name].Message))
 	}
 	b.WriteString("\n")
 }
@@ -404,7 +410,7 @@ func (s *sections) opened(b *strings.Builder) {
 	}
 	b.WriteString("## Open\n\nThese merge requests exist. Tick a box to rebase one on the next run.\n\n")
 	for _, br := range s.open {
-		fmt.Fprintf(b, " - [ ] <!-- rebase-branch=%s -->[%s](!%d)\n", br.Name, br.Title, s.byMR[br.Name].IID)
+		fmt.Fprintf(b, " - [ ] <!-- rebase-branch=%s -->[%s](!%d)\n", br.Name, markdown.Line(br.Title), s.byMR[br.Name].IID)
 	}
 	b.WriteString(" - [ ] <!-- rebase-all-open-prs -->**Rebase all open merge requests at once**\n\n")
 }
@@ -419,10 +425,10 @@ func (s *sections) actionable(b *strings.Builder) {
 		if st, ok := s.states[br.Name]; ok {
 			msg = " — " + st.Action
 			if st.Message != "" {
-				msg += ": " + st.Message
+				msg += ": " + markdown.Line(st.Message)
 			}
 		}
-		fmt.Fprintf(b, " - %s%s\n", br.Title, msg)
+		fmt.Fprintf(b, " - %s%s\n", markdown.Line(br.Title), msg)
 	}
 	b.WriteString("\n")
 }

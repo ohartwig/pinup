@@ -150,7 +150,11 @@ What you get: one branch per update or group, named the way Renovate
 names it (`renovate/lodash-4.x`), a merge request whose description lists
 the edits and the release notes, `automerge` set where a rule says so, and
 a "Dependency Dashboard" issue that lists every held update with a
-checkbox to approve it.
+checkbox to approve it. A ticked box is an instruction to the next run,
+and it is honoured from whoever may edit the issue - Reporter and above
+on the project. The dashboard is the operators' surface by design; a
+project where Reporter is handed out widely should know that an approval
+there is one of them.
 
 ### 3. One configuration for many repositories
 
