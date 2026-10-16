@@ -1,3 +1,9 @@
+## [0.65.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.3...v0.65.4) (2026-10-16)
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([9a30784](https://git.ole-hartwig.eu/pinup/pinup/commit/9a30784c80244d44b8dbdaeb01173b135493083d))
+
 ## [0.65.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.2...v0.65.3) (2026-10-16)
 
 ### :bug: Fixes
