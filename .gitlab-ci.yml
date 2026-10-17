@@ -523,9 +523,20 @@ release:links:
 # 2026-09-13 did not happen. HEAD was tested when it was pushed.
 #
 # Variables (group pinup, masked): PINUP_GITLAB_TOKEN with api and
-# write_repository, PINUP_GIT_NAME, PINUP_GIT_EMAIL, PINUP_GPG_PRIVATE_KEY
-# (armored) and PINUP_GPG_KEY_ID. PINUP_MODE=whatif turns the job into a
-# dry run that pushes nothing.
+# write_repository, PINUP_GIT_NAME, PINUP_GIT_EMAIL,
+# PINUP_GPG_PRIVATE_KEY_B64 (the armored key base64-encoded onto one line,
+# so GitLab can mask it) and PINUP_GPG_KEY_ID. PINUP_MODE=whatif turns the
+# job into a dry run that pushes nothing.
+#
+# This job read the armored multi-line PINUP_GPG_PRIVATE_KEY until
+# 2026-10-17. AUD-007 replaced that variable with the B64 form everywhere,
+# because the armored one cannot be masked and an `env` in any job log
+# would have printed it -- but only pinup/runner was carried over, not this
+# job. The variable was then deleted, and because this job runs on a
+# schedule alone, nothing noticed until the next scheduled run failed with
+# `PINUP_GPG_PRIVATE_KEY: parameter not set`. No fallback to the armored
+# form is kept: it is gone on purpose and a fallback would invite its
+# return.
 # --------------------------------------------------------------------------- #
 update:pinup:
   stage: update
@@ -560,12 +571,13 @@ update:pinup:
       # The key lives outside HOME: a task pinup runs (go mod tidy here)
       # gets a scratch HOME and none of the job's, so the imported key
       # is nowhere a task can read.
+      test -n "${PINUP_GPG_PRIVATE_KEY_B64:-}" || { echo "PINUP_GPG_PRIVATE_KEY_B64 is not set; without the signing key every commit this job pushes would show Unverified"; exit 1; }
       GNUPGHOME=$(mktemp -d); export GNUPGHOME
-      printf '%s\n' "$PINUP_GPG_PRIVATE_KEY" | gpg --batch --quiet --import
-      # Imported, so the armored key has done its job: out of the
-      # environment before pinup starts, and so out of pinup's own
+      printf '%s' "$PINUP_GPG_PRIVATE_KEY_B64" | base64 -d | gpg --batch --quiet --import
+      # Imported, so the key has done its job: out of the environment
+      # before pinup starts, and so out of pinup's own
       # /proc/<pid>/environ, which a task under the same uid can read.
-      unset PINUP_GPG_PRIVATE_KEY
+      unset PINUP_GPG_PRIVATE_KEY_B64
       CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${CI_COMMIT_SHORT_SHA}" -o /tmp/pinup ./cmd/pinup
       /tmp/pinup version
       mode="run"
