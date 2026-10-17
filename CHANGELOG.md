@@ -1,3 +1,9 @@
+## [0.65.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.4...v0.65.5) (2026-10-17)
+
+### :bug: Fixes
+
+* **ci:** read the signing key from PINUP_GPG_PRIVATE_KEY_B64 ([6613f0b](https://git.ole-hartwig.eu/pinup/pinup/commit/6613f0b11fbca02fb515c8917c13e9f2a9351b8a))
+
 ## [0.65.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.3...v0.65.4) (2026-10-16)
 
 ### :repeat: Chores
