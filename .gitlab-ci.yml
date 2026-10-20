@@ -199,7 +199,7 @@ variables:
   # the binary kept the old standard library. Its patch bump is fix(deps)
   # (pinup/runner!40), which releases.
   # pinup: datasource=docker depName=registry.ole-hartwig.eu/devops/images/golang
-  GOLANG_IMAGE_TAG: "1.27.2"
+  GOLANG_IMAGE_TAG: "1.27.3"
   GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:$GOLANG_IMAGE_TAG"
   # update:pinup runs on the toolchain image: gpg for the signature, git,
   # go for the go.sum refresh. The binary it runs is this tree's own, built
