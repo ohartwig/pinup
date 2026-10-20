@@ -1,3 +1,17 @@
+## [0.65.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.5...v0.65.6) (2026-10-20)
+
+### :bug: Fixes
+
+* **deps:** update dependency registry.ole-hartwig.eu/devops/images/golang to v1.27.3 ([1aff779](https://git.ole-hartwig.eu/pinup/pinup/commit/1aff779fe9bab2b9eb5018e566d7d41831aa0290))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 6c0c4e7 ([37418dc](https://git.ole-hartwig.eu/pinup/pinup/commit/37418dc3a4244fd57227afbe17a8d223d6340975))
+
+### :repeat: Chores
+
+* **deps:** update dependency go-1.27 to v1.27.3-r0 ([56500ad](https://git.ole-hartwig.eu/pinup/pinup/commit/56500ade6d56d8f37e828301ba60f74a7751ebe9))
+
 ## [0.65.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.4...v0.65.5) (2026-10-17)
 
 ### :bug: Fixes
