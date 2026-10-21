@@ -40,7 +40,7 @@ RUN printf 'label     ::1/128       0\nlabel     ::/0          1\nlabel     ::ff
 # optional maintenance, it is how this file keeps building. pinup proposes it
 # from the annotations.
 # pinup: datasource=custom.wolfi depName=php-8.5 versioning=apk
-ARG PHP_VERSION=8.5.11-r3
+ARG PHP_VERSION=8.5.11-r4
 # pinup: datasource=custom.wolfi depName=composer versioning=apk
 ARG COMPOSER_VERSION=2.10.3-r1
 # pinup: datasource=custom.wolfi depName=nodejs-24 versioning=apk
