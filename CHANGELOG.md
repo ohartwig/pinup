@@ -1,3 +1,13 @@
+## [0.65.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.6...v0.65.7) (2026-10-21)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 08e7288 ([f01c1b7](https://git.ole-hartwig.eu/pinup/pinup/commit/f01c1b7ec82780f30e1e84381c9b80f5f2b18d25))
+
+### :repeat: Chores
+
+* **deps:** update dependency php-8.5 to v8.5.11-r4 ([a35a668](https://git.ole-hartwig.eu/pinup/pinup/commit/a35a6685c96fcd32d0044e8d0834fc988b1efa38))
+
 ## [0.65.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.5...v0.65.6) (2026-10-20)
 
 ### :bug: Fixes
