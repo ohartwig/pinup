@@ -192,6 +192,9 @@ func TestAutomergeIsWithheldForARevertedChangeNotForASharedTitle(t *testing.T) {
 	if !pf.MRs[len(pf.MRs)-1].Automerge {
 		t.Error("a shared title alone withheld automerge")
 	}
+	if wanted, _ := automergeWanted(pf.MRs[len(pf.MRs)-1].Description); !wanted {
+		t.Error("a request that wants automerge carries no marker for the arm watch")
+	}
 
 	// The same edits merged before: withheld, said so, request still opened.
 	pf = &platformfake.Platform{Verification: "verified", MRs: []publish.MergeRequest{{
@@ -208,6 +211,11 @@ func TestAutomergeIsWithheldForARevertedChangeNotForASharedTitle(t *testing.T) {
 	last := pf.MRs[len(pf.MRs)-1]
 	if last.Automerge || !strings.Contains(last.Description, "Automerge withheld: !182") {
 		t.Errorf("reverted change: automerge=%v description:\n%s", last.Automerge, last.Description)
+	}
+	// Withheld means no marker either: the arm watch must not arm what
+	// the run decided against.
+	if strings.Contains(last.Description, markerPrefix) {
+		t.Errorf("a withheld automerge carries the marker:\n%s", last.Description)
 	}
 	if len(p.Warnings) == 0 || !strings.Contains(p.Warnings[len(p.Warnings)-1].Msg, "automerge withheld") {
 		t.Errorf("the plan does not say: %+v", p.Warnings)

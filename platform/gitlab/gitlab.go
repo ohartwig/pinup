@@ -34,6 +34,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ohartwig/pinup/publish"
@@ -66,6 +67,10 @@ type Platform struct {
 	// wrote, not any issue with the title (review S7, 2026-09-13).
 	userMu sync.Mutex
 	userID int
+
+	// calls counts the requests sent, for a command that reports what it
+	// cost (Calls).
+	calls atomic.Int64
 
 	// Sleep waits out the pause before CreateMergeRequest asks again for a
 	// branch GitLab does not see yet; nil is time.Sleep. Tests set it to
@@ -130,6 +135,9 @@ func New(base string, transport http.RoundTripper, token Token) *Platform {
 }
 
 func (p *Platform) Name() string { return Name }
+
+// Calls is the number of API requests this Platform has sent.
+func (p *Platform) Calls() int64 { return p.calls.Load() }
 
 // Project resolves a project path to its canonical path and default branch.
 func (p *Platform) Project(ctx context.Context, path string) (publish.Project, error) {
@@ -907,9 +915,15 @@ type mrJSON struct {
 	// pinup forming its own opinion about a pipeline it did not run.
 	DetailedMergeStatus string    `json:"detailed_merge_status"`
 	HasConflicts        bool      `json:"has_conflicts"`
+	Draft               bool      `json:"draft"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`
 	MergedAt            time.Time `json:"merged_at"`
+	// References.Full is "group/project!iid": the project of a request
+	// listed estate-wide, where no project was named in the call.
+	References struct {
+		Full string `json:"full"`
+	} `json:"references"`
 }
 
 func toPublish(m mrJSON) publish.MergeRequest {
@@ -929,6 +943,7 @@ func toPublish(m mrJSON) publish.MergeRequest {
 		// 2026-09-30, both pending behind a runner backlog.
 		PipelineBusy: m.DetailedMergeStatus == "ci_still_running",
 		Conflict:     m.HasConflicts || m.DetailedMergeStatus == "conflict",
+		Draft:        m.Draft,
 		CreatedAt:    m.CreatedAt,
 		UpdatedAt:    m.UpdatedAt,
 	}
@@ -981,6 +996,7 @@ func (p *Platform) do(ctx context.Context, method, rawURL string, payload any) (
 		req.Header.Set(p.token.Header, p.token.Value)
 	}
 
+	p.calls.Add(1)
 	resp, err := p.hc.Do(req)
 	if err != nil {
 		// The stdlib error text names addresses and protocols, never our

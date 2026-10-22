@@ -60,6 +60,21 @@ type fakeMR struct {
 	hasConflicts         bool
 	createdAt, updatedAt time.Time
 	mergedAt             time.Time
+	// The arm watch's reads: draft, the head pipeline (none while status
+	// is empty), the commits' author emails, the notes.
+	draft                       bool
+	pipelineStatus, pipelineSHA string
+	commitAuthors               []string
+	notes                       []fakeNote
+}
+
+// fakeNote is one note on a merge request; system notes are GitLab's own
+// record of an action, written as the user who took it.
+type fakeNote struct {
+	body     string
+	system   bool
+	authorID int
+	username string
 }
 
 func (m *fakeMR) toJSON() mrJSON {
@@ -67,7 +82,7 @@ func (m *fakeMR) toJSON() mrJSON {
 		IID: m.iid, State: m.state, SourceBranch: m.sourceBranch, TargetBranch: m.targetBranch,
 		Title: m.title, Description: m.description, Labels: append([]string(nil), m.labels...),
 		SHA: cmp.Or(m.recordedSHA, m.sha), WebURL: m.webURL, Automerge: m.automerge,
-		DetailedMergeStatus: m.detailedMergeStatus, HasConflicts: m.hasConflicts,
+		DetailedMergeStatus: m.detailedMergeStatus, HasConflicts: m.hasConflicts, Draft: m.draft,
 		CreatedAt: m.createdAt, UpdatedAt: m.updatedAt, MergedAt: m.mergedAt,
 	}
 }
@@ -213,6 +228,11 @@ func (s *gitlabServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// the estate; issues carry their author.
 	if r.URL.Path == "/api/v4/user" && r.Method == http.MethodGet {
 		writeJSON(w, http.StatusOK, map[string]any{"id": 322, "username": "renovate-bot"})
+		return
+	}
+
+	if r.URL.Path == "/api/v4/merge_requests" && r.Method == http.MethodGet {
+		s.listAllMergeRequests(w, r)
 		return
 	}
 
@@ -393,12 +413,41 @@ func (s *gitlabServer) serveOneMergeRequest(w http.ResponseWriter, r *http.Reque
 	if !hasSub {
 		switch r.Method {
 		case http.MethodGet:
-			writeJSON(w, http.StatusOK, mr.toJSON())
+			s.mu.Lock()
+			doc := asMap(mr.toJSON())
+			if mr.pipelineStatus != "" {
+				doc["head_pipeline"] = map[string]any{"id": 1, "status": mr.pipelineStatus, "sha": mr.pipelineSHA}
+			} else {
+				doc["head_pipeline"] = nil
+			}
+			s.mu.Unlock()
+			writeJSON(w, http.StatusOK, doc)
 		case http.MethodPut:
 			s.updateMergeRequest(w, mr, body)
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
 		}
+		return
+	}
+	if sub == "commits" && r.Method == http.MethodGet {
+		s.mu.Lock()
+		var all []any
+		for _, a := range mr.commitAuthors {
+			all = append(all, map[string]any{"id": "c", "author_email": a})
+		}
+		s.mu.Unlock()
+		writePage(w, r, all)
+		return
+	}
+	if sub == "notes" && r.Method == http.MethodGet {
+		s.mu.Lock()
+		var all []any
+		for i := len(mr.notes) - 1; i >= 0; i-- { // newest first, as asked
+			n := mr.notes[i]
+			all = append(all, map[string]any{"body": n.body, "system": n.system, "author": map[string]any{"id": n.authorID, "username": n.username}})
+		}
+		s.mu.Unlock()
+		writePage(w, r, all)
 		return
 	}
 	if sub == "merge" && r.Method == http.MethodPut {
@@ -540,6 +589,61 @@ func (s *gitlabServer) serveSignature(w http.ResponseWriter, proj *fakeProject, 
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"verification_status": status})
+}
+
+// listAllMergeRequests is GET /merge_requests: every project's requests,
+// filtered by state and label, each with its references.full.
+func (s *gitlabServer) listAllMergeRequests(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	s.mu.Lock()
+	paths := make([]string, 0, len(s.projects))
+	for k := range s.projects {
+		paths = append(paths, k)
+	}
+	slices.Sort(paths)
+	var all []any
+	for _, k := range paths {
+		p := s.projects[k]
+		for _, m := range p.mrs {
+			if st := q.Get("state"); st != "" && m.state != st {
+				continue
+			}
+			if l := q.Get("labels"); l != "" && !slices.Contains(m.labels, l) {
+				continue
+			}
+			doc := asMap(m.toJSON())
+			doc["references"] = map[string]any{"full": fmt.Sprintf("%s!%d", p.pathWithNamespace, m.iid)}
+			all = append(all, doc)
+		}
+	}
+	s.mu.Unlock()
+	writePage(w, r, all)
+}
+
+// writePage answers one page of all at the forced page size, with
+// X-Next-Page while more follow.
+func writePage(w http.ResponseWriter, r *http.Request, all []any) {
+	page, _ := strconv.Atoi(r.URL.Query().Get("page"))
+	page = max(page, 1)
+	start := min((page-1)*testPageSize, len(all))
+	end := min(start+testPageSize, len(all))
+	if end < len(all) {
+		w.Header().Set("X-Next-Page", strconv.Itoa(page+1))
+	}
+	out := all[start:end]
+	if out == nil {
+		out = []any{}
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// asMap turns a merge request into the generic shape a handler can add
+// fields to that mrJSON does not carry.
+func asMap(m mrJSON) map[string]any {
+	raw, _ := json.Marshal(m)
+	var doc map[string]any
+	_ = json.Unmarshal(raw, &doc)
+	return doc
 }
 
 func splitLabels(s string) []string {

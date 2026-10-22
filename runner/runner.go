@@ -257,10 +257,15 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: automerge withheld, !%d merged the same edits before", b.Name, prior)})
 			}
 		}
+		direct := b.AutomergeDirect == nil || *b.AutomergeDirect
+		// The marker records the decision in the request itself, so the arm
+		// watch can arm it once GitLab has a pipeline - which can come
+		// minutes after this run has moved on (armwatch.go).
 		req := publish.Request{
 			SourceBranch: b.Name, TargetBranch: o.Base, Title: b.Title,
-			Description: description(b, plan.Updates, footer), Labels: union(o.Labels, b.Labels),
-			Automerge: automerge, AutomergeDirect: b.AutomergeDirect == nil || *b.AutomergeDirect,
+			Description: withAutomergeMarker(description(b, plan.Updates, footer), automerge, direct),
+			Labels:      union(o.Labels, b.Labels),
+			Automerge:   automerge, AutomergeDirect: direct,
 			RemoveSourceBranch: true,
 		}
 		if pushed {
@@ -292,7 +297,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 				mr, armed = armNew(ctx, o, mr, req)
 				if !armed && mr.AutomergeRefused == "" {
 					plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
-						"%s: !%d pushed, automerge not armed again yet - GitLab had no pipeline to wait for within %s; the next run arms it", b.Name, mr.IID, armWindow)})
+						"%s: !%d pushed, automerge not armed again yet - GitLab had no pipeline to wait for within %s; the arm watch arms it once there is one (every 10 minutes)", b.Name, mr.IID, armWindow)})
 				}
 			}
 			action := "unchanged"
@@ -313,7 +318,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 				mr, armed = armNew(ctx, o, mr, req)
 				if !armed && mr.AutomergeRefused == "" {
 					plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
-						"%s: !%d opened, automerge not armed yet - GitLab had no pipeline to wait for within %s; the next run arms it", b.Name, mr.IID, armWindow)})
+						"%s: !%d opened, automerge not armed yet - GitLab had no pipeline to wait for within %s; the arm watch arms it once there is one (every 10 minutes)", b.Name, mr.IID, armWindow)})
 				}
 			}
 		}

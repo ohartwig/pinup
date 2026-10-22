@@ -6,3 +6,5 @@ package gitlab
 import "github.com/ohartwig/pinup/publish"
 
 var _ publish.Platform = (*Platform)(nil)
+
+var _ publish.ArmWatcher = (*Platform)(nil)
