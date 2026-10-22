@@ -231,6 +231,7 @@ pinup print-config --config .pinup.yaml --explain                  # what a conf
 pinup migrate --config renovate.json [--to yaml]                   # which keys pinup supports; a YAML rewrite
 pinup advise --config .pinup.yaml [--plan plan.json] [--fix]       # what to change - performance, security, hygiene - and why
 pinup advisories --index '.pinup/consumers.json'                   # OSV over everything the runs have seen, no clone
+pinup arm-watch --filter '["group/**"]'                            # arm automerge once GitLab has the pipeline, no clone
 pinup shadow --plans 'reports/*.json'                              # compare with the merge requests another tool has open
 ```
 

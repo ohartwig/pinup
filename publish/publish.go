@@ -84,8 +84,14 @@ type MergeRequest struct {
 	// Both false when the platform does not say.
 	PipelineBusy bool
 	Conflict     bool
-	CreatedAt    time.Time
-	UpdatedAt    time.Time
+	// Draft: the request is marked as a draft and will not merge.
+	Draft     bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	// Project is the request's project path. Set by the estate-wide
+	// listing (ArmWatcher.OpenLabelled), where requests of many projects
+	// come back together; empty where the caller named the project.
+	Project string
 }
 
 // Request is what a branch wants its merge request to look like.
@@ -184,6 +190,34 @@ type Platform interface {
 	// it with its description - what the dashboard's ticked boxes are read
 	// from before a run plans.
 	ReadIssue(ctx context.Context, p Project, title string) (Issue, string, bool, error)
+}
+
+// ArmWatcher is what the arm watch needs from a platform beyond Platform:
+// the open requests of the whole estate under one label, and per request
+// the facts arming automerge depends on - read one at a time, so a request
+// ruled out by the first costs no further call. GitLab implements it.
+//
+// The watch exists because GitLab cannot arm automerge before the head has
+// a pipeline, and a pipeline can come minutes after the push - longer than
+// a run can wait for it (runner.ArmWatch).
+type ArmWatcher interface {
+	// OpenLabelled lists every open merge request the token can see that
+	// carries label, across projects, with Project set on each.
+	OpenLabelled(ctx context.Context, label string) ([]MergeRequest, error)
+	// HeadPipeline reports the request's head pipeline: its status and the
+	// commit it ran for, both empty when there is none yet.
+	HeadPipeline(ctx context.Context, project string, iid int) (status, sha string, err error)
+	// CommitAuthors lists the author email of every commit on the request.
+	CommitAuthors(ctx context.Context, project string, iid int) ([]string, error)
+	// AutomergeCanceledBy names the users other than the token's own who
+	// canceled the automatic merge of the request - a person's answer.
+	AutomergeCanceledBy(ctx context.Context, project string, iid int) ([]string, error)
+	// ArmAutomerge arms automerge on the request bound to sha, or with
+	// direct merges a request the platform calls mergeable now. It
+	// reports the request afterwards: Automerge or State "merged" when it
+	// took, AutomergeRefused when the platform said no for good, neither
+	// for "not yet".
+	ArmAutomerge(ctx context.Context, project string, iid int, sha string, direct bool) (MergeRequest, error)
 }
 
 // Issue is an issue on the platform, as much of it as pinup reads back.

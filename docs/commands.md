@@ -280,6 +280,23 @@ advisories not reported before. No clone: the index has the versions.
 The runner follows a report with `run --project <repo> --package
 <datasource:name>` per finding.
 
+## arm-watch
+
+`pinup arm-watch --filter '<live filter>'`: arm automerge on the bot's
+open merge requests that want it, without a clone. A run that pushes
+waits a minute for GitLab to create the pipeline it cannot arm without;
+a pipeline created later left the request green and unarmed until a run
+that did not push. The run therefore ends the description of a request
+that wants automerge with a hidden marker, `<!-- pinup:automerge -->`
+(`<!-- pinup:automerge direct -->` with `automergeDirect`), and the watch
+lists every open request labelled `pinup` (`--label`) and arms those whose
+last line is the marker, that are not armed, not a draft, not conflicted,
+whose head pipeline exists for the current head and has not failed or
+been canceled, whose every commit is by the bot (`--author-email`,
+default `PINUP_GIT_EMAIL`) and on which no person canceled the automatic
+merge. One line per request, the counts and the API calls at the end; a
+request that could not be read fails the pass. GitLab only.
+
 ## shadow
 
 Compare plan reports with the merge requests another tool (or a previous
