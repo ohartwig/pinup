@@ -370,6 +370,12 @@ var mutators = []mutator{
 		"\t\t\tplan.LockedPackages = append(plan.LockedPackages, l.pkg)", "\t\t\t_ = l", []string{"./cmd/pinup/"}, false, ""},
 	{107, "lockwatch", "the index drops lock-only packages", "report/consumers.go",
 		"\tfor _, l := range plan.LockedPackages {", "\tfor _, l := range plan.LockedPackages[:0] {", []string{"./cmd/pinup/"}, false, ""},
+	// The arm watch (2026-10-22, moselwal-websites!1119): it arms only what
+	// the run marked, and leaves a request a person took over or answered.
+	{108, "armwatch", "the arm watch arms a request whose head a person pushed", "runner/armwatch.go",
+		"\t\tif !strings.EqualFold(a, o.AuthorEmail) {", "\t\tif false && !strings.EqualFold(a, o.AuthorEmail) {", []string{"./runner/"}, false, ""},
+	{109, "armwatch", "a release note's look-alike marker arms a request", "runner/armwatch.go",
+		"\tdescription = strings.ReplaceAll(description, markerPrefix, \"<!-- pinup-quoted:automerge\")\n", "", []string{"./runner/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {
