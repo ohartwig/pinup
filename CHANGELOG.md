@@ -1,3 +1,13 @@
+## [0.66.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.9...v0.66.0) (2026-10-22)
+
+### :sparkles: Features
+
+* **runner:** arm automerge once GitLab has the pipeline (arm-watch) ([91c24a5](https://git.ole-hartwig.eu/pinup/pinup/commit/91c24a5c3c57354aa385f0a3741599c0107a66e4))
+
+### :white_check_mark: Tests
+
+* **mutate:** two mutators for the arm watch ([204bc2d](https://git.ole-hartwig.eu/pinup/pinup/commit/204bc2d0b03682c0534f12ed45a642f8d6d214e8))
+
 ## [0.65.9](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.8...v0.65.9) (2026-10-22)
 
 ### :repeat: Chores
