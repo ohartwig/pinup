@@ -1,3 +1,13 @@
+## [0.65.8](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.7...v0.65.8) (2026-10-22)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 1034473 ([2a23c17](https://git.ole-hartwig.eu/pinup/pinup/commit/2a23c17aba423b2a4a8fe0f70ab727440e462ab6))
+
+### :repeat: Chores
+
+* **deps:** update alpine + wolfi packages ([5d4072a](https://git.ole-hartwig.eu/pinup/pinup/commit/5d4072a93b5d4f4304ca17d813239de6ce1ea863))
+
 ## [0.65.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.6...v0.65.7) (2026-10-21)
 
 ### :repeat: Continuous Integrations
