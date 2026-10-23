@@ -27,7 +27,7 @@ Two images per release, `linux/amd64` and `linux/arm64`:
 | Image | What is in it |
 |---|---|
 | `ghcr.io/ohartwig/pinup` | pinup, git, gpg, ssh-keygen. No Node, no PHP - the build fails if either turns up. |
-| `ghcr.io/ohartwig/pinup-toolchain` | the same, plus composer, npm, node, go and yarn for lock-file refreshes and `postUpgradeTasks` |
+| `ghcr.io/ohartwig/pinup-toolchain` | the same, plus composer, npm, node, go, yarn and pnpm for lock-file refreshes and `postUpgradeTasks` |
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
@@ -40,11 +40,12 @@ scan carry composer, npm or Go locks: pinup only needs a package manager
 when an update has a lock file to regenerate, and the toolchain image is
 five times the size.
 
-The binary in the image is the one from the release - the workflow that
+The binary in the image is the one from the release - the pipeline that
 builds the image downloads it and checks it against `SHA256SUMS` rather
-than compiling its own. Both images are signed keyless, so the signature
-is verifiable without a key from us. The image runs as uid 1000 in
-`/workspace`.
+than compiling its own, and the image on ghcr.io is that pipeline's image,
+copied with its signature. Both images are signed with the key whose
+public half is [`cosign.pub`](../cosign.pub), the same key that signs
+`SHA256SUMS`. The image runs as uid 1000 in `/workspace`.
 
 [Container images](container-images.md) has the package pages, the
 `cosign verify` line, what each image carries and what running one needs.

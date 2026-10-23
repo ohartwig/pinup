@@ -4,7 +4,6 @@
 package githubactions
 
 import (
-	"os"
 	"strings"
 	"testing"
 
@@ -172,25 +171,6 @@ func TestBrokenYAMLIsAWarningNotAnError(t *testing.T) {
 	res := run(t, ".github/workflows/x.yml", "jobs: [unclosed\n")
 	if len(res.Deps) != 0 || len(res.Warnings) != 1 {
 		t.Fatalf("got %d deps and %d warnings, want 0 and 1", len(res.Deps), len(res.Warnings))
-	}
-}
-
-// Every action this repository's own workflow uses is pinned by SHA with
-// its version beside it - the shape this manager exists for. None may be
-// skipped.
-func TestThisRepositorysWorkflow(t *testing.T) {
-	raw, err := os.ReadFile("../../.github/workflows/images.yml")
-	if err != nil {
-		t.Fatal(err)
-	}
-	res := run(t, ".github/workflows/images.yml", string(raw))
-	if len(res.Deps) < 5 {
-		t.Fatalf("found %d actions in images.yml", len(res.Deps))
-	}
-	for _, d := range res.Deps {
-		if d.SkipReason != "" || d.CurrentDigest == "" || d.CurrentValue == "" {
-			t.Errorf("%s: value %q digest %q skip %q", d.DepName, d.CurrentValue, d.CurrentDigest, d.SkipReason)
-		}
 	}
 }
 
