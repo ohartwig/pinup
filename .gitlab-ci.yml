@@ -541,6 +541,14 @@ release:links:
 update:pinup:
   stage: update
   image: ${PINUP_TOOLCHAIN_IMAGE}
+  # az1a, not the default pool: the spot runners are IPv6-only, and
+  # cgr.dev publishes no AAAA record. On spot every lookup of
+  # cgr.dev/chainguard/wolfi-base failed ("dial tcp4 ... i/o timeout",
+  # dashboard #1), so the base digest of packaging/Containerfile sat on
+  # its 2026-09-22 pin until the image scan on GitHub failed on its
+  # ca-certificates-bundle (v0.65.8 to v0.66.0). The runner's scan jobs
+  # pin the same pool.
+  tags: [az1a]
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
     - when: never
