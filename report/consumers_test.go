@@ -148,3 +148,43 @@ func TestIndexesMergeByWhoRecordedARepositoryLast(t *testing.T) {
 		}
 	}
 }
+
+// A consumer that names a component only by its floating major gains
+// nothing from a release in that major; every other shape is run.
+func TestFloatingMajorOnlyForAMajorThatAdmitsTheRelease(t *testing.T) {
+	const cdp = "devops/ci-cd-components/composed-default-pipelines"
+	component := func(ds, value string) Dependency {
+		return Dependency{Datasource: ds, PackageName: cdp, Version: value, File: ".gitlab-ci.yml"}
+	}
+	other := Dependency{Datasource: "docker", PackageName: "registry.ole-hartwig.eu/devops/images/golang", Version: "2.6.13"}
+	for _, c := range []struct {
+		name     string
+		deps     []Dependency
+		recorded bool
+		version  string
+		want     bool
+	}{
+		{"catalog component and include, both @2", []Dependency{component("gitlab-releases", "2"), component("gitlab-tags", "2"), other}, true, "2.28.87", true},
+		{"a v-prefixed release", []Dependency{component("gitlab-tags", "2")}, true, "v2.28.87", true},
+		{"an exact pin", []Dependency{component("gitlab-tags", "2.28.86")}, true, "2.28.87", false},
+		{"one floating, one exact", []Dependency{component("gitlab-releases", "2"), component("gitlab-tags", "2.28.86")}, true, "2.28.87", false},
+		{"a new major is news", []Dependency{component("gitlab-tags", "2")}, true, "3.0.0", false},
+		{"a value nothing resolves", []Dependency{component("gitlab-tags", "${CDP_REF}")}, true, "2.28.87", false},
+		{"a docker tag may be digest-pinned", []Dependency{{Datasource: "docker", PackageName: "registry.ole-hartwig.eu/" + cdp, Version: "2"}}, true, "2.28.87", false},
+		{"no version given", []Dependency{component("gitlab-tags", "2")}, true, "", false},
+		{"a version that is not a number", []Dependency{component("gitlab-tags", "2")}, true, "latest", false},
+		{"no dependency on the project", []Dependency{other}, true, "2.28.87", false},
+		{"an index without the repository's dependencies", nil, false, "2.28.87", false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			x := NewIndex()
+			if c.recorded {
+				x.Dependencies["development/app"] = c.deps
+			}
+			major, got := x.FloatingMajor("development/app", cdp, c.version)
+			if got != c.want || (got && major != "2") {
+				t.Errorf("FloatingMajor = %q, %v; want %v", major, got, c.want)
+			}
+		})
+	}
+}

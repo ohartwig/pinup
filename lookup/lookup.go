@@ -143,7 +143,12 @@ type Fetcher struct {
 	OwnHosts []string
 	// Bypass, when set, names refs whose cached answer is not to be used:
 	// the release fast lane must see the tag that was pushed a minute ago,
-	// not last hour's list. The fresh answer is still written back.
+	// not last hour's list. The fresh answer is still written back - and
+	// an answer fetched at Now or later is used: Now is the invocation's
+	// start, which every repository of one fast lane shares, so the first
+	// consumer asks the registry and the other 157 read its answer. Until
+	// 2026-10-23 each asked again; composed-default-pipelines has 1,863
+	// releases, and that was ten to fifteen seconds of every consumer's plan.
 	Bypass func(Ref) bool
 
 	mu       sync.Mutex
@@ -210,11 +215,14 @@ func (f *Fetcher) Fetch(ctx context.Context, deps []model.Dependency) map[string
 func (f *Fetcher) one(ctx context.Context, ref Ref) Result {
 	key := ref.Key()
 	var stale *model.ReleaseSet
-	if f.Cache != nil && (f.Bypass == nil || !f.Bypass(ref)) {
+	if f.Cache != nil {
+		bypass := f.Bypass != nil && f.Bypass(ref)
 		payload, fresh, cerr := f.Cache.GetReleases(key, f.ttlFor(ref), f.Now)
 		if cerr == nil && payload != nil {
 			var cached model.ReleaseSet
-			if json.Unmarshal(payload, &cached) == nil {
+			// A bypassed ref older than this invocation is not used, not
+			// even as a stale fallback.
+			if json.Unmarshal(payload, &cached) == nil && (!bypass || !cached.FetchedAt.Before(f.Now)) {
 				if fresh {
 					cached.FromCache = true
 					f.recordFirstSeen(key, &cached)

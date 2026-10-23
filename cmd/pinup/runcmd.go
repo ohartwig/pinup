@@ -491,6 +491,11 @@ func runReleased(ctx context.Context, o *runOptions, spec string, only *glob.Set
 	} else {
 		fmt.Fprintf(errw, "fast lane: %s%s has %d consumers\n", path, atVersion(version), len(consumers))
 	}
+	consumers = skipFloatingMajors(o.index, path, version, consumers, errw)
+	if len(consumers) == 0 {
+		fmt.Fprintf(out, "%s: every consumer follows the release by its floating major; nothing to do\n", path)
+		return nil
+	}
 	o.released = path
 	failed := 0
 	failed = runEach(ctx, o, consumers, repositoryConcurrency(os.Getenv), reportPath, out, errw)
@@ -507,6 +512,35 @@ func runReleased(ctx context.Context, o *runOptions, spec string, only *glob.Set
 		}
 	}
 	return nil
+}
+
+// skipFloatingMajors leaves out the consumers that refer to the release
+// only by a floating major that already admits it (report.FloatingMajor),
+// before anything is cloned: such a run plans nothing - GitLab resolves
+// `component@2` to the newest 2.x itself - and cost a clone, a lookup and
+// a plan per consumer (2026-10-23: 155 of 158 for composed-default-pipelines,
+// fourteen minutes per release). Each one is named in the log with the
+// reason; a consumer with an exact pin, or one the index cannot vouch for,
+// is run as before.
+func skipFloatingMajors(idx *report.Index, path, version string, consumers []string, errw io.Writer) []string {
+	var kept, skipped []string
+	major := ""
+	for _, c := range consumers {
+		if m, ok := idx.FloatingMajor(c, path, version); ok {
+			major = m
+			skipped = append(skipped, c)
+			continue
+		}
+		kept = append(kept, c)
+	}
+	if len(skipped) == 0 {
+		return consumers
+	}
+	fmt.Fprintf(errw, "fast lane: %d of %d consumers refer to %s only as @%s, which GitLab already resolves to %s; skipped, %d to run\n", len(skipped), len(consumers), path, major, version, len(kept))
+	for _, c := range skipped {
+		fmt.Fprintf(errw, "  skipped %s: floating major @%s\n", c, major)
+	}
+	return kept
 }
 
 func atVersion(v string) string {

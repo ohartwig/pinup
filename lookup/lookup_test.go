@@ -315,3 +315,44 @@ func TestDigestIsCachedPerVersionAndNeverEmpty(t *testing.T) {
 		t.Error("a datasource without digests answered one")
 	}
 }
+
+// The fast lane bypasses the cache for the released package - it must see
+// the tag pushed a minute ago - but only answers older than the invocation:
+// the first consumer asks the registry, the others of the same run read
+// that answer. A failed fresh lookup does not fall back to an older entry.
+func TestBypassUsesOnlyAnswersOfThisInvocation(t *testing.T) {
+	ds := &countingDS{calls: map[string]int{}, releases: map[string][]string{"a": {"1.0.0"}}}
+	c := newMemCache()
+	f := &Fetcher{Registry: Registry{"fake": ds}, Cache: c, TTL: time.Hour, Now: now}
+	f.Fetch(t.Context(), []model.Dependency{dep("a", "fake")})
+
+	// A later invocation: the ten-minute-old entry is ignored.
+	f.Now = now.Add(10 * time.Minute)
+	f.Bypass = func(Ref) bool { return true }
+	ds.releases["a"] = []string{"1.0.0", "1.1.0"}
+	res := f.Fetch(t.Context(), []model.Dependency{dep("a", "fake")})
+	if ds.calls["a"] != 2 {
+		t.Fatalf("a bypassed ref answered from an earlier run's cache: %d calls", ds.calls["a"])
+	}
+	if r := res[RefOf(dep("a", "fake")).Key()]; r.Releases.FromCache || len(r.Releases.Releases) != 2 {
+		t.Errorf("bypassed result %+v", r.Releases)
+	}
+
+	// The next consumer of the same invocation reads that answer.
+	res = f.Fetch(t.Context(), []model.Dependency{dep("a", "fake")})
+	if ds.calls["a"] != 2 {
+		t.Fatalf("the same invocation asked the registry again: %d calls", ds.calls["a"])
+	}
+	if r := res[RefOf(dep("a", "fake")).Key()]; !r.Releases.FromCache || len(r.Releases.Releases) != 2 {
+		t.Errorf("result within the invocation %+v", r.Releases)
+	}
+
+	// A later invocation whose lookup fails gets the failure, not the
+	// older list.
+	f.Now = now.Add(20 * time.Minute)
+	ds.err = errors.New("connection refused")
+	res = f.Fetch(t.Context(), []model.Dependency{dep("a", "fake")})
+	if r := res[RefOf(dep("a", "fake")).Key()]; r.Releases == nil || r.Releases.Err == "" || r.Releases.FromCache {
+		t.Errorf("a failed bypassed lookup served the cache: %+v", r.Releases)
+	}
+}
