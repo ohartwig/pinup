@@ -376,6 +376,16 @@ var mutators = []mutator{
 		"\t\tif !strings.EqualFold(a, o.AuthorEmail) {", "\t\tif false && !strings.EqualFold(a, o.AuthorEmail) {", []string{"./runner/"}, false, ""},
 	{109, "armwatch", "a release note's look-alike marker arms a request", "runner/armwatch.go",
 		"\tdescription = strings.ReplaceAll(description, markerPrefix, \"<!-- pinup-quoted:automerge\")\n", "", []string{"./runner/"}, false, ""},
+	// The fast lane's cost (2026-10-23: 353 runs, 1,100 runner-minutes in
+	// one night): floating-major consumers are not cloned, the released
+	// package is looked up once per run, routine lock maintenance stays
+	// with the scheduled run.
+	{110, "fastlane", "a floating-major consumer is run anyway", "cmd/pinup/runcmd.go",
+		"if m, ok := idx.FloatingMajor(c, path, version); ok {", "if m, ok := idx.FloatingMajor(c, path, version); false && ok {", []string{"./cmd/pinup/"}, false, ""},
+	{111, "fastlane", "the fast lane asks the registry once per consumer", "lookup/lookup.go",
+		"(!bypass || !cached.FetchedAt.Before(f.Now))", "!bypass", []string{"./lookup/"}, false, ""},
+	{112, "fastlane", "a narrowed run plans routine lock maintenance", "cmd/pinup/whatif.go",
+		"ok && !narrowed {", "ok {", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

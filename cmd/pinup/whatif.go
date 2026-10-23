@@ -834,8 +834,9 @@ func (r *whatifRun) planUpdates() error {
 	// lockFileMaintenance: one refresh per lock file the run read, planned
 	// as its own update so the branch Renovate opens for it exists here
 	// too; the branch's task is the toolchain run, and a machine without
-	// the toolchain holds it.
-	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, r.locks, r.transitive)...)
+	// the toolchain holds it. A run narrowed to one package plans only the
+	// security refreshes: routine maintenance is the scheduled run's.
+	planned.Updates = append(planned.Updates, lockMaintenance(resolved.Raw, plan.Deps, r.locks, r.transitive, o.Released != "" || o.Package != "")...)
 
 	var named []planner.Named
 	r.postUpgrade = map[string]plugin.PostUpgrade{}
@@ -2129,9 +2130,17 @@ func holdBranch(b *model.Branch, updates []model.Update, block model.Block) {
 // transitive packages carry advisories gets its refresh as a security fix -
 // planned even where lockFileMaintenance is off, and released from its
 // schedule by the vulnerabilityAlerts keys securityLockOverlay applies.
-func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[string]string, transitive map[string][]model.Advisory) []model.Update {
+//
+// narrowed - the fast lane, --package - plans the security refreshes alone.
+// Routine maintenance has nothing to do with the package such a run is for,
+// and the scheduled run plans it anyway; in the fast lane it ran composer
+// or npm in every consumer that had a lock, and one consumer whose refresh
+// could not be pushed failed the whole run, which was then retried:
+// 2026-10-23, ai-ready-platform/platform/commerce failed 12 of the 18
+// composed-default-pipelines runs of the night, each over 158 consumers.
+func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[string]string, transitive map[string][]model.Advisory, narrowed bool) []model.Update {
 	on := false
-	if lfm, ok := cfg["lockFileMaintenance"].(map[string]any); ok {
+	if lfm, ok := cfg["lockFileMaintenance"].(map[string]any); ok && !narrowed {
 		on, _ = lfm["enabled"].(bool)
 	}
 	if !on && len(transitive) == 0 {

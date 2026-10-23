@@ -112,16 +112,21 @@ func TestSecurityLockRefresh(t *testing.T) {
 		name       string
 		cfg        map[string]any
 		transitive map[string][]model.Advisory
+		narrowed   bool
 		want       int
 		security   bool
 	}{
-		{"maintenance on, nothing found", on, nil, 1, false},
-		{"maintenance on, a finding", on, finding, 1, true},
-		{"maintenance off, nothing found", off, nil, 0, false},
-		{"maintenance off, a finding still refreshes", off, finding, 1, true},
+		{"maintenance on, nothing found", on, nil, false, 1, false},
+		{"maintenance on, a finding", on, finding, false, 1, true},
+		{"maintenance off, nothing found", off, nil, false, 0, false},
+		{"maintenance off, a finding still refreshes", off, finding, false, 1, true},
+		// The fast lane and --package: routine maintenance is the
+		// scheduled run's, a security refresh is still theirs.
+		{"narrowed run, maintenance on, nothing found", on, nil, true, 0, false},
+		{"narrowed run, a finding still refreshes", on, finding, true, 1, true},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			ups := lockMaintenance(c.cfg, deps, locks, c.transitive)
+			ups := lockMaintenance(c.cfg, deps, locks, c.transitive, c.narrowed)
 			if len(ups) != c.want {
 				t.Fatalf("%d updates, want %d", len(ups), c.want)
 			}
