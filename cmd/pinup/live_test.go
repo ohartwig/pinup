@@ -170,6 +170,65 @@ func TestReleasedTakesAutodiscoverAsAFilter(t *testing.T) {
 	}
 }
 
+// The fast lane leaves out, before any clone, the consumers that name the
+// released component only by a floating major that admits the release, and
+// says which and why; a consumer with an exact pin is still run.
+func TestReleasedSkipsFloatingMajorConsumers(t *testing.T) {
+	const cdp = "devops/ci-cd-components/composed-default-pipelines"
+	floating := []report.Dependency{
+		{Datasource: "gitlab-releases", PackageName: cdp, Version: "2", File: ".gitlab-ci.yml"},
+		{Datasource: "gitlab-tags", PackageName: cdp, Version: "2", File: ".gitlab-ci.yml"},
+	}
+	idx := &report.Index{
+		Consumers:    map[string][]string{"gitlab-tags|" + cdp: {"development/app", "devops/images/rust", "devops/pinned"}},
+		Repositories: map[string]time.Time{},
+		Dependencies: map[string][]report.Dependency{
+			"development/app":    floating,
+			"devops/images/rust": floating,
+			"devops/pinned":      {{Datasource: "gitlab-tags", PackageName: cdp, Version: "2.28.86", File: ".gitlab-ci.yml"}},
+		},
+	}
+	dir := t.TempDir()
+	o := &runOptions{index: idx, indexPath: filepath.Join(dir, "consumers.json"), indexPattern: filepath.Join(dir, "consumers.json"), dryRun: true, now: time.Now(), platform: &platformfake.Platform{}}
+	var out, errw strings.Builder
+	// The pinned consumer is run (and fails here, having no clone); the
+	// two floating ones are named as skipped.
+	_ = runReleased(t.Context(), o, cdp+"@2.28.87", nil, "", &out, &errw)
+	for _, want := range []string{
+		"2 of 3 consumers refer to " + cdp + " only as @2, which GitLab already resolves to 2.28.87; skipped, 1 to run",
+		"skipped development/app: floating major @2",
+		"skipped devops/images/rust: floating major @2",
+		"devops/pinned:",
+	} {
+		if !strings.Contains(errw.String(), want) {
+			t.Errorf("missing %q in errw=%q", want, errw.String())
+		}
+	}
+	if strings.Contains(errw.String(), "\ndevelopment/app:") {
+		t.Errorf("a floating consumer was run: %q", errw.String())
+	}
+
+	// A new major is news to every consumer: nothing is skipped.
+	out.Reset()
+	errw.Reset()
+	_ = runReleased(t.Context(), o, cdp+"@3.0.0", nil, "", &out, &errw)
+	if strings.Contains(errw.String(), "skipped") {
+		t.Errorf("a major release skipped consumers: %q", errw.String())
+	}
+
+	// Every consumer floating: nothing to do, nothing run.
+	delete(idx.Dependencies, "devops/pinned")
+	idx.Consumers["gitlab-tags|"+cdp] = []string{"development/app", "devops/images/rust"}
+	out.Reset()
+	errw.Reset()
+	if err := runReleased(t.Context(), o, cdp+"@2.28.88", nil, "", &out, &errw); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "every consumer follows the release by its floating major; nothing to do") {
+		t.Errorf("out=%q errw=%q", out.String(), errw.String())
+	}
+}
+
 // A run narrowed to one package sees one dependency and must not record
 // it as the repository's whole list; the fast lane and a run given
 // several indexes to read do not record either.

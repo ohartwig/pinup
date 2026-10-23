@@ -282,6 +282,59 @@ func (x *Index) ConsumersOf(projectPath string) []string {
 	return out
 }
 
+// FloatingMajor reports whether repo refers to the released project only
+// by a floating major that already admits the release: every entry the
+// index records for it is a GitLab release or tag (a CI/CD catalog
+// component, an include) whose value is a bare major - "2" - equal to the
+// major of version. GitLab resolves `component@2` to the newest 2.x on
+// its own, so a 2.x release gives such a consumer nothing to change; the
+// default configuration freezes those references, and a run against it
+// ends "1 updates (1 held), 0 branches". Measured 2026-10-23: 155 of the
+// 158 consumers of composed-default-pipelines, about fourteen minutes of
+// fast lane per release, for nothing.
+//
+// It answers false whenever it cannot tell: an index without the
+// repository's dependencies, an exact or unresolvable value, any other
+// datasource (a docker tag "2" may be digest-pinned, and the digest moves),
+// a version whose major is not a number, a release of a newer major - the
+// major update is news. The major it returns is the one it matched.
+func (x *Index) FloatingMajor(repo, projectPath, version string) (string, bool) {
+	major, ok := majorOf(version)
+	if !ok {
+		return "", false
+	}
+	deps, ok := x.Dependencies[repo]
+	if !ok {
+		return "", false
+	}
+	found := false
+	for _, d := range deps {
+		if d.Lock != "" || d.Artifact != "" || !RefersTo(d.Datasource+"|"+d.PackageName, projectPath) {
+			continue
+		}
+		if !floatingDatasources[d.Datasource] || d.Version != major {
+			return "", false
+		}
+		found = true
+	}
+	return major, found
+}
+
+// floatingDatasources are those whose bare-major value GitLab itself
+// resolves to the newest release of that major: catalog components and
+// project includes, looked up through gitlab-releases or gitlab-tags.
+var floatingDatasources = map[string]bool{"gitlab-releases": true, "gitlab-tags": true}
+
+// majorOf is the major of a released version, "v2.28.87" -> "2"; false when
+// it is not a run of digits.
+func majorOf(version string) (string, bool) {
+	major, _, _ := strings.Cut(strings.TrimPrefix(version, "v"), ".")
+	if major == "" || strings.Trim(major, "0123456789") != "" {
+		return "", false
+	}
+	return major, true
+}
+
 // RefersTo reports whether an index key ("datasource|name") names the
 // released project.
 func RefersTo(key, projectPath string) bool {
