@@ -1,3 +1,19 @@
+## [0.66.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.1...v0.66.2) (2026-10-23)
+
+### :bug: Fixes
+
+* **fast-lane:** leave routine lock maintenance to the scheduled run ([d291be6](https://git.ole-hartwig.eu/pinup/pinup/commit/d291be6a5df61ca6fd92aa2c2635d1cb9c19ae0b))
+* **lookup:** look the released package up once per fast-lane run ([e703c79](https://git.ole-hartwig.eu/pinup/pinup/commit/e703c79337d6f3a9d2df6b18837881033a01ed0d))
+* **fast-lane:** skip consumers that follow the release by a floating major ([9cdd325](https://git.ole-hartwig.eu/pinup/pinup/commit/9cdd325ef23106242b4160166396ac6aa1894812))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 8f87ad3 ([d11f17f](https://git.ole-hartwig.eu/pinup/pinup/commit/d11f17f566f6c6a7ba3b1ad3b684e1b55fb71b69))
+
+### :repeat: Chores
+
+* **deps:** update cgr.dev/chainguard/wolfi-base:latest docker digest to f15fea2 ([adec4d9](https://git.ole-hartwig.eu/pinup/pinup/commit/adec4d912c754976af7743e36766039723b9bb56))
+
 ## [0.66.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.0...v0.66.1) (2026-10-23)
 
 ### :bug: Fixes
