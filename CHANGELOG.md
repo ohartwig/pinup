@@ -1,3 +1,9 @@
+## [0.66.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.0...v0.66.1) (2026-10-23)
+
+### :bug: Fixes
+
+* **ci:** run update:pinup on the IPv4 runner pool ([6c198c3](https://git.ole-hartwig.eu/pinup/pinup/commit/6c198c3cb72661f73ba311a1b656c61e2f0f11e9))
+
 ## [0.66.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.65.9...v0.66.0) (2026-10-22)
 
 ### :sparkles: Features
