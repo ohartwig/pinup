@@ -856,7 +856,7 @@ func (r *whatifRun) planUpdates() error {
 			}
 		}
 		var floor *ageRule
-		if f, ok := r.releaseAgeFor(u.Dep.Manager, u.Dep.File, u.Dep.DepName, u.NewVersion); ok {
+		if f, ok := r.releaseAgeFor(u.Dep.Manager, u.Dep.File, u.Dep.DepName, u.NewVersion); ok && !r.liftsAge(u) {
 			floor = &f
 		}
 		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now, floor)
@@ -1340,10 +1340,13 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		policy.Origins["dependencyDashboardApproval"] = kevOrigin
 	}
 	// The project's release age raises pinup's, never lowers it - and for a
-	// security fix too, which otherwise travels with none: the package
-	// manager refuses a version younger than its age whatever pinup's
-	// reason for proposing it - npm by looping, pnpm and yarn by failing.
-	// A fix it will not install is a fix that lands nowhere.
+	// security fix too, which otherwise travels with none, wherever the
+	// lock's tool cannot be told to set the age aside: the package manager
+	// refuses a version younger than its age whatever pinup's reason for
+	// proposing it - npm by looping, pnpm and yarn by failing. A fix it
+	// will not install is a fix that lands nowhere. Where it can (npm's own
+	// lock, whatifRun.liftsAge), the caller passes no floor and the lock
+	// refresh carries --min-release-age=0.
 	if floor != nil {
 		floor.raise(&policy)
 	}
@@ -1850,6 +1853,12 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 	type lockKey struct{ manager, dir string }
 	names := map[lockKey][]string{}
 	maintenance := map[lockKey]bool{}
+	// What a security fix asks of the lock's tool: the locked packages a
+	// maintenance refresh must move (its advisories), and whether a direct
+	// bump on the lock is a security fix that may take a version younger
+	// than the project's release age.
+	lifts := map[lockKey][]model.Lift{}
+	security := map[lockKey]bool{}
 	var order []lockKey
 	for _, u := range mine {
 		dir := filepath.Dir(u.Dep.File)
@@ -1862,7 +1871,13 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 				maintenance[k] = true
 				order = append(order, k)
 			}
+			if u.SecurityFix {
+				lifts[k] = append(lifts[k], liftsOf(u.Dep.Advisories)...)
+			}
 			continue
+		}
+		if u.SecurityFix {
+			security[k] = true
 		}
 		if locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)] == "" {
 			// No lock pinup reads: a manifest-only edit is the whole
@@ -1889,6 +1904,8 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		names       []string
 		maintenance bool
 		whole       bool
+		security    bool
+		lifts       []model.Lift
 	}
 	byLock := map[lockKey]*refresh{}
 	var lockOrder []lockKey
@@ -1915,6 +1932,8 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		r.names = append(r.names, names[k]...)
 		r.maintenance = r.maintenance || maintenance[k]
 		r.whole = r.whole || whole
+		r.security = r.security || security[k]
+		r.lifts = append(r.lifts, lifts[k]...)
 	}
 	for _, at := range lockOrder {
 		r := byLock[at]
@@ -1922,7 +1941,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		if r.whole {
 			refreshNames = nil
 		}
-		t, ok := plugin.LockRefresh(at.manager, at.dir, r.lockFile, refreshNames, r.maintenance)
+		t, ok := plugin.LockRefresh(at.manager, at.dir, r.lockFile, refreshNames, r.maintenance, r.security)
 		if !ok && r.maintenance {
 			// A maintenance branch is nothing but its refresh; without a
 			// refresh for this manager's lock it would be a branch with
@@ -1934,6 +1953,11 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		}
 		if ok {
 			tasks = append(tasks, t)
+		}
+		// The security half of a maintenance refresh: the advised packages
+		// alone, past the release age the routine refresh above keeps.
+		if lift, ok := plugin.SecurityLift(at.manager, at.dir, r.lockFile, r.lifts); ok && r.maintenance {
+			tasks = append(tasks, lift)
 		}
 	}
 	// postUpgradeTasks: grouped by the rule object that set them, so a
@@ -2182,6 +2206,26 @@ func lockMaintenance(cfg map[string]any, deps []model.Dependency, locks map[stri
 	return out
 }
 
+// liftsOf is what a security lock refresh must move: each advised package
+// once, with the version the lock pins and the highest first-fixed version
+// among its advisories - the one that clears them all.
+func liftsOf(advisories []model.Advisory) []model.Lift {
+	var out []model.Lift
+	at := map[string]int{}
+	for _, a := range advisories {
+		i, seen := at[a.Package]
+		if !seen {
+			at[a.Package] = len(out)
+			out = append(out, model.Lift{Package: a.Package, Installed: a.Installed, Fixed: a.Fixed})
+			continue
+		}
+		if a.Fixed != "" && (out[i].Fixed == "" || npmScheme.Compare(a.Fixed, out[i].Fixed) > 0) {
+			out[i].Fixed = a.Fixed
+		}
+	}
+	return out
+}
+
 // lockSet is one lock file a refresh regenerates and every package it pins.
 type lockSet struct {
 	manager, path string
@@ -2258,9 +2302,25 @@ func checkLockedAdvisories(ctx context.Context, client advisoryChecker, cfg map[
 			fix = "fixed in " + f.Bound
 		}
 		warns = append(warns, model.Warning{Stage: "lookup", File: path, Msg: fmt.Sprintf(
-			"transitive %s %s: %s (%s); the lock refresh moves it only as far as the constraints that require it allow", l.pkg.PackageName, l.pkg.Version, strings.Join(ids, ", "), fix)})
+			"transitive %s %s: %s (%s); %s", l.pkg.PackageName, l.pkg.Version, strings.Join(ids, ", "), fix, reachOf(locks[l.key]))})
 	}
 	return out, warns
+}
+
+// reachOf says what can keep a transitive fix out of the lock's security
+// refresh - the second half of the warning, after the advisory. Until
+// 2026-10-24 it named the constraints alone, also where the project's
+// release age was what held the fix: fast-uri 3.1.9 sat four days behind
+// a seven-day min-release-age in ten repositories whose dashboards blamed
+// ajv's ^3.0.1, which admitted it all along.
+//
+// gitlab-housekeeping matches the line up to the advisory's parentheses;
+// this half is free text for the reader.
+func reachOf(ls lockSet) string {
+	if plugin.LiftsReleaseAge(ls.manager, ls.path) {
+		return "the security lock refresh lifts it past any release age, as far as the constraints that require it allow"
+	}
+	return "the lock refresh moves it only as far as the constraints that require it and the project's release age allow"
 }
 
 // lockedEntry is one transitive package of a lock, with the lockSets key

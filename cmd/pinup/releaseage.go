@@ -12,6 +12,7 @@ import (
 	"github.com/ohartwig/pinup/manager/npmman"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/planner"
+	"github.com/ohartwig/pinup/plugin"
 	npmver "github.com/ohartwig/pinup/versioning/npm"
 )
 
@@ -111,6 +112,22 @@ func (r *whatifRun) releaseAgeFor(manager, file, depName, version string) (ageRu
 		return ageRule{}, false
 	}
 	return r.releaseAges[filepath.Dir(file)].forPackage(depName, version)
+}
+
+// liftsAge reports whether u is a security fix whose lock's tool pinup
+// tells to set the project's release age aside (plugin.LiftsReleaseAge):
+// then the age is no floor for it. A fix for a CVE travels with no release
+// age of pinup's (vulnerabilityAlerts), and the project's own age held it
+// anyway until 2026-10-24 - the floor existed because npm refused the young
+// version, and with the age lifted on the command line npm takes it.
+// Without a lock pinup refreshes, the repository's own install meets the
+// age, so the floor stays.
+func (r *whatifRun) liftsAge(u model.Update) bool {
+	if !u.SecurityFix {
+		return false
+	}
+	lock := r.locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)]
+	return lock != "" && plugin.LiftsReleaseAge(u.Dep.Manager, lock)
 }
 
 // String is the age in the configuration's own notation: whole or
