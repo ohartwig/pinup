@@ -1,3 +1,13 @@
+## [0.66.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.2...v0.66.3) (2026-10-24)
+
+### :bug: Fixes
+
+* **security:** lift a CVE fix past the project's release age and check it landed ([29ca3b2](https://git.ole-hartwig.eu/pinup/pinup/commit/29ca3b220f294ac2df6fa12e9e59be3ebe24d65e))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to dae618d ([fff7122](https://git.ole-hartwig.eu/pinup/pinup/commit/fff7122b5499d32de555db7d0b9f4d1902622726))
+
 ## [0.66.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.1...v0.66.2) (2026-10-23)
 
 ### :bug: Fixes
