@@ -1344,9 +1344,9 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 	// lock's tool cannot be told to set the age aside: the package manager
 	// refuses a version younger than its age whatever pinup's reason for
 	// proposing it - npm by looping, pnpm and yarn by failing. A fix it
-	// will not install is a fix that lands nowhere. Where it can (npm's own
-	// lock, whatifRun.liftsAge), the caller passes no floor and the lock
-	// refresh carries --min-release-age=0.
+	// will not install is a fix that lands nowhere. Where it can (npm's and
+	// pnpm's lock, whatifRun.liftsAge), the caller passes no floor and the
+	// lock refresh carries the tool's override.
 	if floor != nil {
 		floor.raise(&policy)
 	}
@@ -2317,7 +2317,7 @@ func checkLockedAdvisories(ctx context.Context, client advisoryChecker, cfg map[
 // gitlab-housekeeping matches the line up to the advisory's parentheses;
 // this half is free text for the reader.
 func reachOf(ls lockSet) string {
-	if plugin.LiftsReleaseAge(ls.manager, ls.path) {
+	if plugin.LiftsTransitive(ls.manager, ls.path) {
 		return "the security lock refresh lifts it past any release age, as far as the constraints that require it allow"
 	}
 	return "the lock refresh moves it only as far as the constraints that require it and the project's release age allow"

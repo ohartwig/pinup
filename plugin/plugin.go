@@ -83,6 +83,8 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance, 
 		argv = []string{"pnpm", "install", "--lockfile-only", "--ignore-scripts", "--pm-on-fail=warn"}
 		if maintenance {
 			argv = []string{"pnpm", "update", "--lockfile-only", "--ignore-scripts", "--pm-on-fail=warn"}
+		} else if liftAge {
+			argv = append(argv, noReleaseAgePnpm)
 		}
 		return model.Task{
 			Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: argv,
@@ -178,12 +180,38 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance, 
 // request's own `npm ci` installs what the lock pins and reads no age.
 const noReleaseAge = "--min-release-age=0"
 
+// noReleaseAgePnpm is the same for pnpm: the command line outranks
+// minimumReleaseAge in pnpm-workspace.yaml and minimum-release-age in
+// .npmrc. Measured 2026-10-24 with pnpm 11.28.6, 12.14.0 and 12.15.0 on a
+// lock pinning fast-uri 3.1.8 under minimumReleaseAge 10080: `pnpm update
+// fast-uri --lockfile-only` with it moved fast-uri to 3.1.9, without it
+// left 3.1.8; the lock stayed lockfileVersion '9.0'.
+const noReleaseAgePnpm = "--config.minimum-release-age=0"
+
 // LiftsReleaseAge reports whether a security fix in this lock can be taken
-// past the project's release age: npm's own lock, whose tool takes the age
-// from the command line as well as from .npmrc. pnpm and yarn keep the age
-// they were given - their override has not been measured here - and a
-// security fix for them still waits for it (releaseAgeFloor in cmd/pinup).
+// past the project's release age: npm's own lock and pnpm's, whose tools
+// take the age from the command line as well as from their files. yarn
+// keeps the age it was given - its override has not been measured, and the
+// estate's one yarn lock is classic, which has no age - and a security fix
+// for it still waits (releaseAgeFloor in cmd/pinup).
 func LiftsReleaseAge(manager, lockFile string) bool {
+	if manager != "npm" {
+		return false
+	}
+	switch filepath.Base(lockFile) {
+	case "package-lock.json", "npm-shrinkwrap.json", "pnpm-lock.yaml":
+		return true
+	}
+	return false
+}
+
+// LiftsTransitive reports whether a security refresh of this lock lifts its
+// transitive packages past the project's release age (SecurityLift): npm's
+// lock only. pnpm's update takes the same targeted form, but pinup reads a
+// pnpm lock's importers alone (npmman.LockedVersionsFor), so it neither
+// finds a transitive advisory there nor could it read the lift back - a
+// package it cannot see would pass as moved.
+func LiftsTransitive(manager, lockFile string) bool {
 	if manager != "npm" {
 		return false
 	}
@@ -209,9 +237,9 @@ func LiftsReleaseAge(manager, lockFile string) bool {
 // was the first form, titled [security], and merged with the advisory
 // still locked.
 //
-// Nothing is returned for a lock LiftsReleaseAge refuses, or for no lifts.
+// Nothing is returned for a lock LiftsTransitive refuses, or for no lifts.
 func SecurityLift(manager, dir, lockFile string, lifts []model.Lift) (model.Task, bool) {
-	if len(lifts) == 0 || !LiftsReleaseAge(manager, lockFile) {
+	if len(lifts) == 0 || !LiftsTransitive(manager, lockFile) {
 		return model.Task{}, false
 	}
 	names := make([]string, 0, len(lifts))
