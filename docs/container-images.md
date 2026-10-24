@@ -7,11 +7,13 @@ SPDX-License-Identifier: Apache-2.0
 
 Two images per release, `linux/amd64` and `linux/arm64`. The first release
 with images is **0.35.0**; the binaries on the release page go back further.
+A release that a newer one replaces within minutes can be skipped: the
+images follow the release the author's own pipeline runs.
 
 | Image | Package page | What is in it |
 |---|---|---|
 | `ghcr.io/ohartwig/pinup` | [pinup](https://github.com/ohartwig/pinup/pkgs/container/pinup) | pinup, `git`, `gpg` and its agent, `ssh-keygen`, a CA bundle |
-| `ghcr.io/ohartwig/pinup-toolchain` | [pinup-toolchain](https://github.com/ohartwig/pinup/pkgs/container/pinup-toolchain) | the same, plus `composer`, `php`, `node`, `npm`, `yarn`, `go` |
+| `ghcr.io/ohartwig/pinup-toolchain` | [pinup-toolchain](https://github.com/ohartwig/pinup/pkgs/container/pinup-toolchain) | the same, plus `composer`, `php`, `node`, `npm`, `yarn`, `pnpm`, `go` |
 
 ```sh
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
@@ -50,59 +52,74 @@ the image exists for, and it is checked on every build.
 
 | Tag | Moves | Use it for |
 |---|---|---|
-| `0.35.0` | never | reproducible pipelines, and anything you audit |
+| `0.35.0` | only when that release is rebuilt on a patched base | a fixed pinup version |
 | `0.35` | with each patch | a minor line you want fixes for |
 | `0` | with each minor | pinup is pre-1.0, so this line can carry behaviour changes |
 | `latest` | with each release | trying it out |
 
-A digest (`ghcr.io/ohartwig/pinup@sha256:…`) is the only reference that
-cannot change under you; in a pipeline, pin tag **and** digest and let a
-bot move both — which is, after all, what pinup is for.
+The tags name the pinup version inside the image. The image itself is
+rebuilt whenever its base or its packages get a fix, and a rebuild of the
+same pinup release moves that release's tag to the new image; the rolling
+tags only ever move forward. A digest (`ghcr.io/ohartwig/pinup@sha256:…`)
+is the only reference that cannot change under you; in a pipeline, pin tag
+**and** digest and let a bot move both — which is, after all, what pinup is
+for.
 
-## Where the binary comes from
+## Where the image comes from
 
-The image does **not** compile pinup. The workflow that builds it
-([`.github/workflows/images.yml`](https://github.com/ohartwig/pinup/blob/main/.github/workflows/images.yml))
-downloads the binaries of that release, checks them against the release's
-`SHA256SUMS`, and copies one in. The binaries are built and signed once,
-upstream, and the same files are on the release page.
+Nothing is built on GitHub. The images are built once, in the author's
+pipeline, as the images that pipeline runs pinup in itself: the binary of
+the release is downloaded, checked against the release's `SHA256SUMS` and
+copied onto a Wolfi base pinned by digest; the toolchain image adds each
+language runtime pinned to an exact Wolfi package version, so a bump is a
+reviewed diff rather than whatever the mirror served that morning. The
+image is scanned, and a CRITICAL or HIGH finding that is neither documented
+as not affecting it (VEX) nor explicitly accepted fails the build; only then
+is it signed and released. What is published here is that image, copied by
+digest — the same bytes, the same signature.
 
-That split is deliberate. An earlier workflow here rebuilt the binaries when
-the tag arrived, which put a second artefact under the release's name with
-nobody's signature on it — packaging a signed binary is not the same as
-building one, and only the first can be verified against what was published.
+That split is deliberate. These images used to be built a second time by a
+workflow in this repository, from a copy of the recipe on a different base:
+a second artefact under the release's name, with its own scan result and
+its own signature, which drifted from the one actually in use. The same
+reasoning removed an earlier workflow that rebuilt the binaries — packaging
+a signed artefact once is the only way the published one can be verified
+against what was built.
 
-The recipes are in the repository:
-[`packaging/Containerfile`](https://github.com/ohartwig/pinup/blob/main/packaging/Containerfile)
-and
-[`packaging/Containerfile.toolchain`](https://github.com/ohartwig/pinup/blob/main/packaging/Containerfile.toolchain).
-The base is Chainguard's [wolfi-base](https://github.com/wolfi-dev/os),
-pinned by digest; the toolchain pins each language runtime to an exact Wolfi
-package version, so a bump is a reviewed diff rather than whatever the
-mirror served that morning.
+The labels say what is inside: `org.opencontainers.image.version` is the
+pinup release, `org.opencontainers.image.source` this repository.
 
 ## Verifying what you pulled
 
-Both images are signed **keyless**: the signature is made against the
-workflow's OIDC identity, so it verifies without a key from us.
+Both images are signed with the same key as the release's `SHA256SUMS`. Its
+public half is [`cosign.pub`](../cosign.pub) in this repository; the
+private half is held in AWS KMS and never leaves it.
 
 ```sh
-cosign verify ghcr.io/ohartwig/pinup:0.35.0 \
-  --certificate-identity-regexp '^https://github.com/ohartwig/pinup/' \
-  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+cosign verify --key cosign.pub --insecure-ignore-tlog=true \
+  ghcr.io/ohartwig/pinup:0
 ```
 
-Each image also carries an SBOM and build provenance, attached by BuildKit
-as attestations in the image index:
+`--insecure-ignore-tlog=true` because the signatures are not recorded in
+the public Sigstore transparency log; the key is the trust anchor, and a
+signature that verifies against it was made by the pipeline that holds it.
+Verify a digest rather than a tag where you can — a signature covers the
+digest, and that is what you pin.
+
+Each image also carries a CycloneDX SBOM as a signed attestation:
 
 ```sh
-docker buildx imagetools inspect ghcr.io/ohartwig/pinup:0.35.0 \
-  --format '{{ json .SBOM }}'
+cosign verify-attestation --key cosign.pub --insecure-ignore-tlog=true \
+  --type cyclonedx ghcr.io/ohartwig/pinup:0
 ```
 
-Before the signature is made, the pushed image is scanned and a **fixable**
-CRITICAL or HIGH fails the build — an image that does not pass is never
-signed, so a missing signature is a statement and not an oversight.
+Images up to 0.65.7 were built by a GitHub workflow and signed keyless;
+those signatures verify as before, against
+`--certificate-identity-regexp '^https://github.com/ohartwig/pinup/'` and
+`--certificate-oidc-issuer https://token.actions.githubusercontent.com`.
+Its last runs, 0.65.8 to 0.66.0, pushed images that then failed its scan
+and were never signed; a tag of those versions that verifies against
+`cosign.pub` has since been replaced from the pipeline.
 
 ## Running it
 

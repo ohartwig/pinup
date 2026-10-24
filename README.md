@@ -76,24 +76,29 @@ author's pipeline, and the same files are published on GitHub — nothing is
 rebuilt there.
 
 ```sh
-cosign verify-blob --key <public-key> --signature SHA256SUMS.sig \
+cosign verify-blob --key cosign.pub --signature SHA256SUMS.sig \
   --insecure-ignore-tlog=true SHA256SUMS
 sha256sum -c SHA256SUMS
 ```
 
+[`cosign.pub`](cosign.pub) is the public half of the signing key, which
+lives in AWS KMS; the same key signs the container images.
+
 Or as a container image — [`ghcr.io/ohartwig/pinup`](https://github.com/ohartwig/pinup/pkgs/container/pinup)
 (git, gpg, nothing else) and
 [`ghcr.io/ohartwig/pinup-toolchain`](https://github.com/ohartwig/pinup/pkgs/container/pinup-toolchain)
-(plus composer, npm, node, go, yarn for lock refreshes), `linux/amd64` and
-`linux/arm64`, signed keyless:
+(plus composer, npm, node, go, yarn and pnpm for lock refreshes),
+`linux/amd64` and `linux/arm64`, signed with the same key:
 
 ```sh
+cosign verify --key cosign.pub --insecure-ignore-tlog=true ghcr.io/ohartwig/pinup:0
 docker run --rm -v "$PWD:/workspace" ghcr.io/ohartwig/pinup:0 \
   pinup whatif --repo . --config .pinup.yaml --report plan.json
 ```
 
-The image carries the released binary, checked against `SHA256SUMS`; it is
-not compiled a second time there either.
+The image carries the released binary, checked against `SHA256SUMS`, and it
+is the image the author's own pipeline runs, copied by digest with its
+signature: nothing is compiled or built a second time on GitHub.
 [Container images](docs/container-images.md) has the tags, the verification
 and what each one is for.
 

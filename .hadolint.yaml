@@ -1,21 +1,12 @@
 # SPDX-FileCopyrightText: 2026 Kai Ole Hartwig <mail@ole-hartwig.eu>
 # SPDX-License-Identifier: Apache-2.0
 #
-# Two kinds of Containerfile live here now: the test fixtures under
-# testdata/, shaped for the managers that read them, and the two under
-# packaging/ that build the published images.
+# The Containerfiles here are test fixtures under testdata/, shaped for the
+# managers that read them. The published images are built in the author's
+# image pipeline, not from this repository (docs/container-images.md).
 ignored:
   # A `# renovate:` annotation wants its own RUN right below it, so
   # consecutive RUNs are the point of the fixtures.
   - DL3059
-# Only errors fail the build; the notes below are the ones that would
-# otherwise be read as advice to follow.
+# Only errors fail the build.
 failure-threshold: error
-override:
-  info:
-    # DL3018 wants every apk package pinned to an exact version. The core
-    # image pins nothing and lets the base digest fix it in time - Wolfi
-    # rolls forward, and an exact pin on ca-certificates-bundle would mean
-    # shipping a stale trust store. The toolchain image pins exactly the
-    # packages that define it, through ARGs pinup keeps current.
-    - DL3018
