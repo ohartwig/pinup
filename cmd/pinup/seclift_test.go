@@ -19,19 +19,23 @@ import (
 // the lock's tool can be told so. The same eslint 10.11.0 that
 // TestAProjectsReleaseAgeIsAFloorUnderPinupsOwn holds as a routine update,
 // 5.6 days old under a seven-day .npmrc, is offered at once as a security
-// fix in npm's own lock, and its lock refresh carries the age's override.
-// pnpm's lock, and a manifest with no lock pinup refreshes, keep the
-// floor: their install would refuse the version.
-func TestASecurityFixInNpmsLockTakesAVersionYoungerThanTheProjectsAge(t *testing.T) {
+// fix in npm's or pnpm's lock, and its lock refresh carries the age's
+// override in that tool's spelling. A yarn lock, and a manifest with no
+// lock pinup refreshes, keep the floor: their install would refuse the
+// version.
+func TestASecurityFixTakesAVersionYoungerThanTheProjectsAge(t *testing.T) {
 	now := time.Date(2026, 9, 24, 10, 0, 0, 0, time.UTC)
 	released := time.Date(2026, 9, 18, 20, 15, 0, 0, time.UTC)
 	for _, tc := range []struct {
 		name, lockFile, lock string
-		lifted               bool
+		refresh              string // the lock refresh expected, "" when held
 	}{
-		{"package-lock.json", "package-lock.json", `{"lockfileVersion":3,"packages":{"":{"name":"site"},"node_modules/eslint":{"version":"10.10.0"}}}`, true},
-		{"pnpm-lock.yaml", "pnpm-lock.yaml", "lockfileVersion: '9.0'\n\nimporters:\n\n  .:\n    devDependencies:\n      eslint:\n        specifier: 10.10.0\n        version: 10.10.0\n", false},
-		{"no lock", "", "", false},
+		{"package-lock.json", "package-lock.json", `{"lockfileVersion":3,"packages":{"":{"name":"site"},"node_modules/eslint":{"version":"10.10.0"}}}`,
+			"npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all eslint --min-release-age=0"},
+		{"pnpm-lock.yaml", "pnpm-lock.yaml", "lockfileVersion: '9.0'\n\nimporters:\n\n  .:\n    devDependencies:\n      eslint:\n        specifier: 10.10.0\n        version: 10.10.0\n",
+			"pnpm install --lockfile-only --ignore-scripts --pm-on-fail=warn --config.minimum-release-age=0"},
+		{"yarn.lock", "yarn.lock", "# yarn lockfile v1\n\n\neslint@10.10.0:\n  version \"10.10.0\"\n", ""},
+		{"no lock", "", "", ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			root := t.TempDir()
@@ -63,10 +67,11 @@ func TestASecurityFixInNpmsLockTakesAVersionYoungerThanTheProjectsAge(t *testing
 			if fix == nil {
 				t.Fatalf("no security fix for eslint: %+v", plan.Updates)
 			}
-			if held := fix.Blocked(); held == tc.lifted {
-				t.Fatalf("blocked %t (%+v), want lifted %t", held, fix.Blocks, tc.lifted)
+			lifted := tc.refresh != ""
+			if held := fix.Blocked(); held == lifted {
+				t.Fatalf("blocked %t (%+v), want lifted %t", held, fix.Blocks, lifted)
 			}
-			if !tc.lifted {
+			if !lifted {
 				if fix.Blocks[0].Reason != model.BlockMinimumReleaseAge || fix.Blocks[0].Org.Source != "file:.npmrc" {
 					t.Errorf("hold %+v, want the .npmrc's age", fix.Blocks[0])
 				}
@@ -80,8 +85,8 @@ func TestASecurityFixInNpmsLockTakesAVersionYoungerThanTheProjectsAge(t *testing
 					}
 				}
 			}
-			if strings.Join(refresh, " ") != "npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all eslint --min-release-age=0" {
-				t.Errorf("refresh %q", refresh)
+			if got := strings.Join(refresh, " "); got != tc.refresh {
+				t.Errorf("refresh %q, want %q", got, tc.refresh)
 			}
 		})
 	}

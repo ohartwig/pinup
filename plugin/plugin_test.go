@@ -527,31 +527,39 @@ func TestWaitingForASlotIsNotTheTasksTime(t *testing.T) {
 	}
 }
 
-// A security fix in npm's own lock takes the fixed version past the
-// project's release age; nothing else does. The age stays on a routine
-// install, on a maintenance refresh, and on pnpm and yarn, whose override
-// pinup has not measured.
-func TestLockRefreshLiftsReleaseAgeForASecurityFixInNpmsLock(t *testing.T) {
+// A security fix in npm's or pnpm's lock takes the fixed version past the
+// project's release age, each in its own tool's spelling; nothing else
+// does. The age stays on a routine install, on a maintenance refresh, and
+// on yarn, whose override pinup has not measured.
+func TestLockRefreshLiftsReleaseAgeForASecurityFix(t *testing.T) {
 	for _, c := range []struct {
 		name, lock  string
 		maintenance bool
 		liftAge     bool
-		lifted      bool
+		want        string // the override expected, "" for none
 	}{
-		{"security install, package-lock", "package-lock.json", false, true, true},
-		{"security install, shrinkwrap", "npm-shrinkwrap.json", false, true, true},
-		{"routine install keeps the age", "package-lock.json", false, false, false},
-		{"maintenance keeps the age", "package-lock.json", true, true, false},
-		{"pnpm keeps the age", "pnpm-lock.yaml", false, true, false},
-		{"yarn keeps the age", "yarn.lock", false, true, false},
+		{"security install, package-lock", "package-lock.json", false, true, "--min-release-age=0"},
+		{"security install, shrinkwrap", "npm-shrinkwrap.json", false, true, "--min-release-age=0"},
+		{"security install, pnpm", "pnpm-lock.yaml", false, true, "--config.minimum-release-age=0"},
+		{"routine install keeps the age", "package-lock.json", false, false, ""},
+		{"routine pnpm install keeps the age", "pnpm-lock.yaml", false, false, ""},
+		{"maintenance keeps the age", "package-lock.json", true, true, ""},
+		{"pnpm maintenance keeps the age", "pnpm-lock.yaml", true, true, ""},
+		{"yarn keeps the age", "yarn.lock", false, true, ""},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			task, ok := LockRefresh("npm", "", c.lock, []string{"lodash"}, c.maintenance, c.liftAge)
 			if !ok {
 				t.Fatal("no refresh")
 			}
-			if got := slices.Contains(task.Command, "--min-release-age=0"); got != c.lifted {
-				t.Errorf("%v: lifted %v, want %v", task.Command, got, c.lifted)
+			var got string
+			for _, a := range task.Command {
+				if strings.Contains(a, "release-age") {
+					got = a
+				}
+			}
+			if got != c.want {
+				t.Errorf("%v: override %q, want %q", task.Command, got, c.want)
 			}
 		})
 	}
@@ -586,6 +594,26 @@ func TestSecurityLiftNamesTheAdvisedPackagesPastTheAge(t *testing.T) {
 	} {
 		if _, ok := SecurityLift(c.manager, "", c.lock, c.lifts); ok {
 			t.Errorf("%s: a lift was composed", c.name)
+		}
+	}
+}
+
+// pnpm's update could lift a transitive package, but pinup reads a pnpm
+// lock's importers alone and could not read the lift back; only npm's lock
+// gets the targeted lift.
+func TestOnlyNpmsLockLiftsTransitivePackages(t *testing.T) {
+	for _, c := range []struct {
+		manager, lock string
+		want          bool
+	}{
+		{"npm", "package-lock.json", true},
+		{"npm", "web/npm-shrinkwrap.json", true},
+		{"npm", "pnpm-lock.yaml", false},
+		{"npm", "yarn.lock", false},
+		{"composer", "composer.lock", false},
+	} {
+		if got := LiftsTransitive(c.manager, c.lock); got != c.want {
+			t.Errorf("%s %s: %v, want %v", c.manager, c.lock, got, c.want)
 		}
 	}
 }
