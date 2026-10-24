@@ -20,7 +20,7 @@
 # The base is Chainguard's public wolfi-base, pinned by digest: the tag alone
 # moves, and an image that cannot say which base it was built on cannot be
 # rebuilt. The digest is what a bump changes, in a reviewed diff.
-FROM cgr.dev/chainguard/wolfi-base:latest@sha256:f15fea2f49cb14dceaea491fcbde0d35e0c190126a744ac05a9838440d47d994
+FROM cgr.dev/chainguard/wolfi-base:latest@sha256:360896efb0753a5701c48f860e17130c205eae5a264797aa3e7ea126ee2923a7
 
 # Set by BuildKit for each leg of a multi-platform build.
 ARG TARGETARCH
