@@ -81,8 +81,15 @@ type Options struct {
 	// finished. A conflict, a changed edit or the dashboard's rebase box
 	// pushes either way.
 	RebaseWhen string
+	// LockedVersions reads a lock file's pinned versions by package name;
+	// the runner reads a security refresh's lock back with it (unlifted).
+	// wire supplies the manager's reader - the runner knows none.
+	LockedVersions func(lock []byte) (map[string]string, error)
 
 	Now time.Time
+
+	// warn records a warning on the plan Execute runs; set by Execute.
+	warn func(model.Warning)
 }
 
 // Outcome is what happened to one branch.
@@ -113,6 +120,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		defer func() { _ = o.Repo.Return(ctx, start) }()
 	}
 
+	o.warn = func(w model.Warning) { plan.Warnings = append(plan.Warnings, w) }
 	var outcomes []Outcome
 	created := 0
 	openNow := 0
@@ -623,6 +631,8 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch, keep bool) (str
 	// changes must lie within its file scope, or everything it did is
 	// discarded and the branch fails by name. What survives is committed
 	// together with the edits: a manifest never lands without its lock.
+	b.Unlifted = nil
+	lifts, checked := 0, true
 	for _, t := range b.Tasks {
 		changed, err := o.runTask(ctx, t)
 		if err != nil {
@@ -635,6 +645,24 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch, keep bool) (str
 				paths = append(paths, p)
 			}
 		}
+		left, err := o.unlifted(t)
+		if err != nil {
+			checked = false
+			if o.warn != nil {
+				o.warn(model.Warning{Stage: "refresh", Msg: fmt.Sprintf("%s: lifts not checked: %v", b.Name, err)})
+			}
+			continue
+		}
+		lifts += len(t.Lifts)
+		for _, l := range left {
+			b.Unlifted = append(b.Unlifted, l)
+			if o.warn != nil {
+				o.warn(unliftedWarning(t, l))
+			}
+		}
+	}
+	if checked {
+		dropSecurityTitle(b, lifts, len(b.Unlifted))
 	}
 	if len(paths) == 0 {
 		// A task-only branch whose tool found nothing to refresh: not a
@@ -799,6 +827,7 @@ func fixesAdvisory(b *model.Branch, updates []model.Update) bool {
 
 func description(b *model.Branch, updates []model.Update, footer string) string {
 	var s strings.Builder
+	s.WriteString(unliftedNote(b))
 	keys := map[string]bool{}
 	for _, k := range b.UpdateKeys {
 		keys[k] = true

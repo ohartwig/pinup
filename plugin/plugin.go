@@ -56,7 +56,13 @@ type PostUpgrade struct {
 // no plugins, no install, no scripts, no audit, platform requirements
 // ignored - the runner image is not the deployment image); the npm form is
 // what npm documents for refreshing a lock without installing.
-func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance bool) (model.Task, bool) {
+//
+// liftAge is set when the branch carries a security fix for this lock and
+// the tool can be told to set the project's release age aside for it (see
+// LiftsReleaseAge): the install then takes the fixed version however young
+// it is. A maintenance refresh keeps the age - its security half is the
+// separate SecurityLift task.
+func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance, liftAge bool) (model.Task, bool) {
 	names := unique(depNames)
 	var argv []string
 	if manager == "npm" && lockFile == "pnpm-lock.yaml" {
@@ -143,6 +149,9 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance b
 			argv = []string{"npm", "update", "--package-lock-only", "--no-audit", "--ignore-scripts", "--allow-remote=all"}
 		} else {
 			argv = append(argv, names...)
+			if liftAge && LiftsReleaseAge(manager, lockFile) {
+				argv = append(argv, noReleaseAge)
+			}
 		}
 		return model.Task{
 			Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: argv,
@@ -161,6 +170,63 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance b
 		}, true
 	}
 	return model.Task{}, false
+}
+
+// noReleaseAge sets npm's min-release-age aside for one command. npm reads
+// its configuration with the command line first, so the flag outranks the
+// repository's .npmrc for this run and for nothing else: the merge
+// request's own `npm ci` installs what the lock pins and reads no age.
+const noReleaseAge = "--min-release-age=0"
+
+// LiftsReleaseAge reports whether a security fix in this lock can be taken
+// past the project's release age: npm's own lock, whose tool takes the age
+// from the command line as well as from .npmrc. pnpm and yarn keep the age
+// they were given - their override has not been measured here - and a
+// security fix for them still waits for it (releaseAgeFloor in cmd/pinup).
+func LiftsReleaseAge(manager, lockFile string) bool {
+	if manager != "npm" {
+		return false
+	}
+	switch filepath.Base(lockFile) {
+	case "package-lock.json", "npm-shrinkwrap.json":
+		return true
+	}
+	return false
+}
+
+// SecurityLift composes the task that moves the locked packages of lifts
+// off their vulnerable versions, past the project's release age: a
+// targeted `npm update <names>` with the age set aside. It runs after the
+// lock's maintenance refresh, which keeps the age for everything else.
+//
+// The targeted form is what lifts a transitive package at all under an age.
+// Measured 2026-10-24 with npm 11.17.0 on a lock pinning fast-uri 3.1.8
+// under ajv's ^3.0.1, with min-release-age=7 in .npmrc and 3.1.9 four days
+// old: `npm update --package-lock-only` left 3.1.8 in place; `npm update
+// fast-uri --package-lock-only --min-release-age=0` moved it to 3.1.9 and
+// changed nothing else. Every maintenance refresh of
+// development/moselwal/sitepackage-base between 2026-10-20 and 2026-10-23
+// was the first form, titled [security], and merged with the advisory
+// still locked.
+//
+// Nothing is returned for a lock LiftsReleaseAge refuses, or for no lifts.
+func SecurityLift(manager, dir, lockFile string, lifts []model.Lift) (model.Task, bool) {
+	if len(lifts) == 0 || !LiftsReleaseAge(manager, lockFile) {
+		return model.Task{}, false
+	}
+	names := make([]string, 0, len(lifts))
+	for _, l := range lifts {
+		names = append(names, l.Package)
+	}
+	argv := []string{"npm", "update"}
+	argv = append(argv, unique(names)...)
+	argv = append(argv, "--package-lock-only", "--no-audit", "--ignore-scripts", "--allow-remote=all", noReleaseAge)
+	return model.Task{
+		Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: argv,
+		ExecutionMode: model.ExecBranch, FileFilters: []string{"package-lock.json", "npm-shrinkwrap.json"},
+		AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
+		Lifts: slices.Clone(lifts),
+	}, true
 }
 
 // Compile renders a configuration's postUpgradeTasks for the updates of one

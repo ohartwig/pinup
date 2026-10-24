@@ -126,14 +126,14 @@ func TestRepositoryCommandsAreHardened(t *testing.T) {
 	}
 	// The core's own refresh already carries them; hardening must not
 	// double them up there either.
-	c, _ := LockRefresh("composer", "", "composer.lock", []string{"a/b"}, false)
+	c, _ := LockRefresh("composer", "", "composer.lock", []string{"a/b"}, false, false)
 	if n := strings.Count(strings.Join(c.Command, " "), "--no-scripts"); n != 1 {
 		t.Errorf("LockRefresh carries --no-scripts %d times", n)
 	}
 }
 
 func TestLockRefreshCommands(t *testing.T) {
-	c, ok := LockRefresh("composer", "app", "composer.lock", []string{"a/b", "c/d", "a/b"}, false)
+	c, ok := LockRefresh("composer", "app", "composer.lock", []string{"a/b", "c/d", "a/b"}, false, false)
 	if !ok || strings.Join(c.Command, " ") != "composer update a/b c/d --with-all-dependencies --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs" || c.Dir != "app" || c.AllowedBy != -1 {
 		t.Errorf("composer: %+v", c)
 	}
@@ -145,21 +145,21 @@ func TestLockRefreshCommands(t *testing.T) {
 	if _, err := Allowed(strings.Join(c.Command, " "), []*re2x.Regexp{re}); err != nil {
 		t.Errorf("the estate allowlist refuses pinup's own refresh: %v", err)
 	}
-	m, _ := LockRefresh("composer", "", "composer.lock", nil, true)
+	m, _ := LockRefresh("composer", "", "composer.lock", nil, true, false)
 	if strings.Join(m.Command, " ") != "composer update --no-plugins --no-install --no-scripts --no-audit --ignore-platform-reqs" {
 		t.Errorf("maintenance: %v", m.Command)
 	}
-	n, ok := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, false)
+	n, ok := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, false, false)
 	if !ok || strings.Join(n.Command, " ") != "npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all lodash" {
 		t.Errorf("npm: %+v", n)
 	}
 	// Maintenance must move resolutions, not re-validate them: install
 	// without names leaves a valid lock as it is.
-	nm, _ := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, true)
+	nm, _ := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, true, false)
 	if got := strings.Join(nm.Command, " "); got != "npm update --package-lock-only --no-audit --ignore-scripts --allow-remote=all" {
 		t.Errorf("npm maintenance: %q", got)
 	}
-	if _, ok := LockRefresh("dockerfile", "", "", nil, false); ok {
+	if _, ok := LockRefresh("dockerfile", "", "", nil, false, false); ok {
 		t.Error("dockerfile has no lock to refresh")
 	}
 
@@ -173,7 +173,7 @@ func TestLockRefreshCommands(t *testing.T) {
 		{false, "pnpm install --lockfile-only --ignore-scripts --pm-on-fail=warn"},
 		{true, "pnpm update --lockfile-only --ignore-scripts --pm-on-fail=warn"},
 	} {
-		pn, ok := LockRefresh("npm", "", "pnpm-lock.yaml", []string{"lodash"}, tc.maintenance)
+		pn, ok := LockRefresh("npm", "", "pnpm-lock.yaml", []string{"lodash"}, tc.maintenance, false)
 		if got := strings.Join(pn.Command, " "); !ok || got != tc.want || !slices.Equal(pn.FileFilters, []string{"pnpm-lock.yaml"}) {
 			t.Errorf("pnpm (maintenance %t): %q, filters %v", tc.maintenance, got, pn.FileFilters)
 		}
@@ -226,15 +226,15 @@ func TestEnvironmentIsAnAllowlistAndTimeoutsAreEnforced(t *testing.T) {
 // for a changed manifest, upgrade for a maintenance, scripts and checks
 // off, the lock the only file in scope.
 func TestYarnLockIsRefreshedByYarn(t *testing.T) {
-	y, ok := LockRefresh("npm", "", "yarn.lock", []string{"lodash"}, false)
+	y, ok := LockRefresh("npm", "", "yarn.lock", []string{"lodash"}, false, false)
 	if !ok || y.Command[0] != "yarn" || y.Command[1] != "install" || !strings.Contains(strings.Join(y.Command, " "), "--ignore-scripts") || y.FileFilters[0] != "yarn.lock" {
 		t.Errorf("yarn refresh = %+v", y)
 	}
-	m, _ := LockRefresh("npm", "", "yarn.lock", nil, true)
+	m, _ := LockRefresh("npm", "", "yarn.lock", nil, true, false)
 	if m.Command[1] != "upgrade" {
 		t.Errorf("yarn maintenance = %+v", m)
 	}
-	g, ok := LockRefresh("gomod", "", "go.sum", nil, false)
+	g, ok := LockRefresh("gomod", "", "go.sum", nil, false, false)
 	if !ok || g.Command[0] != "go" {
 		t.Errorf("gomod refresh = %+v", g)
 	}
@@ -524,5 +524,68 @@ func TestWaitingForASlotIsNotTheTasksTime(t *testing.T) {
 	_, err := second.Run(ctx, t.TempDir(), model.Task{Command: []string{"npm", "install"}})
 	if err == nil || !strings.Contains(err.Error(), "waiting for a task slot") {
 		t.Errorf("cancelled while waiting: %v", err)
+	}
+}
+
+// A security fix in npm's own lock takes the fixed version past the
+// project's release age; nothing else does. The age stays on a routine
+// install, on a maintenance refresh, and on pnpm and yarn, whose override
+// pinup has not measured.
+func TestLockRefreshLiftsReleaseAgeForASecurityFixInNpmsLock(t *testing.T) {
+	for _, c := range []struct {
+		name, lock  string
+		maintenance bool
+		liftAge     bool
+		lifted      bool
+	}{
+		{"security install, package-lock", "package-lock.json", false, true, true},
+		{"security install, shrinkwrap", "npm-shrinkwrap.json", false, true, true},
+		{"routine install keeps the age", "package-lock.json", false, false, false},
+		{"maintenance keeps the age", "package-lock.json", true, true, false},
+		{"pnpm keeps the age", "pnpm-lock.yaml", false, true, false},
+		{"yarn keeps the age", "yarn.lock", false, true, false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			task, ok := LockRefresh("npm", "", c.lock, []string{"lodash"}, c.maintenance, c.liftAge)
+			if !ok {
+				t.Fatal("no refresh")
+			}
+			if got := slices.Contains(task.Command, "--min-release-age=0"); got != c.lifted {
+				t.Errorf("%v: lifted %v, want %v", task.Command, got, c.lifted)
+			}
+		})
+	}
+}
+
+func TestSecurityLiftNamesTheAdvisedPackagesPastTheAge(t *testing.T) {
+	lifts := []model.Lift{{Package: "fast-uri", Installed: "3.1.8", Fixed: "3.1.9"}, {Package: "nanoid", Installed: "3.3.11", Fixed: "3.3.18"}, {Package: "fast-uri", Installed: "3.1.8"}}
+	task, ok := SecurityLift("npm", "web", "package-lock.json", lifts)
+	if !ok {
+		t.Fatal("no lift for npm's lock")
+	}
+	if got := strings.Join(task.Command, " "); got != "npm update fast-uri nanoid --package-lock-only --no-audit --ignore-scripts --allow-remote=all --min-release-age=0" {
+		t.Errorf("command %q", got)
+	}
+	if task.Dir != "web" || task.AllowedBy != -1 || task.Kind != model.TaskLockRefresh || len(task.Lifts) != 3 {
+		t.Errorf("task %+v", task)
+	}
+	// The lifts are the runner's to check; the task must not share the
+	// caller's backing array.
+	lifts[0].Package = "changed"
+	if task.Lifts[0].Package != "fast-uri" {
+		t.Error("the task aliases the caller's lifts")
+	}
+	for _, c := range []struct {
+		name, manager, lock string
+		lifts               []model.Lift
+	}{
+		{"no lifts", "npm", "package-lock.json", nil},
+		{"pnpm", "npm", "pnpm-lock.yaml", lifts},
+		{"yarn", "npm", "yarn.lock", lifts},
+		{"composer", "composer", "composer.lock", lifts},
+	} {
+		if _, ok := SecurityLift(c.manager, "", c.lock, c.lifts); ok {
+			t.Errorf("%s: a lift was composed", c.name)
+		}
 	}
 }

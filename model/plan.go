@@ -68,6 +68,21 @@ type Task struct {
 	// different from one that matched the intended entry.
 	AllowedBy int    `json:"allowedBy"`
 	Origin    Origin `json:"origin"`
+	// Lifts are the locked packages the task is run to move off a
+	// vulnerable version - a security lock refresh. The runner reads the
+	// lock back after the task and says which of them did not move: a
+	// merge request titled [security] that left the advisory in place is
+	// how fast-uri 3.1.8 stayed in ten repositories for four days
+	// (2026-10-20..24) while every refresh merged.
+	Lifts []Lift `json:"lifts,omitempty"`
+}
+
+// Lift is one locked package a security lock refresh must move: the name,
+// the vulnerable version the lock pinned, and the first fixed version.
+type Lift struct {
+	Package   string `json:"package"`
+	Installed string `json:"installed"`
+	Fixed     string `json:"fixed,omitempty"`
 }
 
 // Task kinds.
@@ -138,6 +153,10 @@ type Branch struct {
 	// member's - and the members that were actionable on their own carry
 	// it too, with this note.
 	HeldWith Block `json:"heldWith,omitzero"`
+	// Unlifted are the Lifts of the branch's tasks that the tasks left in
+	// place, each with the version the lock still pins - set by the runner
+	// after the tasks ran, never by the planner.
+	Unlifted []Lift `json:"unlifted,omitempty"`
 
 	Schedule Window          `json:"schedule"`
 	Existing *ExistingBranch `json:"existing,omitempty"`
