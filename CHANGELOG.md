@@ -1,3 +1,9 @@
+## [0.68.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.67.1...v0.68.0) (2026-10-24)
+
+### :sparkles: Features
+
+* **images:** publish the golden images, verified with cosign.pub ([99fb049](https://git.ole-hartwig.eu/pinup/pinup/commit/99fb0492d983294a5e49a799db7356baccc399ee))
+
 ## [0.67.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.67.0...v0.67.1) (2026-10-24)
 
 ### :repeat: Continuous Integrations
