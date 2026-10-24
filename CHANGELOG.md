@@ -1,3 +1,13 @@
+## [0.67.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.67.0...v0.67.1) (2026-10-24)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to f3dce9f ([ae9df3f](https://git.ole-hartwig.eu/pinup/pinup/commit/ae9df3f0e4d8634775f251f5dfafe631e470dabe))
+
+### :repeat: Chores
+
+* **deps:** update cgr.dev/chainguard/wolfi-base:latest docker digest to 360896e ([6790591](https://git.ole-hartwig.eu/pinup/pinup/commit/6790591bb67620e22f0de4417e9dfcdd8e9ecbab))
+
 ## [0.67.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.3...v0.67.0) (2026-10-24)
 
 ### :sparkles: Features
