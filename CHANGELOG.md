@@ -1,3 +1,9 @@
+## [0.67.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.3...v0.67.0) (2026-10-24)
+
+### :sparkles: Features
+
+* **security:** lift a direct CVE fix past the release age in pnpm locks too ([dcc469d](https://git.ole-hartwig.eu/pinup/pinup/commit/dcc469d70e272996c330ebf539754eb79b62a2e0))
+
 ## [0.66.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.66.2...v0.66.3) (2026-10-24)
 
 ### :bug: Fixes
