@@ -497,6 +497,11 @@ func runReleased(ctx context.Context, o *runOptions, spec string, only *glob.Set
 		fmt.Fprintf(out, "%s: every consumer follows the release by its floating major; nothing to do\n", path)
 		return nil
 	}
+	consumers = skipGoneProjects(ctx, o.platform, consumers, errw)
+	if len(consumers) == 0 {
+		fmt.Fprintf(out, "%s: no consumer is a live project any more; nothing to do\n", path)
+		return nil
+	}
 	o.released = path
 	failed := 0
 	failed = runEach(ctx, o, consumers, repositoryConcurrency(os.Getenv), reportPath, out, errw)
@@ -540,6 +545,38 @@ func skipFloatingMajors(idx *report.Index, path, version string, consumers []str
 	fmt.Fprintf(errw, "fast lane: %d of %d consumers refer to %s only as @%s, which GitLab already resolves to %s; skipped, %d to run\n", len(skipped), len(consumers), path, major, version, len(kept))
 	for _, c := range skipped {
 		fmt.Fprintf(errw, "  skipped %s: floating major @%s\n", c, major)
+	}
+	return kept
+}
+
+// skipGoneProjects leaves out the consumers the platform no longer lists as
+// live projects of the token: archived, moved or deleted since the index
+// recorded them. Autodiscovery never sees such a project (ListProjects asks
+// for archived=false), but the index outlives the archiving, and the fast
+// lane would clone it, fail to push and count the release as failed, so the
+// next trigger tried again (development/moselwal/ai-workflows, archived
+// after its re-homing of 2026-10-13). A list that cannot be read, or reads
+// empty, vouches for nothing: every consumer is run, as before.
+func skipGoneProjects(ctx context.Context, platform publish.Platform, consumers []string, errw io.Writer) []string {
+	live, err := platform.ListProjects(ctx)
+	if err != nil {
+		fmt.Fprintf(errw, "fast lane: cannot list the live projects (%v); every consumer is run\n", err)
+		return consumers
+	}
+	if len(live) == 0 {
+		fmt.Fprintf(errw, "fast lane: the platform lists no live project; every consumer is run\n")
+		return consumers
+	}
+	var kept, gone []string
+	for _, c := range consumers {
+		if slices.Contains(live, c) {
+			kept = append(kept, c)
+		} else {
+			gone = append(gone, c)
+		}
+	}
+	for _, c := range gone {
+		fmt.Fprintf(errw, "  skipped %s: not a live project (archived, moved or deleted)\n", c)
 	}
 	return kept
 }
