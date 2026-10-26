@@ -170,6 +170,43 @@ func TestReleasedTakesAutodiscoverAsAFilter(t *testing.T) {
 	}
 }
 
+// The fast lane leaves out the consumers the platform no longer lists - an
+// archived project stays in the index - and runs every consumer when the
+// list reads empty, since an empty list vouches for nothing.
+func TestReleasedSkipsArchivedConsumers(t *testing.T) {
+	idx := &report.Index{Consumers: map[string][]string{
+		"gitlab-tags|devops/ci-cd-components/lint-tools": {"development/archived", "development/live"},
+	}, Repositories: map[string]time.Time{}}
+	dir := t.TempDir()
+	o := &runOptions{index: idx, indexPath: filepath.Join(dir, "consumers.json"), indexPattern: filepath.Join(dir, "consumers.json"), dryRun: true, now: time.Now(),
+		platform: &platformfake.Platform{Projects: []string{"development/live", "devops/other"}}}
+	var out, errw strings.Builder
+	// The live consumer is run (and fails here, having no clone).
+	_ = runReleased(t.Context(), o, "devops/ci-cd-components/lint-tools@1.34.0", nil, "", &out, &errw)
+	if !strings.Contains(errw.String(), "skipped development/archived: not a live project") || strings.Contains(errw.String(), "skipped development/live") {
+		t.Errorf("errw=%q", errw.String())
+	}
+
+	// Only archived consumers: nothing to do, nothing failed.
+	o.platform = &platformfake.Platform{Projects: []string{"devops/other"}}
+	out.Reset()
+	errw.Reset()
+	if err := runReleased(t.Context(), o, "devops/ci-cd-components/lint-tools@1.34.1", nil, "", &out, &errw); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(out.String(), "no consumer is a live project any more") {
+		t.Errorf("out=%q", out.String())
+	}
+
+	// An empty list filters nothing.
+	o.platform = &platformfake.Platform{}
+	errw.Reset()
+	_ = runReleased(t.Context(), o, "devops/ci-cd-components/lint-tools@1.34.2", nil, "", &out, &errw)
+	if !strings.Contains(errw.String(), "lists no live project; every consumer is run") || strings.Contains(errw.String(), "not a live project") {
+		t.Errorf("errw=%q", errw.String())
+	}
+}
+
 // The fast lane leaves out, before any clone, the consumers that name the
 // released component only by a floating major that admits the release, and
 // says which and why; a consumer with an exact pin is still run.
