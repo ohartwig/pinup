@@ -1,3 +1,13 @@
+## [0.68.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.0...v0.68.1) (2026-10-26)
+
+### :bug: Fixes
+
+* **run:** the fast lane skips consumers that are no longer live projects ([444d524](https://git.ole-hartwig.eu/pinup/pinup/commit/444d5248e5b8565fbf3c19437e092c82910c8829))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 18de914 ([29774de](https://git.ole-hartwig.eu/pinup/pinup/commit/29774dec454b5fb75b284b39080daca9a196673e))
+
 ## [0.68.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.67.1...v0.68.0) (2026-10-24)
 
 ### :sparkles: Features
