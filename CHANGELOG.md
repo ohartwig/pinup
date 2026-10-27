@@ -1,3 +1,9 @@
+## [0.68.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.1...v0.68.2) (2026-10-27)
+
+### :bug: Fixes
+
+* **gittagsds:** git ls-remote reaches remotes through the egress proxy ([e2cc45f](https://git.ole-hartwig.eu/pinup/pinup/commit/e2cc45fb4cfcb34eb938fb81eb501834672ddfe2))
+
 ## [0.68.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.0...v0.68.1) (2026-10-26)
 
 ### :bug: Fixes
