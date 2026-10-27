@@ -187,6 +187,10 @@ func (d *Datasource) Digest(ctx context.Context, ref lookup.Ref, version string)
 	return "", fmt.Errorf("%s: %s has no ref %q", d.Name(), redactURL(ref.PackageName), version)
 }
 
+// proxyEnv names the variables curl, and so git over http(s), reads for a
+// proxy, in both spellings: curl takes http_proxy only in lower case.
+var proxyEnv = []string{"https_proxy", "HTTPS_PROXY", "http_proxy", "HTTP_PROXY", "all_proxy", "ALL_PROXY", "no_proxy", "NO_PROXY"}
+
 // execLsRemote runs `git ls-remote --tags --refs repoURL` and returns its
 // stdout, its messages in C locale so a recorded failure reads the same on
 // every machine. GIT_TERMINAL_PROMPT=0 turns a repository that needs credentials
@@ -228,6 +232,14 @@ func execLsRemote(ctx context.Context, gitBin string, timeout time.Duration, rep
 	}
 	if v := os.Getenv("SSL_CERT_DIR"); v != "" {
 		cmd.Env = append(cmd.Env, "SSL_CERT_DIR="+v)
+	}
+	// The way out, too: where a runner reaches the internet only through an
+	// egress proxy - every pool since 2026-10-24, IPv6-only while GitHub has
+	// no IPv6 - git without these cannot connect at all.
+	for _, k := range proxyEnv {
+		if v := os.Getenv(k); v != "" {
+			cmd.Env = append(cmd.Env, k+"="+v)
+		}
 	}
 	var out, errb bytes.Buffer
 	cmd.Stdout, cmd.Stderr = &out, &errb

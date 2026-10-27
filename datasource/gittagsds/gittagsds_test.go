@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -328,5 +329,31 @@ func TestOnlyHTTPURLsReachGit(t *testing.T) {
 		if !errors.As(err, &declined) || invoked {
 			t.Errorf("%q: err=%v invoked=%v", bad, err, invoked)
 		}
+	}
+}
+
+// A runner that reaches GitHub only through an egress proxy hands git the
+// proxy variables, and still nothing else of the job's environment.
+func TestLsRemoteSeesTheProxyButNotTheJob(t *testing.T) {
+	fake := filepath.Join(t.TempDir(), "git")
+	if err := os.WriteFile(fake, []byte("#!/bin/sh\nenv\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HTTPS_PROXY", "http://proxy.example:3128")
+	t.Setenv("https_proxy", "http://proxy.example:3128")
+	t.Setenv("NO_PROXY", "localhost,.ole-hartwig.eu")
+	t.Setenv("CI_JOB_TOKEN", "secret")
+	out, err := execLsRemote(t.Context(), fake, time.Minute, "https://github.com/example/repo", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	env := strings.Split(out, "\n")
+	for _, want := range []string{"HTTPS_PROXY=http://proxy.example:3128", "https_proxy=http://proxy.example:3128", "NO_PROXY=localhost,.ole-hartwig.eu"} {
+		if !slices.Contains(env, want) {
+			t.Errorf("git does not see %s:\n%s", want, out)
+		}
+	}
+	if strings.Contains(out, "CI_JOB_TOKEN") {
+		t.Errorf("git sees the job token:\n%s", out)
 	}
 }
