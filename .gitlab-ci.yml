@@ -373,7 +373,7 @@ test:sandbox:toolchain:
 # no patch version here for pinup to raise.
 test:sandbox:image:
   extends: .test:sandbox
-  image: registry.ole-hartwig.eu/devops/images/pinup:0@sha256:18de914546b1c58b4e8a5e0f0589db464ff99a7cf85e0016dc21370170e94a66
+  image: registry.ole-hartwig.eu/devops/images/pinup:0@sha256:5a6351b6666dc5e7827334696091f50e9a1a6d344f5ace5ebb1688932452b90e
 
 # --------------------------------------------------------------------------- #
 # Build - four platforms from one arm64 runner, nothing needs CGO
