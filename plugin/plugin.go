@@ -295,10 +295,14 @@ func Compile(pu PostUpgrade, updates []model.Update, allowed []string) ([]model.
 	var out []model.Task
 	for _, g := range groups {
 		env := variables(g)
-		dir := filepath.Dir(g[0].Dep.File)
-		if dir == "." {
-			dir = ""
-		}
+		// At the repository root, as Renovate runs them: the commands name
+		// paths from there (`node tools/raise-release.mjs {{{packageFile}}}`,
+		// packageFile itself is relative to the root). Run from the package
+		// file's directory, every task for a file below the root failed -
+		// specs/<name>/go.bump looked for specs/<name>/tools/raise-release.mjs
+		// (devops/rpm-packages, 2026-10-28). Lock refreshes are a different
+		// kind of task and stay in their manifest's directory.
+		dir := ""
 		for _, c := range pu.Commands {
 			rendered, _, err := hbs.RenderString(c, env)
 			if err != nil {
