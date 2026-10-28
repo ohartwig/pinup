@@ -1,3 +1,14 @@
+## [0.68.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.2...v0.68.3) (2026-10-28)
+
+### :bug: Fixes
+
+* **plugin:** postUpgradeTasks run at the repository root ([14a7c63](https://git.ole-hartwig.eu/pinup/pinup/commit/14a7c63fa307d931b1ffa6556bf4aabbb8caf1b0))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to a54fbac ([3f5d0b5](https://git.ole-hartwig.eu/pinup/pinup/commit/3f5d0b55000371183ff3ff3523329873c934ecd5))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 5a6351b ([d7c85e4](https://git.ole-hartwig.eu/pinup/pinup/commit/d7c85e478aea97e55fa783011acc86bb7b555135))
+
 ## [0.68.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.1...v0.68.2) (2026-10-27)
 
 ### :bug: Fixes
