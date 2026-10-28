@@ -58,6 +58,12 @@ func TestCompileMatchesTheEstateAllowlist(t *testing.T) {
 	if err != nil || len(tasks) != 2 || tasks[0].AllowedBy != 0 || tasks[1].AllowedBy != 0 {
 		t.Fatalf("update mode: %v %+v", err, tasks)
 	}
+	// A post-upgrade task runs at the repository root whatever directory
+	// its package file is in: the command names paths from the root.
+	nested := PostUpgrade{Commands: []string{"node tools/update-expected-commit.mjs {{{depName}}}"}}
+	if tasks, err := Compile(nested, []model.Update{upd("specs/geesefs/go.bump", "golang.org/x/net", "v0.59.0", "v0.60.0")}, estateAllowed); err != nil || len(tasks) != 1 || tasks[0].Dir != "" {
+		t.Errorf("nested package file: %v %+v", err, tasks)
+	}
 	commit := PostUpgrade{Commands: []string{"node tools/update-expected-commit.mjs {{{depName}}}"}}
 	if tasks, err := Compile(commit, ups[:1], estateAllowed); err != nil || len(tasks) != 1 || tasks[0].AllowedBy != 1 {
 		t.Errorf("update-expected-commit: %v %+v", err, tasks)
