@@ -321,6 +321,52 @@ func carriesSecurityLockRefresh(members []Named) bool {
 	return false
 }
 
+// oneUpdatePerDependency keeps one actionable update per dependency and
+// branch: the highest bucket, a major before a minor before a patch. The
+// planner offers a major and a minor-or-patch bucket for one dependency,
+// and with separateMajorMinor off both name the same branch; written
+// together, they are two edits of one value, which apply refuses, so
+// neither was written. Renovate offers the newest version alone there.
+// Measured 2026-10-31: devops/images/reuse, k6, pinup, pki and trufflehog
+// held their Tumbleweed snapshot pin four days ("editRefused ... the
+// ranges overlap") because a later revision of the pinned day and a later
+// day were both newer, and the snapshot rule sets separateMajorMinor off.
+// A held update is left alone: it carries no edit onto an actionable
+// branch, and a held branch carries none at all.
+func oneUpdatePerDependency(named []Named) []Named {
+	rank := func(t model.UpdateType) int {
+		switch t {
+		case model.UpdateMajor:
+			return 3
+		case model.UpdateMinor:
+			return 2
+		case model.UpdatePatch:
+			return 1
+		}
+		return 0
+	}
+	best := map[string]int{}
+	for i, n := range named {
+		if n.Update.Blocked() || rank(n.Update.Type) == 0 {
+			continue
+		}
+		k := n.Branch + "\x00" + n.Update.DepKey
+		if j, ok := best[k]; !ok || rank(n.Update.Type) > rank(named[j].Update.Type) {
+			best[k] = i
+		}
+	}
+	out := named[:0:0]
+	for i, n := range named {
+		if !n.Update.Blocked() && rank(n.Update.Type) > 0 {
+			if best[n.Branch+"\x00"+n.Update.DepKey] != i {
+				continue
+			}
+		}
+		out = append(out, n)
+	}
+	return out
+}
+
 func Compose(named []Named) ([]model.Branch, error) {
 	type member struct {
 		branch  *model.Branch
@@ -332,6 +378,7 @@ func Compose(named []Named) ([]model.Branch, error) {
 	// those; held ones only add a branch when nothing actionable shares it.
 	ordered := append([]Named(nil), named...)
 	sort.SliceStable(ordered, func(i, j int) bool { return !ordered[i].Update.Blocked() && ordered[j].Update.Blocked() })
+	ordered = oneUpdatePerDependency(ordered)
 	for _, n := range ordered {
 		m, ok := byName[n.Branch]
 		if ok && n.Update.Blocked() {

@@ -4,6 +4,7 @@
 package planner
 
 import (
+	"slices"
 	"testing"
 	"time"
 
@@ -333,6 +334,44 @@ func TestABranchLevelHoldOnOneMemberHoldsTheGroup(t *testing.T) {
 	branches, _ = Compose([]Named{a, c})
 	if len(branches) != 1 || branches[0].SuppressedBy != "" || len(branches[0].UpdateKeys) != 1 {
 		t.Errorf("an aged member stays off an actionable group: %+v", branches)
+	}
+}
+
+// With separateMajorMinor off, a dependency's major and minor bucket name
+// one branch; the branch carries the major alone, as Renovate offers the
+// newest version alone. Measured 2026-10-31 on devops/images/reuse: both
+// were written to one Tumbleweed snapshot pin, apply refused the two
+// overlapping edits, and the pin stood four days.
+func TestOneUpdatePerDependencyOnABranch(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}}
+	snap := with(base, map[string]any{"groupName": "snapshots", "groupSlug": "snapshots", "separateMajorMinor": false})
+	minor, _ := Name(upd("regex", "custom.tumbleweed-snapshot", "x86_64", "1.0.0", "1.1.0", "1.1.0", model.UpdateMinor), snap, vs)
+	major, _ := Name(upd("regex", "custom.tumbleweed-snapshot", "x86_64", "1.0.0", "3.0.0", "3.0.0", model.UpdateMajor), snap, vs)
+	other, _ := Name(upd("regex", "custom.tumbleweed-snapshot", "aarch64", "1.0.0", "1.1.0", "1.1.0", model.UpdateMinor), snap, vs)
+	branches, err := Compose([]Named{minor, major, other})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(branches) != 1 || !slices.Equal(branches[0].UpdateKeys, []string{major.Update.Key(), other.Update.Key()}) {
+		t.Errorf("one update per dependency on a branch: %+v", branches)
+	}
+
+	// A held major leaves the actionable minor on the branch.
+	held := major
+	held.Update.Blocks = []model.Block{{Reason: model.BlockMinimumReleaseAge}}
+	held.Update.SuppressedBy = model.BlockMinimumReleaseAge
+	branches, _ = Compose([]Named{held, minor})
+	if len(branches) != 1 || !slices.Equal(branches[0].UpdateKeys, []string{minor.Update.Key()}) {
+		t.Errorf("a held major must not displace the minor: %+v", branches)
+	}
+
+	// Majors on their own branch keep both, one per branch.
+	sep := with(base, map[string]any{"groupName": "snapshots", "groupSlug": "snapshots", "separateMajorMinor": true})
+	minor, _ = Name(minor.Update, sep, vs)
+	major, _ = Name(major.Update, sep, vs)
+	if branches, _ = Compose([]Named{minor, major}); len(branches) != 2 {
+		t.Errorf("separate majors keep their own branch: %+v", branches)
 	}
 }
 
