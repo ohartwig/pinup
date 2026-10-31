@@ -1,3 +1,14 @@
+## [0.68.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.3...v0.68.4) (2026-10-31)
+
+### :bug: Fixes
+
+* **planner:** carry one update per dependency on a branch ([54cde23](https://git.ole-hartwig.eu/pinup/pinup/commit/54cde23c278885826d5afefec96a87a567bf7387))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 6b8a0e7 ([82ad72f](https://git.ole-hartwig.eu/pinup/pinup/commit/82ad72fdd63a4fbd58cc962c6987a33ae554361d))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 6473bf8 ([159abc7](https://git.ole-hartwig.eu/pinup/pinup/commit/159abc7d47775c40189f59f76c038977f34aeec9))
+
 ## [0.68.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.2...v0.68.3) (2026-10-28)
 
 ### :bug: Fixes
