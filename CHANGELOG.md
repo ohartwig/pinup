@@ -1,3 +1,16 @@
+## [0.68.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.4...v0.68.5) (2026-11-03)
+
+### :bug: Fixes
+
+* **artifacts:** ignoreDeps holds for the components of a build manifest ([697ea1f](https://git.ole-hartwig.eu/pinup/pinup/commit/697ea1f771e312d4f073ea852cad1b6f711c55b0))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to a7a9410 ([e6f91ae](https://git.ole-hartwig.eu/pinup/pinup/commit/e6f91ae2b52d5bfec7a23d8beb1168a1a10d68d7))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 5764a24 ([03ab76a](https://git.ole-hartwig.eu/pinup/pinup/commit/03ab76a0487612a131ea0e4ada767fe62c02afe8))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to b960750 ([12c7843](https://git.ole-hartwig.eu/pinup/pinup/commit/12c784376031a867c1d2af501c324ea8213a7f9c))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to aeb6af2 ([18606cf](https://git.ole-hartwig.eu/pinup/pinup/commit/18606cf51b56217474886b875c4d3809eaa9521c))
+
 ## [0.68.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.3...v0.68.4) (2026-10-31)
 
 ### :bug: Fixes
