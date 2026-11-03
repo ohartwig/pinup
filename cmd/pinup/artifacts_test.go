@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"slices"
@@ -53,6 +54,8 @@ type manifestTree struct {
 	vulnerable bool
 	// pkg narrows the run (--package).
 	pkg string
+	// ignore is the configuration's ignoreDeps.
+	ignore []string
 	// readArtifact answers the platform's artifacts; nil leaves the
 	// option unset.
 	readArtifact func(ctx context.Context, project, ref, job, path string) ([]byte, error)
@@ -72,11 +75,15 @@ func manifestPlan(t *testing.T, mt manifestTree) (*model.Plan, *askedAdvisories)
 	if source == "" {
 		source = `"format": "cyclonedx", "path": "sbom/{{{fileStem}}}.cdx.json"`
 	}
-	cfg := fmt.Sprintf(`{"extends": ["local>devops/renovate-runner"], "osvVulnerabilityAlerts": true, "timezone": "Europe/Berlin",
+	ignore, _ := json.Marshal(mt.ignore)
+	if mt.ignore == nil {
+		ignore = []byte("[]")
+	}
+	cfg := fmt.Sprintf(`{"extends": ["local>devops/renovate-runner"], "osvVulnerabilityAlerts": true, "timezone": "Europe/Berlin", "ignoreDeps": %s,
 		"vulnerabilityAlerts": {"enabled": true, "labels": ["security"], "schedule": ["at any time"], "minimumReleaseAge": null, "automerge": true},
 		"customManagers": [{"customType": "regex", "managerFilePatterns": ["/^[^/]+\\.yaml$/"],
 			"matchStrings": ["%s"], "datasourceTemplate": "go", "versioningTemplate": "semver"}],
-		"artifactManifests": [{"matchFileNames": ["/^[^/]+\\.yaml$/"], %s%s}]}`, depsLine, source, pin)
+		"artifactManifests": [{"matchFileNames": ["/^[^/]+\\.yaml$/"], %s%s}]}`, ignore, depsLine, source, pin)
 	os.WriteFile(root+"/renovate.json", []byte(cfg), 0o644)
 	opts := treeOptions(t, root, "devops/wolfi-packages", time.Date(2026, 10, 16, 9, 0, 0, 0, time.UTC))
 	opts.Datasources["go"] = cannedDS{name: "go", scheme: "semver", releases: map[string][]string{
@@ -203,6 +210,28 @@ func TestAnAdvisoryWritesThePin(t *testing.T) {
 		if strings.Contains(w.Msg, "read by no manager") {
 			t.Errorf("the estate's manager reads the line, yet: %s", w.Msg)
 		}
+	}
+}
+
+// ignoreDeps holds for a component too. enabled: false would only disable
+// it, and a disabled dependency is still moved by a fix: a false positive
+// (grafana-alloy's loki pseudo-version, newer than the fixed tag) would come
+// back every run. An ignored component is counted, not watched.
+func TestAnIgnoredComponentIsNotWatched(t *testing.T) {
+	plan, client := manifestPlan(t, manifestTree{pin: estatePin, vulnerable: true, ignore: []string{"github.com/getkin/kin-openapi"}})
+	if d := artifactDep(t, plan, "github.com/getkin/kin-openapi"); d != nil {
+		t.Fatalf("kin-openapi is still a dependency: %+v", d)
+	}
+	for _, b := range plan.Branches {
+		if slices.ContainsFunc(b.UpdateKeys, func(k string) bool { return strings.Contains(k, "kin-openapi") }) {
+			t.Errorf("a branch was planned for an ignored component: %s", b.Name)
+		}
+	}
+	if slices.ContainsFunc(client.asked, func(q osv.Query) bool { return q.PackageName == "github.com/getkin/kin-openapi" }) {
+		t.Errorf("OSV was asked about an ignored component")
+	}
+	if len(plan.Artifacts) != 1 || plan.Artifacts[0].Skipped["ignoreDeps"] != 1 {
+		t.Errorf("artifacts = %+v, want one ignoreDeps skip", plan.Artifacts)
 	}
 }
 

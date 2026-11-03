@@ -543,20 +543,26 @@ func (r *whatifRun) configure() error {
 	return nil
 }
 
-// extractAll reads every discovered file once and runs each claiming
-// manager over it, applying the pre-lookup rules to what comes out.
-func (r *whatifRun) extractAll() error {
-	o, plan, decoded, resolved := r.o, r.plan, r.decoded, r.resolved
-	r.widened = map[string]bool{}
-	// ignoreDeps names dependencies that are never looked up.
+// ignoredDeps is the set ignoreDeps names: dependencies that are never
+// looked up, whether a manager read them or a build manifest listed them.
+func ignoredDeps(raw map[string]any) map[string]bool {
 	ignored := map[string]bool{}
-	if list, ok := resolved.Raw["ignoreDeps"].([]any); ok {
+	if list, ok := raw["ignoreDeps"].([]any); ok {
 		for _, e := range list {
 			if name, ok := e.(string); ok {
 				ignored[name] = true
 			}
 		}
 	}
+	return ignored
+}
+
+// extractAll reads every discovered file once and runs each claiming
+// manager over it, applying the pre-lookup rules to what comes out.
+func (r *whatifRun) extractAll() error {
+	o, plan, decoded, resolved := r.o, r.plan, r.decoded, r.resolved
+	r.widened = map[string]bool{}
+	ignored := ignoredDeps(resolved.Raw)
 
 	// One read per file, however many managers claim it. Reading a file once
 	// per manager would multiply IO by the number of definitions that match

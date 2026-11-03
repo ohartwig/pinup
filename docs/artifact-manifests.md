@@ -122,6 +122,16 @@ the consumer index so the advisory watch asks about it between full runs.
 Such an entry names no consumer: a release of a transitive module is not news
 to the fast lane, an advisory against it is.
 
+`enabled: false` does not take a component out of that: a disabled
+dependency is still asked about advisories and moved by a fix, the same as
+anywhere else. `ignoreDeps` does. A component it names is counted as
+skipped (`ignoreDeps` in the report) and is neither watched nor asked
+about. That is the way out of a false positive pinup cannot judge: a Go
+pseudo-version of a commit after the fix sorts below the fixed tag, so
+OSV's range reads it as affected, and the "fix" it plans is a downgrade
+(grafana-alloy's `loki/v3`, 2026-11). The scanner on the built image still
+sees the module.
+
 ### Writing the pin
 
 An advisory that names a fix turns the component into a security update,
