@@ -70,6 +70,12 @@ func (r *whatifRun) readArtifacts() error {
 	for _, d := range plan.Deps {
 		declared[d.File+"|"+report.Key(d)] = true
 	}
+	// ignoreDeps holds for a component as for a line: a rule's enabled: false
+	// only disables it, and a disabled dependency is still asked about
+	// advisories and moved by a fix. A component whose advisory is a false
+	// positive (a Go pseudo-version of a commit after the fix sorts below the
+	// fixed tag) has no other way out.
+	ignored := ignoredDeps(r.resolved.Raw)
 	seen := map[string]bool{}
 	for i, am := range decoded.ArtifactManifests {
 		files := byManifest[i]
@@ -104,6 +110,10 @@ func (r *whatifRun) readArtifacts() error {
 						kind = "no-purl"
 					}
 					skip(kind)
+					continue
+				}
+				if ignored[name] {
+					skip("ignoreDeps")
 					continue
 				}
 				if version == "" {

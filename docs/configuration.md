@@ -97,7 +97,7 @@ unsupported means nothing reads it and the run says so.
 | `fetchChangeLogs` | supported |
 | `groupName` | supported |
 | `groupSlug` | supported |
-| `ignoreDeps` | supported |
+| `ignoreDeps` | supported; also for the components of [artifact manifests](artifact-manifests.md#what-a-component-becomes), which are then counted as skipped and neither watched nor asked about advisories |
 | `ignorePaths` | supported |
 | `ignoreUnstable` | supported |
 | `internalChecksFilter` | supported |
