@@ -271,7 +271,7 @@ var mutators = []mutator{
 	// Own-host cache TTL (2026-09-30): lookups at the estate's own
 	// registries age out after --cache-ttl-own, not after --cache-ttl.
 	{73, "lookup", "own hosts keep the long cache TTL", "lookup/lookup.go",
-		"\tif f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {", "\tif false && f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {", []string{"./lookup/"}, false, ""},
+		"\tif f.OwnTTL > 0 && (slices.ContainsFunc(f.OwnHosts, ref.servedBy) || f.builtURLOnOwnHost(ref)) {", "\tif false && f.OwnTTL > 0 && (slices.ContainsFunc(f.OwnHosts, ref.servedBy) || f.builtURLOnOwnHost(ref)) {", []string{"./lookup/"}, false, ""},
 	{74, "lookup", "a registry URL does not make a host own", "lookup/lookup.go",
 		"\t\tif parsed, err := url.Parse(u); err == nil && strings.EqualFold(parsed.Hostname(), host) {", "\t\tif parsed, err := url.Parse(u); false && err == nil && strings.EqualFold(parsed.Hostname(), host) {", []string{"./lookup/"}, false, ""},
 	// A narrowed run widens to an open group (2026-10-03): the fast lane
@@ -386,6 +386,10 @@ var mutators = []mutator{
 		"(!bypass || !cached.FetchedAt.Before(f.Now))", "!bypass", []string{"./lookup/"}, false, ""},
 	{112, "fastlane", "a narrowed run plans routine lock maintenance", "cmd/pinup/whatif.go",
 		"ok && !narrowed {", "ok {", []string{"./cmd/pinup/"}, false, ""},
+	// A custom datasource's own URL makes a lookup own (2026-11-05): the koh
+	// snapshot index on the estate's bucket was cached for five hours.
+	{113, "lookup", "a URL the datasource builds does not make a host own", "lookup/lookup.go",
+		"\treturn slices.ContainsFunc(f.OwnHosts, func(h string) bool { return h != \"\" && strings.EqualFold(parsed.Hostname(), h) })", "\treturn false", []string{"./lookup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

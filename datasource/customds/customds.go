@@ -38,6 +38,25 @@ func New(def model.CustomDatasource, client *httpx.Client) *Datasource {
 
 func (d *Datasource) Name() string { return "custom." + d.def.Name }
 
+// templateURL renders defaultRegistryUrlTemplate for the ref.
+func (d *Datasource) templateURL(ref lookup.Ref) (string, error) {
+	url, set, err := hbs.RenderString(d.def.DefaultRegistryURLTemplate, hbs.MapEnv{Values: map[string]string{"packageName": ref.PackageName}})
+	if err != nil {
+		return "", fmt.Errorf("%s: defaultRegistryUrlTemplate: %w", d.Name(), err)
+	}
+	if !set || url == "" {
+		return "", fmt.Errorf("%s: no registry URL for %s", d.Name(), ref.PackageName)
+	}
+	return url, nil
+}
+
+// RegistryURL is the URL Releases asks for a ref without registry URLs:
+// the rendered template. lookup reads it for --own-hosts.
+func (d *Datasource) RegistryURL(ref lookup.Ref) (string, bool) {
+	u, err := d.templateURL(ref)
+	return u, err == nil
+}
+
 // DefaultVersioning is semver, as Renovate's is for custom datasources.
 func (d *Datasource) DefaultVersioning() string { return "semver" }
 
@@ -48,14 +67,10 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 	if len(ref.RegistryURLs) > 0 && ref.RegistryURLs[0] != "" {
 		url = ref.RegistryURLs[0]
 	} else {
-		var set bool
 		var err error
-		url, set, err = hbs.RenderString(d.def.DefaultRegistryURLTemplate, hbs.MapEnv{Values: map[string]string{"packageName": ref.PackageName}})
+		url, err = d.templateURL(ref)
 		if err != nil {
-			return nil, fmt.Errorf("%s: defaultRegistryUrlTemplate: %w", d.Name(), err)
-		}
-		if !set || url == "" {
-			return nil, fmt.Errorf("%s: no registry URL for %s", d.Name(), ref.PackageName)
+			return nil, err
 		}
 	}
 	resp, err := d.client.Get(ctx, url, httpx.ReqOptions{Accept: "application/json"})
