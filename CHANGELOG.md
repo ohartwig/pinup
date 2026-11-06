@@ -1,3 +1,13 @@
+## [0.68.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.6...v0.68.7) (2026-11-06)
+
+### :bug: Fixes
+
+* **lookup:** --own-hosts covers the URL a custom datasource builds ([c8a1fc0](https://git.ole-hartwig.eu/pinup/pinup/commit/c8a1fc04c6a6e61a385b2b5b611fb7702825045a))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 692bf13 ([7830f86](https://git.ole-hartwig.eu/pinup/pinup/commit/7830f86fb53f35442633443304cc9cbd6155a4b9))
+
 ## [0.68.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.5...v0.68.6) (2026-11-04)
 
 ### :repeat: Chores
