@@ -77,3 +77,16 @@ func TestPackageNameTemplateAndPlainFormat(t *testing.T) {
 		t.Errorf("want a 404 error, got %v", err)
 	}
 }
+
+// RegistryURL is the URL Releases asks: the rendered template, for
+// --own-hosts to read. No URL without a template.
+func TestRegistryURLIsTheRenderedTemplate(t *testing.T) {
+	ds := New(model.CustomDatasource{Name: "koh-snapshot", DefaultRegistryURLTemplate: "https://bucket.example.org/koh/{{packageName}}/index.json"}, client(nil))
+	if u, ok := ds.RegistryURL(lookup.Ref{PackageName: "aarch64"}); !ok || u != "https://bucket.example.org/koh/aarch64/index.json" {
+		t.Errorf("RegistryURL = %q, %v", u, ok)
+	}
+	none := New(model.CustomDatasource{Name: "none"}, client(nil))
+	if u, ok := none.RegistryURL(lookup.Ref{PackageName: "aarch64"}); ok {
+		t.Errorf("no template must give no URL, got %q", u)
+	}
+}

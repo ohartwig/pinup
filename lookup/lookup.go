@@ -79,6 +79,16 @@ type DigestSource interface {
 	Digest(ctx context.Context, ref Ref, version string) (string, error)
 }
 
+// URLSource is a datasource that builds the URL it asks from the ref
+// itself - a custom datasource's defaultRegistryUrlTemplate - so the ref
+// names no host. RegistryURL returns that URL for a ref without registry
+// URLs of its own, and false when it cannot name one. --own-hosts reads it:
+// without it a koh snapshot index on the estate's own bucket was cached for
+// the public TTL (2026-11-05, five hours, through a security release).
+type URLSource interface {
+	RegistryURL(ref Ref) (string, bool)
+}
+
 // Registry maps a datasource name to its implementation. wire fills it.
 type Registry map[string]Datasource
 
@@ -329,12 +339,40 @@ func (f *Fetcher) ttl() time.Duration {
 	return time.Hour
 }
 
-// ttlFor is OwnTTL for a ref served by one of OwnHosts, TTL otherwise.
+// ttlFor is OwnTTL for a ref served by one of OwnHosts, TTL otherwise. A
+// ref that names no registry URL is also served by the host of the URL
+// its datasource builds for it (URLSource).
 func (f *Fetcher) ttlFor(ref Ref) time.Duration {
-	if f.OwnTTL > 0 && slices.ContainsFunc(f.OwnHosts, ref.servedBy) {
+	if f.OwnTTL > 0 && (slices.ContainsFunc(f.OwnHosts, ref.servedBy) || f.builtURLOnOwnHost(ref)) {
 		return f.OwnTTL
 	}
 	return f.ttl()
+}
+
+// builtURLOnOwnHost reports whether the ref's datasource builds a URL on
+// one of OwnHosts for it. Only for a ref without registry URLs: one that
+// has them is asked there, and servedBy has read them.
+func (f *Fetcher) builtURLOnOwnHost(ref Ref) bool {
+	if len(ref.RegistryURLs) > 0 {
+		return false
+	}
+	ds, err := f.Registry.Get(ref.Datasource)
+	if err != nil {
+		return false
+	}
+	us, ok := ds.(URLSource)
+	if !ok {
+		return false
+	}
+	u, ok := us.RegistryURL(ref)
+	if !ok {
+		return false
+	}
+	parsed, err := url.Parse(u)
+	if err != nil {
+		return false
+	}
+	return slices.ContainsFunc(f.OwnHosts, func(h string) bool { return h != "" && strings.EqualFold(parsed.Hostname(), h) })
 }
 
 // servedBy reports whether host serves the ref: named by its registry URL,

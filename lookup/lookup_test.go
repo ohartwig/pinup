@@ -197,6 +197,56 @@ func TestOwnHostsAgeOutAfterOwnTTL(t *testing.T) {
 	}
 }
 
+// urlDS is a countingDS that builds its URL from the package name, as a
+// custom datasource renders defaultRegistryUrlTemplate.
+type urlDS struct {
+	countingDS
+	base string
+}
+
+func (u *urlDS) RegistryURL(ref Ref) (string, bool) {
+	if u.base == "" {
+		return "", false
+	}
+	return u.base + ref.PackageName + "/index.json", true
+}
+
+// A datasource that builds its URL on an own host is an own lookup too.
+// 2026-11-05: custom.koh-snapshot reads koh/<arch>/index.json from the
+// estate's own bucket; the ref names no host, and a project run served a
+// pre-publish answer for five hours through a security release.
+func TestOwnHostsReadTheURLADatasourceBuilds(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		base      string
+		dep       model.Dependency
+		wantCalls int
+	}{
+		{name: "template on an own host", base: "https://bucket.example.org/koh/", dep: dep("aarch64", "fake"), wantCalls: 2},
+		{name: "template on a public host", base: "https://index.example.com/", dep: dep("aarch64", "fake"), wantCalls: 1},
+		{name: "no URL from the datasource", base: "", dep: dep("aarch64", "fake"), wantCalls: 1},
+		{name: "the ref's own URL wins over the template", base: "https://bucket.example.org/koh/", dep: func() model.Dependency {
+			d := dep("aarch64", "fake")
+			d.RegistryURLs = []string{"https://index.example.com/"}
+			return d
+		}(), wantCalls: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ds := &urlDS{countingDS: countingDS{calls: map[string]int{}, releases: map[string][]string{"aarch64": {"1.0.0"}}}, base: tc.base}
+			f := &Fetcher{
+				Registry: Registry{"fake": ds}, Cache: newMemCache(), TTL: 5 * time.Hour, Now: now,
+				OwnTTL: 10 * time.Minute, OwnHosts: []string{"bucket.example.org"},
+			}
+			f.Fetch(t.Context(), []model.Dependency{tc.dep})
+			f.Now = now.Add(30 * time.Minute)
+			f.Fetch(t.Context(), []model.Dependency{tc.dep})
+			if ds.calls["aarch64"] != tc.wantCalls {
+				t.Errorf("%d lookups after 30 minutes, want %d", ds.calls["aarch64"], tc.wantCalls)
+			}
+		})
+	}
+}
+
 func TestStaleEntryIsRefetchedAndServedOnFailure(t *testing.T) {
 	ds := &countingDS{calls: map[string]int{}, releases: map[string][]string{"a": {"1.0.0"}}}
 	c := newMemCache()
