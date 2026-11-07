@@ -1,3 +1,13 @@
+## [0.68.8](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.7...v0.68.8) (2026-11-07)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to fa8ab84 ([05f624a](https://git.ole-hartwig.eu/pinup/pinup/commit/05f624a9fa7497de06845e9cb65f63bb06b0762e))
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([901a1d9](https://git.ole-hartwig.eu/pinup/pinup/commit/901a1d9d8e2812860744e44510abbecda7117904))
+
 ## [0.68.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.6...v0.68.7) (2026-11-06)
 
 ### :bug: Fixes
