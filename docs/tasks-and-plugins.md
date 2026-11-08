@@ -74,6 +74,56 @@ naming the command; Renovate skipped the command and pushed the branch
 anyway, which is how an estate lost every first-party lock refresh for
 weeks without a red job.
 
+## Dropping a bump its tasks left unchanged
+
+```jsonc
+"packageRules": [{
+  "matchDatasources": ["custom.koh-snapshot", "custom.tumbleweed-snapshot"],
+  "groupName": "snapshots",
+  "postUpgradeTasks": {
+    "commands": ["koh-lock {{{packageFile}}}"],
+    "fileFilters": ["**/koh-lock/**"],
+    "executionMode": "branch",
+    "dropWhenUnchanged": true
+  }
+}]
+```
+
+A pin that names a whole repository snapshot moves in every image with
+each new snapshot, while only the images whose packages moved need a
+build. With `dropWhenUnchanged: true` (a JSON `true`; anything else is
+off) the branch is dropped - no commit, no push, no merge request -
+when, after every task of the branch ran successfully:
+
+- no task changed a file - the asking tasks' scope is their
+  `fileFilters`, and a lock refresh beside them that moved its lock is a
+  change as well; and
+- a tracked file within the `fileFilters` of an asking task exists in
+  the branch's tree.
+
+The second condition is what keeps a repository that has not adopted the
+lock as it was: `koh-lock` writes nothing where an image has no
+`koh-lock/` yet, nothing lies in the scope, and the bump is written as
+before.
+
+The decision is made for the branch, never for one update on it: in
+`branch` mode one run covers every package file, and the branch is
+dropped only if no file in scope changed anywhere; in `update` mode the
+same holds across all of the branch's tasks. It applies only when every
+update on the branch asked for it - an update whose own configuration
+did not would otherwise be dropped with the rest - so a group that
+mixes such updates with others is written as usual.
+
+A dropped branch is held with `scopeUnchanged` on the branch and on each
+of its updates, the note naming the commands, the scope and how many
+files in it were found unchanged; the run's log line reads `held` with
+the same note, and the dependency dashboard lists it under *Held*. The
+reason is not settled: a merge request already open for the branch - an
+earlier snapshot that did move the lock - is left exactly as it is, not
+updated with a pin-only commit and not closed by pruning. A task that
+fails is a failure (`publishFailed`), never a drop. `pinup whatif` runs
+no task and cannot know; the drop shows in the plan of a run.
+
 ## The scope
 
 A task runs in a scratch `HOME`, with `PATH`, `LANG`, `TZ` and what

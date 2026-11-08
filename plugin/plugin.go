@@ -45,7 +45,10 @@ type PostUpgrade struct {
 	Commands      []string
 	ExecutionMode model.ExecutionMode
 	FileFilters   []string
-	Origin        model.Origin
+	// DropWhenUnchanged carries postUpgradeTasks' dropWhenUnchanged onto
+	// the compiled tasks (model.Task.DropWhenUnchanged).
+	DropWhenUnchanged bool
+	Origin            model.Origin
 }
 
 // LockRefresh composes the toolchain command that brings a lock file up to
@@ -319,7 +322,8 @@ func Compile(pu PostUpgrade, updates []model.Update, allowed []string) ([]model.
 			}
 			out = append(out, model.Task{
 				Kind: model.TaskPostUpgrade, Manager: g[0].Dep.Manager, Dir: dir, Command: argv,
-				ExecutionMode: mode, FileFilters: pu.FileFilters, AllowedBy: by, Origin: pu.Origin,
+				ExecutionMode: mode, FileFilters: pu.FileFilters, DropWhenUnchanged: pu.DropWhenUnchanged,
+				AllowedBy: by, Origin: pu.Origin,
 			})
 		}
 	}

@@ -17,6 +17,7 @@ package runner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -230,6 +231,17 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		keep := hasMR && !mr.Conflict && (mr.PipelineBusy || o.RebaseWhen == "conflicted")
 		planned := *b
 		sha, pushed, err := pushBranch(ctx, o, b, keep)
+		if dropped, ok := errors.AsType[*scopeUnchanged](err); ok {
+			// Not a failure and not a gap: the plan, the run's log line and
+			// the dashboard name the tasks and the scope they left as it
+			// was. An open request on the branch is left exactly as it is
+			// - the reason is not settled, so prune keeps it too.
+			hold(plan, b, model.Block{
+				Reason: model.BlockScopeUnchanged, Org: dropOrigin(b), Note: dropped.note,
+			})
+			outcomes = append(outcomes, Outcome{Branch: b.Name, Action: "held", MRIID: mr.IID, Message: "scope unchanged: " + dropped.note})
+			continue
+		}
 		if err != nil {
 			if i < original {
 				unresolved = append(unresolved, pushFailure{branch: planned, err: err.Error()})
@@ -633,12 +645,14 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch, keep bool) (str
 	// together with the edits: a manifest never lands without its lock.
 	b.Unlifted = nil
 	lifts, checked := 0, true
+	byTask := make([][]string, 0, len(b.Tasks))
 	for _, t := range b.Tasks {
 		changed, err := o.runTask(ctx, t)
 		if err != nil {
 			_ = o.Repo.Discard(ctx)
 			return "", false, err
 		}
+		byTask = append(byTask, changed)
 		for _, p := range changed {
 			if !files[p] {
 				files[p] = true
@@ -663,6 +677,23 @@ func pushBranch(ctx context.Context, o Options, b *model.Branch, keep bool) (str
 	}
 	if checked {
 		dropSecurityTitle(b, lifts, len(b.Unlifted))
+	}
+	// postUpgradeTasks' dropWhenUnchanged: the tasks left their scope as
+	// it was, so the edits alone are not written - not pushed, not onto an
+	// open request either. Decided after every task ran successfully; a
+	// failed task returned above and fails the branch.
+	if slices.ContainsFunc(b.Tasks, func(t model.Task) bool { return t.DropWhenUnchanged }) {
+		tracked, err := o.Repo.Tracked(ctx)
+		if err != nil {
+			_ = o.Repo.Discard(ctx)
+			return "", false, err
+		}
+		if note, drop := dropUnchanged(b.Tasks, byTask, tracked); drop {
+			if err := o.Repo.Discard(ctx); err != nil {
+				return "", false, err
+			}
+			return "", false, &scopeUnchanged{note: note}
+		}
 	}
 	if len(paths) == 0 {
 		// A task-only branch whose tool found nothing to refresh: not a

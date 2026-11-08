@@ -27,7 +27,7 @@ func TestKeySupportKnowsEveryKeyTheCodeReads(t *testing.T) {
 		"depNameTemplate": true, "packageNameTemplate": true, "datasourceTemplate": true, "versioningTemplate": true,
 		"currentValueTemplate": true, "extractVersionTemplate": true, "registryUrlTemplate": true, "depTypeTemplate": true,
 		"defaultRegistryUrlTemplate": true, "transformTemplates": true, "format": true,
-		"commands": true, "fileFilters": true, "executionMode": true,
+		"commands": true, "fileFilters": true, "executionMode": true, "dropWhenUnchanged": true,
 	}
 	reads := regexp.MustCompile(`\b(?:raw|Raw|cfg|c|single|rule|obj)\["([a-zA-Z$]+)"\]`)
 	cases := regexp.MustCompile(`case ("match[A-Za-z]+"(?:,\s*"match[A-Za-z]+")*)`)

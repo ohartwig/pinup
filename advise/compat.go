@@ -359,17 +359,27 @@ func renovateRejects(in *Input) []Finding {
 			Origin: in.fileOrigin(pointer, rule),
 			Msg:    fmt.Sprintf("`%s` is pinup's own and Renovate rejects it (\"Invalid configuration option\"): %s would stop working under Renovate; keep the key in a .pinup.* file or the run's own configuration", key, name)})
 	}
+	postUpgrade := func(obj any, rule int, at ...any) {
+		pu, _ := obj.(map[string]any)
+		for _, k := range slices.Sorted(maps.Keys(pu)) {
+			if PinupOnly.PostUpgradeTasks[k] {
+				emit(ptr(append(at, "postUpgradeTasks", k)...), "postUpgradeTasks."+k, rule)
+			}
+		}
+	}
 	for _, k := range slices.Sorted(maps.Keys(in.Layer.Raw)) {
 		if PinupOnly.Top[k] {
 			emit(ptr(k), k, model.NoRule)
 		}
 	}
+	postUpgrade(in.Layer.Raw["postUpgradeTasks"], model.NoRule)
 	for i, rule := range in.ownRules() {
 		for _, k := range slices.Sorted(maps.Keys(rule)) {
 			if PinupOnly.Rule[k] {
 				emit(ptr("packageRules", i, k), k, in.base("packageRules")+i)
 			}
 		}
+		postUpgrade(rule["postUpgradeTasks"], in.base("packageRules")+i, "packageRules", i)
 	}
 	if ds, ok := in.Layer.Raw["customDatasources"].(map[string]any); ok {
 		for _, n := range slices.Sorted(maps.Keys(ds)) {

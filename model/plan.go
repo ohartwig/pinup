@@ -62,6 +62,13 @@ type Task struct {
 	Command       []string      `json:"command"`
 	ExecutionMode ExecutionMode `json:"executionMode"`
 	FileFilters   []string      `json:"fileFilters,omitempty"`
+	// DropWhenUnchanged is postUpgradeTasks' dropWhenUnchanged: when every
+	// such task of a branch ran, none of them changed a file, and a file
+	// within their fileFilters exists in the tree, the branch is not
+	// written - its edits alone are not worth a merge request. A pin
+	// bumped in every image when only a few images' package locks move
+	// is the case it was made for (koh-lock, 2026-11).
+	DropWhenUnchanged bool `json:"dropWhenUnchanged,omitzero"`
 	// AllowedBy is the index of the allowlist pattern that admitted this
 	// command, or -1 for a lock refresh pinup composed itself. A command
 	// that ran because the allowlist was too loose is then visibly

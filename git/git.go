@@ -350,6 +350,23 @@ func (r *Repo) Changed(ctx context.Context) ([]string, error) {
 	return paths, nil
 }
 
+// Tracked lists the paths git tracks in the work tree, relative to the
+// repository root: what the branch will carry, without what a .gitignore
+// keeps out of it.
+func (r *Repo) Tracked(ctx context.Context) ([]string, error) {
+	out, err := r.run(ctx, "ls-files", "-z")
+	if err != nil {
+		return nil, err
+	}
+	var paths []string
+	for p := range strings.SplitSeq(out, "\x00") {
+		if p != "" {
+			paths = append(paths, p)
+		}
+	}
+	return paths, nil
+}
+
 // ForeignAuthors lists the author emails of commits on branch that are not
 // on base and were not made by who. A branch a person has committed to is
 // theirs now; the runner leaves it alone and says so.

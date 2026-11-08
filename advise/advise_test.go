@@ -426,14 +426,16 @@ func TestSortIsStable(t *testing.T) {
 // the run's own overlay may carry the same keys without a word.
 func TestRenovateRejectsOnlyWhereRenovateReads(t *testing.T) {
 	cfg := `{"osvTransitiveAlerts": true, "prConcurrentLimitIgnoreLabels": ["needs-runbook"],
+		"postUpgradeTasks": {"commands": ["koh-lock {{{packageFile}}}"], "fileFilters": ["**/koh-lock/**"], "dropWhenUnchanged": true},
 		"customDatasources": {"wolfi": {"defaultRegistryUrlTemplate": "https://x/{{packageName}}", "osvEcosystem": "Wolfi"}},
-		"packageRules": [{"matchDatasources": ["helm"], "analyze": true, "matchEffective": ["patch"], "trustEffective": true}]}`
+		"packageRules": [{"matchDatasources": ["helm"], "analyze": true, "matchEffective": ["patch"], "trustEffective": true,
+			"postUpgradeTasks": {"commands": ["koh-lock {{{packageFile}}}"], "fileFilters": ["**/koh-lock/**"], "dropWhenUnchanged": true}}]}`
 	for _, c := range []struct {
 		file string
 		want []string
 	}{
-		{"renovate.json", []string{"/customDatasources/wolfi/osvEcosystem", "/osvTransitiveAlerts", "/packageRules/0/analyze", "/packageRules/0/matchEffective", "/packageRules/0/trustEffective", "/prConcurrentLimitIgnoreLabels"}},
-		{".renovaterc.json", []string{"/customDatasources/wolfi/osvEcosystem", "/osvTransitiveAlerts", "/packageRules/0/analyze", "/packageRules/0/matchEffective", "/packageRules/0/trustEffective", "/prConcurrentLimitIgnoreLabels"}},
+		{"renovate.json", []string{"/customDatasources/wolfi/osvEcosystem", "/osvTransitiveAlerts", "/packageRules/0/analyze", "/packageRules/0/matchEffective", "/packageRules/0/postUpgradeTasks/dropWhenUnchanged", "/packageRules/0/trustEffective", "/postUpgradeTasks/dropWhenUnchanged", "/prConcurrentLimitIgnoreLabels"}},
+		{".renovaterc.json", []string{"/customDatasources/wolfi/osvEcosystem", "/osvTransitiveAlerts", "/packageRules/0/analyze", "/packageRules/0/matchEffective", "/packageRules/0/postUpgradeTasks/dropWhenUnchanged", "/packageRules/0/trustEffective", "/postUpgradeTasks/dropWhenUnchanged", "/prConcurrentLimitIgnoreLabels"}},
 		{"default.json", nil},
 		{".pinup.json", nil},
 		{"pinup.json", nil},
