@@ -608,6 +608,7 @@ func TestASecurityFixIsNotHeldByTheLimits(t *testing.T) {
 type fakeTasks struct {
 	writes  map[string]string // path relative to the checkout -> content
 	missing string
+	fail    error // returned by Run, after the writes
 	ran     int
 }
 
@@ -623,11 +624,14 @@ func (f *fakeTasks) Available(tasks []model.Task) error {
 func (f *fakeTasks) Run(_ context.Context, root string, t model.Task) error {
 	f.ran++
 	for p, c := range f.writes {
+		if err := os.MkdirAll(filepath.Dir(filepath.Join(root, p)), 0o755); err != nil {
+			return err
+		}
 		if err := os.WriteFile(filepath.Join(root, p), []byte(c), 0o644); err != nil {
 			return err
 		}
 	}
-	return nil
+	return f.fail
 }
 
 // A manifest edit with a lock refresh task lands as one commit carrying

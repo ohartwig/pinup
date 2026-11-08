@@ -1804,6 +1804,10 @@ func postUpgradeOf(cfg map[string]any) (plugin.PostUpgrade, bool) {
 		FileFilters:   stringList(obj["fileFilters"]),
 		Origin:        model.Origin{Source: "config", Rule: model.NoRule},
 	}
+	// Only a JSON true opts in: a string "true" is no decision to drop
+	// anything, and a bump that silently stopped coming is the failure
+	// this key can cause.
+	pu.DropWhenUnchanged, _ = obj["dropWhenUnchanged"].(bool)
 	return pu, len(pu.Commands) > 0
 }
 
@@ -1968,16 +1972,26 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 	}
 	// postUpgradeTasks: grouped by the rule object that set them, so a
 	// branch-mode command carries every update the same object applies to.
-	type puKey struct{ commands, mode, filters string }
+	type puKey struct {
+		commands, mode, filters string
+		drop                    bool
+	}
 	groups := map[puKey][]model.Update{}
 	confs := map[puKey]plugin.PostUpgrade{}
 	var puOrder []puKey
+	// dropWhenUnchanged decides for the whole branch, so it holds only
+	// when every update on the branch asked for it: an update whose own
+	// configuration did not would otherwise be dropped with the others.
+	droppable := len(mine) > 0
 	for _, u := range mine {
 		pu, ok := postUpgrade[u.Key()]
+		if !ok || !pu.DropWhenUnchanged {
+			droppable = false
+		}
 		if !ok {
 			continue
 		}
-		k := puKey{strings.Join(pu.Commands, "\x00"), string(pu.ExecutionMode), strings.Join(pu.FileFilters, "\x00")}
+		k := puKey{strings.Join(pu.Commands, "\x00"), string(pu.ExecutionMode), strings.Join(pu.FileFilters, "\x00"), pu.DropWhenUnchanged}
 		if _, seen := groups[k]; !seen {
 			puOrder = append(puOrder, k)
 			confs[k] = pu
@@ -1985,9 +1999,11 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		groups[k] = append(groups[k], u)
 	}
 	for _, k := range puOrder {
-		compiled, err := plugin.Compile(confs[k], groups[k], allowed)
+		pu := confs[k]
+		pu.DropWhenUnchanged = pu.DropWhenUnchanged && droppable
+		compiled, err := plugin.Compile(pu, groups[k], allowed)
 		if err != nil {
-			return tasks, &model.Block{Reason: model.BlockTaskRefused, Org: confs[k].Origin, Note: err.Error()}
+			return tasks, &model.Block{Reason: model.BlockTaskRefused, Org: pu.Origin, Note: err.Error()}
 		}
 		tasks = append(tasks, compiled...)
 	}

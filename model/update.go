@@ -199,6 +199,16 @@ const (
 	// (measured 2026-09-16: sixteen such branches read as pinup-only in
 	// the comparison once Renovate no longer refreshed the same locks).
 	BlockNothingToRefresh BlockReason = "nothingToRefresh"
+	// BlockScopeUnchanged holds a branch whose postUpgradeTasks set
+	// dropWhenUnchanged and changed nothing inside their fileFilters, while
+	// files inside them exist: the edits would land without the change the
+	// tasks are there to produce. A golden image's snapshot pin moves
+	// with every new snapshot; the image's package lock (koh-lock/) moves
+	// only when a package it installs does, and only then is the bump
+	// worth a build. Not settled: an open request for the branch stays
+	// as it is - not updated, not closed - and the next snapshot that
+	// moves the lock writes the branch again.
+	BlockScopeUnchanged BlockReason = "scopeUnchanged"
 	// BlockPublishFailed marks a branch the run tried to write and could
 	// not - a push refused, a task whose output left its scope, a merge
 	// request the platform declined. The warning names the step and the

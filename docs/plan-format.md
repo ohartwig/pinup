@@ -120,7 +120,10 @@ cache's first-seen record), `securityFix` with the advisory, and:
   `disabled`, `allowedVersions`, `internalChecksFilter`, `hourlyLimit`,
   `concurrentLimit`, `rollingMajor`, `pluginRequired` (a tool missing,
   or a lock pinup cannot refresh governing the manifest - the note names
-  it), `taskRefused`, `nothingToRefresh`, `publishFailed`, `closedByHand`
+  it), `taskRefused`, `nothingToRefresh`, `scopeUnchanged` (the
+  branch's `postUpgradeTasks` set `dropWhenUnchanged` and changed nothing
+  inside their `fileFilters`; the note names the commands and the scope),
+  `publishFailed`, `closedByHand`
   (the newest request on the branch was closed by a person without
   merging and carried exactly these edits; a changed update opens again).
   `narrowedRun` concerns a group branch in a run narrowed to one

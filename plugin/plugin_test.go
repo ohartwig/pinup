@@ -623,3 +623,28 @@ func TestOnlyNpmsLockLiftsTransitivePackages(t *testing.T) {
 		}
 	}
 }
+
+// dropWhenUnchanged travels from the configuration onto every task it
+// compiles, in either mode; without it no task asks for a drop.
+func TestCompileCarriesDropWhenUnchanged(t *testing.T) {
+	admit := []string{`^koh-lock( [^ ;&|]+)+$`}
+	ups := []model.Update{upd("a/Containerfile", "koh-snapshot", "20261101", "20261108"), upd("b/Containerfile", "koh-snapshot", "20261101", "20261108")}
+	for _, c := range []struct {
+		mode  model.ExecutionMode
+		drop  bool
+		tasks int
+	}{
+		{model.ExecBranch, true, 1}, {model.ExecUpdate, true, 2}, {model.ExecBranch, false, 1},
+	} {
+		pu := PostUpgrade{Commands: []string{"koh-lock {{{packageFile}}}"}, ExecutionMode: c.mode, FileFilters: []string{"**/koh-lock/**"}, DropWhenUnchanged: c.drop}
+		tasks, err := Compile(pu, ups, admit)
+		if err != nil || len(tasks) != c.tasks {
+			t.Fatalf("%s: %v %+v", c.mode, err, tasks)
+		}
+		for _, task := range tasks {
+			if task.DropWhenUnchanged != c.drop {
+				t.Errorf("%s: task %v dropWhenUnchanged = %v, want %v", c.mode, task.Command, task.DropWhenUnchanged, c.drop)
+			}
+		}
+	}
+}

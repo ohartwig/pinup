@@ -63,14 +63,16 @@ var KeySupport = map[string]Support{
 // PinupOnly are the keys pinup reads and Renovate rejects: its configuration
 // validator answers "Invalid configuration option" for each (measured with
 // renovate-config-validator 43.204.0 on 2026-10-06; a nested key is "key is
-// not allowed"). Top names a top-level key, Rule a packageRules key, and
-// Datasource a key inside a customDatasources entry. A key here belongs in a
+// not allowed"). Top names a top-level key, Rule a packageRules key,
+// Datasource a key inside a customDatasources entry, and PostUpgradeTasks a
+// key inside a postUpgradeTasks object, top-level or a rule's. A key here belongs in a
 // file Renovate never reads - a .pinup.* file or the run's own configuration
 // - so that a renovate.json stays valid for Renovate (compat/renovate-rejects).
 var PinupOnly = struct {
-	Top, Rule, Datasource map[string]bool
+	Top, Rule, Datasource, PostUpgradeTasks map[string]bool
 }{
-	Top:        map[string]bool{"osvTransitiveAlerts": true, "automergeDirect": true, "prConcurrentLimitIgnoreLabels": true, "artifactManifests": true},
-	Rule:       map[string]bool{"analyze": true, "matchEffective": true, "trustEffective": true, "automergeDirect": true, "osvPackage": true},
-	Datasource: map[string]bool{"osvEcosystem": true},
+	Top:              map[string]bool{"osvTransitiveAlerts": true, "automergeDirect": true, "prConcurrentLimitIgnoreLabels": true, "artifactManifests": true},
+	Rule:             map[string]bool{"analyze": true, "matchEffective": true, "trustEffective": true, "automergeDirect": true, "osvPackage": true},
+	Datasource:       map[string]bool{"osvEcosystem": true},
+	PostUpgradeTasks: map[string]bool{"dropWhenUnchanged": true},
 }

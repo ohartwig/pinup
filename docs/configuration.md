@@ -163,6 +163,7 @@ A key not in this table is not read; `migrate` lists it as unsupported.
 | `trustEffective` | a rule | let an automerge a `matchEffective` rule switched on stand although the declared label is stricter; without it the stricter label wins |
 | `osvEcosystem` | `customDatasources.<name>` | the [OSV ecosystem](https://ossf.github.io/osv-schema/#appendix-ecosystems) this custom datasource's packages belong to, e.g. `"Wolfi"`; with it, `osvVulnerabilityAlerts` asks OSV about them ([advisory coverage](#advisory-coverage)) |
 | `osvPackage` | a rule | `{"ecosystem": "Go", "name": "github.com/aquasecurity/trivy"}`: ask OSV about the matched dependencies as this package, for a pin whose datasource has no advisory ecosystem ([advisory coverage](#mapping-a-pin-to-an-osv-package)) |
+| `dropWhenUnchanged` | `postUpgradeTasks` | `true`: a branch whose tasks changed nothing inside their `fileFilters`, while files inside them exist, is not written; a pin bump that moves no lock opens nothing ([tasks](tasks-and-plugins.md#dropping-a-bump-its-tasks-left-unchanged)) |
 | `artifactManifests` | top level | the manifests of what the build shipped - an SBOM, a Trivy report, a module list - whose components are watched for advisories and, where `pin` says how, raised past a fix ([artifact manifests](artifact-manifests.md)) |
 
 ### pinup's own keys and Renovate
@@ -172,7 +173,8 @@ the key, the whole file. Measured with `renovate-config-validator` 43.204.0
 (2026-10-06): every key in the table above, and `osvTransitiveAlerts`,
 `automergeDirect` and `prConcurrentLimitIgnoreLabels`, is an *"Invalid
 configuration option"*; `osvEcosystem` inside a custom datasource is *"key
-is not allowed"*.
+is not allowed"*, and so, by the same rule, is `dropWhenUnchanged` inside
+`postUpgradeTasks`.
 
 So a pinup-only key belongs in a file Renovate never reads:
 
