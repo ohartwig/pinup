@@ -1,3 +1,13 @@
+## [0.69.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.9...v0.69.0) (2026-11-08)
+
+### :sparkles: Features
+
+* **runner:** postUpgradeTasks dropWhenUnchanged drops a bump its tasks left unchanged ([1d5d4bb](https://git.ole-hartwig.eu/pinup/pinup/commit/1d5d4bb49c204ef3933102ed54912f6423aa2840))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 370627a ([6b699a5](https://git.ole-hartwig.eu/pinup/pinup/commit/6b699a5e2c1b5f2c6038527d7ca01e9f43045813))
+
 ## [0.68.9](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.68.8...v0.68.9) (2026-11-07)
 
 ### :repeat: Chores
