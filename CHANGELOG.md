@@ -1,3 +1,13 @@
+## [0.69.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.2...v0.69.3) (2026-11-09)
+
+### :bug: Fixes
+
+* **runner:** tell dependencies apart in the revert fingerprint ([49e85b2](https://git.ole-hartwig.eu/pinup/pinup/commit/49e85b24154250ac161aae8b226a2907e4506283))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 2d35ef4 ([0461630](https://git.ole-hartwig.eu/pinup/pinup/commit/04616301a2e27c194e49895b0aa21cab64bca89a))
+
 ## [0.69.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.1...v0.69.2) (2026-11-09)
 
 ### :repeat: Chores
