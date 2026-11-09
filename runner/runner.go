@@ -486,18 +486,34 @@ func closedBefore(history []publish.MergeRequest, b *model.Branch, updates []mod
 }
 
 // editRows is the set of "| `file` | `old` → `new` |" rows of a
-// description, sorted and joined - the fingerprint of what the branch
-// changes.
+// description together with the dependencies its updates table names,
+// sorted and joined - the fingerprint of what the branch changes.
+//
+// The file rows alone do not say what moved: `composer.json` going from
+// 5.10.0 to 5.10.1 reads the same for every package that happens to share
+// those versions. moselwal-websites!1539 (koh/frankenphp 5.10.0 → 5.10.1,
+// 2026-11-09) had its automerge withheld because !1248 had taken
+// moselwal/typo3-config through the same two versions ten days earlier.
+// The dependency names close that; only the first cell of the updates
+// table is read, because its other cells carry release notes and counts
+// that move between runs.
 func editRows(description string) string {
 	var rows []string
 	for _, line := range strings.Split(description, "\n") {
-		// The file table's rows have two cells; the updates table's rows
-		// carry a release count that moves between runs.
-		if strings.HasPrefix(line, "| `") && strings.Contains(line, "` → `") && strings.Count(line, "|") == 3 {
+		if !strings.HasPrefix(line, "| `") {
+			continue
+		}
+		switch n := strings.Count(line, "|"); {
+		case n == 3 && strings.Contains(line, "` → `"):
 			rows = append(rows, line)
+		case n >= 5:
+			if name, _, ok := strings.Cut(strings.TrimPrefix(line, "| `"), "` |"); ok && name != "" {
+				rows = append(rows, "dependency "+name)
+			}
 		}
 	}
 	sort.Strings(rows)
+	rows = slices.Compact(rows)
 	return strings.Join(rows, "\n")
 }
 
