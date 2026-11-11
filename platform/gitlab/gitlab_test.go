@@ -66,6 +66,9 @@ type fakeMR struct {
 	pipelineStatus, pipelineSHA string
 	commitAuthors               []string
 	notes                       []fakeNote
+	// armedBy is the user who armed an automerge (merge_user); zero is
+	// the bot, 322.
+	armedBy int
 }
 
 // fakeNote is one note on a merge request; system notes are GitLab's own
@@ -419,6 +422,10 @@ func (s *gitlabServer) serveOneMergeRequest(w http.ResponseWriter, r *http.Reque
 				doc["head_pipeline"] = map[string]any{"id": 1, "status": mr.pipelineStatus, "sha": mr.pipelineSHA}
 			} else {
 				doc["head_pipeline"] = nil
+			}
+			if mr.automerge {
+				id := cmp.Or(mr.armedBy, 322)
+				doc["merge_user"] = map[string]any{"id": id, "username": fmt.Sprintf("user%d", id)}
 			}
 			s.mu.Unlock()
 			writeJSON(w, http.StatusOK, doc)

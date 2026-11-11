@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/ohartwig/pinup/platform/gitlab"
 	"github.com/ohartwig/pinup/plugin"
 	"io"
 	"os"
@@ -680,6 +681,8 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			ConcurrentIgnoreLabels: plan.Limits.PRConcurrentLimitIgnoreLabels,
 			RebaseWhen:             plan.Limits.RebaseWhen,
 			Now:                    o.now,
+			Clock:                  time.Now,
+			MergeWatch:             o.platform.Name() == gitlab.Name,
 			Prune:                  o.pkg == "" && o.released == "",
 			Tasks:                  plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate, cmp.Or(project, repoDir), o.taskSlots)},
 			Sleep:                  time.Sleep,

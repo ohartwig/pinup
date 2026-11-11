@@ -218,7 +218,8 @@ func datasourceUnknown(in *Input) []Finding {
 }
 
 // scheduleInvalid parses every schedule the run would: the repository's,
-// the lock-file maintenance's, the vulnerability alerts', each rule's.
+// the lock-file maintenance's, the vulnerability alerts', each rule's -
+// and each automergeSchedule beside them, which the merge is judged by.
 func scheduleInvalid(in *Input) []Finding {
 	tz, _ := in.Resolved.Raw["timezone"].(string)
 	var out []Finding
@@ -237,13 +238,16 @@ func scheduleInvalid(in *Input) []Finding {
 		out = append(out, Finding{ID: "compat/schedule-invalid", Category: Compat, Severity: Error, Pointer: p, Frame: FrameResolved, Origin: in.originAt(p), Msg: err.Error()})
 	}
 	check("/schedule", in.Decoded.Schedule)
+	check("/automergeSchedule", stringsOf(in.Resolved.Raw["automergeSchedule"]))
 	for _, k := range []string{"lockFileMaintenance", "vulnerabilityAlerts"} {
 		if obj, ok := in.Resolved.Raw[k].(map[string]any); ok {
 			check(ptr(k, "schedule"), stringsOf(obj["schedule"]))
+			check(ptr(k, "automergeSchedule"), stringsOf(obj["automergeSchedule"]))
 		}
 	}
 	for i, rule := range in.resolvedRules() {
 		check(ptr("packageRules", i, "schedule"), stringsOf(rule["schedule"]))
+		check(ptr("packageRules", i, "automergeSchedule"), stringsOf(rule["automergeSchedule"]))
 	}
 	return out
 }

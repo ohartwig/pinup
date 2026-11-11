@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"github.com/ohartwig/pinup/glob"
 	"github.com/ohartwig/pinup/platform/gitlab"
@@ -55,7 +56,7 @@ func cmdArmWatch(args []string, out, errw io.Writer) error {
 		return fmt.Errorf("arm-watch: a GitLab instance and the bot's access token are required: set PINUP_GITLAB_URL (or CI_SERVER_URL) and PINUP_GITLAB_TOKEN")
 	}
 	platform := gitlab.New(env.URL, nil, gitlab.Token{Value: env.Token, Header: env.Header})
-	return armWatch(context.Background(), platform, platform.Calls, runner.ArmWatchOptions{Label: *label, Only: only, AuthorEmail: *author}, out)
+	return armWatch(context.Background(), platform, platform.Calls, runner.ArmWatchOptions{Label: *label, Only: only, AuthorEmail: *author, Now: time.Now}, out)
 }
 
 // armWatch is cmdArmWatch without the environment: one pass, one line per
@@ -70,8 +71,8 @@ func armWatch(ctx context.Context, w publish.ArmWatcher, calls func() int64, o r
 		counts[r.Action]++
 		fmt.Fprintln(out, "  "+r.String())
 	}
-	fmt.Fprintf(out, "arm-watch: %d open requests labelled %s in scope: %d armed, %d merged, %d not yet, %d refused, %d skipped, %d failed; %d API calls\n",
-		len(results), o.Label, counts["armed"], counts["merged"], counts["not-yet"], counts["refused"], counts["skipped"], counts["failed"], calls())
+	fmt.Fprintf(out, "arm-watch: %d open requests labelled %s in scope: %d armed, %d merged, %d not yet, %d deferred, %d disarmed, %d refused, %d skipped, %d failed; %d API calls\n",
+		len(results), o.Label, counts["armed"], counts["merged"], counts["not-yet"], counts["deferred"], counts["disarmed"], counts["refused"], counts["skipped"], counts["failed"], calls())
 	if counts["failed"] > 0 {
 		return fmt.Errorf("arm-watch: %d request(s) could not be read or armed", counts["failed"])
 	}

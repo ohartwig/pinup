@@ -31,7 +31,7 @@ var KeySupport = map[string]Support{
 	"matchEffective": Supported, "analyze": Supported, "trustEffective": Supported, "osvPackage": Supported,
 	// Decisions.
 	"enabled": Supported, "minimumReleaseAge": Supported, "minimumReleaseAgeBehaviour": Supported, "schedule": Supported,
-	"timezone": Supported, "automerge": Supported, "automergeDirect": Supported, "dependencyDashboardApproval": Supported, "groupName": Supported,
+	"timezone": Supported, "automerge": Supported, "automergeDirect": Supported, "automergeSchedule": Supported, "dependencyDashboardApproval": Supported, "groupName": Supported,
 	"groupSlug": Supported, "versioning": Supported, "registryUrls": Supported, "extractVersion": Supported,
 	// Literal values only: Renovate also templates overridePackageName.
 	"overrideDatasource": Supported, "overridePackageName": Partial,

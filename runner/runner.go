@@ -88,6 +88,18 @@ type Options struct {
 	LockedVersions func(lock []byte) (map[string]string, error)
 
 	Now time.Time
+	// Clock reads the time at the moment of merging, for the merge window:
+	// a run's publish stage takes minutes (6m27s on devops/koh-gitops,
+	// 2026-11-11), and a window judged at the plan's Now can have closed by
+	// the time the request is touched. nil means Now.
+	Clock func() time.Time
+	// MergeWatch says that a watch outside the run merges a request whose
+	// automerge waits for a merge window (the arm watch, GitLab): the run
+	// then never arms merge-when-pipeline-succeeds on such a request and
+	// takes back one that is armed, and the watch merges it once its
+	// pipeline has succeeded inside the window. Without it the run arms
+	// such a request inside the window and takes the arm back outside it.
+	MergeWatch bool
 
 	// warn records a warning on the plan Execute runs; set by Execute.
 	warn func(model.Warning)
@@ -278,20 +290,33 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			}
 		}
 		direct := b.AutomergeDirect == nil || *b.AutomergeDirect
+		// An automerge that waits for a window is armed by this run only
+		// where nothing else merges it and only inside the window; see
+		// armDecision.
+		arm, deferred := automerge, ""
+		if automerge {
+			var err error
+			arm, deferred, err = armDecision(b.MergeWindow, o.clock(), o.MergeWatch)
+			if err != nil {
+				automerge, arm = false, false
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: automerge withheld, the merge window does not parse: %v", b.Name, err)})
+			}
+		}
 		// The marker records the decision in the request itself, so the arm
 		// watch can arm it once GitLab has a pipeline - which can come
-		// minutes after this run has moved on (armwatch.go).
+		// minutes after this run has moved on (armwatch.go) - together with
+		// the window the merge waits for, which the watch judges again.
 		req := publish.Request{
 			SourceBranch: b.Name, TargetBranch: o.Base, Title: b.Title,
-			Description: withAutomergeMarker(description(b, plan.Updates, footer), automerge, direct),
+			Description: withAutomergeMarker(description(b, plan.Updates, footer), automerge, direct, b.MergeWindow),
 			Labels:      union(o.Labels, b.Labels),
-			Automerge:   automerge, AutomergeDirect: direct,
+			Automerge:   arm, AutomergeDirect: direct,
 			RemoveSourceBranch: true,
 		}
 		if pushed {
 			req.HeadSHA = sha
 		}
-		if hasMR && pushed && automerge && !awaitHead(ctx, o, b.Name, sha) {
+		if hasMR && pushed && req.Automerge && !awaitHead(ctx, o, b.Name, sha) {
 			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
 				"%s: the platform has not seen the pushed head %s yet; automerge is armed by a later run", b.Name, short(sha))})
 		}
@@ -341,6 +366,11 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 						"%s: !%d opened, automerge not armed yet - GitLab had no pipeline to wait for within %s; the arm watch arms it once there is one (every 10 minutes)", b.Name, mr.IID, armWindow)})
 				}
 			}
+		}
+		if deferred != "" {
+			// Said on the request's own line of the run's log, every run
+			// that touches it outside the window.
+			out.Message = strings.TrimSpace(out.Message + " " + deferred)
 		}
 		if mr.AutomergeRefused != "" {
 			// The request is open; only the merge is somebody else's. Said

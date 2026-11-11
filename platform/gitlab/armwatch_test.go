@@ -115,3 +115,60 @@ func TestArmAutomergeIsTheMergeEndpointBoundToTheHead(t *testing.T) {
 		t.Errorf("direct: %+v %v", mr, err)
 	}
 }
+
+// A merge inside a window is the merge endpoint without auto_merge, asked
+// only of a request GitLab calls mergeable and whose head is the one the
+// watch saw: never an arm that could carry the merge past the window.
+func TestMergeNowMergesOnlyAMergeableRequestAndNeverArms(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	p := srv.addProject("group/a", "main")
+	p.mrs = []*fakeMR{
+		{iid: 1, state: "opened", sha: "h1", canMerge: true, detailedMergeStatus: "mergeable"},
+		{iid: 2, state: "opened", sha: "h2", canMerge: true, detailedMergeStatus: "ci_still_running"},
+		{iid: 3, state: "opened", sha: "h3", canMerge: true, detailedMergeStatus: "mergeable"},
+	}
+	ctx := context.Background()
+	mr, err := pf.MergeNow(ctx, "group/a", 1, "h1")
+	if err != nil || mr.State != "merged" || mr.Project != "group/a" {
+		t.Errorf("mergeable: %+v %v", mr, err)
+	}
+	var body map[string]any
+	_ = json.Unmarshal(srv.lastRequestBody("PUT", "/merge_requests/1/merge"), &body)
+	if body["sha"] != "h1" || body["auto_merge"] != nil || body["merge_when_pipeline_succeeds"] != nil {
+		t.Errorf("the merge call carried %v", body)
+	}
+	if mr, err := pf.MergeNow(ctx, "group/a", 2, "h2"); err != nil || mr.State != "opened" || mr.Automerge {
+		t.Errorf("pipeline running: %+v %v", mr, err)
+	}
+	if mr, err := pf.MergeNow(ctx, "group/a", 3, "older"); err != nil || mr.State != "opened" {
+		t.Errorf("another head: %+v %v", mr, err)
+	}
+	if n := srv.requestCountOf("PUT", "/merge"); n != 1 {
+		t.Errorf("%d merge calls, want 1 (only the mergeable request at its head)", n)
+	}
+}
+
+// The watch takes back its own arm and leaves a person's.
+func TestCancelAutomergeTakesBackOnlyTheBotsArm(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	p := srv.addProject("group/a", "main")
+	p.mrs = []*fakeMR{
+		{iid: 1, state: "opened", sha: "h1", automerge: true},
+		{iid: 2, state: "opened", sha: "h2", automerge: true, armedBy: 5},
+		{iid: 3, state: "opened", sha: "h3"},
+	}
+	ctx := context.Background()
+	if mr, err := pf.CancelAutomerge(ctx, "group/a", 1); err != nil || mr.Automerge || p.mrs[0].automerge {
+		t.Errorf("the bot's arm: %+v %v", mr, err)
+	}
+	mr, err := pf.CancelAutomerge(ctx, "group/a", 2)
+	if err != nil || !mr.Automerge || !p.mrs[1].automerge || mr.AutomergeRefused != "armed by user5; left to them" {
+		t.Errorf("a person's arm: %+v %v", mr, err)
+	}
+	if mr, err := pf.CancelAutomerge(ctx, "group/a", 3); err != nil || mr.Automerge {
+		t.Errorf("nothing armed: %+v %v", mr, err)
+	}
+	if n := srv.requestCountOf("POST", "cancel_auto_merge"); n != 1 {
+		t.Errorf("cancel_auto_merge called %d times, want 1", n)
+	}
+}

@@ -233,8 +233,9 @@ type whatifOptions struct {
 	checksRead *report.Checks
 	// Open names the branches that already have an open merge request. A
 	// schedule gates the creation of a branch, not its life: a request
-	// that exists is kept current and automerged outside the window as
-	// well, as Renovate does by default (updateNotScheduled). Without it a
+	// that exists is kept current outside the window as well, as Renovate
+	// does by default (updateNotScheduled). Its merge is not: that waits
+	// for the branch's merge window (model.Branch.MergeWindow). Without it a
 	// request opened at the end of a window sat green for four hours
 	// (measured 2026-09-17, aws-cli in three images). nil means nothing
 	// is known, and the schedule holds every branch.
@@ -865,7 +866,7 @@ func (r *whatifRun) planUpdates() error {
 		if f, ok := r.releaseAgeFor(u.Dep.Manager, u.Dep.File, u.Dep.DepName, u.NewVersion); ok && !r.liftsAge(u) {
 			floor = &f
 		}
-		decided, cfg, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now, floor)
+		decided, cfg, amsWritten, err := applyUpdateRules(r.engine, resolved.Raw, u, r.now, floor)
 		if err != nil {
 			return fmt.Errorf("%s: %w", u.DepKey, err)
 		}
@@ -879,6 +880,7 @@ func (r *whatifRun) planUpdates() error {
 		if err != nil {
 			return fmt.Errorf("%s: %w", u.DepKey, err)
 		}
+		n.MergeSchedule = planner.MergeSchedule(n, amsWritten || automergeScheduleConfigured(resolved, decided.Type))
 		if len(decided.ExploitedFix()) > 0 && !slices.Contains(n.Labels, kevLabel) {
 			n.Labels = append(n.Labels, kevLabel)
 		}
@@ -911,6 +913,9 @@ func (r *whatifRun) planUpdates() error {
 		adoptOld(&branches[i], plan.Branching, o.Open)
 		liftByDashboard(&branches[i], plan.Updates, o.Checks)
 		liftForOpen(&branches[i], plan.Updates, o.Open)
+		if err := planner.JudgeMergeWindow(&branches[i], r.now); err != nil {
+			return fmt.Errorf("branches: %s: %w", branches[i].Name, err)
+		}
 	}
 	r.branches = branches
 	return nil
@@ -1257,7 +1262,10 @@ func applyDepRules(engine *rules.Engine, base map[string]any, d model.Dependency
 // and the policy they select decides whether the update is acted on now.
 // Held, not deleted: the plan still says what would have happened and why
 // not, with the thaw time and the rule that held it.
-func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time, floor *ageRule) (model.Update, map[string]any, error) {
+//
+// written reports whether a rule wrote automergeSchedule for the update
+// (planner.MergeSchedule).
+func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update, now time.Time, floor *ageRule) (_ model.Update, _ map[string]any, written bool, _ error) {
 	// The rules were written for Renovate and see the type Renovate would
 	// report: a majorAvailable update is a major to them.
 	subject := rules.SubjectOf(u.Dep, u.Type.Renovate().String())
@@ -1357,10 +1365,24 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 		floor.raise(&policy)
 	}
 	decided, err := planner.Decide(u, policy, now)
+	written = len(res.Wrote["automergeSchedule"]) > 0
 	if u.SecurityFix {
-		return decided, cfg, err
+		return decided, cfg, written, err
 	}
-	return decided, res.Config, err
+	return decided, res.Config, written, err
+}
+
+// automergeScheduleConfigured reports whether the resolved configuration -
+// the repository's, a preset's, the runner's - sets automergeSchedule at the
+// top or in the update type's own object, rather than leaving it at the
+// builtin default.
+func automergeScheduleConfigured(r *config.Resolved, t model.UpdateType) bool {
+	for _, p := range []string{"/automergeSchedule", "/" + planner.UpdateTypeKey(t) + "/automergeSchedule"} {
+		if by := configuredBy(r, p); by != "" && by != config.DefaultsSource {
+			return true
+		}
+	}
+	return false
 }
 
 // lockRefreshSubject is what a rule sees of a lock refresh. Renovate builds
@@ -2106,9 +2128,14 @@ func liftByDashboard(b *model.Branch, updates []model.Update, checks report.Chec
 
 // liftForOpen clears a schedule hold on a branch whose merge request is
 // already open: the window gates creation, and a request that exists is
-// rebased and automerged whatever the hour, as Renovate's
-// updateNotScheduled default does. Any other hold - an approval, a release
-// age - stays; those are decisions, not timing.
+// rebased whatever the hour, as Renovate's updateNotScheduled default
+// does. It is not merged whatever the hour: the merge waits for the
+// branch's merge window, judged when merging (runner.mergeWindowOpen).
+// Through 0.65.4 the lift took the merge with it - devops/koh-gitops!8807, a
+// mariadb bump under a night window, was rebased by the four-hourly run at 08:56 and
+// merged by the arm watch at 09:13 Berlin, and every tenant's database
+// restarted in the daytime (2026-11-11). Any other hold - an approval, a
+// release age - stays; those are decisions, not timing.
 func liftForOpen(b *model.Branch, updates []model.Update, open map[string]bool) {
 	if b.SuppressedBy != model.BlockSchedule || !open[b.Name] {
 		return

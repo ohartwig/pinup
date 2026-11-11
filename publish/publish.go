@@ -218,6 +218,17 @@ type ArmWatcher interface {
 	// took, AutomergeRefused when the platform said no for good, neither
 	// for "not yet".
 	ArmAutomerge(ctx context.Context, project string, iid int, sha string, direct bool) (MergeRequest, error)
+	// MergeNow merges the request bound to sha when the platform calls it
+	// mergeable at this moment, and never arms anything: the merge of a
+	// request whose automerge waits for a window, which an arm could carry
+	// past the window's end. It reports the request afterwards: State
+	// "merged" when it took, AutomergeRefused when the platform said no
+	// for good, neither for "not yet".
+	MergeNow(ctx context.Context, project string, iid int, sha string) (MergeRequest, error)
+	// CancelAutomerge takes back an arm the token's own user set and
+	// reports the request afterwards. An arm somebody else set is theirs:
+	// it stays, Automerge stays true and AutomergeRefused names who.
+	CancelAutomerge(ctx context.Context, project string, iid int) (MergeRequest, error)
 }
 
 // Issue is an issue on the platform, as much of it as pinup reads back.

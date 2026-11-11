@@ -156,7 +156,12 @@ the old name lasts as long as the request), `title`, `commitBody` (the
 configuration's, rendered), `groupName`, the `updateKeys` it carries,
 `edits` (file, byte range, old and new bytes, manager), `tasks` (the
 lock refreshes and post-upgrade commands with their scope), `automerge`,
-`labels`, `schedule` (the window and when it next opens), `existing`
+`labels`, `schedule` (the window and when it next opens), `mergeWindow`
+(on an automerging branch whose merge waits for a window: `expr`,
+`timezone`, `raw` - the expressions as configured - and, as judged when
+the plan was made, `active` and `nextOpen`; the run and the arm watch
+judge it again at the moment of merging, see
+[automerge](configuration.md#automerge)), `existing`
 (the merge request already open, if any), and `suppressedBy` with
 `heldWith` where the branch as a whole is held - a limit, a task the
 allowlist refused, a lock found current, a push that failed.
