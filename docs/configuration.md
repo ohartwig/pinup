@@ -232,10 +232,12 @@ a rule whose `schedule` only paces creation. A security fix merges at any
 time.
 
 The window is judged at the moment of merging, by every path that merges,
-and a request outside it is left open with a line saying so -
-`automerge deferred: outside the merge window "* 3-5 * * *" (Europe/Berlin);
-next opens 2026-11-12 03:00 CET` on the run's line for the request, and the
-same reason as `deferred` in the arm watch's output.
+and a request outside it is left open with a line saying so, on the run's
+line for the request and as `deferred` in the arm watch's output:
+
+```text
+automerge deferred: outside the merge window "* 3-5 * * *" (Europe/Berlin); next opens 2026-11-12 03:00 CET
+```
 
 Merge-when-pipeline-succeeds cannot be bounded by a window - armed at 05:50
 for a pipeline that finishes at 06:10, GitLab merges at 06:10. On GitLab a

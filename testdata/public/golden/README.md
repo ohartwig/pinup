@@ -74,8 +74,9 @@ Before, the schedule gated only the creation of a request, and an open one
 was merged whatever the hour (devops/koh-gitops!8807, 2026-11-11). The
 repositories, the recorded answers, `golden.json` and every `plan.md` are
 those of the previous version; each `plan.json` differs only by the added
-`mergeWindow` objects - the runner's external throttle (`* 0,4,8,12,16,20 *
-* *`) and `lockFileMaintenance`'s `after 1am and before 6am` - and
+`mergeWindow` objects - the runner's external throttle
+(`* 0,4,8,12,16,20 * * *`) and `lockFileMaintenance`'s
+`after 1am and before 6am` - and
 `git diff -M` against the previous version shows exactly that. `osv.v2` and
 `packagist.v2` are unchanged: none of their automerging branches has a
 window.
