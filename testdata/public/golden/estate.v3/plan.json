@@ -671,6 +671,15 @@
         "kind": "cron",
         "timezone": "Europe/Berlin",
         "active": true
+      },
+      "mergeWindow": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": true,
+        "raw": [
+          "* 0,4,8,12,16,20 * * *"
+        ]
       }
     },
     {

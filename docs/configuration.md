@@ -75,6 +75,7 @@ unsupported means nothing reads it and the run says so.
 | `analyze` | supported (pinup's own) |
 | `automerge` | supported |
 | `automergeDirect` | pinup's own; default on, see [automerge](#automerge) |
+| `automergeSchedule` | supported where set; unset, the merge waits for `schedule` instead - see [automerge](#automerge) |
 | `branchPrefix` | supported |
 | `branchPrefixOld` | supported: a request still open under the old prefix is adopted under its own name, not opened again |
 | `branchTopic` | supported |
@@ -130,7 +131,7 @@ unsupported means nothing reads it and the run says so.
 | `overrideDatasource` | supported in packageRules: the dependency is looked up at that datasource, without the manager's registry URLs |
 | `overridePackageName` | partial: a literal name; Renovate's templates are not expanded |
 | `registryUrls` | supported |
-| `schedule` | supported |
+| `schedule` | supported: it gates the creation of a request, and an open one is kept current outside it (`updateNotScheduled`); unlike Renovate it also gates the merge, unless `automergeSchedule` is set - see [automerge](#automerge) |
 | `semanticCommitScope` | supported |
 | `semanticCommitType` | supported |
 | `semanticCommits` | supported |
@@ -214,6 +215,44 @@ that did not happen. Turning it off never turns automerge *on*; it only
 changes how one that is already allowed is carried out.
 
 `automerge: false` remains the way to stop pinup merging at all.
+
+### When the merge happens: the merge window
+
+A request is merged only inside its **merge window**: the
+`automergeSchedule` of the update's rules where a configuration sets it,
+otherwise their `schedule`, in the configuration's `timezone`. The
+`schedule` alone gates the creation of a request; a request that exists is
+rebased and kept current outside it, as in Renovate (`updateNotScheduled`),
+but not merged. Renovate gates the merge on `automergeSchedule` alone, whose
+default is `at any time`; pinup falls back to `schedule` while
+`automergeSchedule` is unset, so a rule that keeps an update into a window
+with `schedule` keeps its merge there too. An explicit
+`"automergeSchedule": ["at any time"]` opens the merge around the clock for
+a rule whose `schedule` only paces creation. A security fix merges at any
+time.
+
+The window is judged at the moment of merging, by every path that merges,
+and a request outside it is left open with a line saying so -
+`automerge deferred: outside the merge window "* 3-5 * * *" (Europe/Berlin);
+next opens 2026-11-12 03:00 CET` on the run's line for the request, and the
+same reason as `deferred` in the arm watch's output.
+
+Merge-when-pipeline-succeeds cannot be bounded by a window - armed at 05:50
+for a pipeline that finishes at 06:10, GitLab merges at 06:10. On GitLab a
+request with a merge window is therefore never armed: the
+[arm watch](commands.md#arm-watch) merges it outright, every ten minutes,
+once its head pipeline has succeeded and GitLab calls it mergeable inside
+the window, whatever `automergeDirect` says, and it takes back an arm the
+bot finds on such a request (one a person set stays). The cost is up to ten
+minutes between a green pipeline and the merge, and a pipeline that turns
+green in the window's last minutes waits for the next window. Without the
+arm watch - on GitHub - the run arms the request inside the window and takes
+the arm back on its first pass outside it.
+
+Through 0.65.4 the window gated the creation alone: devops/koh-gitops!8807, a
+database image under a night window, was rebased outside the window by the
+four-hourly run and merged by the arm watch at 09:13, and every tenant's
+database restarted in the daytime (2026-11-11).
 
 ## Known exploited vulnerabilities
 

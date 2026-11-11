@@ -6,9 +6,11 @@ package planner
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/ohartwig/pinup/hbs"
@@ -146,6 +148,13 @@ type Named struct {
 	Notes    []string
 	Schedule []string
 	Timezone string
+	// AutomergeSchedule is the rendered configuration's automergeSchedule.
+	AutomergeSchedule []string
+	// MergeSchedule is the window an automerge of this update waits for
+	// (MergeSchedule, the function); the caller sets it, since only the
+	// caller knows whether automergeSchedule was configured at all. Empty
+	// means the merge waits for no window.
+	MergeSchedule []string
 }
 
 // Name renders the branch name and commit message for one update from the
@@ -289,7 +298,82 @@ func Name(u model.Update, cfg map[string]any, vs versioning.Registry) (Named, er
 	}
 	n.Schedule = stringsOf(cfg["schedule"])
 	n.Timezone, _ = cfg["timezone"].(string)
+	n.AutomergeSchedule = stringsOf(cfg["automergeSchedule"])
 	return n, nil
+}
+
+// MergeSchedule is the window an automerge of n waits for.
+//
+// An automergeSchedule the configuration sets decides - "at any time"
+// included, which lets a rule whose schedule only paces creation (an
+// hourly throttle) keep merging around the clock. Renovate gates the
+// merge on automergeSchedule alone, whose default is "at any time"; pinup
+// falls back to the schedule while nothing set automergeSchedule, so a
+// rule that keeps a restart into the night with `schedule` alone keeps
+// the merge there as well. explicit says whether anything but the builtin
+// defaults set automergeSchedule for the update.
+//
+// A security fix merges at any time: vulnerabilityAlerts lifts its
+// schedule, and a window on the merge would hold the one update that
+// should not wait.
+func MergeSchedule(n Named, explicit bool) []string {
+	switch {
+	case n.Update.SecurityFix:
+		return nil
+	case explicit:
+		if narrows(n.AutomergeSchedule) {
+			return n.AutomergeSchedule
+		}
+		return nil
+	case narrows(n.Schedule):
+		return n.Schedule
+	}
+	return nil
+}
+
+// narrows reports whether a schedule closes at any time: a list that is
+// empty or carries an "at any time" is open always (sched.Parse).
+func narrows(exprs []string) bool {
+	if len(exprs) == 0 {
+		return false
+	}
+	for _, e := range exprs {
+		if sched.IsAnyTime(strings.TrimSpace(e)) {
+			return false
+		}
+	}
+	return true
+}
+
+// JudgeMergeWindow records on the plan whether the branch's merge window is
+// open at now and when it next opens. The runner and the arm watch judge it
+// again when they merge; this is what the plan reader sees.
+func JudgeMergeWindow(b *model.Branch, now time.Time) error {
+	if len(b.MergeWindow.Raw) == 0 {
+		return nil
+	}
+	s, err := sched.Parse(b.MergeWindow.Raw, b.MergeWindow.Timezone)
+	if err != nil {
+		return err
+	}
+	b.MergeWindow.Active = s.IsActive(now)
+	b.MergeWindow.NextOpen = time.Time{}
+	if !b.MergeWindow.Active {
+		b.MergeWindow.NextOpen = s.NextOpen(now).UTC()
+	}
+	return nil
+}
+
+// mergeWindowOf compiles a member's merge window for the branch.
+func mergeWindowOf(n Named) (model.Window, error) {
+	if len(n.MergeSchedule) == 0 {
+		return model.Window{}, nil
+	}
+	s, err := sched.Parse(n.MergeSchedule, n.Timezone)
+	if err != nil {
+		return model.Window{}, err
+	}
+	return model.Window{Expr: s.String(), Kind: sched.Kind(n.MergeSchedule[0]), Timezone: s.Timezone(), Active: true, Raw: slices.Clone(n.MergeSchedule)}, nil
 }
 
 // Compose turns named updates into branches: one per branch name, with the
@@ -451,6 +535,17 @@ func Compose(named []Named) ([]model.Branch, error) {
 		// A group merges automatically only if every member may, and it
 		// merges directly only if no member forbids that.
 		m.branch.Automerge = m.branch.Automerge && n.Automerge
+		// The branch merges inside the window of the first member that has
+		// one: members of a branch come from one rule set, and a window
+		// one of them brings holds the whole merge, as a schedule holds the
+		// whole branch.
+		if len(m.branch.MergeWindow.Raw) == 0 {
+			w, err := mergeWindowOf(n)
+			if err != nil {
+				return nil, err
+			}
+			m.branch.MergeWindow = w
+		}
 		if n.AutomergeDirect != nil && !*n.AutomergeDirect {
 			off := false
 			m.branch.AutomergeDirect = &off
@@ -492,6 +587,9 @@ func Compose(named []Named) ([]model.Branch, error) {
 			m.branch.Title = first.GroupTitle(shared)
 		}
 		m.branch.Title = ciCommitType(m.branch.Title, m.members)
+		if !m.branch.Automerge {
+			m.branch.MergeWindow = model.Window{}
+		}
 		out = append(out, *m.branch)
 	}
 	return out, nil

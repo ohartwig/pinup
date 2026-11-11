@@ -35,10 +35,16 @@ type ArmWatcher struct {
 	MergeableNow map[string]bool
 	// ListErr and ReadErr fail the listing and every per-request read.
 	ListErr, ReadErr error
+	// ArmedByOther names the requests whose arm somebody else set:
+	// CancelAutomerge leaves it and says who.
+	ArmedByOther map[string]string
 	// Calls records method and key in order; Armed records the arm calls
-	// as "project!iid sha direct".
-	Calls []string
-	Armed []string
+	// as "project!iid sha direct", Merged the MergeNow calls as
+	// "project!iid sha" and Canceled the arms taken back.
+	Calls    []string
+	Armed    []string
+	Merged   []string
+	Canceled []string
 }
 
 var _ publish.ArmWatcher = (*ArmWatcher)(nil)
@@ -117,4 +123,52 @@ func (a *ArmWatcher) ArmAutomerge(_ context.Context, project string, iid int, sh
 		}
 	}
 	return out, nil
+}
+
+// MergeNow merges a request named in MergeableNow; NotYet and Refuse
+// answer as for ArmAutomerge. It never arms.
+func (a *ArmWatcher) MergeNow(_ context.Context, project string, iid int, sha string) (publish.MergeRequest, error) {
+	k := key(project, iid)
+	a.record("MergeNow " + k)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Merged = append(a.Merged, fmt.Sprintf("%s %s", k, sha))
+	out := publish.MergeRequest{Project: project, IID: iid, State: "opened", SHA: sha}
+	switch {
+	case a.Refuse[k] != "":
+		out.AutomergeRefused = a.Refuse[k]
+	case a.NotYet[k]:
+	case a.MergeableNow[k]:
+		out.State = "merged"
+	}
+	a.set(project, iid, out)
+	return out, nil
+}
+
+// CancelAutomerge takes the arm back unless ArmedByOther names who set it.
+func (a *ArmWatcher) CancelAutomerge(_ context.Context, project string, iid int) (publish.MergeRequest, error) {
+	k := key(project, iid)
+	a.record("CancelAutomerge " + k)
+	if a.ReadErr != nil {
+		return publish.MergeRequest{}, a.ReadErr
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	out := publish.MergeRequest{Project: project, IID: iid, State: "opened"}
+	if who := a.ArmedByOther[k]; who != "" {
+		out.Automerge, out.AutomergeRefused = true, "armed by "+who+"; left to them"
+		return out, nil
+	}
+	a.Canceled = append(a.Canceled, k)
+	a.set(project, iid, out)
+	return out, nil
+}
+
+// set records a request's automerge and state; the caller holds mu.
+func (a *ArmWatcher) set(project string, iid int, out publish.MergeRequest) {
+	for i := range a.MRs {
+		if a.MRs[i].Project == project && a.MRs[i].IID == iid {
+			a.MRs[i].Automerge, a.MRs[i].State = out.Automerge, out.State
+		}
+	}
 }

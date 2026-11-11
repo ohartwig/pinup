@@ -30,7 +30,7 @@ func TestArmWatchReportsEachRequestAndTheCounts(t *testing.T) {
 	if err := armWatch(context.Background(), w, func() int64 { return 7 }, o, &out); err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"  g/a!1 armed: ", "  g/a!2 skipped: no automerge marker", "2 open requests labelled pinup in scope: 1 armed, 0 merged, 0 not yet, 0 refused, 1 skipped, 0 failed; 7 API calls"} {
+	for _, want := range []string{"  g/a!1 armed: ", "  g/a!2 skipped: no automerge marker", "2 open requests labelled pinup in scope: 1 armed, 0 merged, 0 not yet, 0 deferred, 0 disarmed, 0 refused, 1 skipped, 0 failed; 7 API calls"} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("output lacks %q:\n%s", want, out.String())
 		}

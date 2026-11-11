@@ -106,6 +106,11 @@ type Window struct {
 	Timezone string    `json:"timezone,omitempty"`
 	Active   bool      `json:"active"`
 	NextOpen time.Time `json:"nextOpen,omitzero"`
+	// Raw is the expression list as configured, for a window that is
+	// judged again after the plan - the merge window is evaluated at the
+	// moment of merging, not only when the plan was made. Empty for the
+	// branch's creation window, which the plan decides once.
+	Raw []string `json:"raw,omitempty"`
 }
 
 // ExistingBranch describes a branch already on the platform, so the plan can
@@ -165,8 +170,17 @@ type Branch struct {
 	// after the tasks ran, never by the planner.
 	Unlifted []Lift `json:"unlifted,omitempty"`
 
-	Schedule Window          `json:"schedule"`
-	Existing *ExistingBranch `json:"existing,omitempty"`
+	Schedule Window `json:"schedule"`
+	// MergeWindow is when the branch may be merged automatically: the
+	// rules' automergeSchedule where it narrows anything, else their
+	// schedule. Set only on an automerging branch with a window, never on
+	// a security fix, which merges at any time. The schedule gates
+	// creation and an open request is kept current outside it; the merge
+	// itself waits for this window, judged again at the moment of merging
+	// (runner.mergeWindowOpen) - a plan made at 05:58 says nothing about a
+	// merge at 06:10.
+	MergeWindow Window          `json:"mergeWindow,omitzero"`
+	Existing    *ExistingBranch `json:"existing,omitempty"`
 
 	Prov []Origin `json:"provenance,omitempty"`
 }

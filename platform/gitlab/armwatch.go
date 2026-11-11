@@ -130,6 +130,83 @@ func (p *Platform) ArmAutomerge(ctx context.Context, project string, iid int, sh
 	return out, nil
 }
 
+// MergeNow is mergeNow for one request, asked only when GitLab's own
+// detailed_merge_status says "mergeable": the merge endpoint without
+// auto_merge merges or refuses, it never arms.
+func (p *Platform) MergeNow(ctx context.Context, project string, iid int, sha string) (publish.MergeRequest, error) {
+	resp, err := p.do(ctx, http.MethodGet, p.mrURL(project, iid), nil)
+	if err != nil {
+		return publish.MergeRequest{}, err
+	}
+	if err := classify(resp, project); err != nil {
+		return publish.MergeRequest{}, err
+	}
+	var cur mrJSON
+	if err := json.Unmarshal(resp.body, &cur); err != nil {
+		return publish.MergeRequest{}, fmt.Errorf("gitlab: decode %q !%d: %w", project, iid, err)
+	}
+	notYet := publish.MergeRequest{IID: iid, Project: project, State: cur.State, SHA: cur.SHA}
+	if cur.State != "opened" || cur.DetailedMergeStatus != "mergeable" || (sha != "" && cur.SHA != sha) {
+		return notYet, nil
+	}
+	m, ok, why, err := p.mergeNow(ctx, project, iid, sha)
+	if err != nil {
+		return publish.MergeRequest{}, err
+	}
+	if !ok {
+		notYet.AutomergeRefused = why
+		return notYet, nil
+	}
+	out := toPublish(m)
+	out.Project = project
+	return out, nil
+}
+
+// CancelAutomerge reads who armed the request (merge_user) and takes the
+// arm back only when that is the token's own user.
+func (p *Platform) CancelAutomerge(ctx context.Context, project string, iid int) (publish.MergeRequest, error) {
+	u := p.mrURL(project, iid)
+	resp, err := p.do(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return publish.MergeRequest{}, err
+	}
+	if err := classify(resp, project); err != nil {
+		return publish.MergeRequest{}, err
+	}
+	var cur struct {
+		mrJSON
+		MergeUser *struct {
+			ID       int    `json:"id"`
+			Username string `json:"username"`
+		} `json:"merge_user"`
+	}
+	if err := json.Unmarshal(resp.body, &cur); err != nil {
+		return publish.MergeRequest{}, fmt.Errorf("gitlab: decode %q !%d: %w", project, iid, err)
+	}
+	out := toPublish(cur.mrJSON)
+	out.Project = project
+	if !cur.Automerge {
+		return out, nil
+	}
+	self, err := p.selfUserID(ctx)
+	if err != nil {
+		return publish.MergeRequest{}, err
+	}
+	if cur.MergeUser != nil && cur.MergeUser.ID != self {
+		out.AutomergeRefused = "armed by " + cur.MergeUser.Username + "; left to them"
+		return out, nil
+	}
+	armed, err := p.cancelAutomerge(ctx, u, project, iid)
+	if err != nil {
+		return publish.MergeRequest{}, err
+	}
+	if armed {
+		return publish.MergeRequest{}, fmt.Errorf("gitlab: %q !%d accepted the automerge cancellation but is still armed", project, iid)
+	}
+	out.Automerge = false
+	return out, nil
+}
+
 func (p *Platform) mrURL(project string, iid int) string {
 	return fmt.Sprintf("%s/api/v4/projects/%s/merge_requests/%d", p.base, url.PathEscape(project), iid)
 }

@@ -297,6 +297,14 @@ default `PINUP_GIT_EMAIL`) and on which no person canceled the automatic
 merge. One line per request, the counts and the API calls at the end; a
 request that could not be read fails the pass. GitLab only.
 
+A request whose merge waits for a window carries it in the marker -
+`<!-- pinup:automerge direct tz=Europe/Berlin schedule=* 3-5 * * * -->` -
+and the watch judges it against the clock before anything else: outside the
+window the request is `deferred`, and an arm the bot set on it is taken back
+(`disarmed`); inside, it is never armed, only merged outright once its head
+pipeline has succeeded and GitLab calls it mergeable. See
+[the merge window](configuration.md#when-the-merge-happens-the-merge-window).
+
 ## shadow
 
 Compare plan reports with the merge requests another tool (or a previous

@@ -192,7 +192,7 @@ func TestAutomergeIsWithheldForARevertedChangeNotForASharedTitle(t *testing.T) {
 	if !pf.MRs[len(pf.MRs)-1].Automerge {
 		t.Error("a shared title alone withheld automerge")
 	}
-	if wanted, _ := automergeWanted(pf.MRs[len(pf.MRs)-1].Description); !wanted {
+	if wanted, _, _ := automergeWanted(pf.MRs[len(pf.MRs)-1].Description); !wanted {
 		t.Error("a request that wants automerge carries no marker for the arm watch")
 	}
 

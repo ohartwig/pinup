@@ -219,6 +219,11 @@ func coResolve(failures []pushFailure) ([]model.Branch, []string) {
 			if b.AutomergeType == "" {
 				b.AutomergeType = m.f.branch.AutomergeType
 			}
+			// A member's merge window holds the combined branch, as it
+			// held the member.
+			if len(b.MergeWindow.Raw) == 0 {
+				b.MergeWindow = m.f.branch.MergeWindow
+			}
 		}
 		b.CommitBody = strings.TrimSpace(body.String())
 		b.Body = b.CommitBody

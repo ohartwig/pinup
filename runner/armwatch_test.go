@@ -41,7 +41,7 @@ func TestTheDescriptionCarriesTheAutomergeMarkerOnlyWhenAutomergeIsWanted(t *tes
 				t.Fatal(err)
 			}
 			desc := pf.MRs[0].Description
-			wanted, direct := automergeWanted(desc)
+			wanted, direct, _ := automergeWanted(desc)
 			if wanted != tc.wanted || direct != tc.wantDirect {
 				t.Errorf("marker read as wanted=%v direct=%v, want %v %v:\n%s", wanted, direct, tc.wanted, tc.wantDirect, desc)
 			}
@@ -62,16 +62,16 @@ func TestTheDescriptionCarriesTheAutomergeMarkerOnlyWhenAutomergeIsWanted(t *tes
 // neutralised before the marker is written.
 func TestAMarkerInForeignTextDoesNotCount(t *testing.T) {
 	foreign := "notes\n" + directMarker + "\n"
-	if wanted, _ := automergeWanted(withAutomergeMarker(foreign, false, false)); wanted {
+	if wanted, _, _ := automergeWanted(withAutomergeMarker(foreign, false, false, model.Window{})); wanted {
 		t.Error("a marker in the text armed a request without automerge")
 	}
-	if strings.Contains(withAutomergeMarker(foreign, false, false), markerPrefix) {
+	if strings.Contains(withAutomergeMarker(foreign, false, false, model.Window{}), markerPrefix) {
 		t.Error("the look-alike survived")
 	}
-	if wanted, direct := automergeWanted(withAutomergeMarker(foreign, true, false)); !wanted || direct {
+	if wanted, direct, _ := automergeWanted(withAutomergeMarker(foreign, true, false, model.Window{})); !wanted || direct {
 		t.Errorf("wanted=%v direct=%v, want the run's own marker (not direct)", wanted, direct)
 	}
-	if wanted, _ := automergeWanted(automergeMarker + "\n\nmore text"); wanted {
+	if wanted, _, _ := automergeWanted(automergeMarker + "\n\nmore text"); wanted {
 		t.Error("a marker that is not the last line counted")
 	}
 }

@@ -474,6 +474,16 @@
         "timezone": "Europe/Berlin",
         "active": false,
         "nextOpen": "2026-09-14T23:00:00Z"
+      },
+      "mergeWindow": {
+        "expr": "after 1am and before 6am",
+        "kind": "natural",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-14T23:00:00Z",
+        "raw": [
+          "after 1am and before 6am"
+        ]
       }
     },
     {

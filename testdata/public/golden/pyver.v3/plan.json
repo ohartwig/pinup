@@ -341,6 +341,16 @@
         "timezone": "Europe/Berlin",
         "active": false,
         "nextOpen": "2026-09-15T18:00:00Z"
+      },
+      "mergeWindow": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-15T18:00:00Z",
+        "raw": [
+          "* 0,4,8,12,16,20 * * *"
+        ]
       }
     },
     {
@@ -362,6 +372,16 @@
         "timezone": "Europe/Berlin",
         "active": false,
         "nextOpen": "2026-09-15T18:00:00Z"
+      },
+      "mergeWindow": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-15T18:00:00Z",
+        "raw": [
+          "* 0,4,8,12,16,20 * * *"
+        ]
       }
     },
     {
@@ -383,6 +403,16 @@
         "timezone": "Europe/Berlin",
         "active": false,
         "nextOpen": "2026-09-15T18:00:00Z"
+      },
+      "mergeWindow": {
+        "expr": "* 0,4,8,12,16,20 * * *",
+        "kind": "cron",
+        "timezone": "Europe/Berlin",
+        "active": false,
+        "nextOpen": "2026-09-15T18:00:00Z",
+        "raw": [
+          "* 0,4,8,12,16,20 * * *"
+        ]
       }
     }
   ],
