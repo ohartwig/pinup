@@ -1,3 +1,13 @@
+## [0.69.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.5...v0.69.6) (2026-11-12)
+
+### :bug: Fixes
+
+* **dashboard:** stay within the platform's issue size limit ([1c6872c](https://git.ole-hartwig.eu/pinup/pinup/commit/1c6872c6270d1ab118a63577756d4f60388703fd))
+
+### :barber: Styles
+
+* gofmt the fake platform's fields ([44dc300](https://git.ole-hartwig.eu/pinup/pinup/commit/44dc300db0bdfc190e39f33e69956c70a6cc270a))
+
 ## [0.69.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.4...v0.69.5) (2026-11-12)
 
 ### :bug: Fixes
