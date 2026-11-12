@@ -25,6 +25,7 @@ two compatible here. See `NOTICE`.
 | `extract-corpus.sh <tree>...` | `extract/<name>.json`: what Renovate extracts from each repository, a checkout's HEAD or a plain tree such as `testdata/public/repos/*` | `PINUP_FIXTURES` |
 | `rules.sh` | `rules/vectors.ndjson`: `packageRules` resolution over the corpus, on the production-shape base from `resolve-config.sh` | `PINUP_FIXTURES` |
 | `presets.sh` | `presets/closure.json` under `testdata/upstream`: every preset the root's `extends` reaches, as Renovate's resolver defines it - reference only, the library is authored | `testdata/upstream` |
+| `merge.sh` | `config/merge.ndjson`: how every object and array option combines when a later layer sets it again, plus edge vectors (null, empty, nested) and two through `resolveConfigPresets` | `testdata/renovate` |
 | `sourceurls.sh` | `rules/source-urls.ndjson`: `matchSourceUrls` over synthetic inputs | `testdata/renovate` |
 | `versioning-probe.cjs` | input/output pairs per versioning module | `testdata/renovate` |
 
