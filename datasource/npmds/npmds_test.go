@@ -4,6 +4,7 @@
 package npmds
 
 import (
+	"maps"
 	"net/http"
 	"strings"
 	"sync"
@@ -272,5 +273,34 @@ func TestAnUnregisteredHostIsRefused(t *testing.T) {
 	}
 	if !rec.Failed() || !rec.Mentions("other.example") {
 		t.Errorf("the refusing transport did not name the escaping host: %s", rec.String())
+	}
+}
+
+// What a version requires is read from the same document: dependencies,
+// optionalDependencies and peerDependencies, the hard dependency winning
+// where one package is named twice. vitest 4.1.12 requiring
+// @vitest/mocker 4.1.12 is what makes its bump a security fix for the
+// mocker's advisory (2026-11-12).
+func TestRequirementsOfOneVersion(t *testing.T) {
+	client, reg, rec, _ := newFixture(t)
+	reg.docs["/vitest"] = `{"versions": {
+		"4.1.11": {"dependencies": {"@vitest/mocker": "4.1.11"}},
+		"4.1.12": {"dependencies": {"@vitest/mocker": "4.1.12", "vite": "^7.0.0"},
+		           "optionalDependencies": {"fsevents": "~2.3.3"},
+		           "peerDependencies": {"vite": "*", "@types/node": "^20 || ^22"}}
+	}}`
+	got, err := New(client).Requirements(t.Context(), lookup.Ref{Datasource: Name, PackageName: "vitest"}, "4.1.12")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Failed() {
+		t.Fatalf("the transport was unhappy: %s", rec.String())
+	}
+	want := map[string]string{"@vitest/mocker": "4.1.12", "vite": "^7.0.0", "fsevents": "~2.3.3", "@types/node": "^20 || ^22"}
+	if !maps.Equal(got, want) {
+		t.Errorf("requirements %v, want %v", got, want)
+	}
+	if _, err := New(client).Requirements(t.Context(), lookup.Ref{Datasource: Name, PackageName: "vitest"}, "9.9.9"); err == nil || !strings.Contains(err.Error(), "no version 9.9.9") {
+		t.Errorf("an unknown version: %v", err)
 	}
 }

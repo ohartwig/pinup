@@ -473,3 +473,41 @@ func TestARegistryURLNamingPackagesJSONIsTheRegistry(t *testing.T) {
 		t.Errorf("releases %+v registry %q", rs.Releases, rs.RegistryURL)
 	}
 }
+
+// A version's require is read from the metadata Releases reads, minified
+// inheritance included; a version that drops every requirement says
+// "__unset" and requires nothing. The ~dev document is not asked for a
+// tagged version.
+func TestRequirementsOfOneVersion(t *testing.T) {
+	client, pf, _, rec, rt := newFixture(t)
+	pf.docs["guzzlehttp/guzzle"] = p2Doc{
+		minified: true,
+		entries: []map[string]any{
+			{"version": "7.9.2", "require": map[string]any{"php": "^7.2.5 || ^8.0", "guzzlehttp/psr7": "^2.7.0"}},
+			{"version": "7.9.3"},
+			{"version": "8.0.0", "require": "__unset"},
+		},
+	}
+	ds := New(client)
+	ref := lookup.Ref{Datasource: "packagist", PackageName: "guzzlehttp/guzzle", RegistryURLs: []string{"https://" + packagistHost}}
+	got, err := ds.Requirements(t.Context(), ref, "7.9.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Failed() {
+		t.Fatalf("the transport was unhappy: %s", rec.String())
+	}
+	if !maps.Equal(got, map[string]string{"php": "^7.2.5 || ^8.0", "guzzlehttp/psr7": "^2.7.0"}) {
+		t.Errorf("7.9.3 requires %v, want what it inherits from 7.9.2", got)
+	}
+	if got, err := ds.Requirements(t.Context(), ref, "8.0.0"); err != nil || len(got) != 0 {
+		t.Errorf("8.0.0 requires %v (%v), want nothing", got, err)
+	}
+	if _, err := ds.Requirements(t.Context(), ref, "9.0.0"); err == nil || !strings.Contains(err.Error(), "no version 9.0.0") {
+		t.Errorf("an unknown version: %v", err)
+	}
+	// packages.json once, then the p2 document per question; never ~dev.
+	if n := rt.Count(packagistHost); n != 4 {
+		t.Errorf("packagist requests = %d, want 4", n)
+	}
+}

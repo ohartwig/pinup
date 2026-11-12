@@ -296,7 +296,7 @@ var mutators = []mutator{
 	// Majors never automerge, security and KEV fixes included (I-055,
 	// I-237, 2026-10-04): vulnerabilityAlerts.automerge cannot arm one.
 	{82, "kev", "a major security fix is merged automatically", "cmd/pinup/whatif.go",
-		"\t\tif u.Type == model.UpdateMajor {\n\t\t\tif armed, _ := cfg[\"automerge\"].(bool); armed {", "\t\tif false {\n\t\t\tif armed, _ := cfg[\"automerge\"].(bool); armed {", []string{"./cmd/pinup/"}, false, ""},
+		"\t\t// vulnerabilityAlerts cannot switch it back on.\n\t\tif u.Type == model.UpdateMajor {", "\t\t// vulnerabilityAlerts cannot switch it back on.\n\t\tif false {", []string{"./cmd/pinup/"}, false, ""},
 	// A branch GitLab does not see yet is asked for again (2026-10-04): the
 	// fast lane's bump in pinup-toolchain stalled on the first refusal.
 	{83, "delivery", "a merge request whose branch GitLab does not see yet is given up at once", "platform/gitlab/gitlab.go",
@@ -411,6 +411,26 @@ var mutators = []mutator{
 		"		if n.Update.SecurityFix && !n.Update.Blocked() {", "		if n.Update.SecurityFix && n.Update.Type == model.UpdateLockFileMaintenance && !n.Update.Blocked() {", []string{"./planner/"}, false, ""},
 	{119, "security", "a sibling's merge window holds a grouped security fix", "planner/branch.go",
 		"if !m.branch.Automerge || carriesSecurityFix(m.members) {", "if !m.branch.Automerge {", []string{"./planner/"}, false, ""},
+	// A bump that moves a transitive package off an advisory (2026-11-12,
+	// collab-rte: vitest 4.1.12 and @vitest/mocker): it is a security fix,
+	// keeps its group, titles its branch, and is read back after the
+	// refresh.
+	{122, "transitive", "a bump that moves an advised package is no security fix", "cmd/pinup/transitivefix.go",
+		"\t\tif len(u.TransitiveFixes) > 0 {\n\t\t\tu.SecurityFix = true", "\t\tif false {\n\t\t\tu.SecurityFix = true", []string{"./cmd/pinup/"}, false, ""},
+	{123, "transitive", "a range that still admits the vulnerable version counts as a fix", "cmd/pinup/transitivefix.go",
+		"\tif v.Satisfies(installed, rng) {\n\t\treturn false", "\tif false {\n\t\treturn false", []string{"./cmd/pinup/"}, false, ""},
+	{124, "transitive", "a transitive fix leaves its group for the vulnerability branch", "cmd/pinup/whatif.go",
+		"} else if u.SecurityFix && len(u.TransitiveFixes) > 0 {", "} else if false {", []string{"./cmd/pinup/"}, false, ""},
+	{125, "transitive", "the refresh of a transitive fix is not read back", "cmd/pinup/whatif.go",
+		"\t\t\t\tt.Lifts = liftsOf(r.moved)", "\t\t\t\t_ = r.moved", []string{"./cmd/pinup/"}, false, ""},
+	{126, "transitive", "the first member titles a branch whatever fix it carries", "planner/branch.go",
+		"if lead, ok := securityLead(m.members); ok {", "if lead, ok := securityLead(m.members); false && ok {", []string{"./planner/"}, false, ""},
+	{127, "transitive", "a transitive bump keeps [security] when nothing moved", "runner/lift.go",
+		"(len(b.Edits) > 0 && !b.SecurityByLifts)", "len(b.Edits) > 0", []string{"./runner/"}, false, ""},
+	{128, "transitive", "npm requirements leave out dependencies", "datasource/npmds/npmds.go",
+		"v.PeerDependencies, v.OptionalDependencies, v.Dependencies}", "v.PeerDependencies, v.OptionalDependencies}", []string{"./datasource/npmds/"}, false, ""},
+	{129, "transitive", "requirements are asked again every time", "lookup/lookup.go",
+		"if json.Unmarshal(payload, &out) == nil {", "if false && json.Unmarshal(payload, &out) == nil {", []string{"./lookup/"}, false, ""},
 	// Mergeable options combine across layers as Renovate combines them
 	// (2026-11-12): a repository's partial vulnerabilityAlerts dropped the
 	// runner's labels, schedule and automerge; golang!447 repeated them.

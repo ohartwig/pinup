@@ -405,6 +405,30 @@ func carriesSecurityFix(members []Named) bool {
 	return false
 }
 
+// securityLead is the first actionable security fix among a branch's
+// members, the one the branch is titled after.
+func securityLead(members []Named) (Named, bool) {
+	for _, n := range members {
+		if u := n.Update; u.SecurityFix && !u.Blocked() {
+			return n, true
+		}
+	}
+	return Named{}, false
+}
+
+// securityByLifts reports whether every actionable security fix of a branch
+// claims its fix through the lock alone - a lock refresh, or a bump that
+// moves a transitive package - so that reading the lock back decides it.
+func securityByLifts(members []Named) bool {
+	for _, n := range members {
+		u := n.Update
+		if u.SecurityFix && !u.Blocked() && u.Type != model.UpdateLockFileMaintenance && len(u.TransitiveFixes) == 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // oneUpdatePerDependency keeps one actionable update per dependency and
 // branch: the highest bucket, a major before a minor before a patch. The
 // planner offers a major and a minor-or-patch bucket for one dependency,
@@ -570,7 +594,23 @@ func Compose(named []Named) ([]model.Branch, error) {
 	out := make([]model.Branch, 0, len(order))
 	for _, name := range order {
 		m := byName[name]
+		// A branch that carries a security fix is titled and labelled by
+		// it, whichever member came first: a group's members share one
+		// configuration but for what vulnerabilityAlerts lays over the fix
+		// - the [security] suffix, the security label. Until 2026-11-12 the
+		// branch took both from its first member alone.
 		first := m.members[0]
+		if lead, ok := securityLead(m.members); ok {
+			first = lead
+			labels := slices.Clone(m.branch.Labels)
+			for _, l := range lead.Labels {
+				if !slices.Contains(labels, l) {
+					labels = append(labels, l)
+				}
+			}
+			m.branch.Labels = labels
+			m.branch.SecurityByLifts = securityByLifts(m.members)
+		}
 		// Measured: "renovate/ci-components" on moselwal-websites-deploy is
 		// titled "update dependency devops/ci-cd-components/deploy-tools
 		// to ..." - one dependency, read by two managers, is one update
@@ -584,7 +624,7 @@ func Compose(named []Named) ([]model.Branch, error) {
 			m.branch.Title = first.Title
 		default:
 			shared := first.Extra
-			for _, n := range m.members[1:] {
+			for _, n := range m.members {
 				if n.Extra != shared {
 					shared = ""
 					break

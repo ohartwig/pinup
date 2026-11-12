@@ -51,7 +51,7 @@ func (o Options) unlifted(t model.Task) ([]model.Lift, error) {
 	if name == "" {
 		return nil, fmt.Errorf("none of %s in %q after the refresh", strings.Join(t.FileFilters, ", "), t.Dir)
 	}
-	versions, err := o.LockedVersions(raw)
+	versions, err := o.LockedVersions(t.Manager, raw)
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", name, err)
 	}
@@ -81,10 +81,12 @@ func unliftedWarning(t model.Task, l model.Lift) model.Warning {
 
 // dropSecurityTitle takes the [security] claim off a branch whose only
 // security content was lifts and none of them moved: what is left is a
-// routine refresh and is titled as one. A branch with edits keeps its
-// title - a direct security bump is checked by its own install.
+// routine refresh, or a routine bump, and is titled as one. A branch with
+// a direct security bump keeps its title - that bump is checked by its own
+// install; a bump that claimed to move a transitive package
+// (model.Branch.SecurityByLifts) is checked here like a refresh.
 func dropSecurityTitle(b *model.Branch, lifts, unlifted int) {
-	if lifts == 0 || unlifted < lifts || len(b.Edits) > 0 {
+	if lifts == 0 || unlifted < lifts || (len(b.Edits) > 0 && !b.SecurityByLifts) {
 		return
 	}
 	if title, ok := strings.CutSuffix(b.Title, securitySuffix); ok {

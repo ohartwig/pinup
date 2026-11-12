@@ -84,8 +84,10 @@ type Options struct {
 	RebaseWhen string
 	// LockedVersions reads a lock file's pinned versions by package name;
 	// the runner reads a security refresh's lock back with it (unlifted).
-	// wire supplies the manager's reader - the runner knows none.
-	LockedVersions func(lock []byte) (map[string]string, error)
+	// wire supplies the managers' readers - the runner knows none - and
+	// the task's manager picks one: a composer bump's refresh is read back
+	// as composer.lock, an npm one as package-lock.json.
+	LockedVersions func(manager string, lock []byte) (map[string]string, error)
 
 	Now time.Time
 	// Clock reads the time at the moment of merging, for the merge window:
@@ -1063,6 +1065,8 @@ func noteLinks(u model.Update) string {
 	}
 	if u.SecurityFix && u.Type == model.UpdateLockFileMaintenance {
 		parts = append(parts, "security fix: "+transitiveNote(u.Dep.Advisories))
+	} else if u.SecurityFix && len(u.TransitiveFixes) > 0 {
+		parts = append(parts, "security fix: "+transitiveNote(u.TransitiveFixes))
 	} else if u.SecurityFix {
 		if note := u.Dep.WithdrawnNote(); note != "" {
 			parts = append(parts, "security fix ("+note+")")

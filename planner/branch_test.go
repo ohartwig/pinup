@@ -5,6 +5,7 @@ package planner
 
 import (
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -542,5 +543,54 @@ func TestCommitBodyIsRenderedFromTheConfiguration(t *testing.T) {
 	}
 	if none.CommitBody != "" {
 		t.Errorf("without a commitBody the branch has %q", none.CommitBody)
+	}
+}
+
+// A branch is titled and labelled by the security fix it carries, not by
+// whichever member came first: in a group the fix's configuration differs
+// from its siblings' by what vulnerabilityAlerts laid over it, the
+// [security] suffix and the security label (collab-rte's npm group,
+// vitest 4.1.12 after typescript-eslint, 2026-11-12).
+func TestABranchIsTitledAndLabelledByItsSecurityFix(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}}
+	group := with(base, map[string]any{"groupName": "npm packages", "groupSlug": "npm", "labels": []any{"dependencies"}})
+	secure := with(group, map[string]any{"labels": []any{"security"}, "commitMessageSuffix": "[SECURITY]"})
+	tse, _ := Name(upd("npm", "npm", "typescript-eslint", "8.70.0", "8.72.1", "8.72.1", model.UpdateMinor), group, vs)
+	vitest, _ := Name(upd("npm", "npm", "vitest", "4.1.11", "4.1.12", "4.1.12", model.UpdatePatch), secure, vs)
+	vitest.Update.SecurityFix = true
+	vitest.Update.TransitiveFixes = []model.Advisory{{ID: "GHSA-qxg6-89mg-rqv8", Package: "@vitest/mocker", Installed: "4.1.11", Fixed: "4.1.12"}}
+
+	branches, err := Compose([]Named{tse, vitest})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(branches) != 1 {
+		t.Fatalf("branches %+v", branches)
+	}
+	b := branches[0]
+	if !strings.HasSuffix(b.Title, "[security]") {
+		t.Errorf("title %q, want the fix's [security]", b.Title)
+	}
+	if !slices.Contains(b.Labels, "security") || !slices.Contains(b.Labels, "dependencies") {
+		t.Errorf("labels %v, want the group's and the fix's", b.Labels)
+	}
+	if !b.SecurityByLifts {
+		t.Error("a branch whose only fix moves a transitive package must be checked by its lifts")
+	}
+	if slices.Contains(tse.Labels, "security") {
+		t.Errorf("the sibling's own labels changed: %v", tse.Labels)
+	}
+
+	// A direct security fix is checked by its own install.
+	vitest.Update.TransitiveFixes = nil
+	branches, _ = Compose([]Named{tse, vitest})
+	if branches[0].SecurityByLifts {
+		t.Error("a direct security fix must not be taken back by the lifts")
+	}
+	// Without a fix the first member titles the branch, as before.
+	branches, _ = Compose([]Named{tse})
+	if strings.Contains(branches[0].Title, "security") || slices.Contains(branches[0].Labels, "security") {
+		t.Errorf("no fix, yet %q %v", branches[0].Title, branches[0].Labels)
 	}
 }

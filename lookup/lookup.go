@@ -79,6 +79,16 @@ type DigestSource interface {
 	Digest(ctx context.Context, ref Ref, version string) (string, error)
 }
 
+// RequirementSource is a datasource that can name what one version of a
+// package requires: each package it depends on and the range it asks for -
+// npm's dependencies, optionalDependencies and peerDependencies, composer's
+// require. A bump of a direct dependency that requires a transitive package
+// at a range its vulnerable locked version falls outside moves that package
+// off it; this is how the plan sees that without running the lock's tool.
+type RequirementSource interface {
+	Requirements(ctx context.Context, ref Ref, version string) (map[string]string, error)
+}
+
 // URLSource is a datasource that builds the URL it asks from the ref
 // itself - a custom datasource's defaultRegistryUrlTemplate - so the ref
 // names no host. RegistryURL returns that URL for a ref without registry
@@ -330,6 +340,47 @@ func (f *Fetcher) Digest(ctx context.Context, d model.Dependency, version string
 		}
 	}
 	return digest, nil
+}
+
+// Requirements answers what one version of the dependency's package
+// requires, through its datasource, cached like a digest: a published
+// version's requirements do not change, and the TTL bounds the one case
+// where they do (a registry that republishes). It is asked only for a
+// bump whose lock carries a transitive advisory, so a datasource without
+// requirements is an error the caller reports, not a failed run.
+func (f *Fetcher) Requirements(ctx context.Context, d model.Dependency, version string) (map[string]string, error) {
+	ref := RefOf(d)
+	key := "requires\x00" + ref.Key() + "\x00" + version
+	if f.Cache != nil && (f.Bypass == nil || !f.Bypass(ref)) {
+		if payload, fresh, err := f.Cache.GetReleases(key, f.ttlFor(ref), f.Now); err == nil && fresh && len(payload) > 0 {
+			var out map[string]string
+			if json.Unmarshal(payload, &out) == nil {
+				return out, nil
+			}
+		}
+	}
+	ds, err := f.Registry.Get(ref.Datasource)
+	if err != nil {
+		return nil, err
+	}
+	src, ok := ds.(RequirementSource)
+	if !ok {
+		return nil, fmt.Errorf("%s names no requirements", ref.Datasource)
+	}
+	out, err := src.Requirements(ctx, ref, version)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		out = map[string]string{}
+	}
+	if f.Cache != nil {
+		payload, _ := json.Marshal(out)
+		if cerr := f.Cache.PutReleases(key, payload, f.Now); cerr != nil {
+			f.problem("cache: %s: %v", key, cerr)
+		}
+	}
+	return out, nil
 }
 
 func (f *Fetcher) ttl() time.Duration {

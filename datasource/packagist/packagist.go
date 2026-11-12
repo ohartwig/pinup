@@ -104,11 +104,49 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		ref.PackageName, strings.Join(tried, ", "))
 }
 
+// Requirements answers the require of one version, from the first registry
+// in ref.RegistryURLs that has the package - the one Releases answered
+// from. Only the stable metadata is read unless the version is a branch.
+func (d *Datasource) Requirements(ctx context.Context, ref lookup.Ref, version string) (map[string]string, error) {
+	registries := ref.RegistryURLs
+	if len(registries) == 0 {
+		registries = []string{defaultRegistry}
+	}
+	dev := strings.HasPrefix(version, "dev-") || strings.HasSuffix(version, "-dev")
+	for _, reg := range registries {
+		base := strings.TrimSuffix(strings.TrimRight(reg, "/"), "/packages.json")
+		entries, found, err := d.entries(ctx, base, ref.PackageName, dev)
+		if err != nil {
+			return nil, err
+		}
+		if !found {
+			continue
+		}
+		for _, e := range entries {
+			if e.Version == version {
+				return e.Require, nil
+			}
+		}
+		return nil, fmt.Errorf("packagist: %s: registry %s has no version %s", ref.PackageName, base, version)
+	}
+	return nil, fmt.Errorf("packagist: %s not found in any registry", ref.PackageName)
+}
+
 // lookupOne fetches base's packages.json and dispatches to whichever
 // repository format it declares. found is false only for "this registry
 // does not have the package" (a 404 on the package's own metadata); every
 // other problem is returned as an error.
 func (d *Datasource) lookupOne(ctx context.Context, base, pkg string) (*model.ReleaseSet, bool, error) {
+	entries, found, err := d.entries(ctx, base, pkg, true)
+	if err != nil || !found {
+		return nil, found, err
+	}
+	return buildReleaseSet(base, pkg, entries), true, nil
+}
+
+// entries reads every version of pkg one registry lists, dev included
+// when asked; found and err as for lookupOne.
+func (d *Datasource) entries(ctx context.Context, base, pkg string, dev bool) ([]releaseEntry, bool, error) {
 	root, err := d.root(ctx, base)
 	if err != nil {
 		return nil, false, err
@@ -116,7 +154,7 @@ func (d *Datasource) lookupOne(ctx context.Context, base, pkg string) (*model.Re
 
 	switch {
 	case root.MetadataURL != "":
-		return d.lookupP2(ctx, base, pkg, root.MetadataURL)
+		return d.lookupP2(ctx, base, pkg, root.MetadataURL, dev)
 	case len(root.Packages) > 0 && string(root.Packages) != "null":
 		return lookupInline(base, pkg, root.Packages)
 	case root.ProvidersURL != "" || len(root.ProviderIncludes) > 0:
@@ -175,13 +213,13 @@ type rootEntry struct {
 
 // lookupP2 fetches the Composer 2 metadata-url document for pkg, plus its
 // "~dev" companion, and merges both into one release set.
-func (d *Datasource) lookupP2(ctx context.Context, base, pkg, metadataURLTemplate string) (*model.ReleaseSet, bool, error) {
+func (d *Datasource) lookupP2(ctx context.Context, base, pkg, metadataURLTemplate string, dev bool) ([]releaseEntry, bool, error) {
 	entries, found, err := d.fetchP2(ctx, base, metadataURLTemplate, pkg)
 	if err != nil {
 		return nil, false, err
 	}
-	if !found {
-		return nil, false, nil
+	if !found || !dev {
+		return entries, found, nil
 	}
 
 	// The dev variant is a separate document under a "~dev" suffixed
@@ -195,7 +233,7 @@ func (d *Datasource) lookupP2(ctx context.Context, base, pkg, metadataURLTemplat
 	if devFound {
 		entries = append(entries, devEntries...)
 	}
-	return buildReleaseSet(base, pkg, entries), true, nil
+	return entries, true, nil
 }
 
 // escapePackage escapes a composer package name for a URL path, segment
@@ -299,7 +337,7 @@ func versionList(raw json.RawMessage) ([]map[string]json.RawMessage, error) {
 // lookupInline reads a small repository's packages.json that lists every
 // version inline, keyed by version string:
 // {"packages": {"vendor/name": {"1.0.0": {...}, "dev-main": {...}}}}.
-func lookupInline(base, pkg string, raw json.RawMessage) (*model.ReleaseSet, bool, error) {
+func lookupInline(base, pkg string, raw json.RawMessage) ([]releaseEntry, bool, error) {
 	var all map[string]map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &all); err != nil {
 		return nil, false, fmt.Errorf("packagist: registry %s: parsing inline packages: %w", base, err)
@@ -328,7 +366,7 @@ func lookupInline(base, pkg string, raw json.RawMessage) (*model.ReleaseSet, boo
 		}
 		entries = append(entries, e)
 	}
-	return buildReleaseSet(base, pkg, entries), true, nil
+	return entries, true, nil
 }
 
 // releaseEntry is one version's worth of fields this datasource cares
@@ -337,6 +375,10 @@ type releaseEntry struct {
 	Version   string
 	Timestamp time.Time
 	SourceURL string
+	// Require is the version's require: package to constraint. Composer 2
+	// minified metadata writes "__unset" for a key an entry drops, which
+	// decodes as no requirements.
+	Require map[string]string
 }
 
 // decodeEntry pulls version, time and source.url out of one (already fully
@@ -361,6 +403,14 @@ func decodeEntry(raw map[string]json.RawMessage) (releaseEntry, error) {
 				return e, fmt.Errorf("time %q is not RFC 3339: %w", s, err)
 			}
 			e.Timestamp = t
+		}
+	}
+	if v, ok := raw["require"]; ok {
+		// An empty require is written [] as often as {}; neither names a
+		// package.
+		var req map[string]string
+		if json.Unmarshal(v, &req) == nil {
+			e.Require = req
 		}
 	}
 	if v, ok := raw["source"]; ok {

@@ -14,7 +14,7 @@ import (
 )
 
 // flatLock reads the test's lock shape: a JSON object of name -> version.
-func flatLock(raw []byte) (map[string]string, error) {
+func flatLock(_ string, raw []byte) (map[string]string, error) {
 	var out map[string]string
 	err := json.Unmarshal(raw, &out)
 	return out, err
@@ -38,6 +38,7 @@ func TestASecurityRefreshSaysWhetherItLiftedTheAdvisory(t *testing.T) {
 		name      string
 		lock      string
 		edits     bool
+		byLifts   bool
 		noReader  bool
 		wantTitle string
 		unlifted  int
@@ -50,6 +51,13 @@ func TestASecurityRefreshSaysWhetherItLiftedTheAdvisory(t *testing.T) {
 		// checks; its title stays, the note and the warning still come.
 		{name: "left in place beside an edit", lock: `{"fast-uri": "3.1.8"}`, edits: true, wantTitle: title, unlifted: 1,
 			warning: "not lifted by the security lock refresh"},
+		// A bump titled [security] because it moves a transitive package
+		// (vitest 4.1.12 and @vitest/mocker, 2026-11-12) claims nothing
+		// its install checks: when the lock still pins the package, the
+		// title goes back as for a refresh; when it moved, it stays.
+		{name: "a transitive bump that moved it", lock: `{"fast-uri": "3.1.9"}`, edits: true, byLifts: true, wantTitle: title},
+		{name: "a transitive bump that left it", lock: `{"fast-uri": "3.1.8"}`, edits: true, byLifts: true, wantTitle: "chore(deps): refresh lock file", unlifted: 1,
+			warning: "not lifted by the security lock refresh"},
 		// No reader, no claim: the title stays and the plan says the
 		// check did not happen rather than that it passed.
 		{name: "unchecked", lock: `{"fast-uri": "3.1.8"}`, noReader: true, wantTitle: title, warning: "lifts not checked"},
@@ -61,6 +69,7 @@ func TestASecurityRefreshSaysWhetherItLiftedTheAdvisory(t *testing.T) {
 			if c.edits {
 				b.Name, b.UpdateKeys, b.Edits = "renovate/alpine-3.x", []string{"Containerfile|alpine|3.20"}, []model.Edit{edit("3.20", "3.21")}
 			}
+			b.SecurityByLifts = c.byLifts
 			o := options(repo, pf)
 			o.Tasks = &fakeTasks{writes: map[string]string{"package-lock.json": c.lock + "\n"}}
 			if !c.noReader {

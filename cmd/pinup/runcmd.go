@@ -32,7 +32,6 @@ import (
 	"github.com/ohartwig/pinup/httpx"
 	"github.com/ohartwig/pinup/kev"
 	"github.com/ohartwig/pinup/lookup"
-	"github.com/ohartwig/pinup/manager/npmman"
 	"github.com/ohartwig/pinup/model"
 	"github.com/ohartwig/pinup/osv"
 	"github.com/ohartwig/pinup/packagistadv"
@@ -745,7 +744,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 			Tasks:                  plugin.TaskRunner{Runner: taskRunner(os.Getenv, o.isolate, cmp.Or(project, repoDir), o.taskSlots)},
 			Sleep:                  time.Sleep,
 			Rebase:                 rebaseSet(*opts.checksRead),
-			LockedVersions:         npmman.LockedVersions,
+			LockedVersions:         wire.LockedVersions,
 		})
 		if err != nil {
 			return err

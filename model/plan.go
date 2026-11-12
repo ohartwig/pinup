@@ -174,6 +174,13 @@ type Branch struct {
 	// place, each with the version the lock still pins - set by the runner
 	// after the tasks ran, never by the planner.
 	Unlifted []Lift `json:"unlifted,omitempty"`
+	// SecurityByLifts says the branch is titled [security] for its lifts
+	// alone: every security fix on it is a lock refresh or a bump that
+	// moves a transitive package (Update.TransitiveFixes), none a direct
+	// advisory. The runner then takes the title back when no lift moved,
+	// edits or not - a direct bump is checked by its own install, a lift
+	// only by reading the lock back.
+	SecurityByLifts bool `json:"securityByLifts,omitempty"`
 
 	Schedule Window `json:"schedule"`
 	// MergeWindow is when the branch may be merged automatically: the

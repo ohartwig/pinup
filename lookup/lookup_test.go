@@ -406,3 +406,49 @@ func TestBypassUsesOnlyAnswersOfThisInvocation(t *testing.T) {
 		t.Errorf("a failed bypassed lookup served the cache: %+v", r.Releases)
 	}
 }
+
+// requiringDS answers requirements per version and counts the questions.
+type requiringDS struct {
+	countingDS
+	requires map[string]map[string]string
+	asked    int
+}
+
+func (d *requiringDS) Requirements(_ context.Context, _ Ref, version string) (map[string]string, error) {
+	d.asked++
+	r, ok := d.requires[version]
+	if !ok {
+		return nil, errors.New("no such version")
+	}
+	return r, nil
+}
+
+func TestRequirementsAreCachedPerVersion(t *testing.T) {
+	ds := &requiringDS{countingDS: countingDS{calls: map[string]int{}}, requires: map[string]map[string]string{
+		"4.1.12": {"@vitest/mocker": "4.1.12"}, "4.1.13": nil,
+	}}
+	f := &Fetcher{Registry: Registry{"fake": ds}, Cache: newMemCache(), Now: now}
+	d := dep("vitest", "fake")
+	for range 3 {
+		got, err := f.Requirements(context.Background(), d, "4.1.12")
+		if err != nil || got["@vitest/mocker"] != "4.1.12" {
+			t.Fatalf("got %v, %v", got, err)
+		}
+	}
+	// No requirements is an answer too, and is cached as one.
+	for range 2 {
+		if got, err := f.Requirements(context.Background(), d, "4.1.13"); err != nil || len(got) != 0 {
+			t.Fatalf("got %v, %v", got, err)
+		}
+	}
+	if ds.asked != 2 {
+		t.Errorf("the datasource was asked %d times for two versions, want 2", ds.asked)
+	}
+	if _, err := f.Requirements(context.Background(), d, "9.9"); err == nil {
+		t.Error("an unknown version yielded requirements")
+	}
+	plain := &Fetcher{Registry: Registry{"fake": &countingDS{calls: map[string]int{}}}, Now: now}
+	if _, err := plain.Requirements(context.Background(), d, "4.1.12"); err == nil {
+		t.Error("a datasource without requirements answered some")
+	}
+}
