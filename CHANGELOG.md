@@ -1,3 +1,9 @@
+## [0.69.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.6...v0.69.7) (2026-11-12)
+
+### :bug: Fixes
+
+* **config:** layer a repository file over the run's configuration ([e09a0a9](https://git.ole-hartwig.eu/pinup/pinup/commit/e09a0a9b749ea331f5ded4d4a52c64cc394402ba))
+
 ## [0.69.6](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.5...v0.69.6) (2026-11-12)
 
 ### :bug: Fixes
