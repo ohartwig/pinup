@@ -27,6 +27,8 @@ type Platform struct {
 	// calls. CreateErrTimes bounds how often CreateErr is returned; zero
 	// means always.
 	CreateErr, UpdateErr error
+	// IssueErr, when set, is what UpsertIssue answers.
+	IssueErr error
 	CreateErrTimes       int
 	createErrs           int
 	// Verification is what CommitVerification answers.
@@ -242,6 +244,9 @@ func (p *Platform) UpsertIssue(_ context.Context, _ publish.Project, title, desc
 	p.record("UpsertIssue")
 	p.mu.Lock()
 	defer p.mu.Unlock()
+	if p.IssueErr != nil {
+		return publish.Issue{}, false, p.IssueErr
+	}
 	if p.Issues == nil {
 		p.Issues = map[string]publish.Issue{}
 		p.IssueBodies = map[string]string{}

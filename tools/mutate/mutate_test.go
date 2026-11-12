@@ -208,7 +208,7 @@ var mutators = []mutator{
 	{53, "plan", "an update beside an allowedVersions exclusion hides what is kept out", "planner/planner.go",
 		"\tif p.excluded > 0 && len(ups) > 0 && p.beyond(ups) {", "\tif false {", []string{"./planner/"}, false, ""},
 	{54, "plan", "the dashboard drops what allowedVersions keeps out beside an update", "report/dashboard.go",
-		"\t\t\t\t\tif d.HeldBack != \"\" {", "\t\t\t\t\tif false {", []string{"./report/"}, false, ""},
+		"\t\tif d.HeldBack != \"\" {", "\t\tif false {", []string{"./report/"}, false, ""},
 	// A rule moves where a dependency is looked up (2026-09-26): composer's
 	// php follows the Wolfi package the images pin, not the upstream release.
 	{55, "config", "overrideDatasource in a rule is ignored", "cmd/pinup/whatif.go",
@@ -255,7 +255,7 @@ var mutators = []mutator{
 	{67, "lookup", "a withdrawn current version gets no fix bound", "cmd/pinup/withdrawn.go",
 		"\t\t\td.VulnerabilityBound = bound\n", "\t\t\t_ = bound\n", []string{"./cmd/pinup/"}, false, ""},
 	{68, "delivery", "the dashboard does not name a withdrawn version", "report/dashboard.go",
-		"\t\t\t\tif note := d.WithdrawnNote(); note != \"\" {", "\t\t\t\tif note := d.WithdrawnNote(); false && note != \"\" {", []string{"./report/"}, false, ""},
+		"\tif note := d.WithdrawnNote(); note != \"\" {", "\tif note := d.WithdrawnNote(); false && note != \"\" {", []string{"./report/"}, false, ""},
 	// Withdrawn image versions (2026-09-29): a withdrawn tag leaves the
 	// docker releases, and the runner's list URL reaches the datasource.
 	{69, "lookup", "a withdrawn image tag stays a release", "datasource/dockerds/dockerds.go",
@@ -390,6 +390,13 @@ var mutators = []mutator{
 	// snapshot index on the estate's bucket was cached for five hours.
 	{113, "lookup", "a URL the datasource builds does not make a host own", "lookup/lookup.go",
 		"\treturn slices.ContainsFunc(f.OwnHosts, func(h string) bool { return h != \"\" && strings.EqualFold(parsed.Hostname(), h) })", "\treturn false", []string{"./lookup/"}, false, ""},
+	// The dashboard within the platform's limit (2026-11-12): rpm-packages'
+	// grew to 1.11 MiB, GitLab refused it for two weeks, and the refusal was
+	// a warning line in a green job.
+	{114, "delivery", "the dashboard ignores its size budget", "report/dashboard.go",
+		"\tif budget.Bytes <= 0 || len(full) <= budget.Bytes {", "\tif true {", []string{"./report/", "./cmd/pinup/"}, false, ""},
+	{115, "delivery", "a refused dashboard leaves the exit status alone", "cmd/pinup/runcmd.go",
+		"\to.dashboardFailed.Add(1)\n", "", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

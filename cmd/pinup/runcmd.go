@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/ohartwig/pinup/platform/github"
 	"github.com/ohartwig/pinup/platform/gitlab"
 	"github.com/ohartwig/pinup/plugin"
 	"io"
@@ -19,6 +20,7 @@ import (
 	"slices"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ohartwig/pinup/cache"
@@ -176,6 +178,7 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		cfgPath: *cfgPath, runnerDefault: runnerDefault, runnerProject: runnerProj, cache: store, cacheTTL: *cacheTTL, cacheTTLOwn: *cacheTTLOwn, ownHosts: splitHosts(*ownHosts), dryRun: *dryRun, env: env, pkg: *pkg,
 		client: httpClient(env), identity: identity, signing: signing, platform: platform, now: now, base: *baseBranch,
 		dashboardTitle: os.Getenv("PINUP_DASHBOARD_TITLE"),
+		jobURL:         os.Getenv("CI_JOB_URL"),
 		coverage:       *coverage,
 	}
 	if !*dryRun {
@@ -241,9 +244,37 @@ func cmdRun(args []string, out, errw io.Writer) error {
 		if failed > 0 {
 			return fmt.Errorf("run: %d of %d projects failed", failed, len(selected))
 		}
-		return nil
+		return dashboardFailures(one)
 	}
-	return runProject(ctx, one, *project, *repoDir, *reportPath, out, errw)
+	if err := runProject(ctx, one, *project, *repoDir, *reportPath, out, errw); err != nil {
+		return err
+	}
+	return dashboardFailures(one)
+}
+
+// exitDashboard is the exit status of a run that did everything but write
+// a dashboard. The runner's jobs allow it (allow_failure: exit_codes), so
+// the job shows as passed with a warning: not red, as a failed project
+// is, and not green either. Until this change the refusal was one warning line
+// in a green job; devops/rpm-packages' dashboard went unwritten for two
+// weeks on it (GitLab answered 400, description too long) and nobody saw.
+const exitDashboard = 3
+
+// exitError carries an exit status other than 1 out to main.
+type exitError struct {
+	code int
+	msg  string
+}
+
+func (e *exitError) Error() string { return e.msg }
+
+// dashboardFailures is the run's verdict on its dashboards: nil when every
+// one was written, an exitError with exitDashboard when one was not.
+func dashboardFailures(o *runOptions) error {
+	if n := o.dashboardFailed.Load(); n > 0 {
+		return &exitError{code: exitDashboard, msg: fmt.Sprintf("run: %d dashboard(s) could not be written; the ticked boxes there are not read until they are", n)}
+	}
+	return nil
 }
 
 // runEach runs the projects, up to parallel at a time, and returns how many
@@ -378,7 +409,15 @@ func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platf
 			open = append(open, m)
 		}
 	}
-	body := report.Dashboard(plan, states, open, o.now)
+	fitted := report.DashboardWithin(plan, states, open, o.now, report.DashboardBudget{
+		Bytes:    dashboardBudget(platform.Name()),
+		FullList: fullListAt(o.jobURL, reportPath, project),
+	})
+	if fitted.Detail != report.DetailFull {
+		fmt.Fprintf(errw, "warning: %s: dashboard is %d bytes at full detail, over the budget of %d; written with detected dependencies %s (%d bytes)\n",
+			proj.Path, fitted.Untrimmed, dashboardBudget(platform.Name()), fitted.Detail, len(fitted.Body))
+	}
+	body := fitted.Body
 	if o.dryRun {
 		if reportPath == "" {
 			return nil
@@ -397,6 +436,48 @@ func publishDashboard(ctx context.Context, o *runOptions, platform publish.Platf
 		fmt.Fprintf(out, "%s: dashboard #%d updated\n", proj.Path, issue.IID)
 	}
 	return nil
+}
+
+// dashboardBudget is the most a dashboard may carry on the platform, in
+// bytes, with a tenth to spare. GitLab refuses an issue description over
+// 1 MiB (1048576 bytes); GitHub a body over 65536 characters, and a
+// character is at least a byte, so a byte budget under it holds for both
+// counts.
+func dashboardBudget(platform string) int {
+	if platform == github.Name {
+		return 60000
+	}
+	return 900 << 10
+}
+
+// fullListAt names where the full dependency list of a condensed dashboard
+// is: the plan report, in the job's artifacts when the run is a CI job.
+func fullListAt(jobURL, reportPath, project string) string {
+	if reportPath == "" {
+		return "the plan (`pinup whatif --report`)"
+	}
+	path := reportPath
+	if project != "" && strings.Contains(reportPath, "%s") {
+		path = fmt.Sprintf(reportPath, strings.ReplaceAll(project, "/", "-"))
+	}
+	if jobURL == "" {
+		return "the plan report `" + path + "`"
+	}
+	return fmt.Sprintf("the plan report `%s` in the [job's artifacts](%s/artifacts/browse)", path, jobURL)
+}
+
+// writeDashboard publishes the dashboard and, when the platform refuses
+// it, says so where it is seen: an error line in the log, a warning in the
+// plan report, and the run's exit status (exitDashboard). The project's
+// branches stand; the run goes on.
+func writeDashboard(ctx context.Context, o *runOptions, platform publish.Platform, proj publish.Project, plan *model.Plan, outcomes []runner.Outcome, reportPath, project string, out, errw io.Writer) {
+	err := publishDashboard(ctx, o, platform, proj, plan, outcomes, reportPath, project, out, errw)
+	if err == nil {
+		return
+	}
+	o.dashboardFailed.Add(1)
+	fmt.Fprintf(errw, "error: %s: dashboard not written: %v\n", proj.Path, err)
+	plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: "dashboard not written: " + err.Error()})
 }
 
 // runOptions is what every project in one invocation shares.
@@ -428,6 +509,11 @@ type runOptions struct {
 	// the configuration's dependencyDashboardTitle; empty means the
 	// configuration names the issue (see dashboardTitle in env.go).
 	dashboardTitle string
+	// jobURL is CI_JOB_URL, where a condensed dashboard points for the
+	// full list; empty outside CI.
+	jobURL string
+	// dashboardFailed counts the dashboards the run could not write.
+	dashboardFailed atomic.Int32
 	// index is the consumer index, updated after every plan; nil means
 	// none is kept. indexMu serialises the projects that feed it.
 	index     *report.Index
@@ -694,9 +780,7 @@ func runProject(ctx context.Context, o *runOptions, project, repoDir, reportPath
 		}
 	}
 	if plan.Dashboard.Enabled {
-		if err := publishDashboard(ctx, o, o.platform, proj, plan, outcomes, reportPath, project, out, errw); err != nil {
-			fmt.Fprintf(errw, "warning: %s: dashboard: %v\n", proj.Path, err)
-		}
+		writeDashboard(ctx, o, o.platform, proj, plan, outcomes, reportPath, project, out, errw)
 	}
 	if err := writeReport(reportPath, project, plan); err != nil {
 		return err
