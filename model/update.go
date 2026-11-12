@@ -6,6 +6,7 @@ package model
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"time"
 )
 
@@ -333,6 +334,16 @@ type Update struct {
 	// The vulnerabilityAlerts configuration overlays such an update - its
 	// own branch, labels, no release age, no schedule.
 	SecurityFix bool `json:"securityFix,omitempty"`
+	// TransitiveFixes are the advisories on packages of the dependency's
+	// lock that no manifest names (osvTransitiveAlerts) and that this bump
+	// moves to a fixed version: the new version requires the package at a
+	// range its locked, vulnerable version falls outside, and a fixed one
+	// inside (vitest 4.1.12 requires @vitest/mocker 4.1.12 exactly, and
+	// GHSA-qxg6-89mg-rqv8 is fixed there). Such an update is a SecurityFix
+	// that keeps its own branch - its group, if it has one - and takes the
+	// vulnerabilityAlerts keys a security lock refresh takes. Empty for
+	// every other update, a direct security fix included.
+	TransitiveFixes []Advisory `json:"transitiveFixes,omitempty"`
 
 	// Notes are the source repository's release notes between the current
 	// and the new version, newest first, filled for an update that will be
@@ -378,13 +389,20 @@ func (u Update) Key() string {
 func (u Update) Blocked() bool { return len(u.Blocks) > 0 }
 
 // ExploitedFix names the CVEs CISA lists as exploited that this update
-// closes: a security fix's own advisories with a KEV mark. nil for any
-// other update, including an ordinary bump of the same dependency.
+// closes: a security fix's own advisories with a KEV mark, and those of the
+// transitive packages it moves. nil for any other update, including an
+// ordinary bump of the same dependency.
 func (u Update) ExploitedFix() []string {
 	if !u.SecurityFix {
 		return nil
 	}
-	return u.Dep.ExploitedCVEs()
+	out := u.Dep.ExploitedCVEs()
+	for _, a := range u.TransitiveFixes {
+		if a.Exploited != nil && !slices.Contains(out, a.Exploited.CVE) {
+			out = append(out, a.Exploited.CVE)
+		}
+	}
+	return out
 }
 
 // AutomergeRisk is the risk an automerge decision must be taken against:

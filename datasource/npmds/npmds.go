@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/url"
 	"sort"
@@ -174,6 +175,47 @@ func (d *Datasource) Releases(ctx context.Context, ref lookup.Ref) (*model.Relea
 		rs.Releases = append(rs.Releases, rel)
 	}
 	return rs, nil
+}
+
+// Requirements answers what one version of a package requires: its
+// dependencies, optionalDependencies and peerDependencies, each the range
+// as written. Every one of them is installed beside the package by npm 7
+// and later, so each can move a locked transitive package. The full
+// document is read again rather than a per-version path, which GitLab's
+// npm registry does not serve; the fetcher caches the answer, and it is
+// asked only for a bump whose lock carries a transitive advisory.
+func (d *Datasource) Requirements(ctx context.Context, ref lookup.Ref, version string) (map[string]string, error) {
+	base := defaultRegistry
+	if len(ref.RegistryURLs) > 0 && ref.RegistryURLs[0] != "" {
+		base = ref.RegistryURLs[0]
+	}
+	base = strings.TrimRight(base, "/")
+	resp, err := d.client.Get(ctx, base+"/"+url.PathEscape(ref.PackageName), httpx.ReqOptions{Accept: "application/json"})
+	if err != nil {
+		return nil, wrapError(ref.PackageName, base, err)
+	}
+	var doc struct {
+		Versions map[string]struct {
+			Dependencies         map[string]string `json:"dependencies"`
+			OptionalDependencies map[string]string `json:"optionalDependencies"`
+			PeerDependencies     map[string]string `json:"peerDependencies"`
+		} `json:"versions"`
+	}
+	if err := json.Unmarshal(resp.Body, &doc); err != nil {
+		return nil, fmt.Errorf("npm: %s: decode response from %s: %w", ref.PackageName, base, err)
+	}
+	v, ok := doc.Versions[version]
+	if !ok {
+		return nil, fmt.Errorf("npm: %s: %s has no version %s", ref.PackageName, base, version)
+	}
+	out := map[string]string{}
+	// A peer range is the weakest claim and a hard dependency the
+	// strongest; where a package names the same one twice, the stronger
+	// says what is installed.
+	for _, m := range []map[string]string{v.PeerDependencies, v.OptionalDependencies, v.Dependencies} {
+		maps.Copy(out, m)
+	}
+	return out, nil
 }
 
 // cleanSourceURL strips the "git+" prefix and ".git" suffix npm's

@@ -5,4 +5,7 @@ package packagist
 
 import "github.com/ohartwig/pinup/lookup"
 
-var _ lookup.Datasource = (*Datasource)(nil)
+var (
+	_ lookup.Datasource        = (*Datasource)(nil)
+	_ lookup.RequirementSource = (*Datasource)(nil)
+)

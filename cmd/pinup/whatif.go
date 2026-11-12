@@ -898,6 +898,11 @@ func (r *whatifRun) planUpdates() error {
 	})
 	plan.Deps = planned.Deps
 	plan.Warnings = append(plan.Warnings, planned.Warnings...)
+	// A bump that moves a transitive package off an advisory is a
+	// security fix, whatever bucket it came from (transitivefix.go).
+	plan.Warnings = append(plan.Warnings, markTransitiveFixes(planned.Updates, r.locks, r.transitive, func(d model.Dependency, version string) (map[string]string, error) {
+		return r.fetcher.Requirements(r.ctx, d, version)
+	}, wire.Versionings(), wire.DefaultVersioning(r.datasources))...)
 	// lockFileMaintenance: one refresh per lock file the run read, planned
 	// as its own update so the branch Renovate opens for it exists here
 	// too; the branch's task is the toolchain run, and a machine without
@@ -1366,6 +1371,18 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 	}
 	if u.SecurityFix && u.Type == model.UpdateLockFileMaintenance {
 		cfg = securityLockOverlay(cfg)
+	} else if u.SecurityFix && len(u.TransitiveFixes) > 0 {
+		// A bump that moves a transitive package off an advisory keeps
+		// its branch and takes when and how a security fix runs; a major
+		// is opened, never merged on its own, as below.
+		cfg = transitiveSecurityOverlay(cfg)
+		if u.Type == model.UpdateMajor {
+			if armed, _ := cfg["automerge"].(bool); armed {
+				cfg["automerge"] = false
+				u.Evidence = append(u.Evidence, model.Evidence{Kind: "automerge", From: "vulnerabilityAlerts.automerge", To: "off",
+					Note: "not armed: a major security fix is opened for review, never merged automatically"})
+			}
+		}
 	} else if u.SecurityFix {
 		// Measured: a security fix travels under the vulnerabilityAlerts
 		// object - its own branch topic, the security label, no release
@@ -1396,7 +1413,7 @@ func applyUpdateRules(engine *rules.Engine, base map[string]any, u model.Update,
 	if res.SkipReason != "" {
 		policy.Enabled = false
 	}
-	if u.SecurityFix {
+	if u.SecurityFix && len(u.TransitiveFixes) == 0 {
 		if enabled, ok := cfg["enabled"].(bool); ok {
 			policy.Enabled = enabled
 		}
@@ -1951,6 +1968,10 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 	// than the project's release age.
 	lifts := map[lockKey][]model.Lift{}
 	security := map[lockKey]bool{}
+	// The transitive packages a bump is a security fix for: not lifted by
+	// a task of their own - the bump's refresh moves them or nothing does -
+	// but read back after it, like a maintenance refresh's lifts.
+	moved := map[lockKey][]model.Advisory{}
 	var order []lockKey
 	for _, u := range mine {
 		dir := filepath.Dir(u.Dep.File)
@@ -1971,6 +1992,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		if u.SecurityFix {
 			security[k] = true
 		}
+		moved[k] = append(moved[k], u.TransitiveFixes...)
 		if locks[u.Dep.Manager+"|"+filepath.Dir(u.Dep.File)] == "" {
 			// No lock pinup reads: a manifest-only edit is the whole
 			// change - unless a lock it cannot refresh governs this
@@ -1998,6 +2020,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		whole       bool
 		security    bool
 		lifts       []model.Lift
+		moved       []model.Advisory
 	}
 	byLock := map[lockKey]*refresh{}
 	var lockOrder []lockKey
@@ -2026,6 +2049,7 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 		r.whole = r.whole || whole
 		r.security = r.security || security[k]
 		r.lifts = append(r.lifts, lifts[k]...)
+		r.moved = append(r.moved, moved[k]...)
 	}
 	for _, at := range lockOrder {
 		r := byLock[at]
@@ -2044,6 +2068,9 @@ func tasksFor(b model.Branch, updates []model.Update, postUpgrade map[string]plu
 				Note: fmt.Sprintf("no lock refresh for %s (%s)", at.manager, filepath.Join(at.dir, r.lockFile))}
 		}
 		if ok {
+			if !r.maintenance {
+				t.Lifts = liftsOf(r.moved)
+			}
 			tasks = append(tasks, t)
 		}
 		// The security half of a maintenance refresh: the advised packages
