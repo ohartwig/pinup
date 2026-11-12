@@ -25,6 +25,7 @@ package plugin
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -149,11 +150,32 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance, 
 		// scoped to this command: the merge request's own `npm ci` still runs
 		// under the repository's .npmrc and keeps refusing a third-party
 		// tarball that a refresh might have let in.
+		//
+		// A bump does not name its packages on the command line. It prunes
+		// their lock entries (Task.PruneLock) and runs a bare install, which
+		// resolves the pruned packages from the manifest the branch edited
+		// and leaves every other resolution as it is. Two defects of the
+		// named form, both measured with npm 11.17.0:
+		//
+		//   - `npm install <name>` saves `<name>@^<latest>` into package.json.
+		//     The manifest is already changed when the task runs, so the
+		//     scope check passed the rewrite through: exact pins became
+		//     ranges (collab-rte, 2026-09-18: "@types/node": "24.13.4" to
+		//     "^24.13.5"), and a bare name may even resolve past the range
+		//     the manifest asks for.
+		//   - With the old family still locked, arborist cannot move a set
+		//     of packages that pin each other exactly: typescript-eslint
+		//     8.70.0 -> 8.72.1 together with @typescript-eslint/eslint-plugin
+		//     and parser failed with ERESOLVE in every form (named, versioned,
+		//     update, bare) until the bumped entries left the lock
+		//     (development/moselwal/collab-rte, pinup/npm, 2026-11-12; the
+		//     group also carried the vitest 4.1.12 security fix).
 		argv = []string{"npm", "install", "--package-lock-only", "--no-audit", "--ignore-scripts", "--allow-remote=all"}
+		var prune []string
 		if maintenance {
 			argv = []string{"npm", "update", "--package-lock-only", "--no-audit", "--ignore-scripts", "--allow-remote=all"}
 		} else {
-			argv = append(argv, names...)
+			prune = names
 			if liftAge && LiftsReleaseAge(manager, lockFile) {
 				argv = append(argv, noReleaseAge)
 			}
@@ -162,6 +184,7 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance, 
 			Kind: model.TaskLockRefresh, Manager: manager, Dir: dir, Command: argv,
 			ExecutionMode: model.ExecBranch, FileFilters: []string{"package-lock.json", "npm-shrinkwrap.json"},
 			AllowedBy: -1, Origin: model.Origin{Source: "pinup", Rule: model.NoRule},
+			PruneLock: prune,
 		}, true
 	case "gomod":
 		// go.sum has no per-package refresh: tidy recomputes it from the
@@ -175,6 +198,68 @@ func LockRefresh(manager, dir, lockFile string, depNames []string, maintenance, 
 		}, true
 	}
 	return model.Task{}, false
+}
+
+// PruneNpmLock removes every entry of the named packages - hoisted or
+// nested, in any workspace - from the npm locks in dir, so that the next
+// install resolves them from the manifest. The lockfileVersion 2 mirror
+// ("dependencies") loses the top-level entry too; npm rewrites the whole
+// file on install, so its formatting is npm's again afterwards. A dir
+// without a lock is left alone.
+func PruneNpmLock(dir string, names []string) error {
+	for _, base := range []string{"package-lock.json", "npm-shrinkwrap.json"} {
+		path := filepath.Join(dir, base)
+		raw, err := os.ReadFile(path)
+		if errors.Is(err, os.ErrNotExist) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+		var lock map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &lock); err != nil {
+			return fmt.Errorf("%s: %w", base, err)
+		}
+		changed := false
+		for _, section := range []string{"packages", "dependencies"} {
+			var entries map[string]json.RawMessage
+			if lock[section] == nil {
+				continue
+			}
+			if err := json.Unmarshal(lock[section], &entries); err != nil {
+				return fmt.Errorf("%s: %s: %w", base, section, err)
+			}
+			for key := range entries {
+				for _, n := range names {
+					if key == "node_modules/"+n || strings.HasSuffix(key, "/node_modules/"+n) ||
+						(section == "dependencies" && key == n) {
+						delete(entries, key)
+						changed = true
+					}
+				}
+			}
+			b, err := json.Marshal(entries)
+			if err != nil {
+				return err
+			}
+			lock[section] = b
+		}
+		if !changed {
+			continue
+		}
+		out, err := json.MarshalIndent(lock, "", "  ")
+		if err != nil {
+			return err
+		}
+		info, err := os.Stat(path)
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, append(out, '\n'), info.Mode()); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // noReleaseAge sets npm's min-release-age aside for one command. npm reads
@@ -624,6 +709,12 @@ func (r *Runner) Run(ctx context.Context, root string, t model.Task) (Result, er
 	if r.Netrc != "" {
 		if err := os.WriteFile(filepath.Join(home, ".netrc"), []byte(strings.TrimSpace(r.Netrc)+"\n"), 0o600); err != nil {
 			return Result{}, fmt.Errorf("plugin: netrc: %w", err)
+		}
+	}
+
+	if len(t.PruneLock) > 0 {
+		if err := PruneNpmLock(filepath.Join(root, t.Dir), t.PruneLock); err != nil {
+			return Result{}, fmt.Errorf("plugin: %s: %w", strings.Join(t.Command, " "), err)
 		}
 	}
 

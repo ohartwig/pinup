@@ -5,7 +5,9 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"maps"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -156,7 +158,11 @@ func TestLockRefreshCommands(t *testing.T) {
 		t.Errorf("maintenance: %v", m.Command)
 	}
 	n, ok := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, false, false)
-	if !ok || strings.Join(n.Command, " ") != "npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all lodash" {
+	// A bump names no package on the command line (npm would save a
+	// caret range for it into package.json); it prunes the package from
+	// the lock instead, and the bare install resolves it from the manifest.
+	if !ok || strings.Join(n.Command, " ") != "npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all" ||
+		!slices.Equal(n.PruneLock, []string{"lodash"}) {
 		t.Errorf("npm: %+v", n)
 	}
 	// Maintenance must move resolutions, not re-validate them: install
@@ -164,6 +170,9 @@ func TestLockRefreshCommands(t *testing.T) {
 	nm, _ := LockRefresh("npm", "", "package-lock.json", []string{"lodash"}, true, false)
 	if got := strings.Join(nm.Command, " "); got != "npm update --package-lock-only --no-audit --ignore-scripts --allow-remote=all" {
 		t.Errorf("npm maintenance: %q", got)
+	}
+	if len(nm.PruneLock) != 0 {
+		t.Errorf("npm maintenance prunes %v; it moves everything within its range and must keep the lock whole", nm.PruneLock)
 	}
 	if _, ok := LockRefresh("dockerfile", "", "", nil, false, false); ok {
 		t.Error("dockerfile has no lock to refresh")
@@ -646,5 +655,60 @@ func TestCompileCarriesDropWhenUnchanged(t *testing.T) {
 				t.Errorf("%s: task %v dropWhenUnchanged = %v, want %v", c.mode, task.Command, task.DropWhenUnchanged, c.drop)
 			}
 		}
+	}
+}
+
+// The collab-rte case (2026-11-12): typescript-eslint 8.70.0 pins
+// @typescript-eslint/eslint-plugin and parser 8.70.0 exactly; with that
+// family still locked npm could not move it to 8.72.1 in any form. Every
+// entry of a pruned package goes - hoisted, nested, in a workspace, and in
+// the v2 "dependencies" mirror - and nothing else does.
+func TestPruneNpmLock(t *testing.T) {
+	dir := t.TempDir()
+	lock := `{
+  "name": "x",
+  "lockfileVersion": 2,
+  "packages": {
+    "": {"name": "x", "devDependencies": {"typescript-eslint": "8.72.1"}},
+    "node_modules/typescript-eslint": {"version": "8.70.0"},
+    "node_modules/@typescript-eslint/parser": {"version": "8.70.0"},
+    "node_modules/@typescript-eslint/utils": {"version": "8.70.0"},
+    "node_modules/eslint/node_modules/@typescript-eslint/parser": {"version": "8.69.0"},
+    "packages/a/node_modules/typescript-eslint": {"version": "8.70.0"},
+    "node_modules/typescript-eslint-extra": {"version": "1.0.0"}
+  },
+  "dependencies": {
+    "typescript-eslint": {"version": "8.70.0"},
+    "@typescript-eslint/utils": {"version": "8.70.0"}
+  }
+}
+`
+	path := filepath.Join(dir, "package-lock.json")
+	if err := os.WriteFile(path, []byte(lock), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := PruneNpmLock(dir, []string{"typescript-eslint", "@typescript-eslint/parser"}); err != nil {
+		t.Fatal(err)
+	}
+	raw, _ := os.ReadFile(path)
+	var got struct {
+		LockfileVersion int                        `json:"lockfileVersion"`
+		Packages        map[string]json.RawMessage `json:"packages"`
+		Dependencies    map[string]json.RawMessage `json:"dependencies"`
+	}
+	if err := json.Unmarshal(raw, &got); err != nil {
+		t.Fatal(err)
+	}
+	keys := slices.Sorted(maps.Keys(got.Packages))
+	want := []string{"", "node_modules/@typescript-eslint/utils", "node_modules/typescript-eslint-extra"}
+	if !slices.Equal(keys, want) || got.LockfileVersion != 2 {
+		t.Errorf("packages %v, want %v", keys, want)
+	}
+	if deps := slices.Sorted(maps.Keys(got.Dependencies)); !slices.Equal(deps, []string{"@typescript-eslint/utils"}) {
+		t.Errorf("dependencies %v", deps)
+	}
+	// No lock, nothing to do.
+	if err := PruneNpmLock(t.TempDir(), []string{"x"}); err != nil {
+		t.Errorf("no lock: %v", err)
 	}
 }

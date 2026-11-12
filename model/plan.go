@@ -82,6 +82,11 @@ type Task struct {
 	// how fast-uri 3.1.8 stayed in ten repositories for four days
 	// (2026-10-20..24) while every refresh merged.
 	Lifts []Lift `json:"lifts,omitempty"`
+	// PruneLock names the packages whose entries the runner removes from
+	// the npm lock (package-lock.json, npm-shrinkwrap.json) in Dir before
+	// the command runs, so that npm resolves them afresh from the manifest
+	// the branch edited. See plugin.LockRefresh for why.
+	PruneLock []string `json:"pruneLock,omitempty"`
 }
 
 // Lift is one locked package a security lock refresh must move: the name,
