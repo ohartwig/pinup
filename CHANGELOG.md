@@ -1,3 +1,9 @@
+## [0.69.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.4...v0.69.5) (2026-11-12)
+
+### :bug: Fixes
+
+* **npm:** prune bumped packages from the lock instead of naming them ([d76808f](https://git.ole-hartwig.eu/pinup/pinup/commit/d76808f9426ec0d4774817643a97b4db31d2f7e4))
+
 ## [0.69.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.3...v0.69.4) (2026-11-12)
 
 ### :bug: Fixes
