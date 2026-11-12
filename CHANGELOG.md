@@ -1,3 +1,9 @@
+## [0.69.8](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.7...v0.69.8) (2026-11-12)
+
+### :bug: Fixes
+
+* **planner:** open a branch with a security fix outside a sibling's window ([ea9c35f](https://git.ole-hartwig.eu/pinup/pinup/commit/ea9c35f0db58f89cfe21c08ca62e80c3cfaad42b))
+
 ## [0.69.7](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.6...v0.69.7) (2026-11-12)
 
 ### :bug: Fixes
