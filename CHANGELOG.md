@@ -1,3 +1,9 @@
+## [0.70.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.9...v0.70.0) (2026-11-12)
+
+### :sparkles: Features
+
+* **planner:** treat a bump that moves an advised transitive package as a security fix ([ec237d5](https://git.ole-hartwig.eu/pinup/pinup/commit/ec237d585f1fa85cfb2835648ce118440bf7a31e))
+
 ## [0.69.9](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.8...v0.69.9) (2026-11-12)
 
 ### :bug: Fixes
