@@ -397,6 +397,13 @@ var mutators = []mutator{
 		"\tif budget.Bytes <= 0 || len(full) <= budget.Bytes {", "\tif true {", []string{"./report/", "./cmd/pinup/"}, false, ""},
 	{115, "delivery", "a refused dashboard leaves the exit status alone", "cmd/pinup/runcmd.go",
 		"\to.dashboardFailed.Add(1)\n", "", []string{"./cmd/pinup/"}, false, ""},
+	// A repository file that does not extend the runner is layered over it
+	// (2026-11-12): consent's two-line .pinup.yaml and every site package's
+	// typo3-extension opt-in had run without the runner's 91 rules.
+	{116, "config", "a repository file that does not extend the runner replaces it", "cmd/pinup/whatif.go",
+		"if repoCfg != \"\" && !reachesRunner(r.Visited, runnerProject) {", "if false && !reachesRunner(r.Visited, runnerProject) {", []string{"./cmd/pinup/"}, false, ""},
+	{117, "config", "a lane file answers its own alias in whatif", "cmd/pinup/runcmd.go",
+		"; fileExists(def) {\n\t\t\t\trunnerDefault = def", "; false && fileExists(def) {\n\t\t\t\trunnerDefault = def", []string{"./cmd/pinup/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

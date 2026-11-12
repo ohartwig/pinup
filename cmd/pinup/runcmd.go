@@ -124,41 +124,13 @@ func cmdRun(args []string, out, errw io.Writer) error {
 
 	platform := wire.Platform(env.Kind, env.URL, env.Token, env.Header)
 
-	// --config may name the runner's file on the platform rather than a
-	// path: "local>devops/renovate-runner". The job that runs pinup against
-	// its own repository has no checkout of the runner project, and a copy
-	// of the file would be a second truth.
-	runnerDefault := ""
 	runnerProj := runnerProject(os.Getenv, *cfgPath)
-	if strings.HasPrefix(*cfgPath, "local>") {
-		local, err := fetchConfig(ctx, platform, *cfgPath)
-		if err != nil {
-			return err
-		}
-		defer os.Remove(local)
-		// The alias the repositories extend is the project's default.json,
-		// whichever file of that project this run is configured with:
-		// release-fast.json extends it too.
-		project, path, _, _ := preset.ParseLocal(strings.TrimPrefix(*cfgPath, "local>"))
-		if !isDefaultName(path) {
-			def, err := fetchConfig(ctx, platform, "local>"+project+":"+defaultName)
-			if err != nil {
-				return err
-			}
-			defer os.Remove(def)
-			runnerDefault = def
-		}
-		*cfgPath = local
-	} else if !isDefaultName(*cfgPath) {
-		// The default beside the file, under whichever extension the
-		// runner keeps it in.
-		for _, ext := range []string{".json", ".yaml", ".yml", ".jsonc", ".json5"} {
-			if def := filepath.Join(filepath.Dir(*cfgPath), "default"+ext); fileExists(def) {
-				runnerDefault = def
-				break
-			}
-		}
+	local, runnerDefault, cleanup, err := runnerConfig(ctx, platform, *cfgPath)
+	if err != nil {
+		return err
 	}
+	defer cleanup()
+	*cfgPath = local
 
 	var store lookup.Cache
 	if *cachePath != "" {
@@ -1041,11 +1013,73 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
+// configReader reads a file from a project on the platform: what a
+// local> configuration is fetched through.
+type configReader interface {
+	ReadFile(ctx context.Context, project, path, ref string) ([]byte, error)
+}
+
+// runnerConfig turns --config into the file a run resolves and the
+// runner's default.json the repositories extend as local><project>.
+//
+// --config may name the runner's file on the platform rather than a path:
+// "local>pinup/runner:release-fast". The job that runs pinup against its own
+// repository has no checkout of the runner project, and a copy of the file
+// would be a second truth. The alias the repositories extend is the
+// project's default.json, whichever file of that project the run is
+// configured with: release-fast.json extends it too. A local path that is
+// not the default finds it beside itself, under whichever extension the
+// runner keeps it in.
+//
+// runnerDefault is empty when --config is the default itself. Without it,
+// a file that extends the runner - release-fast.json does - answers its
+// own extends and resolves as a cycle; `whatif --config release-fast.json`
+// did, until run and whatif shared this function.
+//
+// platform may be nil when cfgPath is a local path. cleanup removes what
+// was fetched.
+func runnerConfig(ctx context.Context, platform configReader, cfgPath string) (path, runnerDefault string, cleanup func(), err error) {
+	var temp []string
+	cleanup = func() {
+		for _, f := range temp {
+			os.Remove(f)
+		}
+	}
+	if strings.HasPrefix(cfgPath, "local>") {
+		if platform == nil {
+			return "", "", cleanup, fmt.Errorf("--config %s needs the instance: set PINUP_GITLAB_URL or CI_SERVER_URL", cfgPath)
+		}
+		local, err := fetchConfig(ctx, platform, cfgPath)
+		if err != nil {
+			return "", "", cleanup, err
+		}
+		temp = append(temp, local)
+		project, file, _, _ := preset.ParseLocal(strings.TrimPrefix(cfgPath, "local>"))
+		if !isDefaultName(file) {
+			def, err := fetchConfig(ctx, platform, "local>"+project+":"+defaultName)
+			if err != nil {
+				cleanup()
+				return "", "", func() {}, err
+			}
+			temp = append(temp, def)
+			runnerDefault = def
+		}
+		return local, runnerDefault, cleanup, nil
+	}
+	if !isDefaultName(cfgPath) {
+		for _, ext := range []string{".json", ".yaml", ".yml", ".jsonc", ".json5"} {
+			if def := filepath.Join(filepath.Dir(cfgPath), "default"+ext); fileExists(def) {
+				runnerDefault = def
+				break
+			}
+		}
+	}
+	return cfgPath, runnerDefault, cleanup, nil
+}
+
 // fetchConfig fetches a local> configuration through the platform into a
 // temporary file, named so provenance still reads as the preset it is.
-func fetchConfig(ctx context.Context, platform interface {
-	ReadFile(ctx context.Context, project, path, ref string) ([]byte, error)
-}, name string) (string, error) {
+func fetchConfig(ctx context.Context, platform configReader, name string) (string, error) {
 	project, path, ref, err := preset.ParseLocal(strings.TrimPrefix(name, "local>"))
 	if err != nil {
 		return "", err

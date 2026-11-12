@@ -36,6 +36,25 @@ Three layers, resolved in this order:
    written from observed behaviour, not from Renovate's tree. `local>`
    presets of other projects are fetched from the platform.
 
+The repository's file goes over the run's configuration, never instead
+of it: the run's file first, the repository's own presets next, its own
+keys and rules last, where they decide. A file that extends the runner
+already starts with it, and is resolved as written, so the runner's
+rules are counted once. A file that does not - a `.pinup.yaml` holding
+one dependency back, or one that extends only a narrower preset of the
+runner's such as `local>group/runner:typo3-extension` - gets the run's
+configuration put under it as its first `extends`, and `print-config
+--explain` names that layer `preset:runner>global`. Before 0.69.7 such a
+file replaced the run's configuration outright.
+
+The alias a repository extends is always the runner project's
+`default.json`, also when the run is started with another of its files
+(`release-fast.json`, a partition's file). A repository that extends the
+alias therefore runs under the default, not under that file; one without
+a file of its own, or with one that does not extend the alias, runs under
+the run's file. `whatif` and `run` find that default the same way: from
+the platform for a `local>` name, beside the file for a path.
+
 `PINUP_RUNNER_PROJECT` names the runner project when `--config` is a
 plain file and the repositories extend it by name.
 

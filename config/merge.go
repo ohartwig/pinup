@@ -33,6 +33,9 @@ type Resolved struct {
 	Prov map[string][]model.Origin
 	// Migrations lists what Migrate rewrote on the way, one note each.
 	Migrations []string
+	// Visited lists every preset the layer's extends reached, in the order
+	// it was merged (preset.Result.Visited). Empty for Merge.
+	Visited []string
 }
 
 // Merge applies layers in order, parent first. Later layers override earlier
