@@ -31,7 +31,7 @@ func TestASecurityFixTakesAVersionYoungerThanTheProjectsAge(t *testing.T) {
 		refresh              string // the lock refresh expected, "" when held
 	}{
 		{"package-lock.json", "package-lock.json", `{"lockfileVersion":3,"packages":{"":{"name":"site"},"node_modules/eslint":{"version":"10.10.0"}}}`,
-			"npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all eslint --min-release-age=0"},
+			"npm install --package-lock-only --no-audit --ignore-scripts --allow-remote=all --min-release-age=0"},
 		{"pnpm-lock.yaml", "pnpm-lock.yaml", "lockfileVersion: '9.0'\n\nimporters:\n\n  .:\n    devDependencies:\n      eslint:\n        specifier: 10.10.0\n        version: 10.10.0\n",
 			"pnpm install --lockfile-only --ignore-scripts --pm-on-fail=warn --config.minimum-release-age=0"},
 		{"yarn.lock", "yarn.lock", "# yarn lockfile v1\n\n\neslint@10.10.0:\n  version \"10.10.0\"\n", ""},

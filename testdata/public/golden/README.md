@@ -23,7 +23,7 @@ commit that explains why.
 | `tfversion.v3` | `terraform-version` and `kustomize` (helm, git-tags declined and failing, docker, github) |
 | `gomod.v4` | `gomod` under the runner's own configuration: `go-mod-directive`, `go` and `golang-version`; a pseudo-version pin moving as a digest, an `// indirect` requirement reached only by its security fix, `go mod tidy` beside every module that has a `go.sum` and none for the tree that has not |
 | `gitrefs.v3` | `git-refs`: a branch pinned by commit (`expected-commit` under a `# renovate:` line, devops/wolfi-packages' shape) refreshed to the branch head, on the branch Renovate uses; and a `node:24-alpine` job image under the `node` versioning, where the tag is no version and the digest gets pinned - as Renovate pins it (measured on hub node:24-alpine), unlike a range no release satisfies |
-| `lock.v4` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
+| `lock.v5` | composer and npm with lock files: the lock-refresh tasks and a maintenance branch |
 | `pyver.v3` | `pypi` under `pep440`: three Python tools pinned in CI variables (the runner's annotation managers for `.gitlab-ci.yml` and component templates), and `engines.node` through `node-version`, a range the current line already satisfies |
 | `osv.v2` | the vulnerability fast path: lodash 4.17.20, guzzle 7.4.4, symfony/http-kernel 6.0.0 against OSV |
 | `packagist.v2` | Packagist's security advisories beside OSV: typo3/cms-backend 14.3.6 against TYPO3-CORE-SA-2026-022 (CVE-2026-77132), which OSV did not carry when it was recorded on 2026-10-05 - the fix opens from Packagist alone |
@@ -80,3 +80,15 @@ those of the previous version; each `plan.json` differs only by the added
 `git diff -M` against the previous version shows exactly that. `osv.v2` and
 `packagist.v2` are unchanged: none of their automerging branches has a
 window.
+
+## lock.v5 (2026-11-12)
+
+An npm bump no longer names its packages on the install command line: it
+prunes their entries from the lock (`pruneLock`, a task field) and runs a
+bare `npm install --package-lock-only`. Named, npm saved a caret range into
+package.json past an exact pin, and with a family that pins itself exactly
+(typescript-eslint) still locked it could not move the family at all
+(ERESOLVE). The repository, the answers, `golden.json` are those of
+`lock.v4`; `plan.json` differs only in the npm refresh - `minimist` moved
+from `command` to `pruneLock` - and `plan.md` only in that command, and
+`git diff -M` against `lock.v4` shows exactly that.

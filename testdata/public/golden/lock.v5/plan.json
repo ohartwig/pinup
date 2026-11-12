@@ -571,8 +571,7 @@
             "--package-lock-only",
             "--no-audit",
             "--ignore-scripts",
-            "--allow-remote=all",
-            "minimist"
+            "--allow-remote=all"
           ],
           "executionMode": "branch",
           "fileFilters": [
@@ -584,7 +583,10 @@
             "source": "pinup",
             "rule": -1,
             "order": 0
-          }
+          },
+          "pruneLock": [
+            "minimist"
+          ]
         }
       ],
       "automerge": false,
