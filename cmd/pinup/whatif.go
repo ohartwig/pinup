@@ -73,17 +73,16 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		return err
 	}
 	project := runnerProject(os.Getenv, *cfgPath)
-	if strings.HasPrefix(*cfgPath, "local>") {
-		if env.Host == "" {
-			return fmt.Errorf("whatif: --config %s needs the instance: set PINUP_GITLAB_URL or CI_SERVER_URL", *cfgPath)
-		}
-		local, err := fetchConfig(context.Background(), wire.Platform(env.Kind, env.URL, env.Token, env.Header), *cfgPath)
-		if err != nil {
-			return err
-		}
-		defer os.Remove(local)
-		*cfgPath = local
+	var reader configReader
+	if env.Host != "" {
+		reader = wire.Platform(env.Kind, env.URL, env.Token, env.Header)
 	}
+	local, runnerDefault, cleanup, err := runnerConfig(context.Background(), reader, *cfgPath)
+	if err != nil {
+		return fmt.Errorf("whatif: %w", err)
+	}
+	defer cleanup()
+	*cfgPath = local
 	client := httpClient(env)
 	dsOpts, err := datasourceOptions(env, os.Getenv)
 	if err != nil {
@@ -93,6 +92,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 		Root: *repo, Coverage: *coverage, ConfigPath: *cfgPath, RepoName: *name, Now: now,
 		Datasources:   wire.Datasources(client, dsOpts),
 		CacheTTL:      *cacheTTL,
+		RunnerDefault: runnerDefault,
 		RunnerProject: project,
 	}
 	opts.CustomDatasources = customDatasourcesHook(client, dsOpts)
@@ -325,12 +325,31 @@ func runnerProject(getenv func(string) string, cfgPath string) string {
 
 // resolveConfig resolves the configuration a repository runs under.
 //
-// The runner's file is the global configuration. A repository that carries
-// its own renovate.json (or .pinup.*) is resolved from that file, with the
-// runner's file answering the local> alias its extends name - the way
-// Renovate composes them in production, where the repository's own keys
-// and rules come last and decide (testdata/renovate/.../presets/README.md).
-// A repository without one runs under the runner's file alone.
+// The runner's file is the global configuration, and the repository's own
+// renovate.json (or .pinup.*) is layered over it: global first, the
+// repository's keys and rules last, where they decide - the way Renovate
+// composes them in production (testdata/upstream/.../presets/README.md).
+// A repository without a file runs under the runner's file alone.
+//
+// Every estate repository that carries a file extends the runner by its
+// alias, so the global layer is already the first thing its chain merges,
+// and resolving the file alone gives the same document Renovate did - the
+// runner's file twice, the later copy deciding - with the rules numbered
+// once. Such a repository is resolved from its file, with the runner's
+// default.json answering the alias. That is also why a run configured with
+// another file of the runner's (release-fast.json, images.json) does not
+// reach it: the alias is default.json, and images.json relies on exactly
+// that (its description).
+//
+// A file that does not extend the runner at all is the case that differs.
+// Renovate still had the global configuration under it; pinup resolved the
+// file alone, and a two-line .pinup.yaml holding back doctrine/dbal took
+// the runner's 91 rules, 37 custom managers, branch prefix, release age and
+// advisory checks off ai-ready-platform/platform/consent from 2026-09-26.
+// Such a file is now resolved over the run's configuration as its first
+// extends (runnerBasePreset), so the repository adds to the runner instead
+// of replacing it.
+//
 // resolveConfig returns the repository's resolved document and, separately,
 // the RUNNER's own allowedCommands. The two must not be confused: `layer`
 // below is the repository's file whenever it has one, so a value read back
@@ -370,6 +389,12 @@ func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote pr
 	if err != nil {
 		return config.Decoded{}, nil, nil, nil, err
 	}
+	if repoCfg != "" && !reachesRunner(r.Visited, runnerProject) {
+		r, warnings, err = config.ResolveLayer(overRunner(layer), append(preset.Chain{preset.Aliases{runnerBasePreset: global.Raw}}, sources...))
+		if err != nil {
+			return config.Decoded{}, nil, nil, nil, err
+		}
+	}
 	if repoCfg == "" {
 		// A repository without a configuration file runs under the
 		// onboarding default on top of the runner's file, and the one
@@ -389,6 +414,41 @@ func resolveConfig(root, cfgPath, runnerDefault, runnerProject string, remote pr
 	}
 	d, err := config.Decode(r.Raw)
 	return d, r, warnings, runnerAllowed, err
+}
+
+// runnerBasePreset is the name the run's configuration is merged under
+// when a repository's file does not extend the runner (resolveConfig). It
+// appears in provenance as preset:runner>global.
+const runnerBasePreset = "runner>global"
+
+// reachesRunner is whether a resolution merged the runner's file: one of
+// the names the alias answers, under the configured project or the old one.
+// A repository's own local>pinup/runner:typo3-extension counts because that
+// file extends the alias in turn.
+func reachesRunner(visited []string, runnerProject string) bool {
+	names := runnerAliases(runnerProject)
+	for _, v := range visited {
+		if slices.Contains(names, v) {
+			return true
+		}
+	}
+	return false
+}
+
+// overRunner is the repository's layer with the run's configuration as its
+// first extends: global first, then the repository's own presets, then its
+// own keys and rules.
+func overRunner(l config.Layer) config.Layer {
+	raw := maps.Clone(l.Raw)
+	ext := []any{runnerBasePreset}
+	switch x := l.Raw["extends"].(type) {
+	case string:
+		ext = append(ext, x)
+	case []any:
+		ext = append(ext, x...)
+	}
+	raw["extends"] = ext
+	return config.Layer{Source: l.Source, Raw: raw}
 }
 
 // whatif runs everything up to the plan. It writes nothing to the repository,

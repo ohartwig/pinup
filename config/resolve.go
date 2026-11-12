@@ -38,7 +38,7 @@ func ResolveLayer(l Layer, src preset.Source) (*Resolved, []string, error) {
 	}
 	migrated, notes := Migrate(res.Config)
 	res.Config = migrated
-	r := &Resolved{Raw: map[string]any{}, Prov: map[string][]model.Origin{}, Migrations: notes}
+	r := &Resolved{Raw: map[string]any{}, Prov: map[string][]model.Origin{}, Migrations: notes, Visited: res.Visited}
 	order := 0
 	// The defaults first, so every key the configuration does not set is
 	// still there and says where it came from. Written directly rather
