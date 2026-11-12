@@ -1,3 +1,9 @@
+## [0.69.9](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.8...v0.69.9) (2026-11-12)
+
+### :bug: Fixes
+
+* **config:** merge mergeable options across presets as Renovate does ([0a7e914](https://git.ole-hartwig.eu/pinup/pinup/commit/0a7e9149bba4afbd3ec0865ec926db518ba93388))
+
 ## [0.69.8](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.7...v0.69.8) (2026-11-12)
 
 ### :bug: Fixes
