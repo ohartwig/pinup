@@ -28,9 +28,9 @@ type Platform struct {
 	// means always.
 	CreateErr, UpdateErr error
 	// IssueErr, when set, is what UpsertIssue answers.
-	IssueErr error
-	CreateErrTimes       int
-	createErrs           int
+	IssueErr       error
+	CreateErrTimes int
+	createErrs     int
 	// Verification is what CommitVerification answers.
 	Verification string
 	// Files answers ReadFile, keyed "project|path|ref".
