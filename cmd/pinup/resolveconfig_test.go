@@ -205,3 +205,41 @@ func TestRunnerConfigFindsTheDefaultBesideALaneFile(t *testing.T) {
 		t.Errorf("rules = %q", got)
 	}
 }
+
+// A repository that sets one key of vulnerabilityAlerts keeps every other
+// key the runner set there (2026-11-12). The later object used to replace
+// the runner's whole: devops/images/golang, wanting only its own groupName,
+// had to repeat the runner's labels, schedule and automerge to keep them.
+func TestRepositoryVulnerabilityAlertsMergeOverTheRunners(t *testing.T) {
+	dir := t.TempDir()
+	def := filepath.Join(dir, "default.json")
+	writeTestFile(t, def, `{
+  "branchPrefix": "pinup/",
+  "vulnerabilityAlerts": {"labels": ["security"], "schedule": ["at any time"], "automerge": true}
+}`)
+	for _, c := range []struct{ name, body string }{
+		{"extends the runner", `{"extends": ["local>pinup/runner"], "vulnerabilityAlerts": {"groupName": "snapshots", "groupSlug": "snapshots"}}`},
+		{"layered over the runner", `{"vulnerabilityAlerts": {"groupName": "snapshots", "groupSlug": "snapshots"}}`},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			r := resolveForTest(t, "renovate.json", c.body, def, "")
+			va, _ := r.Raw["vulnerabilityAlerts"].(map[string]any)
+			if va["groupName"] != "snapshots" || va["groupSlug"] != "snapshots" {
+				t.Errorf("vulnerabilityAlerts = %v, want the repository's group", va)
+			}
+			if on, _ := va["automerge"].(bool); !on {
+				t.Errorf("vulnerabilityAlerts.automerge = %v, want the runner's true", va["automerge"])
+			}
+			if l, _ := va["labels"].([]any); len(l) != 1 || l[0] != "security" {
+				t.Errorf("vulnerabilityAlerts.labels = %v, want the runner's [security]", va["labels"])
+			}
+			if s, _ := va["schedule"].([]any); len(s) != 1 || s[0] != "at any time" {
+				t.Errorf("vulnerabilityAlerts.schedule = %v, want the runner's", va["schedule"])
+			}
+			// The builtin default under both still says what it says.
+			if _, ok := va["commitMessageSuffix"]; !ok {
+				t.Errorf("vulnerabilityAlerts lost the builtin defaults: %v", va)
+			}
+		})
+	}
+}

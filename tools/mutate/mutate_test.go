@@ -411,6 +411,13 @@ var mutators = []mutator{
 		"		if n.Update.SecurityFix && !n.Update.Blocked() {", "		if n.Update.SecurityFix && n.Update.Type == model.UpdateLockFileMaintenance && !n.Update.Blocked() {", []string{"./planner/"}, false, ""},
 	{119, "security", "a sibling's merge window holds a grouped security fix", "planner/branch.go",
 		"if !m.branch.Automerge || carriesSecurityFix(m.members) {", "if !m.branch.Automerge {", []string{"./planner/"}, false, ""},
+	// Mergeable options combine across layers as Renovate combines them
+	// (2026-11-12): a repository's partial vulnerabilityAlerts dropped the
+	// runner's labels, schedule and automerge; golang!447 repeated them.
+	{120, "config", "merge objects are replaced by a later layer", "config/preset/preset.go",
+		"if subOK && existingOK && mergeKeys[k] {", "if false && subOK && existingOK && mergeKeys[k] {", []string{"./config/preset/", "./cmd/pinup/"}, false, ""},
+	{121, "config", "only packageRules, customManagers and description concatenate", "config/preset/preset.go",
+		"func isConcat(k string) bool { return concatKeys[k] }", "func isConcat(k string) bool {\n\treturn k == \"packageRules\" || k == \"customManagers\" || k == \"description\"\n}", []string{"./config/preset/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

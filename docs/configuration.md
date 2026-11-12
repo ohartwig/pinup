@@ -62,8 +62,36 @@ plain file and the repositories extend it by name.
 
 The semantics are Renovate's, measured against it:
 
-- objects deep-merge, arrays replace, `null` clears a key;
-- `packageRules` concatenate across every layer and apply in array order;
+- a key set again by a later layer - a preset listed later, or the file's
+  own keys over what it extends - combines the way Renovate combines that
+  option (measured over all 224 of its object and array options,
+  `tools/capture/merge.sh`):
+  - the update-type objects (`major`, `minor`, `patch`, `digest`, `pin`,
+    `pinDigest`, `rollback`, `replacement`), `lockFileMaintenance`,
+    `vulnerabilityAlerts`, every manager's object (`gomod`, `dockerfile`,
+    …), `customDatasources`, `registryAliases`, `constraints`,
+    `prBodyDefinitions` and the rest of Renovate's mergeable objects
+    **merge key by key**. A repository that sets
+    `vulnerabilityAlerts: {groupName: …}` keeps the labels, schedule and
+    automerge the runner set there. Inside such an object each key combines
+    by the same rule: `addLabels` appends, `labels` and `schedule` replace,
+    and a nested object that is not itself one of these options replaces;
+  - `packageRules`, `customManagers`, `hostRules`, `ignoreDeps`,
+    `addLabels`, `additionalReviewers`, `postUpdateOptions`, `prBodyNotes`,
+    the `match*` lists and the other mergeable lists **concatenate**;
+  - everything else replaces: `labels`, `schedule`, `ignorePaths`,
+    `enabledManagers`, `registryUrls`, and the objects Renovate does not
+    merge - `postUpgradeTasks` (a task is read whole, from the layer that
+    set it last), `env`, `customEnvVariables`;
+  - pinup's own keys (`artifactManifests`, `prConcurrentLimitIgnoreLabels`)
+    replace, as an option Renovate does not know does there;
+  - `null` clears a key. An empty list or object does **not**: it adds
+    nothing, so the earlier value stands, as in Renovate.
+
+  Until 2026-11-12 only `packageRules`, `customManagers` and `description`
+  combined; every other object a later layer set replaced the earlier one
+  whole;
+- `packageRules` apply in array order;
   for a dependency every matching rule applies, later rules winning per key;
 - rules run twice, as in Renovate: once per dependency before lookup,
   where they can disable it or change its versioning and registries, and

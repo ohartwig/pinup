@@ -15,9 +15,12 @@
 // Resolution order is Renovate's, measured on the pinned container's
 // resolver: a preset's own extends resolve before its body, presets listed
 // later override earlier ones, and the configuration's own keys win over
-// everything it extends. packageRules concatenate, description accumulates,
-// everything else replaces. A rule inside packageRules may itself extend
-// presets; those resolve into the rule.
+// everything it extends. Keys combine as the container combines them
+// (mergeable.go): packageRules, customManagers, ignoreDeps and the other
+// list options concatenate, description accumulates, the update-type,
+// manager and vulnerabilityAlerts objects merge key by key, and everything
+// else replaces. A rule inside packageRules may itself extend presets;
+// those resolve into the rule.
 package preset
 
 import (
@@ -196,13 +199,7 @@ func (r *Result) resolve(config map[string]any, src Source, stack []string, owne
 			continue
 		}
 		own[k] = v
-		if list, ok := v.([]any); ok && isConcat(k) {
-			for i := range list {
-				ownProv[fmt.Sprintf("/%s/%d", k, i)] = []string{owner}
-			}
-		} else {
-			ownProv["/"+k] = []string{owner}
-		}
+		record(ownProv, "", k, v, owner)
 	}
 	out, outProv := merge(acc, accProv, own, ownProv)
 
@@ -254,46 +251,98 @@ func extendsOf(config map[string]any) ([]string, error) {
 	return nil, fmt.Errorf("extends is %T, want a list of strings", raw)
 }
 
-// isConcat names the keys that concatenate instead of replacing.
-// Measured: workarounds:all resolves to its own description only because
-// its children carry theirs inside packageRules, not because a parent's
-// description wins.
-func isConcat(k string) bool {
-	return k == "packageRules" || k == "customManagers" || k == "description"
+// isConcat names the keys that concatenate instead of replacing
+// (mergeable.go).
+func isConcat(k string) bool { return concatKeys[k] }
+
+// record writes the provenance of a value a layer sets itself: one pointer
+// per element of a concat array, one per key of a merge object - recursively,
+// since a merge object's keys combine by the same tables - and one for
+// anything else.
+func record(prov provenance, prefix, k string, v any, owner string) {
+	ptr := prefix + "/" + k
+	if list, ok := v.([]any); ok && isConcat(k) {
+		for i := range list {
+			prov[fmt.Sprintf("%s/%d", ptr, i)] = []string{owner}
+		}
+		return
+	}
+	if obj, ok := v.(map[string]any); ok && mergeKeys[k] {
+		prov[ptr] = []string{owner}
+		for kk, vv := range obj {
+			record(prov, ptr, kk, vv, owner)
+		}
+		return
+	}
+	prov[ptr] = []string{owner}
 }
 
 // merge writes child over parent into a new map, and child's provenance
 // over parent's in the merged frame. Concat keys append and their pointers
-// shift by the parent's length; everything else - arrays and objects
-// included - is replaced by the child's value, and the chain grows.
+// shift by the parent's length; merge objects combine key by key; anything
+// else is replaced by the child's value, and the chain grows.
 func merge(parent map[string]any, parentProv provenance, child map[string]any, childProv provenance) (map[string]any, provenance) {
 	out := make(map[string]any, len(parent)+len(child))
-	prov := make(provenance, len(parentProv)+len(childProv))
 	for k, v := range parent {
 		out[k] = v
 	}
+	prov := make(provenance, len(parentProv)+len(childProv))
 	for p, chain := range parentProv {
 		prov[p] = append([]string(nil), chain...)
 	}
+	mergeInto(out, prov, child, childProv, "")
+	return out, prov
+}
+
+// mergeInto writes child's keys into dst, which the caller owns; a nested
+// object it merges into is copied first, so neither input is modified.
+func mergeInto(dst map[string]any, prov provenance, child map[string]any, childProv provenance, prefix string) {
 	for k, v := range child {
-		if isConcat(k) {
+		ptr := prefix + "/" + k
+		if v != nil && isConcat(k) {
 			base := 0
-			if existing, ok := out[k].([]any); ok {
+			switch existing := dst[k].(type) {
+			case []any:
 				base = len(existing)
+			case string:
+				base = 1
 			}
-			out[k] = concat(out[k], v)
-			n := len(out[k].([]any)) - base
+			dst[k] = concat(dst[k], v)
+			n := len(dst[k].([]any)) - base
 			for i := range n {
-				from := fmt.Sprintf("/%s/%d", k, i)
-				to := fmt.Sprintf("/%s/%d", k, base+i)
+				from := fmt.Sprintf("%s/%d", ptr, i)
+				to := fmt.Sprintf("%s/%d", ptr, base+i)
 				prov[to] = append([]string(nil), childProv[from]...)
 			}
 			continue
 		}
-		out[k] = v
-		prov["/"+k] = append(prov["/"+k], childProv["/"+k]...)
+		sub, subOK := v.(map[string]any)
+		existing, existingOK := dst[k].(map[string]any)
+		if subOK && existingOK && mergeKeys[k] {
+			merged := make(map[string]any, len(existing)+len(sub))
+			for kk, vv := range existing {
+				merged[kk] = vv
+			}
+			mergeInto(merged, prov, sub, childProv, ptr)
+			dst[k] = merged
+			prov[ptr] = append(prov[ptr], childProv[ptr]...)
+			continue
+		}
+		// Replaced: what the earlier value's parts said about themselves
+		// no longer describes anything.
+		for p := range prov {
+			if strings.HasPrefix(p, ptr+"/") {
+				delete(prov, p)
+			}
+		}
+		dst[k] = v
+		prov[ptr] = append(prov[ptr], childProv[ptr]...)
+		for p, chain := range childProv {
+			if strings.HasPrefix(p, ptr+"/") {
+				prov[p] = append([]string(nil), chain...)
+			}
+		}
 	}
-	return out, prov
 }
 
 func (r *Result) warnOnce(w string) {
