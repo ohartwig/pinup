@@ -365,7 +365,7 @@ var mutators = []mutator{
 	// source-map-js 1.2.1): a security lock refresh is not held by a
 	// sibling's window, and the transitive packages reach the watch.
 	{105, "lockwatch", "a sibling's window holds the security lock refresh", "planner/branch.go",
-		"if blk, level := branchLevelBlock(n.Update); level && blk.Reason == model.BlockSchedule && !n.Update.SecurityFix && carriesSecurityLockRefresh(m.members) {", "if blk, level := branchLevelBlock(n.Update); false && level && blk.Reason == model.BlockSchedule && !n.Update.SecurityFix && carriesSecurityLockRefresh(m.members) {", []string{"./cmd/pinup/"}, false, ""},
+		"if blk, level := branchLevelBlock(n.Update); level && blk.Reason == model.BlockSchedule && carriesSecurityFix(m.members) {", "if blk, level := branchLevelBlock(n.Update); false && level && blk.Reason == model.BlockSchedule && carriesSecurityFix(m.members) {", []string{"./cmd/pinup/"}, false, ""},
 	{106, "lockwatch", "the run does not hand lock-only packages to the index", "cmd/pinup/whatif.go",
 		"\t\t\tplan.LockedPackages = append(plan.LockedPackages, l.pkg)", "\t\t\t_ = l", []string{"./cmd/pinup/"}, false, ""},
 	{107, "lockwatch", "the index drops lock-only packages", "report/consumers.go",
@@ -404,6 +404,13 @@ var mutators = []mutator{
 		"if repoCfg != \"\" && !reachesRunner(r.Visited, runnerProject) {", "if false && !reachesRunner(r.Visited, runnerProject) {", []string{"./cmd/pinup/"}, false, ""},
 	{117, "config", "a lane file answers its own alias in whatif", "cmd/pinup/runcmd.go",
 		"; fileExists(def) {\n\t\t\t\trunnerDefault = def", "; false && fileExists(def) {\n\t\t\t\trunnerDefault = def", []string{"./cmd/pinup/"}, false, ""},
+	// A security fix in a group (2026-11-12, devops/images/golang: Go
+	// 1.27.4 on the snapshots branch with the Tumbleweed pin): a sibling's
+	// window neither holds the branch nor its merge.
+	{118, "security", "a sibling's window holds a grouped security fix", "planner/branch.go",
+		"		if n.Update.SecurityFix && !n.Update.Blocked() {", "		if n.Update.SecurityFix && n.Update.Type == model.UpdateLockFileMaintenance && !n.Update.Blocked() {", []string{"./planner/"}, false, ""},
+	{119, "security", "a sibling's merge window holds a grouped security fix", "planner/branch.go",
+		"if !m.branch.Automerge || carriesSecurityFix(m.members) {", "if !m.branch.Automerge {", []string{"./planner/"}, false, ""},
 }
 
 func TestMutatorTableIsWellFormed(t *testing.T) {

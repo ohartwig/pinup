@@ -158,7 +158,7 @@ unsupported means nothing reads it and the run says so.
 | `timezone` | supported |
 | `trustEffective` | supported (pinup's own) |
 | `versioning` | supported |
-| `vulnerabilityAlerts` | supported; a fix for a CVE CISA lists as exploited goes first and waits for no release age or approval - see [Known exploited vulnerabilities](#known-exploited-vulnerabilities) |
+| `vulnerabilityAlerts` | supported; a fix for a CVE CISA lists as exploited goes first and waits for no release age or approval - see [Known exploited vulnerabilities](#known-exploited-vulnerabilities). A branch that carries a security fix is not held by another member's `schedule`: when the fix shares a branch with an update outside its window (a `groupName` both match, or `vulnerabilityAlerts.groupName`), the branch opens with the fix and the other member stays off it until its own window, as a member still inside its `minimumReleaseAge` stays off an actionable group, and then joins the request if it is still open. Nor does such a branch merge inside another member's merge window. A member awaiting `dependencyDashboardApproval` still holds the branch (2026-11-12; before, the Go security fix on `devops/images/golang`'s snapshots group waited for the Tumbleweed pin's four-hourly window) |
 | `commitBody` | supported: rendered per branch with the update's variables (`updateType`, `depName`, …) |
 | `executionTimeout` | partial: the runner's `PINUP_EXECUTION_TIMEOUT` decides, never a repository |
 | `matchCurrentVersion` | partial: matched as a version, not as a range |
@@ -248,7 +248,8 @@ default is `at any time`; pinup falls back to `schedule` while
 with `schedule` keeps its merge there too. An explicit
 `"automergeSchedule": ["at any time"]` opens the merge around the clock for
 a rule whose `schedule` only paces creation. A security fix merges at any
-time.
+time, and so does a branch that carries one, whatever window its other
+members bring.
 
 The window is judged at the moment of merging, by every path that merges,
 and a request outside it is left open with a line saying so, on the run's

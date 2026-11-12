@@ -337,6 +337,55 @@ func TestABranchLevelHoldOnOneMemberHoldsTheGroup(t *testing.T) {
 	}
 }
 
+// A security fix is not held by a sibling's window, nor merged inside one:
+// on devops/images/golang the Go 1.27.4 fix shared the snapshots branch
+// with the Tumbleweed pin, and the pin's external throttle held the fix
+// until the next four-hourly window (2026-11-12). The scheduled sibling
+// stays off the branch, as an aged one does; an approval still holds it.
+func TestASecurityFixIsNotHeldByASiblingsWindow(t *testing.T) {
+	base := resolvedConfig(t)
+	vs := versioning.Registry{"semver": semverForTest{}}
+	group := with(base, map[string]any{"groupName": "snapshots", "groupSlug": "snapshots", "automerge": true})
+	fix, _ := Name(upd("regex", "golang-version", "go", "1.27.3", "1.27.4", "1.27.4", model.UpdatePatch), group, vs)
+	fix.Update.SecurityFix = true
+	koh, _ := Name(upd("regex", "custom.koh-snapshot", "aarch64", "1.0.0", "1.1.0", "1.1.0", model.UpdateMinor), group, vs)
+	koh.MergeSchedule = []string{"* 3-5 * * *"}
+	tw, _ := Name(upd("regex", "custom.tumbleweed-snapshot", "x86_64", "1.0.0", "1.1.0", "1.1.0", model.UpdateMinor), group, vs)
+	tw.Update.Blocks = []model.Block{{Reason: model.BlockSchedule, Until: now.Add(time.Hour)}}
+	tw.Update.SuppressedBy = model.BlockSchedule
+
+	branches, err := Compose([]Named{koh, tw, fix})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(branches) != 1 || branches[0].SuppressedBy != "" || len(branches[0].UpdateKeys) != 2 || slices.Contains(branches[0].UpdateKeys, tw.Update.Key()) {
+		t.Fatalf("the security fix must open now, without the scheduled sibling: %+v", branches)
+	}
+	if len(branches[0].MergeWindow.Raw) != 0 {
+		t.Errorf("a sibling's merge window holds the security fix's merge: %+v", branches[0].MergeWindow)
+	}
+
+	// Without the fix the window holds the group, and the sibling's merge
+	// window is the branch's.
+	branches, _ = Compose([]Named{koh, tw})
+	if len(branches) != 1 || branches[0].SuppressedBy != model.BlockSchedule {
+		t.Errorf("without a security fix the window must hold the group: %+v", branches)
+	}
+	branches, _ = Compose([]Named{koh})
+	if len(branches) != 1 || len(branches[0].MergeWindow.Raw) == 0 {
+		t.Errorf("a merge window without a security fix must stay: %+v", branches)
+	}
+
+	// An approval is a decision, not timing: it holds the branch.
+	ap := tw
+	ap.Update.Blocks = []model.Block{{Reason: model.BlockDashboardApproval}}
+	ap.Update.SuppressedBy = model.BlockDashboardApproval
+	branches, _ = Compose([]Named{fix, ap})
+	if len(branches) != 1 || branches[0].SuppressedBy != model.BlockDashboardApproval {
+		t.Errorf("an approval must still hold the branch: %+v", branches)
+	}
+}
+
 // With separateMajorMinor off, a dependency's major and minor bucket name
 // one branch; the branch carries the major alone, as Renovate offers the
 // newest version alone. Measured 2026-10-31 on devops/images/reuse: both

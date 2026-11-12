@@ -394,11 +394,11 @@ func branchLevelBlock(u model.Update) (model.Block, bool) {
 	return model.Block{}, false
 }
 
-// carriesSecurityLockRefresh reports whether an actionable member of a
-// branch is a lock refresh planned as a security fix.
-func carriesSecurityLockRefresh(members []Named) bool {
+// carriesSecurityFix reports whether an actionable member of a branch is
+// planned as a security fix - a version bump or a lock refresh.
+func carriesSecurityFix(members []Named) bool {
 	for _, n := range members {
-		if n.Update.SecurityFix && n.Update.Type == model.UpdateLockFileMaintenance && !n.Update.Blocked() {
+		if n.Update.SecurityFix && !n.Update.Blocked() {
 			return true
 		}
 	}
@@ -466,14 +466,20 @@ func Compose(named []Named) ([]model.Branch, error) {
 	for _, n := range ordered {
 		m, ok := byName[n.Branch]
 		if ok && n.Update.Blocked() {
-			// A security lock refresh on the branch is not held by a
-			// sibling's window: the lock-file-maintenance branch carries
-			// every lock's refresh, and a composer.lock outside its
-			// window held the package-lock.json refresh that fixed an
-			// advisory with it (ai-ready-platform/platform/commerce,
-			// source-map-js 1.2.1, 2026-10-07). The sibling stays off the
-			// branch until its own window, as a release age would keep it.
-			if blk, level := branchLevelBlock(n.Update); level && blk.Reason == model.BlockSchedule && !n.Update.SecurityFix && carriesSecurityLockRefresh(m.members) {
+			// A security fix on the branch is not held by a sibling's
+			// window: the lock-file-maintenance branch carries every
+			// lock's refresh, and a composer.lock outside its window held
+			// the package-lock.json refresh that fixed an advisory with it
+			// (ai-ready-platform/platform/commerce, source-map-js 1.2.1,
+			// 2026-10-07); a group does the same to a version bump - on
+			// devops/images/golang the Go 1.27.4 security fix shares the
+			// snapshots branch with the Tumbleweed pin, whose external
+			// throttle held the fix until the next of the hours
+			// 0/4/8/12/16/20 (2026-11-12). The sibling stays off the
+			// branch until its own window, as a release age would keep it,
+			// and joins the open request in that window. An approval still
+			// holds the branch: that is a decision, not timing.
+			if blk, level := branchLevelBlock(n.Update); level && blk.Reason == model.BlockSchedule && carriesSecurityFix(m.members) {
 				continue
 			}
 			if m.branch.SuppressedBy == "" {
@@ -587,7 +593,10 @@ func Compose(named []Named) ([]model.Branch, error) {
 			m.branch.Title = first.GroupTitle(shared)
 		}
 		m.branch.Title = ciCommitType(m.branch.Title, m.members)
-		if !m.branch.Automerge {
+		// A security fix merges at any time (MergeSchedule), and so does
+		// the branch that carries one: the window a sibling brings would
+		// hold the fix's merge as its schedule held the fix's creation.
+		if !m.branch.Automerge || carriesSecurityFix(m.members) {
 			m.branch.MergeWindow = model.Window{}
 		}
 		out = append(out, *m.branch)
