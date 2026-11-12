@@ -1,3 +1,19 @@
+## [0.69.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.3...v0.69.4) (2026-11-12)
+
+### :bug: Fixes
+
+* **automerge:** merge only inside the update's schedule window ([cba999a](https://git.ole-hartwig.eu/pinup/pinup/commit/cba999a2a4c999351ab52fb3e445dc7dcd916fcd))
+
+### :memo: Documentation
+
+* **automerge:** keep code spans on one line for markdownlint ([e03efe5](https://git.ole-hartwig.eu/pinup/pinup/commit/e03efe5a0638258f235447b004ff504993b4fcda))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 848e300 ([67a1f64](https://git.ole-hartwig.eu/pinup/pinup/commit/67a1f642e417bddf212019ff1b7deee63fbd7ea9))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 3e30fdf ([8fcbd07](https://git.ole-hartwig.eu/pinup/pinup/commit/8fcbd07032adecb008be980d89ada392c3f2a66e))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 72a8dcc ([2abcf83](https://git.ole-hartwig.eu/pinup/pinup/commit/2abcf83c5dce778cfb6f11d6a5dd0c12b1a9280b))
+
 ## [0.69.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.2...v0.69.3) (2026-11-09)
 
 ### :bug: Fixes
