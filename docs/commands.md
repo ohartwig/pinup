@@ -47,6 +47,16 @@ requests, write the dashboard issue. One of `--repo`, `--project`,
 Every run also reads the dashboard issue's ticked boxes before it plans,
 and writes the consumer index the fast lane and the advisory watch read.
 
+The dashboard stays within what the platform takes in an issue: 900 KiB
+on GitLab (limit 1 MiB), 60000 bytes on GitHub (limit 65536 characters).
+Over that it condenses the detected dependencies - first to the
+components of artifact manifests that have something to say, then to
+counts per file - and points at the plan report for the full list; the
+sections with boxes are never what gives. A dashboard the platform
+refuses all the same is an `error:` line, a `publish` warning in the plan
+report, and exit status **3** once every project is through - the
+runner's jobs allow it, so they show as passed with a warning.
+
 A full run - not `--released`, not `--package` - closes the requests it
 no longer stands behind, titled `- autoclosed`, and deletes their
 branches: those whose branch the plan no longer names, and those whose

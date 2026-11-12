@@ -6,6 +6,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -42,6 +43,9 @@ func main() {
 	}
 	if err := run(os.Args[1:], os.Stdout, os.Stderr); err != nil {
 		fmt.Fprintln(os.Stderr, "pinup:", err)
+		if e, ok := errors.AsType[*exitError](err); ok {
+			os.Exit(e.code)
+		}
 		os.Exit(1)
 	}
 }

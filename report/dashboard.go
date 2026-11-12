@@ -99,16 +99,117 @@ type BranchState struct {
 // Dashboard renders the issue body for a plan and what the run did with it.
 // open are the merge requests under the prefix that are open now.
 func Dashboard(plan *model.Plan, states map[string]BranchState, open []publish.MergeRequest, now time.Time) string {
-	var b strings.Builder
-	b.WriteString("This issue lists pinup updates and detected dependencies. A ticked box is read on the next run and cleared.\n\n")
+	return DashboardWithin(plan, states, open, now, DashboardBudget{}).Body
+}
+
+// DashboardBudget bounds the size of a dashboard: what the platform takes
+// in an issue description, with room to spare. GitLab refuses a
+// description over 1 MiB, GitHub a body over 65536 characters - and a
+// refused write leaves the issue as it was, so the boxes ticked there are
+// never read back: on 2026-10-29 devops/rpm-packages' dashboard grew to
+// 1.11 MiB (5892 components of 40 artifact manifests, 95 % of it) and its
+// approvals, rebases and release-age overrides stopped working for two
+// weeks.
+type DashboardBudget struct {
+	// Bytes is the most the body may carry; zero is no bound.
+	Bytes int
+	// FullList names where the full dependency list is, for the line that
+	// says the dashboard condensed it: the plan report of the run.
+	FullList string
+}
+
+// Detail is how much of the detected dependencies a dashboard spells out.
+// The sections with boxes are never what gives: they are the dashboard's
+// reason to exist.
+type Detail int
+
+const (
+	// DetailFull lists every dependency on a line of its own.
+	DetailFull Detail = iota
+	// DetailNotable lists the components of artifact manifests only where
+	// there is something to say about one - an update, an advisory, a
+	// withdrawn version - and counts the rest.
+	DetailNotable
+	// DetailCounts lists managers and files with their counts, no
+	// dependency.
+	DetailCounts
+	// DetailCut leaves the detected dependencies out and cuts what remains
+	// at the last line that fits. Only a dashboard whose boxes alone
+	// exceed the budget comes to this.
+	DetailCut
+)
+
+func (d Detail) String() string {
+	switch d {
+	case DetailFull:
+		return "full"
+	case DetailNotable:
+		return "notable components only"
+	case DetailCounts:
+		return "counts only"
+	}
+	return "cut"
+}
+
+// Fitted is a dashboard rendered within a budget.
+type Fitted struct {
+	Body string
+	// Untrimmed is the size of the body at full detail, in bytes.
+	Untrimmed int
+	// Detail is the level the body was rendered at.
+	Detail Detail
+}
+
+// DashboardWithin renders the dashboard at the most detail that fits the
+// budget: every dependency, then the notable components of artifact
+// manifests, then counts. Each step is a pure function of the plan, so two
+// runs over one plan write one body and the issue does not churn.
+func DashboardWithin(plan *model.Plan, states map[string]BranchState, open []publish.MergeRequest, now time.Time, budget DashboardBudget) Fitted {
+	var head strings.Builder
+	head.WriteString("This issue lists pinup updates and detected dependencies. A ticked box is read on the next run and cleared.\n\n")
 	s := sortBranches(plan, states, open)
 	for _, section := range []func(*strings.Builder){
-		s.problems, s.exploited, s.unmanaged, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable, s.detected,
+		s.problems, s.exploited, s.unmanaged, s.pending, s.scheduled, s.aged, s.otherHeld, s.errored, s.opened, s.actionable,
 	} {
-		section(&b)
+		section(&head)
 	}
-	fmt.Fprintf(&b, "---\n\n*pinup %s, %s*\n", plan.PinupVersion, now.UTC().Format("2006-01-02 15:04 UTC"))
-	return b.String()
+	foot := fmt.Sprintf("---\n\n*pinup %s, %s*\n", plan.PinupVersion, now.UTC().Format("2006-01-02 15:04 UTC"))
+	render := func(d Detail) string {
+		var b strings.Builder
+		b.WriteString(head.String())
+		s.detected(&b, d, budget.FullList)
+		b.WriteString(foot)
+		return b.String()
+	}
+	full := render(DetailFull)
+	if budget.Bytes <= 0 || len(full) <= budget.Bytes {
+		return Fitted{Body: full, Untrimmed: len(full), Detail: DetailFull}
+	}
+	for _, d := range []Detail{DetailNotable, DetailCounts} {
+		if body := render(d); len(body) <= budget.Bytes {
+			return Fitted{Body: body, Untrimmed: len(full), Detail: d}
+		}
+	}
+	return Fitted{Body: cut(head.String(), foot, budget), Untrimmed: len(full), Detail: DetailCut}
+}
+
+// cut keeps the head up to the last whole line that leaves room for the
+// note and the footer. A box cut in half would be a box nobody can tick,
+// or worse, one whose marker names a different branch.
+func cut(head, foot string, budget DashboardBudget) string {
+	note := fmt.Sprintf("\n**This dashboard is cut short to stay within the platform's size limit; the detected dependencies and anything below this line are in %s.**\n\n", fullList(budget.FullList))
+	room := budget.Bytes - len(note) - len(foot)
+	if room < 0 {
+		room = 0
+	}
+	if len(head) > room {
+		head = head[:strings.LastIndexByte(head[:room], '\n')+1]
+	}
+	return head + note + foot
+}
+
+func fullList(where string) string {
+	return cmp.Or(where, "the run's plan report")
 }
 
 // heldBranch is a branch the run holds, with the block that names why.
@@ -434,8 +535,9 @@ func (s *sections) actionable(b *strings.Builder) {
 }
 
 // detected lists every dependency by manager and file, with the values the
-// plan proposes for it or the reason it proposes none.
-func (s *sections) detected(b *strings.Builder) {
+// plan proposes for it or the reason it proposes none - as much of it as
+// the detail asks for.
+func (s *sections) detected(b *strings.Builder, detail Detail, full string) {
 	plan := s.plan
 	b.WriteString("## Detected dependencies\n\n")
 	if c := plan.AdvisoryCoverage; c != nil {
@@ -452,6 +554,12 @@ func (s *sections) detected(b *strings.Builder) {
 	}
 	if line := ArtifactsLine(plan.Artifacts); line != "" {
 		fmt.Fprintf(b, "%s\n\n", line)
+	}
+	switch detail {
+	case DetailNotable:
+		fmt.Fprintf(b, "_Condensed to stay within the platform's size limit: components shipped by a build are listed only where there is something to say about one. The full list is in %s._\n\n", fullList(full))
+	case DetailCounts:
+		fmt.Fprintf(b, "_Condensed to stay within the platform's size limit: managers and files with their counts only. The full list is in %s._\n\n", fullList(full))
 	}
 	type fileDeps struct {
 		manager, file string
@@ -494,34 +602,67 @@ func (s *sections) detected(b *strings.Builder) {
 			n += len(f.deps)
 		}
 		fmt.Fprintf(b, "<details><summary>%s (%d)</summary>\n<blockquote>\n\n", m, n)
+		if detail == DetailCounts {
+			for _, f := range files {
+				fmt.Fprintf(b, " - %s (%d)\n", f.file, len(f.deps))
+			}
+			b.WriteString("\n</blockquote>\n</details>\n\n")
+			continue
+		}
 		for _, f := range files {
-			fmt.Fprintf(b, "<details><summary>%s (%d)</summary>\n\n", f.file, len(f.deps))
+			summary := fmt.Sprintf("%s (%d)", f.file, len(f.deps))
+			if m == model.ArtifactManager {
+				summary += ", shipped by the build: watched for advisories, not updated on their own"
+			}
+			fmt.Fprintf(b, "<details><summary>%s</summary>\n\n", summary)
+			quiet := 0
 			for _, d := range f.deps {
-				value := d.CurrentValue
-				if d.CurrentDigest != "" && value != "" {
-					value += "@" + short(d.CurrentDigest)
-				} else if value == "" {
-					value = short(d.CurrentDigest)
-				}
-				line := fmt.Sprintf(" - `%s %s`", d.DepName, value)
-				if ups := newest[d.Key()]; len(ups) > 0 {
-					line += " → [Updates: `" + strings.Join(ups, "`, `") + "`]"
-					if d.HeldBack != "" {
-						line += " — " + d.HeldBack
-					}
-				} else if d.SkipReason != "" && !strings.HasPrefix(d.SkipReason, "up to date") {
-					line += " — " + d.SkipReason
-				}
-				// A withdrawn current version is said on its line, moved or not.
-				if note := d.WithdrawnNote(); note != "" {
-					line += " — " + note
+				line, notable := depLine(d, newest[d.Key()])
+				if detail == DetailNotable && d.Artifact != nil && !notable {
+					quiet++
+					continue
 				}
 				b.WriteString(line + "\n")
+			}
+			if quiet > 0 {
+				fmt.Fprintf(b, " - … and %d more, nothing to say about them\n", quiet)
 			}
 			b.WriteString("\n</details>\n\n")
 		}
 		b.WriteString("</blockquote>\n</details>\n\n")
 	}
+}
+
+// depLine is a dependency's line in the detected list, and whether it says
+// more than name and version. A component of an artifact manifest carries
+// the same reason on every line - shipped by the build, watched, not
+// updated on its own - which its file's summary says once instead: 5892
+// copies of it were 0.7 MiB of one dashboard.
+func depLine(d model.Dependency, ups []string) (string, bool) {
+	value := d.CurrentValue
+	if d.CurrentDigest != "" && value != "" {
+		value += "@" + short(d.CurrentDigest)
+	} else if value == "" {
+		value = short(d.CurrentDigest)
+	}
+	line := fmt.Sprintf(" - `%s %s`", d.DepName, value)
+	notable := len(d.Advisories) > 0
+	if len(ups) > 0 {
+		notable = true
+		line += " → [Updates: `" + strings.Join(ups, "`, `") + "`]"
+		if d.HeldBack != "" {
+			line += " — " + d.HeldBack
+		}
+	} else if d.SkipReason != "" && !strings.HasPrefix(d.SkipReason, "up to date") && (d.Artifact == nil || d.SkipReason != d.Disabled) {
+		notable = true
+		line += " — " + d.SkipReason
+	}
+	// A withdrawn current version is said on its line, moved or not.
+	if note := d.WithdrawnNote(); note != "" {
+		notable = true
+		line += " — " + note
+	}
+	return line, notable
 }
 
 func firstBlock(br model.Branch, updates map[string]model.Update) model.Block {
