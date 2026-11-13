@@ -263,6 +263,23 @@ changes how one that is already allowed is carried out.
 
 `automerge: false` remains the way to stop pinup merging at all.
 
+**A revert is not merged again on its own.** A request whose edits - the
+file rows of its description and the dependencies it names - are exactly
+those of a request merged before on the same branch is opened without
+automerge, with a note saying which request merged them; the base no longer
+carrying them means someone took them back. The note stays in the request
+and every later run withholds again while the edits are the same; a changed
+update arms as usual (0.71.0; before, the run after the one that opened the
+request armed it). A branch with no file row - a lock file refresh, which
+names its command rather than the bytes it writes - has no such fingerprint
+and is never withheld or held as closed by hand for an earlier refresh
+(0.71.0; before, every lock file refresh read as the one merged before it).
+
+**On the dashboard**, an open request GitLab has armed is listed as *merges
+automatically when green*. pinup's own merge starts no run, so the dashboard
+is written again only by the next full scan or push run, up to four hours
+later; a request so marked may be merged already.
+
 ### When the merge happens: the merge window
 
 A request is merged only inside its **merge window**: the
