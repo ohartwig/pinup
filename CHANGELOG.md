@@ -1,3 +1,17 @@
+## [0.71.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.70.0...v0.71.0) (2026-11-13)
+
+### :sparkles: Features
+
+* **report:** mark an armed request as merging automatically on the dashboard ([474848a](https://git.ole-hartwig.eu/pinup/pinup/commit/474848ab732aedcb6fd9c06fab5b5ddb9701f57a))
+
+### :bug: Fixes
+
+* **runner:** keep a withheld automerge withheld, and never withhold a lock refresh ([210151d](https://git.ole-hartwig.eu/pinup/pinup/commit/210151dc2b1a194c61d4273754bb168f26e7ec4d))
+
+### :white_check_mark: Tests
+
+* **mutate:** break the lock fingerprint, the persisting withhold and the armed mark ([76ffa8c](https://git.ole-hartwig.eu/pinup/pinup/commit/76ffa8c914ee47361da2887840f3eac0be83f304))
+
 ## [0.70.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.69.9...v0.70.0) (2026-11-12)
 
 ### :sparkles: Features
