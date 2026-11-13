@@ -1,3 +1,9 @@
+## [0.71.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.0...v0.71.1) (2026-11-13)
+
+### :bug: Fixes
+
+* **deps:** update dependency registry.ole-hartwig.eu/devops/images/golang to v1.27.4 ([393b21c](https://git.ole-hartwig.eu/pinup/pinup/commit/393b21cc2daf1c913a1830aa8c6134192191b454))
+
 ## [0.71.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.70.0...v0.71.0) (2026-11-13)
 
 ### :sparkles: Features
