@@ -19,8 +19,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -276,7 +278,7 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 		}
 		footer := o.Footer
 		automerge := b.Automerge
-		if automerge && !hasMR {
+		if automerge {
 			// The same bytes merged before and gone from the base again
 			// is a revert; it does not land a second time on its own.
 			// Renovate withholds automerge on the title alone, which
@@ -284,10 +286,25 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			// of the same module in other files carried the same title
 			// (devops/wolfi-packages!404, 2026-09-14). The comparison
 			// here is the edits themselves.
-			if prior, ok := mergedBefore(history, b, plan.Updates); ok {
+			//
+			// The decision is read from the history once, when the
+			// request opens, and kept in the request's own description
+			// after that: the run that finds the request open reads the
+			// note back and withholds again while the edits are the same.
+			// It used to hold for one run only - the next run, finding
+			// the request open, skipped the check, armed it and rewrote
+			// the description without the note, while the dashboard
+			// still said "withheld" (development/moselwal/collab-rte!248,
+			// 2026-11-12: opened 15:59 withheld, armed and merged 16:39).
+			prior, ok := 0, false
+			if hasMR {
+				prior, ok = stillWithheld(mr.Description, b, plan.Updates)
+			} else {
+				prior, ok = mergedBefore(history, b, plan.Updates)
+			}
+			if ok {
 				automerge = false
-				note := fmt.Sprintf("Automerge withheld: !%d merged exactly these edits before and the base no longer carries them; merge by hand if the revert is over.", prior)
-				footer = note + "\n\n" + footer
+				footer = fmt.Sprintf(withheldNote, prior) + "\n\n" + footer
 				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf("%s: automerge withheld, !%d merged the same edits before", b.Name, prior)})
 			}
 		}
@@ -469,6 +486,32 @@ func openUnder(ctx context.Context, o Options, plan *model.Plan) ([]publish.Merg
 	return out, nil
 }
 
+// withheldNote is the line a request whose automerge was withheld carries
+// at the head of its footer; stillWithheld reads it back.
+const withheldNote = "Automerge withheld: !%d merged exactly these edits before and the base no longer carries them; merge by hand if the revert is over."
+
+var withheldRE = regexp.MustCompile(`(?m)^Automerge withheld: !(\d+) merged exactly these edits before`)
+
+// stillWithheld reports the request a withhold named when the open
+// request's description carries the note and its edits are still exactly
+// this branch's. A changed update is a new question: its edits are not
+// the ones that merged before, and it arms as usual.
+func stillWithheld(open string, b *model.Branch, updates []model.Update) (int, bool) {
+	m := withheldRE.FindStringSubmatch(open)
+	if m == nil {
+		return 0, false
+	}
+	mine := editRows(description(b, updates, ""))
+	if mine == "" || editRows(open) != mine {
+		return 0, false
+	}
+	prior, err := strconv.Atoi(m[1])
+	if err != nil {
+		return 0, false
+	}
+	return prior, true
+}
+
 // mergedBefore reports the newest merged request on the branch whose
 // edits - the "| File | Change |" rows of its description - are exactly
 // this branch's. That is a change that landed and was taken back; a bump
@@ -529,6 +572,14 @@ func closedBefore(history []publish.MergeRequest, b *model.Branch, updates []mod
 // The dependency names close that; only the first cell of the updates
 // table is read, because its other cells carry release notes and counts
 // that move between runs.
+//
+// A description without a single file row has no fingerprint at all.
+// What a task-only branch changes - a lock file refresh - is whatever the
+// tool wrote this time, and its rows name the command, not the bytes:
+// every refresh of one repository read as "dependency lock file" and
+// matched the refresh merged the day before. development/moselwal/
+// collab-rte's lock file maintenance had its automerge withheld that way
+// on 2026-11-12 (!248 against !245), each new refresh against the last.
 func editRows(description string) string {
 	var rows []string
 	for _, line := range strings.Split(description, "\n") {
@@ -543,6 +594,9 @@ func editRows(description string) string {
 				rows = append(rows, "dependency "+name)
 			}
 		}
+	}
+	if !slices.ContainsFunc(rows, func(r string) bool { return !strings.HasPrefix(r, "dependency ") }) {
+		return ""
 	}
 	sort.Strings(rows)
 	rows = slices.Compact(rows)
