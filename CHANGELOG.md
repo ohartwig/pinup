@@ -1,3 +1,14 @@
+## [0.71.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.1...v0.71.2) (2026-11-13)
+
+### :bug: Fixes
+
+* **planner:** give a security fix of a digest-pinned reference its digest ([a29b33f](https://git.ole-hartwig.eu/pinup/pinup/commit/a29b33f44e7652211b24ab5b7bcace1b0a214562))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to a690225 ([5406df8](https://git.ole-hartwig.eu/pinup/pinup/commit/5406df82667752a6f4dfad30d4934fb2b261f92a))
+* publish the dogfood run's consumer index for the runner's fast lane ([cb1c330](https://git.ole-hartwig.eu/pinup/pinup/commit/cb1c33011fe83c477351d124d7dc9af9d82c07c3))
+
 ## [0.71.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.0...v0.71.1) (2026-11-13)
 
 ### :bug: Fixes
