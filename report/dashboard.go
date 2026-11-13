@@ -330,7 +330,7 @@ func (s *sections) exploited(b *strings.Builder) {
 		state := "planned"
 		switch m, open := s.byMR[br.Name]; {
 		case open && br.SuppressedBy == "":
-			state = fmt.Sprintf("open !%d", m.IID)
+			state = fmt.Sprintf("open !%d%s", m.IID, armedNote(m))
 		case s.states[br.Name].Action == "failed":
 			state = "failed: " + markdown.Line(s.states[br.Name].Message)
 		case br.SuppressedBy != "":
@@ -510,10 +510,32 @@ func (s *sections) opened(b *strings.Builder) {
 		return
 	}
 	b.WriteString("## Open\n\nThese merge requests exist. Tick a box to rebase one on the next run.\n\n")
+	armed := false
 	for _, br := range s.open {
-		fmt.Fprintf(b, " - [ ] <!-- rebase-branch=%s -->[%s](!%d)\n", br.Name, markdown.Line(br.Title), s.byMR[br.Name].IID)
+		m := s.byMR[br.Name]
+		fmt.Fprintf(b, " - [ ] <!-- rebase-branch=%s -->[%s](!%d)%s\n", br.Name, markdown.Line(br.Title), m.IID, armedNote(m))
+		armed = armed || m.Automerge
+	}
+	if armed {
+		// The run that merges a request is not the run that writes this
+		// issue next: pinup's own merge starts no run, and the dashboard
+		// is written again by the next full scan, up to four hours later.
+		// Listed as plain "open", a request merged in between read as a
+		// claim the dashboard got wrong.
+		b.WriteString("\n_Merges automatically when green_: the platform merges it once its pipeline passes, without another run - it may be merged already, and leaves this list on the next run.\n\n")
 	}
 	b.WriteString(" - [ ] <!-- rebase-all-open-prs -->**Rebase all open merge requests at once**\n\n")
+}
+
+// armedNote marks a request the platform will merge on its own once its
+// pipeline passes: automerge armed, as the platform reported it when the
+// dashboard was written. Short on purpose - one per open request, inside
+// the part of the dashboard its size budget never condenses.
+func armedNote(m publish.MergeRequest) string {
+	if m.Automerge {
+		return " — merges automatically when green"
+	}
+	return ""
 }
 
 func (s *sections) actionable(b *strings.Builder) {

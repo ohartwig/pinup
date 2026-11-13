@@ -431,6 +431,15 @@ var mutators = []mutator{
 		"v.PeerDependencies, v.OptionalDependencies, v.Dependencies}", "v.PeerDependencies, v.OptionalDependencies}", []string{"./datasource/npmds/"}, false, ""},
 	{129, "transitive", "requirements are asked again every time", "lookup/lookup.go",
 		"if json.Unmarshal(payload, &out) == nil {", "if false && json.Unmarshal(payload, &out) == nil {", []string{"./lookup/"}, false, ""},
+	// A withheld automerge held for one run, on a fingerprint every lock
+	// file refresh shared (development/moselwal/collab-rte!248,
+	// 2026-11-12), and the dashboard called an armed request plain open.
+	{130, "delivery", "a lock file refresh is fingerprinted by its dependency name alone", "runner/runner.go",
+		"\tif !slices.ContainsFunc(rows, func(r string) bool { return !strings.HasPrefix(r, \"dependency \") }) {", "\tif false {", []string{"./runner/"}, false, ""},
+	{131, "delivery", "a withhold lasts one run", "runner/runner.go",
+		"prior, ok = stillWithheld(mr.Description, b, plan.Updates)", "prior, ok = 0, false", []string{"./runner/"}, false, ""},
+	{132, "delivery", "the dashboard does not mark an armed request", "report/dashboard.go",
+		"\tif m.Automerge {\n\t\treturn \" — merges automatically when green\"", "\tif false {\n\t\treturn \" — merges automatically when green\"", []string{"./report/"}, false, ""},
 	// Mergeable options combine across layers as Renovate combines them
 	// (2026-11-12): a repository's partial vulnerabilityAlerts dropped the
 	// runner's labels, schedule and automerge; golang!447 repeated them.

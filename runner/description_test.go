@@ -220,6 +220,20 @@ func TestAutomergeIsWithheldForARevertedChangeNotForASharedTitle(t *testing.T) {
 	if len(p.Warnings) == 0 || !strings.Contains(p.Warnings[len(p.Warnings)-1].Msg, "automerge withheld") {
 		t.Errorf("the plan does not say: %+v", p.Warnings)
 	}
+
+	// The next run finds the request open and withholds again: it used to
+	// arm it and drop the note (collab-rte!248, 2026-11-12).
+	p = mk()
+	if _, err := Execute(context.Background(), p, options(repo2, pf)); err != nil {
+		t.Fatal(err)
+	}
+	again := pf.MRs[len(pf.MRs)-1]
+	if again.IID != last.IID || again.Automerge || !strings.Contains(again.Description, "Automerge withheld: !182") || strings.Contains(again.Description, markerPrefix) {
+		t.Errorf("second run on the open request: !%d automerge=%v description:\n%s", again.IID, again.Automerge, again.Description)
+	}
+	if len(p.Warnings) == 0 || !strings.Contains(p.Warnings[len(p.Warnings)-1].Msg, "automerge withheld, !182") {
+		t.Errorf("the second run's plan does not say: %+v", p.Warnings)
+	}
 }
 
 // A fix for an exploited CVE says so before the table, with the catalog's
