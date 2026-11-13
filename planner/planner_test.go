@@ -580,6 +580,44 @@ func TestVulnerabilityBoundPlansTheLowestFixOnly(t *testing.T) {
 	}
 }
 
+// A security fix of a reference pinned by digest carries the fix's digest,
+// as an ordinary update does: apply refuses a tag without one. Measured on
+// koh-gitops, 2026-11-13: crowdsec 2.9.102@sha256 withdrawn for 2.9.117,
+// the branch planned and then refused (editRefused). A digest that cannot be
+// learned plans nothing and says so - never the current tag's refresh,
+// since the current version is the one being moved off.
+func TestSecurityFixOfADigestPinnedReferenceCarriesTheDigest(t *testing.T) {
+	digests := map[string]string{"2.9.117": "sha256:fix117", "2.9.120": "sha256:new120", "2.9.102": "sha256:moved102"}
+	req := func(d model.Dependency, rs *model.ReleaseSet) Request {
+		return Request{
+			Deps:        []model.Dependency{d},
+			Releases:    func(model.Dependency) *model.ReleaseSet { return rs },
+			Versionings: registry(),
+			Digest: func(_ model.Dependency, version string) (string, error) {
+				if v, ok := digests[version]; ok {
+					return v, nil
+				}
+				return "", fmt.Errorf("manifest for %s: 404", version)
+			},
+			Now: now,
+		}
+	}
+	d := dep("registry.example/images/crowdsec", "2.9.102", "semver")
+	d.CurrentDigest = "sha256:old102"
+	d.VulnerabilityBound = "2.9.117"
+	d.Advisories = []model.Advisory{{ID: "CVE-2026-97054", Fixed: "2.9.117"}}
+	res := Plan(req(d, releases("2.9.102", "2.9.117", "2.9.120")))
+	if len(res.Updates) != 1 || !res.Updates[0].SecurityFix || res.Updates[0].NewValue != "2.9.117" || res.Updates[0].NewDigest != "sha256:fix117" {
+		t.Fatalf("want one security fix to 2.9.117@sha256:fix117, got %+v warnings %+v", res.Updates, res.Warnings)
+	}
+
+	delete(digests, "2.9.117")
+	res = Plan(req(d, releases("2.9.102", "2.9.117", "2.9.120")))
+	if len(res.Updates) != 0 || len(res.Warnings) != 1 || !strings.Contains(res.Deps[0].SkipReason, "security fix to 2.9.117 not planned") {
+		t.Errorf("unknown digest of the fix: updates %+v, warnings %+v, skip %q", res.Updates, res.Warnings, res.Deps[0].SkipReason)
+	}
+}
+
 // Range strategies, measured against the estate's composer rules: bump
 // raises the floor even for a version the range admits and compares
 // against the lock; update-lockfile moves only the lock for an admitted

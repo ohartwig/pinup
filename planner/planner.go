@@ -601,6 +601,23 @@ func (p *planning) securityFix() ([]model.Update, string, *model.Warning) {
 		return nil, skip, nil
 	}
 	u.SecurityFix = true
+	// A reference pinned by digest moves value and digest together, the
+	// security fix as much as an ordinary update (withDigests). Without
+	// this the fix reached apply with the tag alone, and apply refused the
+	// edit: every withdrawn image pinned tag@digest - all of koh-gitops -
+	// planned a security branch that could never be written (editRefused,
+	// crowdsec 2.9.102 -> 2.9.117, 2026-11-13), and the dependency waited
+	// for its ordinary update and that update's schedule. Unlike
+	// withDigests there is no fallback to refreshing the current tag's
+	// digest: the current version is the vulnerable one.
+	if d.CurrentDigest != "" && u.NewDigest == "" && versioning.GoPseudoCommit(d.CurrentValue) == "" {
+		digest, err := lookupDigest(p.req, *d, u.NewValue)
+		if err != nil {
+			msg := fmt.Sprintf("%s: security fix to %s not planned: %v", d.DepName, u.NewValue, err)
+			return nil, msg, &model.Warning{Stage: "plan", File: d.File, Msg: msg}
+		}
+		u.NewDigest = digest
+	}
 	return []model.Update{u}, "", nil
 }
 
