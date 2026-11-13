@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ohartwig/pinup/model"
+	"github.com/ohartwig/pinup/publish"
 )
 
 // budgetPlan is a plan shaped like devops/rpm-packages' on 2026-11-12: a
@@ -137,5 +138,23 @@ func TestDashboardCutAtAWholeLine(t *testing.T) {
 		if !strings.Contains(f.Body, c) {
 			t.Errorf("the first box is gone: %s", c)
 		}
+	}
+}
+
+// The armed mark sits on the open request's line, which the budget never
+// condenses: a dashboard cut to counts still says which request merges on
+// its own, and stays within the budget saying it.
+func TestDashboardWithinBudgetKeepsTheArmedMark(t *testing.T) {
+	plan := budgetPlan(20000, 3)
+	plan.Branches = append(plan.Branches, model.Branch{Name: "pinup/lock-file-maintenance", Title: "chore(deps): refresh lock file"})
+	open := []publish.MergeRequest{{IID: 248, SourceBranch: "pinup/lock-file-maintenance", State: "opened", Automerge: true}}
+	now := time.Date(2026, 11, 13, 8, 0, 0, 0, time.UTC)
+	const budget = 4500
+	f := DashboardWithin(plan, nil, open, now, DashboardBudget{Bytes: budget})
+	if f.Detail != DetailCounts || len(f.Body) > budget {
+		t.Fatalf("detail %v, %d bytes; want counts within %d", f.Detail, len(f.Body), budget)
+	}
+	if !strings.Contains(f.Body, "(!248) — merges automatically when green\n") {
+		t.Errorf("the armed mark is gone at counts:\n%s", f.Body)
 	}
 }

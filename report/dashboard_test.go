@@ -257,3 +257,37 @@ func TestDashboardKeepsMessagesAndTitlesOnTheirLine(t *testing.T) {
 		t.Errorf("the message is not kept on its line:\n%s", body)
 	}
 }
+
+// A request the platform will merge once its pipeline passes says so on
+// its line: pinup's own merge starts no run, so the dashboard can lag the
+// merge by up to a full scan, and "open" on a merged request read as a
+// mistake. A request not armed keeps the plain line, and a dashboard
+// without an armed request carries no legend.
+func TestDashboardMarksArmedRequests(t *testing.T) {
+	now := time.Date(2026, 11, 13, 8, 0, 0, 0, time.UTC)
+	plan := &model.Plan{
+		PinupVersion: "test", Repo: model.RepoRef{Path: "a/b"},
+		Branches: []model.Branch{
+			{Name: "pinup/lock-file-maintenance", Title: "chore(deps): refresh lock file"},
+			{Name: "pinup/major-vite", Title: "chore(deps): update vite to v8"},
+		},
+	}
+	open := []publish.MergeRequest{
+		{IID: 248, SourceBranch: "pinup/lock-file-maintenance", State: "opened", Automerge: true},
+		{IID: 249, SourceBranch: "pinup/major-vite", State: "opened"},
+	}
+	body := Dashboard(plan, nil, open, now)
+	for _, want := range []string{
+		"[chore(deps): refresh lock file](!248) — merges automatically when green\n",
+		"[chore(deps): update vite to v8](!249)\n",
+		"_Merges automatically when green_:",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard lacks %q\n%s", want, body)
+		}
+	}
+	open[0].Automerge = false
+	if body := Dashboard(plan, nil, open, now); strings.Contains(body, "automatically") {
+		t.Errorf("no request is armed, yet the dashboard says one merges automatically:\n%s", body)
+	}
+}
