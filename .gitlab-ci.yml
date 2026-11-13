@@ -592,6 +592,13 @@ update:pinup:
       if [ "${PINUP_MODE:-}" = "whatif" ]; then mode="run --dry-run"; fi
       # shellcheck disable=SC2086
       /tmp/pinup $mode --project "$CI_PROJECT_PATH" --config "local>pinup/runner" --report pinup-plan.json
+  # .pinup/consumers.json is the consumer index the run writes beside
+  # PINUP_CACHE: this repository's dependencies, one entry. No partition of
+  # pinup/runner scans this repository, so its fast lane had no index
+  # naming it and a release of something pinned here (devops/images/golang
+  # 1.27.4 for a Go stdlib advisory, 2026-11-12) waited ~14 h for the next
+  # daily run. pinup:release-self in pinup/runner reads this artifact and
+  # runs the fast lane for this repository alone.
   artifacts:
-    paths: [pinup-plan.json, pinup-plan.md]
+    paths: [pinup-plan.json, pinup-plan.md, .pinup/consumers.json]
     expire_in: 1 week
