@@ -1,3 +1,13 @@
+## [0.71.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.2...v0.71.3) (2026-11-16)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to f42058c ([7fbe4fa](https://git.ole-hartwig.eu/pinup/pinup/commit/7fbe4faebb4ed052e01317892596f7dd10d88352))
+
+### :repeat: Chores
+
+* **repo-templates:** sync ([6254188](https://git.ole-hartwig.eu/pinup/pinup/commit/625418810c9f5a614bbf2a9d5d5c7586728358c8))
+
 ## [0.71.2](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.1...v0.71.2) (2026-11-13)
 
 ### :bug: Fixes
