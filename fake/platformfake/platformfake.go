@@ -8,6 +8,7 @@ package platformfake
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -25,7 +26,8 @@ type Platform struct {
 	Calls []string
 	// CreateErr and UpdateErr, when set, are returned by the respective
 	// calls. CreateErrTimes bounds how often CreateErr is returned; zero
-	// means always.
+	// means always. A CreateErr wrapping publish.ErrAlreadyOpen opens the
+	// request a concurrent run would have, unless one is open already.
 	CreateErr, UpdateErr error
 	// IssueErr, when set, is what UpsertIssue answers.
 	IssueErr       error
@@ -48,6 +50,14 @@ type Platform struct {
 	// a push. After that it reports no head, which the runner does not
 	// wait for.
 	StaleHeads map[string]int
+	// HiddenBranches makes BranchHead report the branch missing for its
+	// next N calls, as a platform does that has not yet processed a push.
+	// After that the branch shows at BranchHeads[branch]; a branch absent
+	// there shows with no head, which the runner does not wait for.
+	HiddenBranches map[string]int
+	BranchHeads    map[string]string
+	// BranchErr, when set, is what BranchHead answers.
+	BranchErr error
 	// Requests records every request UpdateMergeRequest was given.
 	Requests []publish.Request
 	// ArmAfter makes the platform arm automerge only on the ArmAfter-th
@@ -107,6 +117,9 @@ func (p *Platform) CreateMergeRequest(_ context.Context, _ publish.Project, r pu
 	p.record("Create " + r.SourceBranch)
 	if p.CreateErr != nil && (p.CreateErrTimes == 0 || p.createErrs < p.CreateErrTimes) {
 		p.createErrs++
+		if errors.Is(p.CreateErr, publish.ErrAlreadyOpen) {
+			p.openConcurrently(r)
+		}
 		return publish.MergeRequest{}, p.CreateErr
 	}
 	p.mu.Lock()
@@ -119,6 +132,38 @@ func (p *Platform) CreateMergeRequest(_ context.Context, _ publish.Project, r pu
 	}
 	p.MRs = append(p.MRs, mr)
 	return mr, nil
+}
+
+func (p *Platform) BranchHead(_ context.Context, _ publish.Project, branch string) (string, bool, error) {
+	p.record("Branch " + branch)
+	if p.BranchErr != nil {
+		return "", false, p.BranchErr
+	}
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if p.HiddenBranches[branch] > 0 {
+		p.HiddenBranches[branch]--
+		return "", false, nil
+	}
+	return p.BranchHeads[branch], true, nil
+}
+
+// openConcurrently is the request a concurrent run opened, which a create
+// answered with ErrAlreadyOpen implies: one opened request for the branch,
+// unless the test put one there already.
+func (p *Platform) openConcurrently(r publish.Request) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, m := range p.MRs {
+		if m.SourceBranch == r.SourceBranch && m.State == "opened" {
+			return
+		}
+	}
+	p.nextIID++
+	p.MRs = append(p.MRs, publish.MergeRequest{
+		IID: p.nextIID, State: "opened", SourceBranch: r.SourceBranch, TargetBranch: r.TargetBranch,
+		Title: "opened by a concurrent run", WebURL: fmt.Sprintf("https://fake/mr/%d", p.nextIID),
+	})
 }
 
 func (p *Platform) UpdateMergeRequest(_ context.Context, _ publish.Project, iid int, r publish.Request) (publish.MergeRequest, []string, error) {

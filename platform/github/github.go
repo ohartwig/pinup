@@ -220,6 +220,11 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 	if err != nil {
 		return publish.MergeRequest{}, err
 	}
+	if resp.status == http.StatusUnprocessableEntity && strings.Contains(apiMessage(resp.body), "already exists") {
+		// A concurrent run opened the pull request between this run's
+		// lookup and its create; the runner adopts it.
+		return publish.MergeRequest{}, fmt.Errorf("github: status 422 for %q: %s: %w", proj.Path, apiMessage(resp.body), publish.ErrAlreadyOpen)
+	}
 	if err := classify(resp, proj.Path); err != nil {
 		return publish.MergeRequest{}, err
 	}
@@ -248,6 +253,40 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 	out := toPublish(pr)
 	out.AutomergeRefused = refused
 	return out, nil
+}
+
+// BranchHead reads the branch through the branches endpoint: the commit
+// it shows, or ok=false on a 404.
+func (p *Platform) BranchHead(ctx context.Context, proj publish.Project, branch string) (string, bool, error) {
+	base, err := p.repoURL(proj.Path)
+	if err != nil {
+		return "", false, err
+	}
+	// Escaped per segment: renovate/x stays a path with its slash, which
+	// is how GitHub names the branch in this endpoint.
+	segs := strings.Split(branch, "/")
+	for i := range segs {
+		segs[i] = url.PathEscape(segs[i])
+	}
+	resp, err := p.do(ctx, http.MethodGet, base+"/branches/"+strings.Join(segs, "/"), nil)
+	if err != nil {
+		return "", false, err
+	}
+	if resp.status == http.StatusNotFound {
+		return "", false, nil
+	}
+	if err := classify(resp, proj.Path); err != nil {
+		return "", false, err
+	}
+	var payload struct {
+		Commit struct {
+			SHA string `json:"sha"`
+		} `json:"commit"`
+	}
+	if err := json.Unmarshal(resp.body, &payload); err != nil {
+		return "", false, fmt.Errorf("github: decode branch %s of %q: %w", branch, proj.Path, err)
+	}
+	return payload.Commit.SHA, true, nil
 }
 
 // UpdateMergeRequest brings pull request number in line with r, changing
