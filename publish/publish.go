@@ -14,6 +14,7 @@ package publish
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -123,6 +124,13 @@ type Request struct {
 	HeadSHA string
 }
 
+// ErrAlreadyOpen is wrapped by CreateMergeRequest when the platform
+// refuses because an open request for the source branch exists already -
+// GitLab's 409 "Another open merge request already exists for this source
+// branch", GitHub's 422 "A pull request already exists". A concurrent run
+// opened it; the caller adopts it rather than failing.
+var ErrAlreadyOpen = errors.New("an open merge request for the source branch exists already")
+
 // Platform is the merge-request side of a run.
 type Platform interface {
 	Name() string
@@ -140,8 +148,16 @@ type Platform interface {
 	// branch, newest first, so a closed one can be respected.
 	History(ctx context.Context, p Project, sourceBranch string) ([]MergeRequest, error)
 
-	// CreateMergeRequest opens one.
+	// CreateMergeRequest opens one. When the platform refuses because an
+	// open request for the source branch exists already, the error wraps
+	// ErrAlreadyOpen.
 	CreateMergeRequest(ctx context.Context, p Project, r Request) (MergeRequest, error)
+
+	// BranchHead reports the commit the platform's API shows at the head
+	// of branch, or ok=false while it shows no such branch - how a run
+	// waits for a branch it has just pushed before it asks for a request.
+	// An empty sha with ok=true means the platform cannot say.
+	BranchHead(ctx context.Context, p Project, branch string) (sha string, ok bool, err error)
 
 	// UpdateMergeRequest brings an existing one in line with r: title,
 	// description, labels, automerge. It changes nothing that already

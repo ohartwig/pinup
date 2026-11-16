@@ -6,6 +6,7 @@ package github
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -89,6 +90,7 @@ type fakeRepo struct {
 		reason   string
 	}
 	nextNumber int
+	branches   map[string]string // name -> head sha
 }
 
 type githubServer struct {
@@ -248,6 +250,12 @@ func (s *githubServer) serveRepo(w http.ResponseWriter, r *http.Request, rp *fak
 			writeJSON(w, 422, map[string]any{"message": "Validation Failed", "errors": []map[string]any{{"message": "head, base and title are required"}}})
 			return
 		}
+		for _, m := range rp.pulls {
+			if m.state == "open" && m.head == in.Head {
+				writeJSON(w, 422, map[string]any{"message": "Validation Failed", "errors": []map[string]any{{"message": "A pull request already exists for " + owner + ":" + in.Head + "."}}})
+				return
+			}
+		}
 		m := &fakePull{number: rp.nextNumber, state: "open", head: in.Head, base: in.Base, title: in.Title, body: in.Body, sha: "sha-" + in.Head,
 			createdAt: fixedTime(rp.nextNumber), updatedAt: fixedTime(rp.nextNumber), notYet: true}
 		rp.nextNumber++
@@ -336,6 +344,14 @@ func (s *githubServer) serveRepo(w http.ResponseWriter, r *http.Request, rp *fak
 			return
 		}
 		writeJSON(w, 404, map[string]any{"message": "Not Found"})
+	case strings.HasPrefix(sub, "branches/"):
+		name := strings.TrimPrefix(sub, "branches/")
+		head, ok := rp.branches[name]
+		if !ok {
+			writeJSON(w, 404, map[string]any{"message": "Branch not found"})
+			return
+		}
+		writeJSON(w, 200, map[string]any{"name": name, "commit": map[string]any{"sha": head}})
 	case strings.HasPrefix(sub, "commits/"):
 		sha := strings.TrimPrefix(sub, "commits/")
 		v, ok := rp.verification[sha]
@@ -807,4 +823,38 @@ func TestAChangeGitHubAcceptsButDoesNotApplyIsNotReported(t *testing.T) {
 			t.Errorf("err %v: a pull request still open must not read as closed", err)
 		}
 	})
+}
+
+// The runner waits for a pushed branch through the branches endpoint: the
+// head GitHub shows, or nothing on a 404. A name with a slash stays a path.
+func TestBranchHeadReadsTheBranchesEndpoint(t *testing.T) {
+	p, srv, _ := newFixture(t)
+	rp := srv.addRepo("o/r", "main")
+	rp.branches = map[string]string{"pinup/x": "abc123"}
+	proj := publish.Project{Path: "o/r"}
+
+	head, ok, err := p.BranchHead(t.Context(), proj, "pinup/x")
+	if err != nil || !ok || head != "abc123" {
+		t.Errorf("visible branch: head=%q ok=%v err=%v", head, ok, err)
+	}
+	head, ok, err = p.BranchHead(t.Context(), proj, "pinup/y")
+	if err != nil || ok || head != "" {
+		t.Errorf("missing branch: head=%q ok=%v err=%v, want ok=false and no error", head, ok, err)
+	}
+}
+
+// GitHub's 422 "A pull request already exists" means a concurrent run
+// opened it first: the error wraps publish.ErrAlreadyOpen for the runner.
+func TestCreateMergeRequestOnAnOpenHeadWrapsErrAlreadyOpen(t *testing.T) {
+	p, srv, _ := newFixture(t)
+	srv.addRepo("o/r", "main")
+	proj := publish.Project{Path: "o/r"}
+	req := publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"}
+	if _, err := p.CreateMergeRequest(t.Context(), proj, req); err != nil {
+		t.Fatal(err)
+	}
+	_, err := p.CreateMergeRequest(t.Context(), proj, req)
+	if !errors.Is(err, publish.ErrAlreadyOpen) {
+		t.Errorf("err = %v, want one wrapping publish.ErrAlreadyOpen", err)
+	}
 }

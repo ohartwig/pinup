@@ -339,6 +339,21 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
 				"%s: the platform has not seen the pushed head %s yet; automerge is armed by a later run", b.Name, short(sha))})
 		}
+		if !hasMR {
+			opened, found, err := createWithRetry(ctx, o, req, req.HeadSHA)
+			if err != nil {
+				outcomes = append(outcomes, fail(plan, b, "create merge request", err))
+				continue
+			}
+			mr = opened
+			if found {
+				// A concurrent run opened it after this run looked: it is
+				// brought in line like a request found at the start.
+				hasMR = true
+				plan.Warnings = append(plan.Warnings, model.Warning{Stage: "publish", Msg: fmt.Sprintf(
+					"%s: !%d was opened by a concurrent run; updated instead of created", b.Name, mr.IID)})
+			}
+		}
 		var out Outcome
 		switch {
 		case hasMR:
@@ -370,11 +385,6 @@ func Execute(ctx context.Context, plan *model.Plan, o Options) ([]Outcome, error
 			}
 			out = Outcome{Branch: b.Name, Action: action, MRIID: mr.IID, SHA: sha, Message: fmt.Sprint(changed)}
 		default:
-			mr, err = createWithRetry(ctx, o, req)
-			if err != nil {
-				outcomes = append(outcomes, fail(plan, b, "create merge request", err))
-				continue
-			}
 			created++
 			out = Outcome{Branch: b.Name, Action: "created", MRIID: mr.IID, SHA: sha}
 			if req.Automerge && !mr.Automerge && mr.State != "merged" && mr.AutomergeRefused == "" {
@@ -603,14 +613,6 @@ func editRows(description string) string {
 	return strings.Join(rows, "\n")
 }
 
-// createWithRetry opens the merge request, retrying a 400 that says the
-// source branch does not exist: measured live, GitLab answered that for a
-// branch pushed a moment earlier and accepted the same request seconds
-// later. Three attempts a second apart were not enough on the first live
-// hour of forty repositories, eight at a time (2026-09-13, 20:33: five
-// requests failed, every branch there): six attempts, doubling from two
-// seconds, a minute in all, then the error stands and the next run opens
-// it.
 // armWaits bounds armNew: armWaits attempts armWait apart, armWindow in all.
 const (
 	armWaits  = 12
@@ -679,24 +681,87 @@ func awaitHead(ctx context.Context, o Options, branch, sha string) bool {
 	return false
 }
 
-func createWithRetry(ctx context.Context, o Options, req publish.Request) (publish.MergeRequest, error) {
+// branchBudget bounds createWithRetry: the time a pushed branch is given to
+// become visible to the platform, waited out in branchWait steps that
+// double up to branchWaitCap.
+const (
+	branchBudget  = 5 * time.Minute
+	branchWait    = 2 * time.Second
+	branchWaitCap = 30 * time.Second
+)
+
+// createWithRetry opens the merge request for a branch this run has just
+// pushed (at sha; empty when nothing was pushed). It reports the request
+// and whether a concurrent run had opened it already.
+//
+// GitLab answers 400 {"source_branch":["does not exist"]} for a branch it
+// has not processed yet and accepts the same request later. Three attempts
+// a second apart were not enough on the first live hour of forty
+// repositories (2026-09-13, 20:33), and six attempts doubling from two
+// seconds - a minute in all - were not enough under load: on the night of
+// 2026-11-16, at ~3,300 CI jobs an hour, post-receive lagged by more than
+// a minute and about 95 % of the failed pinup:release-triggered jobs died
+// on this answer (devops/images/tumbleweed-builder pinup/snapshots: pushed
+// 07:49:22, the create given up on ~1m50 later) while the branches API
+// showed the branch minutes after. Each one turned the job red and left
+// the request for the next run.
+//
+// So the run first waits until the branches API shows the branch at the
+// pushed head - a cheap read that does not trip the create's own retries -
+// and only then asks; a "does not exist" after that is waited out the same
+// way. Both share one budget of five minutes, then the error stands and
+// names the wait.
+//
+// A 409 "another open merge request already exists" means a concurrent run
+// opened it between this run's lookup and its create: the request is
+// looked up and adopted, not reported as a failure.
+func createWithRetry(ctx context.Context, o Options, req publish.Request, sha string) (publish.MergeRequest, bool, error) {
+	var waited time.Duration
+	wait := branchWait
 	var last error
-	for attempt := range 6 {
+	for attempt := 0; ; attempt++ {
 		if attempt > 0 {
+			if waited >= branchBudget {
+				break
+			}
 			if o.Sleep != nil {
-				o.Sleep(time.Duration(1<<uint(attempt)) * time.Second)
+				o.Sleep(wait)
+			}
+			waited += wait
+			wait = min(wait*2, branchWaitCap)
+		}
+		if sha != "" {
+			// An error here is no verdict: the create below answers for
+			// itself. A head the platform cannot name is not waited for.
+			head, ok, err := o.Platform.BranchHead(ctx, o.Project, req.SourceBranch)
+			if err == nil && (!ok || (head != "" && head != sha)) {
+				last = fmt.Errorf("the platform shows no branch %s at %s yet", req.SourceBranch, short(sha))
+				if ok {
+					last = fmt.Errorf("the platform shows branch %s at %s, not yet at the pushed %s", req.SourceBranch, short(head), short(sha))
+				}
+				continue
 			}
 		}
 		mr, err := o.Platform.CreateMergeRequest(ctx, o.Project, req)
 		if err == nil {
-			return mr, nil
+			return mr, false, nil
+		}
+		if errors.Is(err, publish.ErrAlreadyOpen) {
+			found, ok, ferr := o.Platform.FindMergeRequest(ctx, o.Project, req.SourceBranch)
+			if ferr != nil {
+				return publish.MergeRequest{}, false, fmt.Errorf("%w; looking it up: %v", err, ferr)
+			}
+			if !ok {
+				return publish.MergeRequest{}, false, fmt.Errorf("%w, but no open one is found for %s", err, req.SourceBranch)
+			}
+			return found, true, nil
 		}
 		last = err
 		if !strings.Contains(err.Error(), "does not exist") {
-			break
+			return publish.MergeRequest{}, false, err
 		}
 	}
-	return publish.MergeRequest{}, last
+	return publish.MergeRequest{}, false, fmt.Errorf("waited %s for the platform to see the pushed branch: %w", waited, last)
 }
 
 // pushBranch rebuilds the branch from the base, writes the edits, commits,

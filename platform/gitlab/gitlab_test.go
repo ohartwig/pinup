@@ -7,6 +7,7 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -115,6 +116,11 @@ type fakeProject struct {
 	// per entry, the entry as GitLab's "message" - the way it refuses a
 	// branch it does not see yet.
 	createRejects []any
+	// createRejectStatus, when set, is the status createRejects answer
+	// with instead of 400.
+	createRejectStatus int
+	// branches answers the branches API: name -> head commit.
+	branches map[string]string
 }
 
 // requestLog is one request the fake received, kept so tests can assert on
@@ -269,6 +275,16 @@ func (s *gitlabServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		s.serveIssues(w, r, proj, strings.TrimPrefix(strings.TrimPrefix(remainder, "issues"), "/"), body)
 	case strings.HasPrefix(remainder, "repository/commits/"):
 		s.serveSignature(w, proj, strings.TrimPrefix(remainder, "repository/commits/"))
+	case strings.HasPrefix(remainder, "repository/branches/"):
+		name, err := url.PathUnescape(strings.TrimPrefix(remainder, "repository/branches/"))
+		s.mu.Lock()
+		head, ok := proj.branches[name]
+		s.mu.Unlock()
+		if err != nil || !ok {
+			writeJSON(w, http.StatusNotFound, map[string]any{"message": "404 Branch Not Found"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"name": name, "commit": map[string]any{"id": head}})
 	case strings.HasPrefix(remainder, "repository/files/"):
 		// files/<escaped path>/raw?ref=
 		rest := strings.TrimPrefix(remainder, "repository/files/")
@@ -374,7 +390,11 @@ func (s *gitlabServer) createMergeRequest(w http.ResponseWriter, proj *fakeProje
 		msg := proj.createRejects[0]
 		proj.createRejects = proj.createRejects[1:]
 		s.mu.Unlock()
-		writeJSON(w, http.StatusBadRequest, map[string]any{"message": msg})
+		status := http.StatusBadRequest
+		if proj.createRejectStatus != 0 {
+			status = proj.createRejectStatus
+		}
+		writeJSON(w, status, map[string]any{"message": msg})
 		return
 	}
 	s.mu.Unlock()
@@ -1576,5 +1596,44 @@ func TestArmingSendsAutoMerge(t *testing.T) {
 	}
 	if v, _ := body["auto_merge"].(bool); !v {
 		t.Errorf("merge payload %v lacks auto_merge=true", body)
+	}
+}
+
+// The runner waits for a pushed branch through the branches API: the head
+// GitLab shows, or nothing on a 404. The name travels as one escaped
+// segment, slash and all.
+func TestBranchHeadReadsTheBranchesAPI(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	proj.branches = map[string]string{"pinup/x": "abc123"}
+	p := publish.Project{Path: "group/proj"}
+
+	head, ok, err := pf.BranchHead(t.Context(), p, "pinup/x")
+	if err != nil || !ok || head != "abc123" {
+		t.Errorf("visible branch: head=%q ok=%v err=%v", head, ok, err)
+	}
+	head, ok, err = pf.BranchHead(t.Context(), p, "pinup/y")
+	if err != nil || ok || head != "" {
+		t.Errorf("missing branch: head=%q ok=%v err=%v, want ok=false and no error", head, ok, err)
+	}
+}
+
+// A 409 on create means a concurrent run opened the request first: the
+// error wraps publish.ErrAlreadyOpen so the runner can adopt it, and it is
+// not asked again.
+func TestCreateMergeRequestConflictWrapsErrAlreadyOpen(t *testing.T) {
+	pf, srv, _ := newFixture(t, "")
+	proj := srv.addProject("group/proj", "main")
+	proj.createRejects = []any{[]string{"Another open merge request already exists for this source branch: !7"}}
+	proj.createRejectStatus = http.StatusConflict
+	pf.Sleep = func(d time.Duration) { t.Errorf("waited %v on a 409", d) }
+
+	_, err := pf.CreateMergeRequest(t.Context(), publish.Project{Path: "group/proj"},
+		publish.Request{SourceBranch: "pinup/x", TargetBranch: "main", Title: "bump x"})
+	if !errors.Is(err, publish.ErrAlreadyOpen) || !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("err = %v, want one wrapping publish.ErrAlreadyOpen", err)
+	}
+	if n := srv.requestCountOf(http.MethodPost, "merge_requests"); n != 1 {
+		t.Errorf("%d creates, want 1", n)
 	}
 }

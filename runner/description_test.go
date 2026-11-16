@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -146,13 +147,12 @@ func TestAnEmptyRepositoryDoesNotFailTheRun(t *testing.T) {
 }
 
 // GitLab may not see a branch pushed a moment earlier: the request is
-// retried with a doubling wait, a minute in all, and opens on the attempt
-// that succeeds.
+// retried with a doubling wait and opens on the attempt that succeeds.
 func TestCreateRetriesUntilTheBranchIsVisible(t *testing.T) {
 	pf := &platformfake.Platform{CreateErr: errors.New(`gitlab: status 400: {"source_branch":["does not exist"]}`), CreateErrTimes: 4}
 	var waits []time.Duration
 	o := Options{Platform: pf, Sleep: func(d time.Duration) { waits = append(waits, d) }}
-	mr, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"})
+	mr, _, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"}, "")
 	if err != nil || mr.IID == 0 {
 		t.Fatalf("mr=%+v err=%v", mr, err)
 	}
@@ -162,8 +162,130 @@ func TestCreateRetriesUntilTheBranchIsVisible(t *testing.T) {
 	// Any other error stands at once.
 	pf = &platformfake.Platform{CreateErr: errors.New("gitlab: status 403")}
 	waits = nil
-	if _, err := createWithRetry(context.Background(), Options{Platform: pf, Sleep: o.Sleep}, publish.Request{}); err == nil || len(waits) != 0 {
+	if _, _, err := createWithRetry(context.Background(), Options{Platform: pf, Sleep: o.Sleep}, publish.Request{}, ""); err == nil || len(waits) != 0 {
 		t.Errorf("a 403 was retried: %v %v", err, waits)
+	}
+}
+
+// Under load GitLab showed a pushed branch only after more than a minute
+// (2026-11-16, ~3,300 CI jobs an hour): the old minute of retries gave up
+// first. The run now waits for the branches API to show the branch at the
+// pushed head, past that minute, and asks for the request once.
+func TestCreateWaitsPastTheOldMinuteForThePushedBranch(t *testing.T) {
+	pf := &platformfake.Platform{
+		HiddenBranches: map[string]int{"renovate/x": 8},
+		BranchHeads:    map[string]string{"renovate/x": "abc1234"},
+	}
+	var waits []time.Duration
+	o := Options{Platform: pf, Sleep: func(d time.Duration) { waits = append(waits, d) }}
+	mr, adopted, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"}, "abc1234")
+	if err != nil || mr.IID == 0 || adopted {
+		t.Fatalf("mr=%+v adopted=%v err=%v", mr, adopted, err)
+	}
+	want := []time.Duration{2 * time.Second, 4 * time.Second, 8 * time.Second, 16 * time.Second, 30 * time.Second, 30 * time.Second, 30 * time.Second, 30 * time.Second}
+	if !slices.Equal(waits, want) {
+		t.Errorf("waits = %v, want %v", waits, want)
+	}
+	var total time.Duration
+	for _, w := range waits {
+		total += w
+	}
+	if total <= 62*time.Second {
+		t.Errorf("waited %v in all, not past the old budget of 62s", total)
+	}
+	if n := slices.IndexFunc(pf.Calls, func(c string) bool { return strings.HasPrefix(c, "Create ") }); n < 0 || slices.ContainsFunc(pf.Calls[n+1:], func(c string) bool { return strings.HasPrefix(c, "Create ") }) {
+		t.Errorf("want exactly one create, after the branch showed: %v", pf.Calls)
+	}
+}
+
+// A branch shown at its previous head is not yet the pushed one: the run
+// waits for the push, not merely for a branch of that name.
+func TestCreateWaitsForThePushedHeadNotAnOldOne(t *testing.T) {
+	pf := &platformfake.Platform{BranchHeads: map[string]string{"renovate/x": "0ld0000"}}
+	var waits []time.Duration
+	o := Options{Platform: pf, Sleep: func(d time.Duration) { waits = append(waits, d) }}
+	_, _, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"}, "abc1234")
+	if err == nil || !strings.Contains(err.Error(), "not yet at the pushed abc1234") {
+		t.Errorf("err = %v, want one naming the pushed head", err)
+	}
+	if slices.ContainsFunc(pf.Calls, func(c string) bool { return strings.HasPrefix(c, "Create ") }) {
+		t.Errorf("created against the old head: %v", pf.Calls)
+	}
+}
+
+// The wait is bounded: five minutes, then the error says what was waited
+// for and how long, and nothing was created.
+func TestCreateGivesUpAfterTheBranchBudgetNamingTheWait(t *testing.T) {
+	pf := &platformfake.Platform{HiddenBranches: map[string]int{"renovate/x": 1000}}
+	var total time.Duration
+	o := Options{Platform: pf, Sleep: func(d time.Duration) { total += d }}
+	_, _, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"}, "abc1234")
+	if err == nil {
+		t.Fatal("no error after the budget")
+	}
+	for _, want := range []string{"waited 5m0s for the platform to see the pushed branch", "no branch renovate/x at abc1234"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("err = %q, want it to name %q", err, want)
+		}
+	}
+	if total != branchBudget {
+		t.Errorf("waited %v, want the budget %v", total, branchBudget)
+	}
+	if slices.ContainsFunc(pf.Calls, func(c string) bool { return strings.HasPrefix(c, "Create ") }) {
+		t.Errorf("created a request for a branch never seen: %v", pf.Calls)
+	}
+
+	// A branch the branches API shows but the create still calls missing
+	// is waited out within the same budget, and the create's own answer
+	// is what the error carries.
+	pf = &platformfake.Platform{CreateErr: errors.New(`gitlab: status 400: {"source_branch":["does not exist"]}`)}
+	total = 0
+	o.Platform = pf
+	_, _, err = createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"}, "abc1234")
+	if err == nil || !strings.Contains(err.Error(), "does not exist") || !strings.Contains(err.Error(), "waited 5m0s") {
+		t.Errorf("err = %v", err)
+	}
+	if total != branchBudget {
+		t.Errorf("waited %v, want the budget %v", total, branchBudget)
+	}
+}
+
+// A 409 "another open merge request already exists" is a concurrent run
+// that opened the request first: it is looked up and adopted, not failed.
+func TestCreateAdoptsTheRequestAConcurrentRunOpened(t *testing.T) {
+	pf := &platformfake.Platform{
+		CreateErr: fmt.Errorf("gitlab: status 409 for project %q: Another open merge request already exists for this source branch: !7: %w", "g/p", publish.ErrAlreadyOpen),
+		MRs:       []publish.MergeRequest{{IID: 7, State: "opened", SourceBranch: "renovate/x"}},
+	}
+	o := Options{Platform: pf, Sleep: func(d time.Duration) { t.Errorf("waited %v on a 409", d) }}
+	mr, adopted, err := createWithRetry(context.Background(), o, publish.Request{SourceBranch: "renovate/x"}, "abc1234")
+	if err != nil || !adopted || mr.IID != 7 {
+		t.Errorf("mr=%+v adopted=%v err=%v, want !7 adopted", mr, adopted, err)
+	}
+}
+
+// End to end: the run whose create meets a request a concurrent run opened
+// brings that request in line - title, description, labels - and reports
+// it updated, not created and not failed.
+func TestARequestOpenedConcurrentlyIsUpdatedNotFailed(t *testing.T) {
+	_, repo := fixture(t)
+	pf := &platformfake.Platform{CreateErr: fmt.Errorf("gitlab: status 409: Another open merge request already exists for this source branch: %w", publish.ErrAlreadyOpen)}
+	p := plan(model.Branch{Name: "renovate/a", Title: "chore(deps): update a", UpdateKeys: []string{"a"}, Edits: []model.Edit{edit("3.20", "3.21")}})
+	outs, err := Execute(context.Background(), p, options(repo, pf))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(outs) != 1 || outs[0].Action != "updated" || outs[0].MRIID != 1 {
+		t.Fatalf("outcomes %+v, want !1 updated", outs)
+	}
+	if p.Branches[0].SuppressedBy == model.BlockPublishFailed {
+		t.Error("the branch is marked failed")
+	}
+	if len(pf.MRs) != 1 || pf.MRs[0].Title != "chore(deps): update a" || !strings.Contains(pf.MRs[0].Description, "by pinup") {
+		t.Errorf("the adopted request was not brought in line: %+v", pf.MRs)
+	}
+	if !slices.ContainsFunc(p.Warnings, func(w model.Warning) bool { return strings.Contains(w.Msg, "concurrent run") }) {
+		t.Errorf("no warning names the concurrent run: %+v", p.Warnings)
 	}
 }
 

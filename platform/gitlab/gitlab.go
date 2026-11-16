@@ -232,6 +232,11 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 		}
 		sleep(branchWaits[attempt])
 	}
+	if resp.status == http.StatusConflict && strings.Contains(apiMessage(resp.body), "already exists") {
+		// A concurrent run opened the request between this run's lookup
+		// and its create; the runner adopts it.
+		return publish.MergeRequest{}, fmt.Errorf("gitlab: status 409 for project %q: %s: %w", proj.Path, apiMessage(resp.body), publish.ErrAlreadyOpen)
+	}
 	if err := classify(resp, proj.Path); err != nil {
 		return publish.MergeRequest{}, err
 	}
@@ -257,6 +262,31 @@ func (p *Platform) CreateMergeRequest(ctx context.Context, proj publish.Project,
 	out := toPublish(mr)
 	out.AutomergeRefused = refused
 	return out, nil
+}
+
+// BranchHead reads the branch through the branches API: the commit it
+// shows, or ok=false on a 404 - a branch the API does not show yet.
+func (p *Platform) BranchHead(ctx context.Context, proj publish.Project, branch string) (string, bool, error) {
+	u := fmt.Sprintf("%s/api/v4/projects/%s/repository/branches/%s", p.base, url.PathEscape(proj.Path), url.PathEscape(branch))
+	resp, err := p.do(ctx, http.MethodGet, u, nil)
+	if err != nil {
+		return "", false, err
+	}
+	if resp.status == http.StatusNotFound {
+		return "", false, nil
+	}
+	if err := classify(resp, proj.Path); err != nil {
+		return "", false, err
+	}
+	var payload struct {
+		Commit struct {
+			ID string `json:"id"`
+		} `json:"commit"`
+	}
+	if err := json.Unmarshal(resp.body, &payload); err != nil {
+		return "", false, fmt.Errorf("gitlab: decode branch %s of %q: %w", branch, proj.Path, err)
+	}
+	return payload.Commit.ID, true, nil
 }
 
 // UpdateMergeRequest brings an existing merge request in line with r,

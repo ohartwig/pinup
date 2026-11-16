@@ -440,6 +440,13 @@ var mutators = []mutator{
 		"prior, ok = stillWithheld(mr.Description, b, plan.Updates)", "prior, ok = 0, false", []string{"./runner/"}, false, ""},
 	{132, "delivery", "the dashboard does not mark an armed request", "report/dashboard.go",
 		"\tif m.Automerge {\n\t\treturn \" — merges automatically when green\"", "\tif false {\n\t\treturn \" — merges automatically when green\"", []string{"./report/"}, false, ""},
+	// A pushed branch GitLab showed only after more than a minute under
+	// load failed its create (2026-11-16); a concurrent run's 409 failed
+	// the job although the request was open.
+	{133, "delivery", "the create does not wait for the pushed branch", "runner/runner.go",
+		"\t\t\tif err == nil && (!ok || (head != \"\" && head != sha)) {", "\t\t\tif err == nil && false {", []string{"./runner/"}, false, ""},
+	{134, "delivery", "a request a concurrent run opened fails the branch", "runner/runner.go",
+		"\t\tif errors.Is(err, publish.ErrAlreadyOpen) {", "\t\tif false {", []string{"./runner/"}, false, ""},
 	// Mergeable options combine across layers as Renovate combines them
 	// (2026-11-12): a repository's partial vulnerabilityAlerts dropped the
 	// runner's labels, schedule and automerge; golang!447 repeated them.
