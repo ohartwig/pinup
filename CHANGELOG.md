@@ -1,3 +1,9 @@
+## [0.71.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.3...v0.71.4) (2026-11-16)
+
+### :bug: Fixes
+
+* **runner:** wait for the pushed branch before opening its request ([1f74e6a](https://git.ole-hartwig.eu/pinup/pinup/commit/1f74e6afa5695ffa3638f4c03572fa447fea18e1))
+
 ## [0.71.3](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.2...v0.71.3) (2026-11-16)
 
 ### :repeat: Continuous Integrations
