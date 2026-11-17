@@ -1,3 +1,9 @@
+## [0.71.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.4...v0.71.5) (2026-11-17)
+
+### :repeat: Chores
+
+* **deps:** update lefthook hook images ([c7e14b0](https://git.ole-hartwig.eu/pinup/pinup/commit/c7e14b08a87ef6b6b955116f552baa8ae328537c))
+
 ## [0.71.4](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.3...v0.71.4) (2026-11-16)
 
 ### :bug: Fixes
