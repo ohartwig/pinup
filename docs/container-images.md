@@ -69,9 +69,12 @@ for.
 
 Nothing is built on GitHub. The images are built once, in the author's
 pipeline, as the images that pipeline runs pinup in itself: the binary of
-the release is downloaded, checked against the release's `SHA256SUMS` and
-copied onto a Wolfi base pinned by digest; the toolchain image adds each
-language runtime pinned to an exact Wolfi package version, so a bump is a
+the release is downloaded, its `SHA256SUMS` verified against `cosign.pub`,
+the binary checked against that manifest and copied onto a root filesystem
+of openSUSE Tumbleweed packages (until 2026-10 the base was Wolfi). The
+packages come from a repository snapshot pinned by its id, one per
+architecture; the toolchain image builds on the slim one by digest and takes
+its language runtimes from the same pinned snapshots, so a bump is a
 reviewed diff rather than whatever the mirror served that morning. The
 image is scanned, and a CRITICAL or HIGH finding that is neither documented
 as not affecting it (VEX) nor explicitly accepted fails the build; only then
