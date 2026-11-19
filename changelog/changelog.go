@@ -56,7 +56,7 @@ func (f *Fetcher) Notes(ctx context.Context, sourceURL string, v versioning.Vers
 	if !v.IsVersion(cur) || !v.IsVersion(tgt) {
 		return nil, compare, nil
 	}
-	all, err := f.releases(ctx, kind, owner, repo, sourceURL, v, cur)
+	all, err := f.releases(ctx, kind, owner, repo, sourceURL, v, trimV, cur)
 	if err != nil && all == nil {
 		return nil, compare, err
 	}
@@ -149,17 +149,38 @@ type stored struct {
 }
 
 // covers reports whether the list reaches below current under v - every
-// release in the span is then in it - or has no further page.
-func (st stored) covers(v versioning.Versioning, current string) bool {
+// release in the span is then in it - or has no further page. version
+// reads a tag as a version; false skips the tag.
+func (st stored) covers(v versioning.Versioning, version func(tag string) (string, bool), current string) bool {
 	if st.Complete {
 		return true
 	}
 	for _, r := range st.Releases {
-		if ver := strings.TrimPrefix(r.Version, "v"); v.IsVersion(ver) && v.Compare(ver, current) <= 0 {
+		if ver, ok := version(r.Version); ok && v.IsVersion(ver) && v.Compare(ver, current) <= 0 {
 			return true
 		}
 	}
 	return false
+}
+
+// trimV reads a tag the way Notes does: the version, without a leading v.
+func trimV(tag string) (string, bool) { return strings.TrimPrefix(tag, "v"), true }
+
+// Releases returns every release of the source repository the forge lists,
+// down to one at or below current, newest first, with the tags as the
+// forge spells them and the bodies untruncated. version reads a tag as a
+// version - an extractVersion pattern's group, "clamav-1.5.4" as 1.5.4 -
+// and decides how far the list is read; nil reads a tag as Notes does. An
+// unknown source yields nothing and no error.
+func (f *Fetcher) Releases(ctx context.Context, sourceURL string, v versioning.Versioning, version func(tag string) (string, bool), current string) ([]model.ReleaseNote, error) {
+	kind, owner, repo := classify(sourceURL, f.GitLabURL)
+	if kind == "" {
+		return nil, nil
+	}
+	if version == nil {
+		version = trimV
+	}
+	return f.releases(ctx, kind, owner, repo, sourceURL, v, version, current)
 }
 
 // releases reads the source's releases newest first, page by page, until
@@ -167,12 +188,12 @@ func (st stored) covers(v versioning.Versioning, current string) bool {
 // pins the 1.x line has its 1.63 notes deep in the list (measured:
 // composed-default-pipelines, 2026-09-13). The cache serves a list that
 // covers the span; a shorter one is read again.
-func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL string, v versioning.Versioning, current string) ([]model.ReleaseNote, error) {
+func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL string, v versioning.Versioning, version func(string) (string, bool), current string) ([]model.ReleaseNote, error) {
 	key := "notes\x00" + sourceURL
 	if f.Cache != nil {
 		if payload, fresh, err := f.Cache.GetReleases(key, f.TTL, f.Now); err == nil && fresh && len(payload) > 0 {
 			var st stored
-			if json.Unmarshal(payload, &st) == nil && st.covers(v, current) {
+			if json.Unmarshal(payload, &st) == nil && st.covers(v, version, current) {
 				return st.Releases, nil
 			}
 		}
@@ -194,7 +215,7 @@ func (f *Fetcher) releases(ctx context.Context, kind, owner, repo, sourceURL str
 		if len(batch) < pageSize {
 			st.Complete = true
 		}
-		if st.covers(v, current) {
+		if st.covers(v, version, current) {
 			break
 		}
 	}

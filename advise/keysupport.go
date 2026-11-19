@@ -38,7 +38,7 @@ var KeySupport = map[string]Support{
 	"ignoreUnstable": Supported, "prHourlyLimit": Supported, "prConcurrentLimit": Supported, "prConcurrentLimitIgnoreLabels": Supported, "labels": Supported,
 	"ignoreDeps": Supported, "allowedVersions": Supported, "rangeStrategy": Supported, "separateMajorMinor": Supported,
 	"separateMinorPatch": Partial, "separateMultipleMajor": Partial, "pinDigests": Supported,
-	"lockFileMaintenance": Supported, "osvVulnerabilityAlerts": Supported, "osvTransitiveAlerts": Supported, "vulnerabilityAlerts": Supported,
+	"lockFileMaintenance": Supported, "osvVulnerabilityAlerts": Supported, "osvTransitiveAlerts": Supported, "releaseNotesAdvisories": Supported, "vulnerabilityAlerts": Supported,
 	"artifactManifests": Supported,
 	"postUpgradeTasks":  Supported, "allowedCommands": Supported,
 	// postUpdateOptions: gomodTidy is what the gomod lock refresh does anyway; the other options are unread.
@@ -71,7 +71,7 @@ var KeySupport = map[string]Support{
 var PinupOnly = struct {
 	Top, Rule, Datasource, PostUpgradeTasks map[string]bool
 }{
-	Top:              map[string]bool{"osvTransitiveAlerts": true, "automergeDirect": true, "prConcurrentLimitIgnoreLabels": true, "artifactManifests": true},
+	Top:              map[string]bool{"osvTransitiveAlerts": true, "releaseNotesAdvisories": true, "automergeDirect": true, "prConcurrentLimitIgnoreLabels": true, "artifactManifests": true},
 	Rule:             map[string]bool{"analyze": true, "matchEffective": true, "trustEffective": true, "automergeDirect": true, "osvPackage": true},
 	Datasource:       map[string]bool{"osvEcosystem": true},
 	PostUpgradeTasks: map[string]bool{"dropWhenUnchanged": true},
