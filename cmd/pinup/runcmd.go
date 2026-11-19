@@ -27,6 +27,7 @@ import (
 	"github.com/ohartwig/pinup/changelog"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/cvelist"
 	"github.com/ohartwig/pinup/git"
 	"github.com/ohartwig/pinup/glob"
 	"github.com/ohartwig/pinup/httpx"
@@ -898,6 +899,11 @@ func planOptions(ctx context.Context, o *runOptions, repo *git.Repo, proj publis
 		notes.Cache = o.cache
 	}
 	opts.Changelog = notes
+	cves := &cvelist.Client{HTTP: o.client, Now: o.now}
+	if o.cache != nil {
+		cves.Store = kevStore{cache: o.cache, what: "CVE record", warn: func(m string) { fmt.Fprintf(errw, "warning: %s: %s\n", proj.Path, m) }}
+	}
+	opts.Upstream = &upstreamSources{osv: advisories, notes: notes, cves: cves}
 	opts.LookPath = exec.LookPath
 	var err error
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {

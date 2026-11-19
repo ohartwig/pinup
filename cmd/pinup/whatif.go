@@ -24,6 +24,7 @@ import (
 	"github.com/ohartwig/pinup/classify"
 	"github.com/ohartwig/pinup/config"
 	"github.com/ohartwig/pinup/config/preset"
+	"github.com/ohartwig/pinup/cvelist"
 	"github.com/ohartwig/pinup/discover"
 	"github.com/ohartwig/pinup/extract"
 	"github.com/ohartwig/pinup/httpx"
@@ -108,6 +109,7 @@ func cmdWhatif(args []string, out, errw io.Writer) error {
 	opts.Exploited = exploited
 	notes := &changelog.Fetcher{Client: client, GitLabURL: env.gitLabURL(), TTL: changelogTTL, Now: now, MaxBody: noteBodyLimit}
 	opts.Changelog = notes
+	opts.Upstream = &upstreamSources{osv: advisories, notes: notes, cves: &cvelist.Client{HTTP: client, Now: now}}
 	opts.LookPath = exec.LookPath
 	if opts.AllowedCommands, err = allowedCommands(os.Getenv); err != nil {
 		return err
@@ -249,6 +251,12 @@ type whatifOptions struct {
 	// security:kev and released from its release age. nil means the
 	// catalog is never read.
 	Exploited exploitedCatalog
+	// Upstream asks about a dependency that follows a repository's tags,
+	// which has no advisory ecosystem: OSV's GIT ecosystem by repository
+	// and tag (osvVulnerabilityAlerts), and the CVE ids the newer releases'
+	// notes name, as the CVE List confirms them (releaseNotesAdvisories).
+	// nil means neither is asked.
+	Upstream *upstreamSources
 	// Analyzers classify what actually changed for an update whose
 	// dependency a rule marked `analyze: true`; nil means no update gets
 	// an effective label. wire supplies them.
@@ -832,6 +840,10 @@ func (r *whatifRun) lookupAll() error {
 			plan.LockedPackages = append(plan.LockedPackages, l.pkg)
 		}
 		plan.Warnings = append(plan.Warnings, warns...)
+		// A dependency that follows a repository's tags has no ecosystem
+		// the database was asked in; its upstream is asked here, before
+		// the exploited marks, which then cover its CVEs as well.
+		plan.Warnings = append(plan.Warnings, checkUpstreamAdvisories(ctx, o.Upstream, r.resolved.Raw, plan.Deps, plan.AdvisoryCoverage, wire.DefaultVersioning(r.datasources), r.releasesOf)...)
 		plan.Warnings = append(plan.Warnings, markExploited(ctx, o.Exploited, r.now, plan.Deps, r.transitive)...)
 	}
 	// A version its repository withdrew is moved off like an advisory -

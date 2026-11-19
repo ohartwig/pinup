@@ -4,6 +4,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -73,6 +74,9 @@ func markExploited(ctx context.Context, cat exploitedCatalog, now time.Time, dep
 // own freshness rule.
 type kevStore struct {
 	cache lookup.Cache
+	// what names the payload in a warning; "" is the KEV catalog. The
+	// CVE List's records (cvelist) are kept the same way.
+	what string
 	// warn receives a cache write failure; nil drops it.
 	warn func(string)
 }
@@ -84,6 +88,6 @@ func (s kevStore) Get(key string, ttl time.Duration, now time.Time) ([]byte, boo
 
 func (s kevStore) Put(key string, payload []byte, now time.Time) {
 	if err := s.cache.PutReleases(key, payload, now); err != nil && s.warn != nil {
-		s.warn(fmt.Sprintf("cache: kev catalog: %v", err))
+		s.warn(fmt.Sprintf("cache: %s: %v", cmp.Or(s.what, "kev catalog"), err))
 	}
 }

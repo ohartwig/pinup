@@ -823,6 +823,33 @@ func coerce(s string) (string, bool) {
 // extractVersions applies an extractVersion pattern to a release set,
 // returning a copy with the rewritten versions.
 func extractVersions(rs *model.ReleaseSet, pattern string) (*model.ReleaseSet, error) {
+	extract, err := VersionExtractor(pattern)
+	if err != nil {
+		return nil, err
+	}
+	out := *rs
+	out.Releases = make([]model.Release, 0, len(rs.Releases))
+	for _, r := range rs.Releases {
+		v, ok := extract(r.Version)
+		if !ok {
+			continue
+		}
+		r.Version = v
+		out.Releases = append(out.Releases, r)
+	}
+	return &out, nil
+}
+
+// VersionExtractor compiles an extractVersion pattern into the function
+// the planner reads every release's tag with: the "version" group of a
+// tag the pattern matches, false for one it does not. An empty pattern
+// reads every tag as its own version. A stage that runs before the planner
+// and needs to know which tag a version came from - the upstream advisory
+// lookup, which asks about tags - reads them the same way.
+func VersionExtractor(pattern string) (func(tag string) (string, bool), error) {
+	if pattern == "" {
+		return func(tag string) (string, bool) { return tag, tag != "" }, nil
+	}
 	re, err := re2x.Compile(pattern)
 	if err != nil {
 		return nil, err
@@ -836,21 +863,14 @@ func extractVersions(rs *model.ReleaseSet, pattern string) (*model.ReleaseSet, e
 	if !hasGroup {
 		return nil, fmt.Errorf("pattern has no (?<version>...) group")
 	}
-	out := *rs
-	out.Releases = make([]model.Release, 0, len(rs.Releases))
-	for _, r := range rs.Releases {
-		m, ok := re.Find(r.Version)
+	return func(tag string) (string, bool) {
+		m, ok := re.Find(tag)
 		if !ok {
-			continue
+			return "", false
 		}
 		v, present := m.Get("version")
-		if !present || v == "" {
-			continue
-		}
-		r.Version = v
-		out.Releases = append(out.Releases, r)
-	}
-	return &out, nil
+		return v, present && v != ""
+	}, nil
 }
 
 // unchangedPrefix marks buildUpdate's answer for a target the scheme would
