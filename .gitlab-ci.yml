@@ -190,17 +190,24 @@ workflow:
     - when: never
 
 variables:
-  # The tag on a variable of its own: the annotation manager reads a
-  # quoted version, not an image reference. Until 2026-09-18 the line
-  # annotated GO_IMAGE itself and named no dependency at all - pinup's
-  # own orphan-annotation warning found it, in pinup's own pipeline.
+  # The whole reference in one quoted value, tag and digest, and no
+  # annotation: the runner's golden-image manager reads `<NAME>_IMAGE:
+  # "registry.ole-hartwig.eu/devops/images/<image>:<tag>@sha256:<digest>"`
+  # and moves both. The annotation manager this line used until 2026-11-19
+  # (GOLANG_IMAGE_TAG on a variable of its own) reads a quoted version up
+  # to the closing quote, so it cannot carry a digest.
   # The exact Go version, not the rolling 1.27: a Go patch in
   # devops/images/golang changed no file here, so nothing cut a release and
   # the binary kept the old standard library. Its patch bump is fix(deps)
   # (pinup/runner!40), which releases.
-  # pinup: datasource=docker depName=registry.ole-hartwig.eu/devops/images/golang
-  GOLANG_IMAGE_TAG: "1.27.4"
-  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:$GOLANG_IMAGE_TAG"
+  # The digest, because a tag can be pushed again under the same name: the
+  # tag alone does not say which toolchain image built a release. A
+  # rebuild of the image is now a digest bump here, typed ci(deps) by the
+  # rule in .pinup.jsonc, which cuts no release. The image has no
+  # multi-architecture index (measured 2026-11-18): the tag
+  # already named one architecture and the digest names the same one,
+  # arm64, which is what every runner of these jobs is.
+  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27.4@sha256:b2f1bbc829b6e2672b5e8af63cf81225839e21136b170dff0bfa76504e5fb240"
   # update:pinup runs on the toolchain image: gpg for the signature, git,
   # go for the go.sum refresh. The binary it runs is this tree's own, built
   # by build:linux-arm64 - the image's pinup is only a bystander.
