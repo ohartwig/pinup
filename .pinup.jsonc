@@ -10,5 +10,14 @@
   // The parity corpus carries deliberately outdated pins, and test files
   // carry FROM lines and annotations as fixtures: Renovate's dockerfile
   // pattern matches dockerfile_test.go, measured.
-  "ignorePaths": ["**/prometheus-exporter/**", "testdata/**", "**/*_test.go"]
+  "ignorePaths": ["**/prometheus-exporter/**", "testdata/**", "**/*_test.go"],
+  "packageRules": [
+    {
+      "description": "A rebuild of the Go image under the same exact tag moves the digest in GO_IMAGE and nothing else: the Go version is the one the tag names, and with -trimpath and CGO_ENABLED=0 the binaries are built to come out the same. The runner's regex manager finds that line, not the pipeline manager, so the bump would keep the default chore and cut a release of identical bytes for every rebuild. ci is no release type. The patch bump is not touched: it stays fix(deps) by the runner's rule and releases.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["registry.ole-hartwig.eu/devops/images/golang"],
+      "matchUpdateTypes": ["digest"],
+      "semanticCommitType": "ci"
+    }
+  ]
 }
