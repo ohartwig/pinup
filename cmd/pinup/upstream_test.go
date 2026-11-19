@@ -391,3 +391,44 @@ func TestClamAVSpecGetsItsSecurityFixPastTheReleaseAge(t *testing.T) {
 		})
 	}
 }
+
+// A release that cites a genuine, recent ClamAV CVE is not believed when
+// the record is older than the release can explain: 1.5.6, first seen a
+// week after 1.5.5, naming a CVE published four days before it - or
+// backdated to look as old as the record - plans no fast path. The same
+// CVE in 1.5.5, an hour before it was published, still counts.
+func TestReleaseNotesCVEOlderThanItsReleaseIsNotTaken(t *testing.T) {
+	week := clamav155Seen.Add(7 * 24 * time.Hour)
+	cited := cveRecord("CVE-2026-44444", clamav155Seen.Add(3*24*time.Hour).Format(time.RFC3339Nano), "A vulnerability in ClamAV.")
+	for _, tc := range []struct {
+		name      string
+		timestamp time.Time
+	}{{"honest date", week}, {"backdated tag", clamav155Seen.Add(3 * 24 * time.Hour)}} {
+		t.Run(tc.name, func(t *testing.T) {
+			notes := &upstreamNotes{notes: []model.ReleaseNote{
+				{Version: "clamav-1.5.6", Published: week, Body: "Fixes CVE-2026-44444."},
+				{Version: "clamav-1.5.5", Published: clamav155Seen, Body: "Maintenance."},
+				{Version: "clamav-1.5.4", Published: clamav154Released, Body: ""},
+			}}
+			src := &upstreamSources{notes: notes, cves: upstreamCVEs{"CVE-2026-44444": cited}}
+			rs := clamavReleases()
+			rs.Releases = append(rs.Releases, model.Release{Version: "clamav-1.5.6", Timestamp: tc.timestamp, FirstSeen: week})
+			deps := []model.Dependency{clamavDep()}
+			checkUpstreamAdvisories(t.Context(), src, map[string]any{"releaseNotesAdvisories": true}, deps, nil, semverDefault, func(model.Dependency) *model.ReleaseSet { return rs })
+			if len(deps[0].Advisories) != 0 || deps[0].VulnerabilityBound != "" {
+				t.Fatalf("advisories %+v bound %q, want none", deps[0].Advisories, deps[0].VulnerabilityBound)
+			}
+		})
+	}
+	// Inside the window the same record counts.
+	notes := &upstreamNotes{notes: []model.ReleaseNote{
+		{Version: "clamav-1.5.5", Published: clamav155Seen, Body: "Fixes CVE-2026-44444."},
+		{Version: "clamav-1.5.4", Published: clamav154Released, Body: ""},
+	}}
+	inside := cveRecord("CVE-2026-44444", clamav155Seen.Add(-time.Hour).Format(time.RFC3339Nano), "A vulnerability in ClamAV.")
+	deps := []model.Dependency{clamavDep()}
+	checkUpstreamAdvisories(t.Context(), &upstreamSources{notes: notes, cves: upstreamCVEs{"CVE-2026-44444": inside}}, map[string]any{"releaseNotesAdvisories": true}, deps, nil, semverDefault, func(model.Dependency) *model.ReleaseSet { return clamavReleases() })
+	if deps[0].VulnerabilityBound != "1.5.5" {
+		t.Fatalf("bound %q, want 1.5.5", deps[0].VulnerabilityBound)
+	}
+}

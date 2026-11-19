@@ -75,6 +75,16 @@ var upstreamDatasources = map[string]bool{"github-tags": true, "github-releases"
 // about: the nearest ones, where a fix for the version in use lands.
 const upstreamCandidates = 20
 
+// noteCVEWindow is how much older than the release that names it a CVE
+// record may be. A fix's record is published with the release or after
+// it (ClamAV 1.5.5: the tag at 16:09 UTC, Cisco's record at 16:30); a
+// record days older that a new release cites is not that release's news,
+// and is what a forged release would carry to skip the release age - an
+// active product nearly always has some recent CVE to cite. The CVE
+// record's affected versions cannot stand in: Cisco's ClamAV records list
+// Cisco Secure Endpoint's versions, not ClamAV's.
+const noteCVEWindow = 72 * time.Hour
+
 // Source names a dependency's coverage records for the two lookups.
 const (
 	sourceOSVGit       = "osv-git"
@@ -83,9 +93,12 @@ const (
 
 // upstreamCandidate is a newer release of the dependency: its tag, the
 // version the planner reads from it, and since when it is known to exist.
+// latest is the later of the forge's timestamp and pinup's own first
+// sighting: a tag's commit date is whatever its author wrote, the first
+// sighting is not, so a backdated tag cannot pass for an old release.
 type upstreamCandidate struct {
 	tag, version string
-	seen         time.Time
+	seen, latest time.Time
 }
 
 // checkUpstreamAdvisories runs both lookups over deps, after the advisory
@@ -203,11 +216,15 @@ func upstreamTags(v versioning.Versioning, d *model.Dependency, rs *model.Releas
 		if seen.IsZero() {
 			seen = r.FirstSeen
 		}
+		latest := seen
+		if r.FirstSeen.After(latest) {
+			latest = r.FirstSeen
+		}
 		switch c := v.Compare(ver, current); {
 		case c == 0 && cur.tag == "":
-			cur = upstreamCandidate{tag: r.Version, version: ver, seen: seen}
+			cur = upstreamCandidate{tag: r.Version, version: ver, seen: seen, latest: latest}
 		case c > 0 && !r.Deprecated && (!v.IsStable(current) || v.IsStable(ver) || d.AllowUnstable):
-			cands = append(cands, upstreamCandidate{tag: r.Version, version: ver, seen: seen})
+			cands = append(cands, upstreamCandidate{tag: r.Version, version: ver, seen: seen, latest: latest})
 		}
 	}
 	slices.SortFunc(cands, func(a, b upstreamCandidate) int { return v.Compare(a.version, b.version) })
@@ -265,8 +282,9 @@ func gitAdvisories(ctx context.Context, client upstreamOSV, repo string, cur ups
 // use names it already - the fix is in - or when the record was published
 // before the version in use was released: an old CVE id written into a
 // new note is not news about this version, and is what a forged note
-// would carry to skip the release age. A version in use whose release
-// date is unknown confirms nothing.
+// would carry to skip the release age. For the same reason the record may
+// be at most noteCVEWindow older than the release that names it. A version
+// in use whose release date is unknown confirms nothing.
 func noteAdvisories(ctx context.Context, src *upstreamSources, v versioning.Versioning, extract func(string) (string, bool), sourceURL, product, current string, cur upstreamCandidate, cands []upstreamCandidate) ([]model.Advisory, []string, error) {
 	notes, err := src.notes.Releases(ctx, sourceURL, v, extract, current)
 	if err != nil && notes == nil {
@@ -301,6 +319,12 @@ func noteAdvisories(ctx context.Context, src *upstreamSources, v versioning.Vers
 		if !ok {
 			continue
 		}
+		// The release's own time: the latest of the tag, pinup's first
+		// sighting and the forge's publication of the release.
+		releasedAt := c.latest
+		if n.Published.After(releasedAt) {
+			releasedAt = n.Published
+		}
 		for _, id := range cvelist.IDs(n.Body) {
 			if named[id] || done[id] {
 				continue
@@ -313,6 +337,9 @@ func noteAdvisories(ctx context.Context, src *upstreamSources, v versioning.Vers
 			}
 			if rec.State != cvelist.Published || !rec.Mentions(product) || rec.Published.IsZero() || rec.Published.Before(released) {
 				continue
+			}
+			if !releasedAt.IsZero() && rec.Published.Before(releasedAt.Add(-noteCVEWindow)) {
+				continue // older than the release can explain
 			}
 			out = append(out, model.Advisory{ID: id, Summary: rec.Title, Severity: rec.Severity, Fixed: c.version, Published: rec.Published})
 		}
