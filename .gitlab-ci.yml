@@ -275,6 +275,40 @@ lint:staticcheck:
       && go build -o /tmp/staticcheck/staticcheck honnef.co/go/tools/cmd/staticcheck)
     - /tmp/staticcheck/staticcheck ./...
 
+# govulncheck, pinned, over the source tree: which advisories of the Go
+# vulnerability database reach code this module actually calls, standard
+# library included. Trivy (test:trivy:fs) reads go.sum and says a module has
+# an advisory; this says whether the vulnerable symbol is linked.
+#
+# A scanner that cannot reach its database must not read as clean. Two
+# things hold that: govulncheck exits 1 when the fetch fails (measured
+# 2026-11-18 with v1.9.0 and HTTPS_PROXY on a closed port: "fetching
+# vulnerabilities: ... proxyconnect tcp ... connection refused", exit 1),
+# and the job itself demands the "DB updated:" line `-show version` prints
+# only after the index was read. A finding fails the job as well:
+# govulncheck exits 3, which `go run` hands on as 1.
+#
+# No runner tag. vuln.go.dev has no AAAA record, and until 2026-10-24 this
+# needed the IPv4 pool (docs/plan.md section 6.2). Every pool now sends
+# HTTPS through the CI egress proxy, whose allowlist carries `.go.dev`
+# (devops/koh-infra, runner/egress-proxy.tf); `go run` fetches the tool
+# through proxy.golang.org the same way lint:staticcheck does.
+#
+# v1.9.0 is the version yasrt/cli runs on this Go image.
+lint:govulncheck:
+  stage: quick
+  image: ${GO_IMAGE}
+  variables:
+    GIT_DEPTH: "1"
+  script:
+    - |
+      set -eu
+      status=0
+      go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 -show version ./... > /tmp/govulncheck.txt 2>&1 || status=$?
+      cat /tmp/govulncheck.txt
+      grep -q '^DB updated: ' /tmp/govulncheck.txt || { echo "govulncheck did not name the database state it read: this is not a clean result"; exit 1; }
+      exit "$status"
+
 # --------------------------------------------------------------------------- #
 # Test
 # --------------------------------------------------------------------------- #
