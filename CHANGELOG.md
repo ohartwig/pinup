@@ -1,3 +1,26 @@
+## [0.72.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.5...v0.72.0) (2026-11-19)
+
+### :sparkles: Features
+
+* **security:** treat an upstream tag's CVE fix as a security update ([7bc38d3](https://git.ole-hartwig.eu/pinup/pinup/commit/7bc38d39967f9c9cad5bd4302df856446af4ff0d))
+
+### :bug: Fixes
+
+* **security:** a release-note CVE must be younger than the release citing it ([25e4a5e](https://git.ole-hartwig.eu/pinup/pinup/commit/25e4a5e3692388923c09ab2818314a3a2e47ad62))
+
+### :memo: Documentation
+
+* the images are built on Tumbleweed; record what of spec §14 runs ([ce3c2be](https://git.ole-hartwig.eu/pinup/pinup/commit/ce3c2be94b3778897d30d87e373695a45b44d1aa))
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to ef26c94 ([354fe48](https://git.ole-hartwig.eu/pinup/pinup/commit/354fe483182a9e4035cfa70ab82819436f467691))
+* pin the Go image by tag and digest ([c9656f8](https://git.ole-hartwig.eu/pinup/pinup/commit/c9656f805aabb495a8562213e6798924b9077050))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 8d8d606 ([0995feb](https://git.ole-hartwig.eu/pinup/pinup/commit/0995feb8ca52d35496ae5718c1f35e577d844e75))
+* run govulncheck as a blocking job ([2dcaa26](https://git.ole-hartwig.eu/pinup/pinup/commit/2dcaa2632f556eb33302b9e46fb7320e106638c4))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 9df7908 ([f1ab146](https://git.ole-hartwig.eu/pinup/pinup/commit/f1ab14681230c8cb27899d4a8ac226a704d946d5))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 2010664 ([2dfae48](https://git.ole-hartwig.eu/pinup/pinup/commit/2dfae4897ab91a51fe90e7b11c5f28da1832183c))
+
 ## [0.71.5](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.4...v0.71.5) (2026-11-17)
 
 ### :repeat: Chores
