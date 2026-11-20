@@ -207,7 +207,7 @@ variables:
   # multi-architecture index (measured 2026-11-18): the tag
   # already named one architecture and the digest names the same one,
   # arm64, which is what every runner of these jobs is.
-  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27.4@sha256:38d1beedcd5cb654bbfe48dd4f1aa6c1baf045480da8d18a3dfda122a80fdffc"
+  GO_IMAGE: "registry.ole-hartwig.eu/devops/images/golang:1.27.4@sha256:f8f8e52feb7545686438e0bbc6f1ef998d0c2d313925cdfd427bd57ba20b55f2"
   # update:pinup runs on the toolchain image: gpg for the signature, git,
   # go for the go.sum refresh. The binary it runs is this tree's own, built
   # by build:linux-arm64 - the image's pinup is only a bystander.
