@@ -1,3 +1,52 @@
+## [0.72.1](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.72.0...v0.72.1) (2026-11-22)
+
+### :repeat: Continuous Integrations
+
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 1e52c90 ([083c289](https://git.ole-hartwig.eu/pinup/pinup/commit/083c2891d40caac14ae8fb266e0f704aa01c397e))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 52d9457 ([47cc967](https://git.ole-hartwig.eu/pinup/pinup/commit/47cc967c179a7f86c9b7b3f7c9b26537babcd224))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 6acd821 ([6af01c2](https://git.ole-hartwig.eu/pinup/pinup/commit/6af01c25c99f8e64c8878408b49aa538eddacb03))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to e830bb1 ([78c141f](https://git.ole-hartwig.eu/pinup/pinup/commit/78c141f7234b5b4b21ac0ea7bfafca460fbfad86))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 04aafc5 ([a87fbbc](https://git.ole-hartwig.eu/pinup/pinup/commit/a87fbbc200bdb190adfb0adc3a6b70a65423dc40))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to b980b13 ([197c667](https://git.ole-hartwig.eu/pinup/pinup/commit/197c667d761925c24a6edcc186a459807368c9ca))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to f67220c ([5baa967](https://git.ole-hartwig.eu/pinup/pinup/commit/5baa967608a66ee1af977843e092c312a3befe03))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to e966b74 ([9999ee1](https://git.ole-hartwig.eu/pinup/pinup/commit/9999ee1a68d69471530e5f77854cf8eac38f8bed))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 2a9f571 ([220ff58](https://git.ole-hartwig.eu/pinup/pinup/commit/220ff580312ffd7f8b1ccded585cbe4f9d7308ce))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to d4a01aa ([f9bf494](https://git.ole-hartwig.eu/pinup/pinup/commit/f9bf49481e196036fae9e738e627150429d2f5c7))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to a7cd664 ([7484fb3](https://git.ole-hartwig.eu/pinup/pinup/commit/7484fb3b4f83e7b906de1153750d7f60d07e6f1d))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 53022b8 ([ac6fe3d](https://git.ole-hartwig.eu/pinup/pinup/commit/ac6fe3d8b28959d74622f17cd996a1ab7852ef5d))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 07ccf8f ([a0224b7](https://git.ole-hartwig.eu/pinup/pinup/commit/a0224b7b593dca1b3e8689c1cd377240832534d2))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 3333817 ([12cfd87](https://git.ole-hartwig.eu/pinup/pinup/commit/12cfd87d703ccbbb061265cb540f65c2bc375159))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to d8aa4ad ([fd33380](https://git.ole-hartwig.eu/pinup/pinup/commit/fd3338021197b793a9977826ba47dcb0756dc561))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 0263540 ([bafce1d](https://git.ole-hartwig.eu/pinup/pinup/commit/bafce1d701d50566d52921eb2f0ca73e91d0f945))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 26d1fb6 ([bf55596](https://git.ole-hartwig.eu/pinup/pinup/commit/bf55596a42aea187ca6b94ab7375f1a678a1b922))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to e53ae01 ([f06cbfd](https://git.ole-hartwig.eu/pinup/pinup/commit/f06cbfddf0cb28aa8ed160ff4a47d34b29765653))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 3c9c6d1 ([d7717de](https://git.ole-hartwig.eu/pinup/pinup/commit/d7717de2a0546bd67f2e2dfe6901c405b9379659))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 47c7350 ([6007304](https://git.ole-hartwig.eu/pinup/pinup/commit/6007304f7308dccdfbf7b251d25a458cb4cbc9d3))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 1c38433 ([ebd3ec0](https://git.ole-hartwig.eu/pinup/pinup/commit/ebd3ec0210a2ba2860008f9aaf0fbf3e9281ddc4))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to ecedeba ([afa847d](https://git.ole-hartwig.eu/pinup/pinup/commit/afa847d482bf291c281f15f60333e67763e4cd92))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to cf01a44 ([78d3ae9](https://git.ole-hartwig.eu/pinup/pinup/commit/78d3ae9468753a6af514b51d35119fb22c7f64dc))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 494e6dd ([4393101](https://git.ole-hartwig.eu/pinup/pinup/commit/4393101a3dc3eef6b791bc22af70a03ef9594777))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 21275c2 ([43d0502](https://git.ole-hartwig.eu/pinup/pinup/commit/43d050289ee788238f0f535f3bf920557467b60c))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 4fe4139 ([ab59fed](https://git.ole-hartwig.eu/pinup/pinup/commit/ab59feda9907c7eebd923341673a9d1c9502306d))
+* **deps:** update registry.ole-hartwig.eu/devops/images/pinup:0 docker digest to 2052638 ([618136e](https://git.ole-hartwig.eu/pinup/pinup/commit/618136e0dd2f626ed88b4321b4e509e52fb9bd54))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to f6d07c8 ([323f92f](https://git.ole-hartwig.eu/pinup/pinup/commit/323f92fcbfb3c1cd5ea3b15b73b014b2d8016a1b))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 4aa2b85 ([9221857](https://git.ole-hartwig.eu/pinup/pinup/commit/92218572313f2ce8e9c5fdafcd6ac5d9860be453))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to f8f8e52 ([82646d6](https://git.ole-hartwig.eu/pinup/pinup/commit/82646d644bfdcd7708599ad10c0efddbb50edc9c))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 38d1bee ([8134805](https://git.ole-hartwig.eu/pinup/pinup/commit/8134805c1209c19271727028d04656a3bb8cbc94))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 2063b52 ([f6ca2a5](https://git.ole-hartwig.eu/pinup/pinup/commit/f6ca2a5ece827aefafb468bb57f6df9b06224c09))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 16e5018 ([b965f0b](https://git.ole-hartwig.eu/pinup/pinup/commit/b965f0b482303f7bef4072b16c483f0b12859523))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 7ac6b3a ([4ed44fe](https://git.ole-hartwig.eu/pinup/pinup/commit/4ed44fe04f2b030853d3dab8cb2963abf79543ec))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 7a82e02 ([76a3ff0](https://git.ole-hartwig.eu/pinup/pinup/commit/76a3ff08dfbe5d8b75295e78e0b6b2eb7dd55ac5))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to eeaadc6 ([00a7479](https://git.ole-hartwig.eu/pinup/pinup/commit/00a7479664cc32cc03ff0c9855be40721e16a81e))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to cee8ae4 ([2d6a993](https://git.ole-hartwig.eu/pinup/pinup/commit/2d6a993efb7099d1074d360c5eb263411e7155c4))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 74ae4f2 ([0e26c40](https://git.ole-hartwig.eu/pinup/pinup/commit/0e26c403162bd8830f1f9084cebd67d1d50c09bb))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to b1dad18 ([1a4b70c](https://git.ole-hartwig.eu/pinup/pinup/commit/1a4b70cdcf06b41fecb7e3702ed59a9f603043a0))
+* **deps:** update registry.ole-hartwig.eu/devops/images/golang:1.27.4 docker digest to 0c3bf67 ([27de677](https://git.ole-hartwig.eu/pinup/pinup/commit/27de6771a1d1fbd1746ff7eec02bfdc813057a20))
+
+### :repeat: Chores
+
+* **deps:** update dependency registry.ole-hartwig.eu/devops/images/franken-php/ci to v3.2.364-8.5 ([f8d75a1](https://git.ole-hartwig.eu/pinup/pinup/commit/f8d75a1cac76e1a0883fcdd77d7b697065656e23))
+
 ## [0.72.0](https://git.ole-hartwig.eu/pinup/pinup/compare/v0.71.5...v0.72.0) (2026-11-19)
 
 ### :sparkles: Features
